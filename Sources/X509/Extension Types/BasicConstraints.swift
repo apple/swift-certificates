@@ -1,0 +1,141 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftCertificate open source project
+//
+// Copyright (c) 2022 Apple Inc. and the SwiftCertificate project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.md for the list of SwiftCertificate project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
+import SwiftASN1
+
+extension Certificate.Extensions {
+    /// Identifies whether the subject of the certificate is a CA and the
+    /// maximum verification depth of valid certificate paths that include this
+    /// certificate.
+    public enum BasicConstraints {
+        /// This entity is a certificate authority.
+        ///
+        /// If `maxPathLength` is non-nil, this length is the maximum number of intermediate
+        /// certificates that may follow this one in a valid certification path. Note that this
+        /// excludes the leaf, so a valid (and common) `maxPathLength` is `0`.
+        case isCertificateAuthority(maxPathLength: Int?)
+
+        /// This entity is not a certificate authority, and may not be a valid issuer of any
+        /// certificate.
+        case notCertificateAuthority
+
+        /// Create a new ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum`` object
+        /// by unwrapping a ``Certificate/Extension``.
+        ///
+        /// - Parameter ext: The ``Certificate/Extension`` to unwrap
+        /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
+        ///     `ASN1ObjectIdentifier.X509ExtensionID.basicConstraints`.
+        @inlinable
+        public init(_ ext: Certificate.Extension) throws {
+            guard ext.oid == .X509ExtensionID.basicConstraints else {
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)")
+            }
+
+            let basicConstraintsValue = try BasicConstraintsValue(asn1Encoded: ext.value)
+            if basicConstraintsValue.isCA {
+                self = .isCertificateAuthority(maxPathLength: basicConstraintsValue.pathLenConstraint)
+            } else {
+                self = .notCertificateAuthority
+            }
+        }
+    }
+}
+
+extension Certificate.Extensions.BasicConstraints: Hashable { }
+
+extension Certificate.Extensions.BasicConstraints: Sendable { }
+
+extension Certificate.Extensions.BasicConstraints: CustomStringConvertible {
+    public var description: String {
+        fatalError("TODO")
+    }
+}
+
+extension Certificate.Extension {
+    /// Construct an opaque ``Certificate/Extension`` from this Basic Constraints extension.
+    ///
+    /// - Parameters:
+    ///   - basicConstraints: The extension to wrap
+    ///   - critical: Whether this extension should have the critical bit set.
+    @inlinable
+    public init(_ basicConstraints: Certificate.Extensions.BasicConstraints, critical: Bool) throws {
+        let asn1Representation = BasicConstraintsValue(basicConstraints)
+        var serializer = ASN1.Serializer()
+        try serializer.serialize(asn1Representation)
+        self.init(oid: .X509ExtensionID.basicConstraints, critical: critical, value: serializer.serializedBytes[...])
+    }
+}
+
+extension Certificate.Extensions.BasicConstraints: CertificateExtensionConvertible {
+    public func makeCertificateExtension() throws -> Certificate.Extension {
+        return try .init(self, critical: false)
+    }
+}
+
+// MARK: ASN1 helpers
+@usableFromInline
+struct BasicConstraintsValue: ASN1ImplicitlyTaggable {
+    @inlinable
+    static var defaultIdentifier: ASN1.ASN1Identifier {
+        .sequence
+    }
+
+    @usableFromInline
+    var isCA: Bool
+
+    @usableFromInline
+    var pathLenConstraint: Int?
+
+    @inlinable
+    init(isCA: Bool, pathLenConstraint: Int?) throws {
+        self.isCA = isCA
+        self.pathLenConstraint = pathLenConstraint
+
+        // CA's must not assert the path len constraint field unless isCA is true.
+        guard pathLenConstraint == nil || isCA else {
+            throw ASN1Error.invalidASN1Object
+        }
+    }
+
+    @inlinable
+    init(_ ext: Certificate.Extensions.BasicConstraints) {
+        switch ext {
+        case .isCertificateAuthority(maxPathLength: let maxPathLen):
+            self.isCA = true
+            self.pathLenConstraint = maxPathLen
+        case .notCertificateAuthority:
+            self.isCA = false
+            self.pathLenConstraint = nil
+        }
+    }
+
+    @inlinable
+    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
+            let isCA: Bool = try ASN1.decodeDefault(&nodes, defaultValue: false)
+            let pathLenConstraint: Int? = try ASN1.optionalImplicitlyTagged(&nodes)
+            return try BasicConstraintsValue(isCA: isCA, pathLenConstraint: pathLenConstraint)
+        }
+    }
+
+    @inlinable
+    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+        try coder.appendConstructedNode(identifier: identifier) { coder in
+            if self.isCA != false {
+                try coder.serialize(self.isCA)
+            }
+            try coder.serializeOptionalImplicitlyTagged(self.pathLenConstraint)
+        }
+    }
+}

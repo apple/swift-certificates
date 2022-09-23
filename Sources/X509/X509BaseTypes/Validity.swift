@@ -1,0 +1,55 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftCertificate open source project
+//
+// Copyright (c) 2022 Apple Inc. and the SwiftCertificate project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.md for the list of SwiftCertificate project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
+import SwiftASN1
+
+// Validity ::= SEQUENCE {
+// notBefore      Time,
+// notAfter       Time  }
+@usableFromInline
+struct Validity: ASN1ImplicitlyTaggable, Hashable, Sendable {
+    @inlinable
+    static var defaultIdentifier: ASN1.ASN1Identifier {
+        .sequence
+    }
+
+    @usableFromInline
+    var notBefore: Time
+
+    @usableFromInline
+    var notAfter: Time
+
+    @inlinable
+    internal init(notBefore: Time, notAfter: Time) {
+        self.notBefore = notBefore
+        self.notAfter = notAfter
+    }
+
+    @inlinable
+    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
+            let notBefore = try Time(asn1Encoded: &nodes)
+            let notAfter = try Time(asn1Encoded: &nodes)
+            return Validity(notBefore: notBefore, notAfter: notAfter)
+        }
+    }
+
+    @inlinable
+    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+        try coder.appendConstructedNode(identifier: identifier) { coder in
+            try coder.serialize(self.notBefore)
+            try coder.serialize(self.notAfter)
+        }
+    }
+}
