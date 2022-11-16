@@ -16,7 +16,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-certificate",
+    name: "swift-certificates",
     platforms: [
         .macOS(.v10_15),
         .iOS(.v13),
