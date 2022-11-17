@@ -81,7 +81,7 @@ extension Certificate.SerialNumber: Sendable { }
 
 extension Certificate.SerialNumber: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        return self.bytes.lazy.map { String($0, radix: 16) }.joined(separator: ":")
     }
 }
 

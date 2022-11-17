@@ -102,8 +102,9 @@ extension RelativeDistinguishedName: RandomAccessCollection {
 extension RelativeDistinguishedName: CustomStringConvertible {
     @inlinable
     public var description: String {
-        // TODO(cory): Relevant citation is probably https://www.rfc-editor.org/rfc/rfc4514
-        return "TODO"
+        self.lazy.map {
+            String(describing: $0)
+        }.joined(separator: "+")
     }
 }
 

@@ -101,6 +101,32 @@ public enum GeneralName: Hashable, Sendable, ASN1Parseable, ASN1Serializable {
     }
 }
 
+extension GeneralName: CustomStringConvertible {
+    @inlinable
+    public var description: String {
+        switch self {
+        case .dNSName(let name):
+            return "dNSName: \(name)"
+        case .directoryName(let directoryName):
+            return "directoryName: \(directoryName)"
+        case .ediPartyName(let name):
+            return "ediPartyName: \(name)"
+        case .iPAddress(let address):
+            return "iPAddress: \(address.bytes)"
+        case .otherName(let otherName):
+            return "otherName: \(otherName)"
+        case .registeredID(let id):
+            return "registeredID: \(id)"
+        case .rfc822Name(let name):
+            return "rfc822Name: \(name)"
+        case .uniformResourceIdentifier(let uri):
+            return "uri: \(uri)"
+        case .x400Address(let address):
+            return "x400Address: \(address)"
+        }
+    }
+}
+
 //GeneralName ::= CHOICE {
 //     otherName                       [0]     OtherName,
 //     rfc822Name                      [1]     IA5String,
@@ -158,6 +184,13 @@ extension GeneralName {
                 }
             }
         }
+    }
+}
+
+extension GeneralName.OtherName: CustomStringConvertible {
+    @inlinable
+    public var description: String {
+        "\(self.typeID): \(String(describing: self.value))"
     }
 }
 

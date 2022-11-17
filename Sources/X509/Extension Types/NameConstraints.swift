@@ -293,7 +293,16 @@ extension Certificate.Extensions.NameConstraints: Sendable { }
 
 extension Certificate.Extensions.NameConstraints: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        var elements: [String] = []
+
+        if self.permittedSubtrees.count > 0 {
+            elements.append("permittedSubtrees: \(self.permittedSubtrees.map { String(describing: $0) }.joined(separator: ", "))")
+        }
+        if self.excludedSubtrees.count > 0 {
+            elements.append("excludedSubtrees: \(self.excludedSubtrees.map { String(describing: $0) }.joined(separator: ", "))")
+        }
+
+        return elements.joined(separator: "; ")
     }
 }
 

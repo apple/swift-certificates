@@ -63,7 +63,7 @@ extension Certificate.Extensions.SubjectAlternativeNames: Sendable { }
 
 extension Certificate.Extensions.SubjectAlternativeNames: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        self.lazy.map { String(describing: $0) }.joined(separator: ", ")
     }
 }
 

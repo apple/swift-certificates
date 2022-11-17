@@ -69,7 +69,21 @@ extension Certificate.Extensions.AuthorityKeyIdentifier: Sendable { }
 
 extension Certificate.Extensions.AuthorityKeyIdentifier: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        var elements: [String] = []
+
+        if let keyId = self.keyIdentifier {
+            elements.append("keyID: \(keyId.map { String($0, radix: 16) }.joined(separator: ":"))")
+        }
+
+        if let issuer = self.authorityCertIssuer {
+            elements.append("issuer: \(issuer)")
+        }
+
+        if let serial = self.authorityCertSerialNumber {
+            elements.append("issuerSerial: \(serial)")
+        }
+
+        return elements.joined(separator: ", ")
     }
 }
 

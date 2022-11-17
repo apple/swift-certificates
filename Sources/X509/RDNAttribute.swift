@@ -56,10 +56,71 @@ extension RelativeDistinguishedName.Attribute: Sendable { }
 extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
     @inlinable
     public var description: String {
-        // TODO(cory): Relevant citation is probably https://www.rfc-editor.org/rfc/rfc4514
-        return "TODO"
+        let attributeKey: String
+        switch self.type {
+        case .RDNAttributeType.commonName:
+            attributeKey = "CN"
+        case .RDNAttributeType.countryName:
+            attributeKey = "C"
+        case .RDNAttributeType.localityName:
+            attributeKey = "L"
+        case .RDNAttributeType.stateOrProvinceName:
+            attributeKey = "ST"
+        case .RDNAttributeType.organizationName:
+            attributeKey = "O"
+        case .RDNAttributeType.organizationalUnitName:
+            attributeKey = "OU"
+        case .RDNAttributeType.streetAddress:
+            attributeKey = "STREET"
+        case let type:
+            attributeKey = String(describing: type)
+        }
+
+        var text: String
+        do {
+            text = try String(ASN1.ASN1PrintableString(asn1Any: self.value))
+        } catch {
+            do {
+                text = try String(ASN1.ASN1UTF8String(asn1Any: self.value))
+            } catch {
+                text = String(describing: self.value)
+            }
+        }
+
+        // This is a very slow way to do this, but until we have any evidence that
+        // this is hot code I'm happy to do it slowly.
+        let unescapedBytes = Array(text.utf8)
+        let charsToEscape: [UInt8] = [
+            UInt8(ascii: ","), UInt8(ascii: "+"), UInt8(ascii: "\""), UInt8(ascii: "\\"),
+            UInt8(ascii: "<"), UInt8(ascii: ">"), UInt8(ascii: ";")]
+
+        let leadingBytesToEscape = unescapedBytes.prefix(while: {
+            $0 == UInt8(ascii: " ") || $0 == UInt8(ascii: "#")
+        })
+
+        // We don't want these ranges to overlap.
+        let trailingBytesToEscape = unescapedBytes.dropFirst(leadingBytesToEscape.count).suffix(while: {
+            $0 == UInt8(ascii: " ")
+        })
+        let middleBytes = unescapedBytes[leadingBytesToEscape.endIndex..<trailingBytesToEscape.startIndex]
+
+        var escapedBytes = leadingBytesToEscape.flatMap { [UInt8(ascii: "\\"), $0] }
+        escapedBytes += middleBytes.flatMap {
+            if charsToEscape.contains($0) {
+                return [UInt8(ascii: "\\"), $0]
+            } else {
+                return [$0]
+            }
+        }
+        escapedBytes += trailingBytesToEscape.flatMap { [UInt8(ascii: "\\"), $0] }
+
+        let escapedString = String(decoding: escapedBytes, as: UTF8.self)
+
+
+        return "\(attributeKey)=\(escapedString)"
     }
 }
+
 
 extension RelativeDistinguishedName.Attribute: ASN1ImplicitlyTaggable {
     @inlinable
@@ -142,5 +203,25 @@ extension ASN1.ASN1ObjectIdentifier {
         /// information from a postal address (i.e., the street name, place,
         /// avenue, and the house number).
         public static let streetAddress: ASN1.ASN1ObjectIdentifier = [2, 5, 4, 9]
+    }
+}
+
+extension RandomAccessCollection {
+    @inlinable
+    func suffix(while predicate: (Element) -> Bool) -> SubSequence {
+        var index = self.endIndex
+        if index == self.startIndex {
+            return self[...]
+        }
+
+        repeat {
+            self.formIndex(before: &index)
+            if !predicate(self[index]) {
+                self.formIndex(after: &index)
+                break
+            }
+        } while index != self.startIndex
+
+        return self[index..<self.endIndex]
     }
 }

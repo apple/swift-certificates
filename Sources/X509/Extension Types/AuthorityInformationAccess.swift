@@ -57,7 +57,7 @@ extension Certificate.Extensions.AuthorityInformationAccess: Sendable { }
 
 extension Certificate.Extensions.AuthorityInformationAccess: CustomStringConvertible {
     public var description: String {
-        "TODO"
+        return self.map { String(describing: $0) }.joined(separator: ", ")
     }
 }
 
@@ -116,7 +116,7 @@ extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription: S
 
 extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        return "\(self.method): \(self.location)"
     }
 }
 
@@ -165,20 +165,22 @@ extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.Ac
 extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod: Sendable { }
 
 extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod: CustomStringConvertible {
+    @inlinable
     public var description: String {
-        fatalError("TODO")
+        switch self.backing {
+        case .ocspServer:
+            return "OCSP Server"
+        case .issuingCA:
+            return "Issuer"
+        case .unknownType(let oid):
+            return String(describing: oid)
+        }
     }
 }
 
 extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Hashable { }
 
 extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Sendable { }
-
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: CustomStringConvertible {
-    public var description: String {
-        fatalError("TODO")
-    }
-}
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this AIA extension.

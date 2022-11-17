@@ -48,6 +48,13 @@ extension Certificate.Version: Comparable {
 
 extension Certificate.Version: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        switch self {
+        case .v1:
+            return "X509v1"
+        case .v3:
+            return "X509v3"
+        case let unknown:
+            return "X509v\(unknown.rawValue - 1)"
+        }
     }
 }

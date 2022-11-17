@@ -173,7 +173,7 @@ extension Certificate.Extensions {
             }
             set {
                 if newValue {
-                    self.rawValue |= 0x08000
+                    self.rawValue |= 0x0800
                 } else {
                     self.rawValue &= (~0x0800)
                 }
@@ -280,7 +280,37 @@ extension Certificate.Extensions.KeyUsage: Sendable { }
 
 extension Certificate.Extensions.KeyUsage: CustomStringConvertible {
     public var description: String {
-        "TODO"
+        var enabledUsages: [String] = []
+
+        if self.digitalSignature {
+            enabledUsages.append("digitalSignature")
+        }
+        if self.nonRepudiation {
+            enabledUsages.append("nonRepudiation")
+        }
+        if self.keyEncipherment {
+            enabledUsages.append("keyEncipherment")
+        }
+        if self.dataEncipherment {
+            enabledUsages.append("dataEncipherment")
+        }
+        if self.keyAgreement {
+            enabledUsages.append("keyAgreement")
+        }
+        if self.keyCertSign {
+            enabledUsages.append("keyCertSign")
+        }
+        if self.cRLSign {
+            enabledUsages.append("cRLSign")
+        }
+        if self.encipherOnly {
+            enabledUsages.append("encipherOnly")
+        }
+        if self.decipherOnly {
+            enabledUsages.append("decipherOnly")
+        }
+
+        return enabledUsages.joined(separator: ", ")
     }
 }
 

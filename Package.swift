@@ -30,7 +30,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.1.0"),
-        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.2.0")),
+        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.2.1")),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
@@ -45,6 +45,7 @@ let package = Package(
             name: "X509Tests",
             dependencies: [
                 "X509",
+                .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
             ]),
     ]

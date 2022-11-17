@@ -175,4 +175,52 @@ final class DistinguishedNameTests: XCTestCase {
             ])
         )
     }
+
+    func testDistinguishedNameRepresentation() throws {
+        let name = try DistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationName, utf8String: "DigiCert Inc"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationalUnitName, utf8String: "www.digicert.com"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.commonName, utf8String: "DigiCert Global Root G3"),
+        ])
+
+        let s = String(describing: name)
+        XCTAssertEqual(s, "CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,C=US")
+    }
+
+    func testDistinguishedNameRepresentationWithNestedAttributes() throws {
+        let name = try DistinguishedName([
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
+            ]),
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.stateOrProvinceName, printableString: "CA"),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.stateOrProvinceName, utf8String: "California")
+            ]),
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationName, utf8String: "DigiCert Inc"),
+            ]),
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationalUnitName, utf8String: "www.digicert.com"),
+            ]),
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.commonName, utf8String: "DigiCert Global Root G3"),
+            ])
+        ])
+
+        let s = String(describing: name)
+        XCTAssertEqual(s, "CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,ST=CA+ST=California,C=US")
+    }
+
+    func testDistinguishedNameRepresentationWithCommasAndNewlines() throws {
+        let name = try DistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US "),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationName, utf8String: " DigiCert Inc"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationalUnitName, utf8String: "#www.digicert.com"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.commonName, utf8String: ",+\"\\<>;"),
+        ])
+
+        let s = String(describing: name)
+        XCTAssertEqual(s, "CN=\\,\\+\\\"\\\\\\<\\>\\;,OU=\\#www.digicert.com,O=\\ DigiCert Inc,C=US\\ ")
+    }
 }

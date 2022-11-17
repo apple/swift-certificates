@@ -55,7 +55,9 @@ extension Certificate.Extensions.ExtendedKeyUsage: Sendable { }
 
 extension Certificate.Extensions.ExtendedKeyUsage: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        return self.map {
+            String(describing: $0)
+        }.joined(separator: ", ")
     }
 }
 
@@ -165,19 +167,32 @@ extension Certificate.Extensions.ExtendedKeyUsage.Usage: Sendable { }
 
 extension Certificate.Extensions.ExtendedKeyUsage.Usage: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        switch self.backing {
+        case .any:
+            return "anyKeyUsage"
+        case .serverAuth:
+            return "serverAuth"
+        case .clientAuth:
+            return "clientAuth"
+        case .codeSigning:
+            return "codeSigning"
+        case .emailProtection:
+            return "emailProtection"
+        case .timeStamping:
+            return "timeStamping"
+        case .ocspSigning:
+            return "ocspSigning"
+        case .certificateTransparency:
+            return "certificateTransparency"
+        case .unknown(let oid):
+            return String(describing: oid)
+        }
     }
 }
 
 extension Certificate.Extensions.ExtendedKeyUsage.Usage.Backing: Hashable { }
 
 extension Certificate.Extensions.ExtendedKeyUsage.Usage.Backing: Sendable { }
-
-extension Certificate.Extensions.ExtendedKeyUsage.Usage.Backing: CustomStringConvertible {
-    public var description: String {
-        fatalError("TODO")
-    }
-}
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Extended Key Usage extension.

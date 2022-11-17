@@ -56,7 +56,7 @@ extension Certificate.Extensions.SubjectKeyIdentifier: Sendable { }
 
 extension Certificate.Extensions.SubjectKeyIdentifier: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        return self.keyIdentifier.lazy.map { String($0, radix: 16) }.joined(separator: ":")
     }
 }
 

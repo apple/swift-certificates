@@ -58,7 +58,14 @@ extension Certificate.Extensions.BasicConstraints: Sendable { }
 
 extension Certificate.Extensions.BasicConstraints: CustomStringConvertible {
     public var description: String {
-        fatalError("TODO")
+        switch self {
+        case .isCertificateAuthority(maxPathLength: nil):
+            return "CA=TRUE"
+        case .isCertificateAuthority(maxPathLength: .some(let maxLen)):
+            return "CA=TRUE, maxPathLength=\(maxLen)"
+        case .notCertificateAuthority:
+            return "CA=FALSE"
+        }
     }
 }
 
