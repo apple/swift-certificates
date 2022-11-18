@@ -83,7 +83,7 @@ The majority of the semantic information in certificate objects is stored in the
 These are a typed key-value dictionary that contain additional information about both the subject of the
 certificate and about much of its content.
 
-``X509`` stores the extension information in an ``Certificate/Extensions-swift.struct`` collection. This
+``X509`` stores the extension information in a ``Certificate/Extensions-swift.struct`` collection. This
 is a full-fidelity representation of all extensions found in the certificate. This stores the extensions
 as ``Certificate/Extension`` objects, an opaque raw-bytes representation of the extension.
 
