@@ -90,10 +90,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.keyUsage else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.keyUsage), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.keyUsage), got \(ext.oid)")
             }
 
-            let keyUsageValue = try ASN1.ASN1BitString(asn1Encoded: ext.value)
+            let keyUsageValue = try ASN1BitString(derEncoded: ext.value)
             try Self.validateBitString(keyUsageValue)
             self.rawValue = UInt16(keyUsageValue)
         }
@@ -247,7 +247,7 @@ extension Certificate.Extensions {
         }
 
         @inlinable
-        internal static func validateBitString(_ bitstring: ASN1.ASN1BitString) throws {
+        internal static func validateBitString(_ bitstring: ASN1BitString) throws {
             switch bitstring.bytes.count {
             case 0:
                 // This is fine, no bits are set.
@@ -322,8 +322,8 @@ extension Certificate.Extension {
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
     public init(_ keyUsage: Certificate.Extensions.KeyUsage, critical: Bool) throws {
-        let asn1Representation = ASN1.ASN1BitString(keyUsage)
-        var serializer = ASN1.Serializer()
+        let asn1Representation = ASN1BitString(keyUsage)
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.keyUsage, critical: critical, value: serializer.serializedBytes[...])
     }
@@ -337,7 +337,7 @@ extension Certificate.Extensions.KeyUsage: CertificateExtensionConvertible {
 
 extension UInt16 {
     @inlinable
-    init(_ bitString: ASN1.ASN1BitString) {
+    init(_ bitString: ASN1BitString) {
         switch bitString.bytes.count {
         case 0:
             self = 0
@@ -352,7 +352,7 @@ extension UInt16 {
     }
 }
 
-extension ASN1.ASN1BitString {
+extension ASN1BitString {
     @inlinable
     init(_ ext: Certificate.Extensions.KeyUsage) {
         if ext.decipherOnly {

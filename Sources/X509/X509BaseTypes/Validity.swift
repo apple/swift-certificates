@@ -18,9 +18,9 @@ import SwiftASN1
 // notBefore      Time,
 // notAfter       Time  }
 @usableFromInline
-struct Validity: ASN1ImplicitlyTaggable, Hashable, Sendable {
+struct Validity: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -37,16 +37,16 @@ struct Validity: ASN1ImplicitlyTaggable, Hashable, Sendable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let notBefore = try Time(asn1Encoded: &nodes)
-            let notAfter = try Time(asn1Encoded: &nodes)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let notBefore = try Time(derEncoded: &nodes)
+            let notAfter = try Time(derEncoded: &nodes)
             return Validity(notBefore: notBefore, notAfter: notAfter)
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.notBefore)
             try coder.serialize(self.notAfter)

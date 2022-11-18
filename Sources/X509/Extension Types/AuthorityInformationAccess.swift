@@ -42,10 +42,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.authorityInformationAccess else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess), got \(ext.oid)")
             }
 
-            let aiaSyntax = try AuthorityInfoAccessSyntax(asn1Encoded: ext.value)
+            let aiaSyntax = try AuthorityInfoAccessSyntax(derEncoded: ext.value)
             self.descriptions = aiaSyntax.descriptions.map { AccessDescription($0) }
         }
     }
@@ -132,7 +132,7 @@ extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription {
         enum Backing {
             case ocspServer
             case issuingCA
-            case unknownType(ASN1.ASN1ObjectIdentifier)
+            case unknownType(ASN1ObjectIdentifier)
         }
 
         @inlinable
@@ -141,7 +141,7 @@ extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription {
         }
 
         @inlinable
-        init(_ oid: ASN1.ASN1ObjectIdentifier) {
+        init(_ oid: ASN1ObjectIdentifier) {
             switch oid {
             case .AccessMethodIdentifiers.ocspServer:
                 self.backing = .ocspServer
@@ -191,7 +191,7 @@ extension Certificate.Extension {
     @inlinable
     public init(_ aia: Certificate.Extensions.AuthorityInformationAccess, critical: Bool) throws {
         let asn1Representation = AuthorityInfoAccessSyntax(aia)
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.authorityInformationAccess, critical: critical, value: serializer.serializedBytes[...])
     }
@@ -212,9 +212,9 @@ extension Certificate.Extensions.AuthorityInformationAccess: CertificateExtensio
 //         accessMethod          OBJECT IDENTIFIER,
 //         accessLocation        GeneralName  }
 @usableFromInline
-struct AuthorityInfoAccessSyntax: ASN1ImplicitlyTaggable {
+struct AuthorityInfoAccessSyntax: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -227,12 +227,12 @@ struct AuthorityInfoAccessSyntax: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.descriptions = try ASN1.sequence(of: AIAAccessDescription.self, identifier: identifier, rootNode: rootNode)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.descriptions = try DER.sequence(of: AIAAccessDescription.self, identifier: identifier, rootNode: rootNode)
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             for description in descriptions {
                 try coder.serialize(description)
@@ -242,41 +242,41 @@ struct AuthorityInfoAccessSyntax: ASN1ImplicitlyTaggable {
 }
 
 @usableFromInline
-struct AIAAccessDescription: ASN1ImplicitlyTaggable {
+struct AIAAccessDescription: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     @usableFromInline
-    var accessMethod: ASN1.ASN1ObjectIdentifier
+    var accessMethod: ASN1ObjectIdentifier
 
     @usableFromInline
     var accessLocation: GeneralName
 
     @inlinable
-    init(accessMethod: ASN1.ASN1ObjectIdentifier, accessLocation: GeneralName) {
+    init(accessMethod: ASN1ObjectIdentifier, accessLocation: GeneralName) {
         self.accessMethod = accessMethod
         self.accessLocation = accessLocation
     }
 
     @inlinable
     init(_ description: Certificate.Extensions.AuthorityInformationAccess.AccessDescription) {
-        self.accessMethod = ASN1.ASN1ObjectIdentifier(accessMethod: description.method)
+        self.accessMethod = ASN1ObjectIdentifier(accessMethod: description.method)
         self.accessLocation = description.location
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let accessMethod = try ASN1.ASN1ObjectIdentifier(asn1Encoded: &nodes)
-            let accessLocation = try GeneralName(asn1Encoded: &nodes)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let accessMethod = try ASN1ObjectIdentifier(derEncoded: &nodes)
+            let accessLocation = try GeneralName(derEncoded: &nodes)
             return AIAAccessDescription(accessMethod: accessMethod, accessLocation: accessLocation)
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.accessMethod)
             try coder.serialize(self.accessLocation)
@@ -284,14 +284,14 @@ struct AIAAccessDescription: ASN1ImplicitlyTaggable {
     }
 }
 
-extension ASN1.ASN1ObjectIdentifier {
+extension ASN1ObjectIdentifier {
     @usableFromInline
     enum AccessMethodIdentifiers {
         @usableFromInline
-        static let ocspServer: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 48, 1]
+        static let ocspServer: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 48, 1]
 
         @usableFromInline
-        static let issuingCA: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 48, 2]
+        static let issuingCA: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 48, 2]
     }
 
     @inlinable

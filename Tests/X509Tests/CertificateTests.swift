@@ -46,11 +46,11 @@ final class CertificateTests: XCTestCase {
             "directoryName: CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,C=US"
         )
         XCTAssertEqual(
-            try String(describing: GeneralName.ediPartyName(ASN1.ASN1Any(erasing: ASN1.ASN1Null()))),
+            try String(describing: GeneralName.ediPartyName(ASN1Any(erasing: ASN1Null()))),
             "ediPartyName: ASN1Any([5, 0])"
         )
         XCTAssertEqual(
-            String(describing: GeneralName.iPAddress(ASN1.ASN1OctetString(contentBytes: [127, 0, 0, 1]))),
+            String(describing: GeneralName.iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1]))),
             "iPAddress: [127, 0, 0, 1]"
         )
         XCTAssertEqual(
@@ -62,7 +62,7 @@ final class CertificateTests: XCTestCase {
             "rfc822Name: mail@example.com"
         )
         XCTAssertEqual(
-            try String(describing: GeneralName.x400Address(ASN1.ASN1Any(erasing: ASN1.ASN1Null()))),
+            try String(describing: GeneralName.x400Address(ASN1Any(erasing: ASN1Null()))),
             "x400Address: ASN1Any([5, 0])"
         )
         XCTAssertEqual(
@@ -186,7 +186,7 @@ final class CertificateTests: XCTestCase {
         let san = Certificate.Extensions.SubjectAlternativeNames([
             .dNSName("example.com"),
             .dNSName("example.org"),
-            .iPAddress(ASN1.ASN1OctetString(contentBytes: [127, 0, 0, 1])),
+            .iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
         ])
         let s = String(describing: san)
         XCTAssertEqual(

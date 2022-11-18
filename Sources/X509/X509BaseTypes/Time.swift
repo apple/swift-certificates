@@ -19,24 +19,24 @@ import SwiftASN1
 // utcTime        UTCTime,
 // generalTime    GeneralizedTime }
 @usableFromInline
-enum Time: ASN1Parseable, ASN1Serializable, Hashable, Sendable {
-    case utcTime(ASN1.UTCTime)
-    case generalTime(ASN1.GeneralizedTime)
+enum Time: DERParseable, DERSerializable, Hashable, Sendable {
+    case utcTime(UTCTime)
+    case generalTime(GeneralizedTime)
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node) throws {
+    init(derEncoded rootNode: ASN1Node) throws {
         switch rootNode.identifier {
-        case ASN1.GeneralizedTime.defaultIdentifier:
-            self = .generalTime(try ASN1.GeneralizedTime(asn1Encoded: rootNode))
-        case ASN1.UTCTime.defaultIdentifier:
-            self = .utcTime(try ASN1.UTCTime(asn1Encoded: rootNode))
+        case GeneralizedTime.defaultIdentifier:
+            self = .generalTime(try GeneralizedTime(derEncoded: rootNode))
+        case UTCTime.defaultIdentifier:
+            self = .utcTime(try UTCTime(derEncoded: rootNode))
         default:
             throw ASN1Error.invalidASN1Object
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer) throws {
+    func serialize(into coder: inout DER.Serializer) throws {
         switch self {
         case .utcTime(let utcTime):
             try coder.serialize(utcTime)
@@ -53,7 +53,7 @@ enum Time: ASN1Parseable, ASN1Serializable, Hashable, Sendable {
         // it as a generalized time. Otherwise, use a UTCTime.
         // These force-unwraps are safe: all the components are returned by the above call.
         if (1950..<2050).contains(components.year!) {
-            let utcTime = try ASN1.UTCTime(
+            let utcTime = try UTCTime(
                 year: components.year!,
                 month: components.month!,
                 day: components.day!,
@@ -64,7 +64,7 @@ enum Time: ASN1Parseable, ASN1Serializable, Hashable, Sendable {
 
             return .utcTime(utcTime)
         } else {
-            let generalizedTime = try ASN1.GeneralizedTime(
+            let generalizedTime = try GeneralizedTime(
                 year: components.year!,
                 month: components.month!,
                 day: components.day!,
@@ -99,7 +99,7 @@ extension Date {
     }
 
     @inlinable
-    init?(_ utcTime: ASN1.UTCTime) {
+    init?(_ utcTime: UTCTime) {
         let components = DateComponents(
             calendar: gregorianCalendar,
             timeZone: utcTimeZone,
@@ -117,7 +117,7 @@ extension Date {
     }
 
     @inlinable
-    init?(_ generalizedTime: ASN1.GeneralizedTime) {
+    init?(_ generalizedTime: GeneralizedTime) {
         let components = DateComponents(
             calendar: gregorianCalendar,
             timeZone: utcTimeZone,

@@ -40,7 +40,7 @@ extension Certificate {
         }
 
         @inlinable
-        internal init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1.ASN1BitString) throws {
+        internal init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1BitString) throws {
             switch signatureAlgorithm {
             case .ecdsaWithSHA256:
                 let signature = try P256.Signing.ECDSASignature(derRepresentation: signatureBytes.bytes)
@@ -128,18 +128,18 @@ extension Certificate.Signature {
     }
 }
 
-extension ASN1.ASN1BitString {
+extension ASN1BitString {
     @inlinable
     init(_ signature: Certificate.Signature) {
         switch signature.backing {
         case .p256(let sig):
-            self = ASN1.ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
+            self = ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
         case .p384(let sig):
-            self = ASN1.ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
+            self = ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
         case .p521(let sig):
-            self = ASN1.ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
+            self = ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
         case .rsa(let sig):
-            self = ASN1.ASN1BitString(bytes: ArraySlice(sig.rawRepresentation))
+            self = ASN1BitString(bytes: ArraySlice(sig.rawRepresentation))
         }
     }
 }

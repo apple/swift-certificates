@@ -32,10 +32,10 @@ import XCTest
 final class OCSPTests: XCTestCase {
     // TODO: Make these work.
     #if false
-    private func assertRoundTrips<ASN1Object: ASN1Parseable & ASN1Serializable & Equatable>(_ value: ASN1Object) throws {
-        var serializer = ASN1.Serializer()
+    private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
+        var serializer = DER.Serializer()
         try serializer.serialize(value)
-        let parsed = try ASN1Object(asn1Encoded: serializer.serializedBytes)
+        let parsed = try ASN1Object(derEncoded: serializer.serializedBytes)
         XCTAssertEqual(parsed, value)
     }
 
@@ -54,7 +54,7 @@ final class OCSPTests: XCTestCase {
 
     func testResponderIDByKeyIDRoundTrips() throws {
         let id = ASN1.ResponderID.byKey(
-            ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4])
+            ASN1OctetString(contentBytes: [1, 2, 3, 4])
         )
 
         try self.assertRoundTrips(id)
@@ -72,19 +72,19 @@ final class OCSPTests: XCTestCase {
 
         let expected: [UInt8] = [161, 17, 48, 15, 49, 13, 48, 11, 6, 3, 85, 4, 41, 12, 4, 1, 2, 3, 4]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(id)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
 
     func testResponderIDByKeySerialization() throws {
         let id = ASN1.ResponderID.byKey(
-            ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4])
+            ASN1OctetString(contentBytes: [1, 2, 3, 4])
         )
 
         let expected: [UInt8] = [162, 6, 4, 4, 1, 2, 3, 4]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(id)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -92,8 +92,8 @@ final class OCSPTests: XCTestCase {
     func testCertIDRoundTrips() throws {
         let certID = ASN1.OCSPCertID(
             hashAlgorithm: .p256PublicKey,
-            issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-            issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+            issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+            issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
             serialNumber: [9, 10, 11, 12]
         )
 
@@ -103,8 +103,8 @@ final class OCSPTests: XCTestCase {
     func testOCSPCertIDSerialization() throws {
         let certID = ASN1.OCSPCertID(
             hashAlgorithm: .p256PublicKey,
-            issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-            issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+            issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+            issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
             serialNumber: [9, 10, 11, 12]
         )
 
@@ -114,7 +114,7 @@ final class OCSPTests: XCTestCase {
             9, 10, 11, 12
         ]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(certID)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -153,11 +153,11 @@ final class OCSPTests: XCTestCase {
         ]
 
         for (fixture, expectedPayload) in fixtures {
-            var serializer = ASN1.Serializer()
+            var serializer = DER.Serializer()
             try serializer.serialize(fixture)
 
             var expected = Array<UInt8>()
-            expected.writeIdentifier(ASN1.ASN1Identifier.enumerated)
+            expected.writeIdentifier(ASN1Identifier.enumerated)
             expected.append(1)
             expected.append(UInt8(expectedPayload))
             XCTAssertEqual(serializer.serializedBytes, expected)
@@ -182,7 +182,7 @@ final class OCSPTests: XCTestCase {
         )
         let expected: [UInt8] = [48, 20, 24, 18, 50, 48, 50, 49, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 46, 48, 54, 90]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(revokedInfo)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -194,7 +194,7 @@ final class OCSPTests: XCTestCase {
         )
         let expected: [UInt8] = [48, 25, 24, 18, 50, 48, 50, 49, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 46, 48, 54, 90, 160, 3, 10, 1, 5]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(revokedInfo)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -219,7 +219,7 @@ final class OCSPTests: XCTestCase {
         let value = ASN1.OCSPCertStatus.good
         let expected: [UInt8] = [128, 0]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(value)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -232,7 +232,7 @@ final class OCSPTests: XCTestCase {
         )
         let expected: [UInt8] = [161, 25, 24, 18, 50, 48, 50, 49, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 46, 48, 54, 90, 160, 3, 10, 1, 5]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(value)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -241,7 +241,7 @@ final class OCSPTests: XCTestCase {
         let value = ASN1.OCSPCertStatus.unknown
         let expected: [UInt8] = [130, 0]
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(value)
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
@@ -270,7 +270,7 @@ final class OCSPTests: XCTestCase {
         ]
 
         for (value, expected) in fixtures {
-            var serializer = ASN1.Serializer()
+            var serializer = DER.Serializer()
             try serializer.serialize(value)
             XCTAssertEqual(serializer.serializedBytes, expected)
         }
@@ -278,7 +278,7 @@ final class OCSPTests: XCTestCase {
 
     func testRFC5280ExtensionRejectsParsingFalse() throws {
         let bytes: [UInt8] = [48, 14, 6, 3, 42, 3, 4, 1, 1, 0, 4, 4, 5, 6, 7, 8]
-        XCTAssertThrowsError(try ASN1.RFC5280Extension(asn1Encoded: bytes))
+        XCTAssertThrowsError(try ASN1.RFC5280Extension(derEncoded: bytes))
     }
 
     func testOCSPSingleResponseRoundTrips() throws {
@@ -286,8 +286,8 @@ final class OCSPTests: XCTestCase {
             .init(
                 certID: ASN1.OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
-                    issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                    issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                    issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                    issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                     serialNumber: [9, 10, 11, 12]
                 ),
                 certStatus: .good,
@@ -298,8 +298,8 @@ final class OCSPTests: XCTestCase {
             .init(
                 certID: ASN1.OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
-                    issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                    issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                    issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                    issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                     serialNumber: [9, 10, 11, 12]
                 ),
                 certStatus: .good,
@@ -310,8 +310,8 @@ final class OCSPTests: XCTestCase {
             .init(
                 certID: ASN1.OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
-                    issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                    issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                    issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                    issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                     serialNumber: [9, 10, 11, 12]
                 ),
                 certStatus: .good,
@@ -322,8 +322,8 @@ final class OCSPTests: XCTestCase {
             .init(
                 certID: ASN1.OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
-                    issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                    issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                    issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                    issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                     serialNumber: [9, 10, 11, 12]
                 ),
                 certStatus: .good,
@@ -351,8 +351,8 @@ final class OCSPTests: XCTestCase {
         let response = ASN1.OCSPSingleResponse(
             certID: ASN1.OCSPCertID(
                 hashAlgorithm: .p256PublicKey,
-                issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                 serialNumber: [9, 10, 11, 12]
             ),
             certStatus: .good,
@@ -413,8 +413,8 @@ final class OCSPTests: XCTestCase {
         let response = ASN1.OCSPSingleResponse(
             certID: ASN1.OCSPCertID(
                 hashAlgorithm: .p256PublicKey,
-                issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                 serialNumber: [9, 10, 11, 12]
             ),
             certStatus: .good,
@@ -439,12 +439,12 @@ final class OCSPTests: XCTestCase {
         let basicResponse = ASN1.BasicOCSPResponse(
             responseData: responseData,
             signatureAlgorithm: .p256PublicKey,
-            signature: ASN1.ASN1BitString(bytes: [1, 2, 3, 4]))
+            signature: ASN1BitString(bytes: [1, 2, 3, 4]))
         try self.assertRoundTrips(basicResponse)
     }
 
     func testOCSPResponseBytesRoundTrips() throws {
-        let bytes = ASN1.OCSPResponseBytes(responseType: .OCSP.basicResponse, response: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]))
+        let bytes = ASN1.OCSPResponseBytes(responseType: .OCSP.basicResponse, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))
         try self.assertRoundTrips(bytes)
     }
 
@@ -461,8 +461,8 @@ final class OCSPTests: XCTestCase {
         let response = ASN1.OCSPSingleResponse(
             certID: ASN1.OCSPCertID(
                 hashAlgorithm: .p256PublicKey,
-                issuerNameHash: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]),
-                issuerKeyHash: ASN1.ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
                 serialNumber: [9, 10, 11, 12]
             ),
             certStatus: .good,
@@ -487,17 +487,17 @@ final class OCSPTests: XCTestCase {
         let basicResponse = ASN1.BasicOCSPResponse(
             responseData: responseData,
             signatureAlgorithm: .p256PublicKey,
-            signature: ASN1.ASN1BitString(bytes: [1, 2, 3, 4]))
+            signature: ASN1BitString(bytes: [1, 2, 3, 4]))
 
         let bytes = try ASN1.OCSPResponseBytes(encoding: basicResponse)
         XCTAssertEqual(bytes.responseType, .OCSP.basicResponse)
-        XCTAssertEqual(try ASN1.BasicOCSPResponse(asn1Encoded: bytes.response.bytes), basicResponse)
+        XCTAssertEqual(try ASN1.BasicOCSPResponse(derEncoded: bytes.response.bytes), basicResponse)
         XCTAssertEqual(try ASN1.BasicOCSPResponse(decoding: bytes), basicResponse)
         try assertRoundTrips(bytes)
     }
 
     func testCannotDecodeBasicOCSPResponseWithWrongOID() throws {
-        let bytes = ASN1.OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]))
+        let bytes = ASN1.OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))
         XCTAssertThrowsError(try ASN1.BasicOCSPResponse(decoding: bytes))
     }
 
@@ -517,17 +517,17 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPResponseStatusRefusesToDeserializeOutOfBandValues() throws {
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(Int(4))
 
-        XCTAssertThrowsError(try ASN1.OCSPResponseStatus(asn1Encoded: serializer.serializedBytes))
+        XCTAssertThrowsError(try ASN1.OCSPResponseStatus(derEncoded: serializer.serializedBytes))
     }
 
     func testOCSPResponse() throws {
         let fixtures: [ASN1.OCSPResponse] = [
             .init(responseStatus: .successful, responseBytes: nil),
             .init(responseStatus: .malformedRequest, responseBytes: nil),
-            .init(responseStatus: .successful, responseBytes: ASN1.OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1.ASN1OctetString(contentBytes: [1, 2, 3, 4]))),
+            .init(responseStatus: .successful, responseBytes: ASN1.OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))),
         ]
 
         for fixture in fixtures {

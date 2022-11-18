@@ -42,26 +42,26 @@ import SwiftASN1
 ///      aACompromise           (10) }
 /// ```
 ///
-enum OCSPCertStatus: ASN1Parseable, ASN1Serializable, Hashable {
+enum OCSPCertStatus: DERParseable, DERSerializable, Hashable {
     case good
     case revoked(OCSPRevokedInfo)
     case unknown
 
-    private static let goodIdentifier = ASN1.ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific, constructed: false)
-    private static let revokedIdentifier = ASN1.ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific, constructed: true)
-    private static let unknownIdentifier = ASN1.ASN1Identifier(tagWithNumber: 2, tagClass: .contextSpecific, constructed: false)
+    private static let goodIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
+    private static let revokedIdentifier = ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific)
+    private static let unknownIdentifier = ASN1Identifier(tagWithNumber: 2, tagClass: .contextSpecific)
 
-    init(asn1Encoded node: ASN1.ASN1Node) throws {
+    init(derEncoded node: ASN1Node) throws {
         switch node.identifier {
         case OCSPCertStatus.goodIdentifier:
-            _ = try ASN1.ASN1Null(asn1Encoded: node, withIdentifier: OCSPCertStatus.goodIdentifier)
+            _ = try ASN1Null(derEncoded: node, withIdentifier: OCSPCertStatus.goodIdentifier)
             self = .good
 
         case OCSPCertStatus.revokedIdentifier:
-            self = try .revoked(.init(asn1Encoded: node, withIdentifier: OCSPCertStatus.revokedIdentifier))
+            self = try .revoked(.init(derEncoded: node, withIdentifier: OCSPCertStatus.revokedIdentifier))
 
         case OCSPCertStatus.unknownIdentifier:
-            _ = try ASN1.ASN1Null(asn1Encoded: node, withIdentifier: OCSPCertStatus.unknownIdentifier)
+            _ = try ASN1Null(derEncoded: node, withIdentifier: OCSPCertStatus.unknownIdentifier)
             self = .unknown
 
         default:
@@ -69,46 +69,46 @@ enum OCSPCertStatus: ASN1Parseable, ASN1Serializable, Hashable {
         }
     }
 
-    func serialize(into coder: inout ASN1.Serializer) throws {
+    func serialize(into coder: inout DER.Serializer) throws {
         switch self {
         case .good:
-            ASN1.ASN1Null().serialize(into: &coder, withIdentifier: OCSPCertStatus.goodIdentifier)
+            ASN1Null().serialize(into: &coder, withIdentifier: OCSPCertStatus.goodIdentifier)
 
         case .revoked(let revokedInfo):
             try revokedInfo.serialize(into: &coder, withIdentifier: OCSPCertStatus.revokedIdentifier)
 
         case .unknown:
-            ASN1.ASN1Null().serialize(into: &coder, withIdentifier: OCSPCertStatus.unknownIdentifier)
+            ASN1Null().serialize(into: &coder, withIdentifier: OCSPCertStatus.unknownIdentifier)
         }
     }
 }
 
-struct OCSPRevokedInfo: ASN1ImplicitlyTaggable, Hashable {
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+struct OCSPRevokedInfo: DERImplicitlyTaggable, Hashable {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
-    var revocationTime: ASN1.GeneralizedTime
+    var revocationTime: GeneralizedTime
 
     var revocationReason: CRLReason?
 
-    init(revocationTime: ASN1.GeneralizedTime, revocationReason: CRLReason?) {
+    init(revocationTime: GeneralizedTime, revocationReason: CRLReason?) {
         self.revocationTime = revocationTime
         self.revocationReason = revocationReason
     }
 
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let revocationTime = try ASN1.GeneralizedTime(asn1Encoded: &nodes)
-            let revocationReason = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
-                try CRLReason(asn1Encoded: node)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let revocationTime = try GeneralizedTime(derEncoded: &nodes)
+            let revocationReason = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                try CRLReason(derEncoded: node)
             }
 
             return .init(revocationTime: revocationTime, revocationReason: revocationReason)
         }
     }
 
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.revocationTime)
 
@@ -119,8 +119,8 @@ struct OCSPRevokedInfo: ASN1ImplicitlyTaggable, Hashable {
     }
 }
 
-struct CRLReason: ASN1ImplicitlyTaggable, Hashable, RawRepresentable {
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+struct CRLReason: DERImplicitlyTaggable, Hashable, RawRepresentable {
+    static var defaultIdentifier: ASN1Identifier {
         .enumerated
     }
 
@@ -130,11 +130,11 @@ struct CRLReason: ASN1ImplicitlyTaggable, Hashable, RawRepresentable {
         self.rawValue = rawValue
     }
 
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.rawValue = try .init(asn1Encoded: rootNode, withIdentifier: identifier)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.rawValue = try .init(derEncoded: rootNode, withIdentifier: identifier)
     }
 
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try self.rawValue.serialize(into: &coder, withIdentifier: identifier)
     }
 

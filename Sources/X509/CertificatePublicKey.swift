@@ -188,7 +188,7 @@ extension SubjectPublicKeyInfo {
     @inlinable
     init(_ publicKey: Certificate.PublicKey) {
         let algorithmIdentifier: AlgorithmIdentifier
-        let key: ASN1.ASN1BitString
+        let key: ASN1BitString
 
         switch publicKey.backing {
         case .p256(let p256):

@@ -177,7 +177,7 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(self.tbsCertificate)
         self.tbsCertificateBytes = serializer.serializedBytes[...]
     }
@@ -228,7 +228,7 @@ public struct Certificate {
         // TODO: validate that signature algorithm is comoatible with the signature.
         self.signatureAlgorithm = signatureAlgorithm
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(self.tbsCertificate)
         let tbsCertificateBytes = serializer.serializedBytes[...]
         self.signature = try issuerPrivateKey.sign(tbsCertificateBytes: tbsCertificateBytes)
@@ -236,7 +236,7 @@ public struct Certificate {
     }
 
     @inlinable
-    init(tbsCertificate: TBSCertificate, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1.ASN1BitString, tbsCertificateBytes: ArraySlice<UInt8>) throws {
+    init(tbsCertificate: TBSCertificate, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, tbsCertificateBytes: ArraySlice<UInt8>) throws {
         self.tbsCertificate = tbsCertificate
         self.signatureAlgorithm = SignatureAlgorithm(algorithmIdentifier: signatureAlgorithm)
         self.signature = try Signature(signatureAlgorithm: self.signatureAlgorithm, signatureBytes: signature)
@@ -254,31 +254,31 @@ extension Certificate: CustomStringConvertible {
     }
 }
 
-extension Certificate: ASN1ImplicitlyTaggable {
+extension Certificate: DERImplicitlyTaggable {
     @inlinable
-    public static var defaultIdentifier: ASN1.ASN1Identifier {
+    public static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     @inlinable
-    public init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
+    public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             guard let tbsCertificateNode = nodes.next() else {
                 throw ASN1Error.invalidASN1Object
             }
-            let tbsCertificate = try TBSCertificate(asn1Encoded: tbsCertificateNode)
-            let signatureAlgorithm = try AlgorithmIdentifier(asn1Encoded: &nodes)
-            let signature = try ASN1.ASN1BitString(asn1Encoded: &nodes)
+            let tbsCertificate = try TBSCertificate(derEncoded: tbsCertificateNode)
+            let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
+            let signature = try ASN1BitString(derEncoded: &nodes)
             return try Certificate(tbsCertificate: tbsCertificate, signatureAlgorithm: signatureAlgorithm, signature: signature, tbsCertificateBytes: tbsCertificateNode.encodedBytes)
         }
     }
 
     @inlinable
-    public func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.tbsCertificate)
             try coder.serialize(AlgorithmIdentifier(self.signatureAlgorithm))
-            try coder.serialize(ASN1.ASN1BitString(self.signature))
+            try coder.serialize(ASN1BitString(self.signature))
         }
     }
 }

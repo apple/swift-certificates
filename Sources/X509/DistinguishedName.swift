@@ -169,19 +169,19 @@ extension DistinguishedName: CustomStringConvertible {
     }
 }
 
-extension DistinguishedName: ASN1ImplicitlyTaggable {
+extension DistinguishedName: DERImplicitlyTaggable {
     @inlinable
-    public static var defaultIdentifier: ASN1.ASN1Identifier {
+    public static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     @inlinable
-    public init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.rdns = try ASN1.sequence(of: RelativeDistinguishedName.self, identifier: identifier, rootNode: rootNode)
+    public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.rdns = try DER.sequence(of: RelativeDistinguishedName.self, identifier: identifier, rootNode: rootNode)
     }
 
     @inlinable
-    public func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { rootCoder in
             for element in self.rdns {
                 try element.serialize(into: &rootCoder)

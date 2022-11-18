@@ -17,10 +17,10 @@ import SwiftASN1
 @testable import X509
 
 final class DistinguishedNameTests: XCTestCase {
-    private func assertRoundTrips<ASN1Object: ASN1Parseable & ASN1Serializable & Equatable>(_ value: ASN1Object) throws {
-        var serializer = ASN1.Serializer()
+    private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
+        var serializer = DER.Serializer()
         try serializer.serialize(value)
-        let parsed = try ASN1Object(asn1Encoded: serializer.serializedBytes)
+        let parsed = try ASN1Object(derEncoded: serializer.serializedBytes)
         XCTAssertEqual(parsed, value)
     }
 
@@ -75,7 +75,7 @@ final class DistinguishedNameTests: XCTestCase {
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
         ])
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(name)
 
         let expectedBytes: [UInt8] = [
@@ -109,7 +109,7 @@ final class DistinguishedNameTests: XCTestCase {
         ])
         let name = DistinguishedName([firstName, secondName])
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(name)
 
         let expectedBytes: [UInt8] = [

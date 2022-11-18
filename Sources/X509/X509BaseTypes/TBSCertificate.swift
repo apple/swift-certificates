@@ -37,12 +37,12 @@ import SwiftASN1
 //
 // Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
 @usableFromInline
-typealias UniqueIdentifier = ASN1.ASN1BitString
+typealias UniqueIdentifier = ASN1BitString
 
 @usableFromInline
-struct TBSCertificate: ASN1ImplicitlyTaggable, Hashable, Sendable {
+struct TBSCertificate: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -102,27 +102,27 @@ struct TBSCertificate: ASN1ImplicitlyTaggable, Hashable, Sendable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let version = try ASN1.decodeDefaultExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific, defaultValue: Int(0))
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let version = try DER.decodeDefaultExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific, defaultValue: Int(0))
             guard (0...2).contains(version) else {
                 throw ASN1Error.invalidASN1Object
             }
 
-            let serialNumber = try ArraySlice<UInt8>(asn1Encoded: &nodes)
-            let signature = try AlgorithmIdentifier(asn1Encoded: &nodes)
-            let issuer = try DistinguishedName(asn1Encoded: &nodes)
-            let validity = try Validity(asn1Encoded: &nodes)
-            let subject = try DistinguishedName(asn1Encoded: &nodes)
-            let subjectPublicKeyInfo = try SubjectPublicKeyInfo(asn1Encoded: &nodes)
-            let issuerUniqueID = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
-                try UniqueIdentifier(asn1Encoded: $0)
+            let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
+            let signature = try AlgorithmIdentifier(derEncoded: &nodes)
+            let issuer = try DistinguishedName(derEncoded: &nodes)
+            let validity = try Validity(derEncoded: &nodes)
+            let subject = try DistinguishedName(derEncoded: &nodes)
+            let subjectPublicKeyInfo = try SubjectPublicKeyInfo(derEncoded: &nodes)
+            let issuerUniqueID = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
+                try UniqueIdentifier(derEncoded: $0)
             }
-            let subjectUniqueID = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 2, tagClass: .contextSpecific) {
-                try UniqueIdentifier(asn1Encoded: $0)
+            let subjectUniqueID = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 2, tagClass: .contextSpecific) {
+                try UniqueIdentifier(derEncoded: $0)
             }
-            let extensions = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 3, tagClass: .contextSpecific) {
-                try ASN1.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: $0)
+            let extensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 3, tagClass: .contextSpecific) {
+                try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: $0)
             }
 
             return TBSCertificate(
@@ -141,7 +141,7 @@ struct TBSCertificate: ASN1ImplicitlyTaggable, Hashable, Sendable {
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             if self.version != .v1 {
                 try coder.serialize(self.version.rawValue, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)

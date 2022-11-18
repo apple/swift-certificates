@@ -191,7 +191,7 @@ extension Certificate.Extensions {
     ///
     /// - Parameter oid: The OID to search for.
     @inlinable
-    public subscript(oid oid: ASN1.ASN1ObjectIdentifier) -> Certificate.Extension? {
+    public subscript(oid oid: ASN1ObjectIdentifier) -> Certificate.Extension? {
         get {
             return self.first(where: { $0.oid == oid })
         }

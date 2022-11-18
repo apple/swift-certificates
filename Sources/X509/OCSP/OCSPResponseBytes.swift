@@ -27,29 +27,29 @@ import SwiftASN1
 /// id-pkix-ocsp-basic     OBJECT IDENTIFIER ::= { id-pkix-ocsp 1 }
 /// ```
 ///
-struct OCSPResponseBytes: ASN1ImplicitlyTaggable, Hashable {
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+struct OCSPResponseBytes: DERImplicitlyTaggable, Hashable {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
-    var responseType: ASN1.ASN1ObjectIdentifier
+    var responseType: ASN1ObjectIdentifier
 
-    var response: ASN1.ASN1OctetString
+    var response: ASN1OctetString
 
-    init(responseType: ASN1.ASN1ObjectIdentifier, response: ASN1.ASN1OctetString) {
+    init(responseType: ASN1ObjectIdentifier, response: ASN1OctetString) {
         self.responseType = responseType
         self.response = response
     }
 
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let responseType = try ASN1.ASN1ObjectIdentifier(asn1Encoded: &nodes)
-            let response = try ASN1.ASN1OctetString(asn1Encoded: &nodes)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let responseType = try ASN1ObjectIdentifier(derEncoded: &nodes)
+            let response = try ASN1OctetString(derEncoded: &nodes)
             return .init(responseType: responseType, response: response)
         }
     }
 
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.responseType)
             try coder.serialize(self.response)
@@ -60,10 +60,10 @@ struct OCSPResponseBytes: ASN1ImplicitlyTaggable, Hashable {
 extension BasicOCSPResponse {
     init(decoding original: OCSPResponseBytes) throws {
         guard original.responseType == .OCSP.basicResponse else {
-            throw ASN1Error.invalidObjectIdentifier
+            throw ASN1Error.invalidASN1Object
         }
 
-        self = try .init(asn1Encoded: original.response.bytes)
+        self = try .init(derEncoded: original.response.bytes)
     }
 }
 
@@ -71,8 +71,8 @@ extension OCSPResponseBytes {
     init(encoding original: BasicOCSPResponse) throws {
         self.responseType = .OCSP.basicResponse
 
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(original)
-        self.response = ASN1.ASN1OctetString(contentBytes: serializer.serializedBytes[...])
+        self.response = ASN1OctetString(contentBytes: serializer.serializedBytes[...])
     }
 }

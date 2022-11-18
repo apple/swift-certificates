@@ -123,11 +123,11 @@ we can wrap up in ``Certificate/PrivateKey/init(_:)-2we15`` to get `issuerPrivat
 Once the certificate is created, we'll want to write it out to a file so we can use it! We can easily output this in DER format,
 which is commonly indicated using a `.crt` file extension.
 
-We get the DER representation by using code from `SwiftASN1`. ``Certificate`` conforms to `ASN1Serializable`, so we can serialize
+We get the DER representation by using code from `SwiftASN1`. ``Certificate`` conforms to `DERSerializable`, so we can serialize
 it like this:
 
 ```swift
-var serializer = ASN1.Serializer()
+var serializer = DER.Serializer()
 try serializer.serialize(certificate)
 ```
 
@@ -172,7 +172,7 @@ let certificate = try Certificate(
     extensions: extensions,
     issuerPrivateKey: key)
 
-var serializer = ASN1.Serializer()
+var serializer = DER.Serializer()
 try serializer.serialize(certificate)
 
 let derEncodedCertificate = serializer.serializedBytes

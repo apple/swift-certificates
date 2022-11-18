@@ -40,10 +40,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.extendedKeyUsage else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage), got \(ext.oid)")
             }
 
-            let asn1EKU = try ASN1ExtendedKeyUsage(asn1Encoded: ext.value)
+            let asn1EKU = try ASN1ExtendedKeyUsage(derEncoded: ext.value)
             self.usages = asn1EKU.usages.map { Usage(oid: $0) }
         }
     }
@@ -97,7 +97,7 @@ extension Certificate.Extensions.ExtendedKeyUsage {
             case ocspSigning
             case any
             case certificateTransparency
-            case unknown(ASN1.ASN1ObjectIdentifier)
+            case unknown(ASN1ObjectIdentifier)
         }
 
         @usableFromInline
@@ -112,7 +112,7 @@ extension Certificate.Extensions.ExtendedKeyUsage {
         ///
         /// - Parameter oid: The OID of the usage.
         @inlinable
-        public init(oid: ASN1.ASN1ObjectIdentifier) {
+        public init(oid: ASN1ObjectIdentifier) {
             switch oid {
             case .ExtendedKeyUsage.serverAuth:
                 self = .serverAuth
@@ -203,7 +203,7 @@ extension Certificate.Extension {
     @inlinable
     public init(_ eku: Certificate.Extensions.ExtendedKeyUsage, critical: Bool) throws {
         let asn1Representation = ASN1ExtendedKeyUsage(eku)
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.extendedKeyUsage, critical: critical, value: serializer.serializedBytes[...])
     }
@@ -215,7 +215,7 @@ extension Certificate.Extensions.ExtendedKeyUsage: CertificateExtensionConvertib
     }
 }
 
-extension ASN1.ASN1ObjectIdentifier {
+extension ASN1ObjectIdentifier {
     /// Construct the OID corresponding to a specific extended key usage.
     ///
     /// - Parameter usage: the EKU to use to construct the OID.
@@ -248,58 +248,58 @@ extension ASN1.ASN1ObjectIdentifier {
     /// extension.
     public enum ExtendedKeyUsage {
         /// The public key may be used for any purpose.
-        public static let any: ASN1.ASN1ObjectIdentifier = [2, 5, 29, 37, 0]
+        public static let any: ASN1ObjectIdentifier = [2, 5, 29, 37, 0]
 
         /// The public key may be used for TLS web servers.
-        public static let serverAuth: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 1]
+        public static let serverAuth: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 1]
 
         /// The public key may be used for TLS web client authentication.
-        public static let clientAuth: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 2]
+        public static let clientAuth: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 2]
 
         /// The public key may be used for signing of downloadable executable code.
-        public static let codeSigning: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 3]
+        public static let codeSigning: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 3]
 
         /// The public key may be used for email protection.
-        public static let emailProtection: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 4]
+        public static let emailProtection: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 4]
 
         /// The public key may be used for binding the hash of an object to a time.
-        public static let timeStamping: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 8]
+        public static let timeStamping: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 8]
 
         /// The public key may be used for signing OCSP responses.
-        public static let ocspSigning: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 9]
+        public static let ocspSigning: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 3, 9]
 
         /// The public key may be used for signing certificate transparency precertificates.
-        public static let certificateTransparency: ASN1.ASN1ObjectIdentifier = [1, 3, 6, 1, 4, 1, 11129, 2, 4, 4]
+        public static let certificateTransparency: ASN1ObjectIdentifier = [1, 3, 6, 1, 4, 1, 11129, 2, 4, 4]
     }
 }
 
 @usableFromInline
-struct ASN1ExtendedKeyUsage: ASN1ImplicitlyTaggable {
+struct ASN1ExtendedKeyUsage: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     @usableFromInline
-    var usages: [ASN1.ASN1ObjectIdentifier]
+    var usages: [ASN1ObjectIdentifier]
 
     @inlinable
-    init(_ usages: [ASN1.ASN1ObjectIdentifier]) {
+    init(_ usages: [ASN1ObjectIdentifier]) {
         self.usages = usages
     }
 
     @inlinable
     init(_ eku: Certificate.Extensions.ExtendedKeyUsage) {
-        self.usages = eku.usages.map { ASN1.ASN1ObjectIdentifier($0) }
+        self.usages = eku.usages.map { ASN1ObjectIdentifier($0) }
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.usages = try ASN1.sequence(identifier: identifier, rootNode: rootNode)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.usages = try DER.sequence(identifier: identifier, rootNode: rootNode)
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.serializeSequenceOf(self.usages, identifier: identifier)
     }
 }

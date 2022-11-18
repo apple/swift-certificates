@@ -23,8 +23,8 @@ import SwiftASN1
 ///
 /// ```
 ///
-struct OCSPResponse: ASN1ImplicitlyTaggable, Hashable {
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+struct OCSPResponse: DERImplicitlyTaggable, Hashable {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -37,18 +37,18 @@ struct OCSPResponse: ASN1ImplicitlyTaggable, Hashable {
         self.responseBytes = responseBytes
     }
 
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let responseStatus = try OCSPResponseStatus(asn1Encoded: &nodes)
-            let responseBytes = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
-                try OCSPResponseBytes(asn1Encoded: node)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let responseStatus = try OCSPResponseStatus(derEncoded: &nodes)
+            let responseBytes = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                try OCSPResponseBytes(derEncoded: node)
             }
 
             return .init(responseStatus: responseStatus, responseBytes: responseBytes)
         }
     }
 
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.responseStatus)
             if let responseBytes = self.responseBytes {

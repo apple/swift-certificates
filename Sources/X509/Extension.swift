@@ -38,8 +38,8 @@ extension Certificate {
     public struct Extension {
         /// The identifier for this extension type.
         ///
-        /// Common values are stored in `ASN1.ASN1ObjectIdentifier.X509ExtensionID`.
-        public var oid: ASN1.ASN1ObjectIdentifier
+        /// Common values are stored in `ASN1ObjectIdentifier.X509ExtensionID`.
+        public var oid: ASN1ObjectIdentifier
 
         /// Whether this extension must be processed in order to trust the certificate.
         ///
@@ -59,7 +59,7 @@ extension Certificate {
         ///   - critical: Whether this extension must be processed in order to trust the certificate.
         ///   - value: The encoded bytes of the value of this extension.
         @inlinable
-        public init(oid: ASN1.ASN1ObjectIdentifier, critical: Bool, value: ArraySlice<UInt8>) {
+        public init(oid: ASN1ObjectIdentifier, critical: Bool, value: ArraySlice<UInt8>) {
             self.oid = oid
             self.critical = critical
             self.value = value
@@ -77,25 +77,25 @@ extension Certificate.Extension: CustomStringConvertible {
     }
 }
 
-extension Certificate.Extension: ASN1ImplicitlyTaggable {
+extension Certificate.Extension: DERImplicitlyTaggable {
     @inlinable
-    public static var defaultIdentifier: ASN1.ASN1Identifier {
+    public static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     @inlinable
-    public init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let extensionID = try ASN1.ASN1ObjectIdentifier(asn1Encoded: &nodes)
-            let critical = try ASN1.decodeDefault(&nodes, defaultValue: false)
-            let value = try ASN1.ASN1OctetString(asn1Encoded: &nodes)
+    public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let extensionID = try ASN1ObjectIdentifier(derEncoded: &nodes)
+            let critical = try DER.decodeDefault(&nodes, defaultValue: false)
+            let value = try ASN1OctetString(derEncoded: &nodes)
 
             return Certificate.Extension(oid: extensionID, critical: critical, value: value.bytes)
         }
     }
 
     @inlinable
-    public func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.oid)
 
@@ -103,7 +103,7 @@ extension Certificate.Extension: ASN1ImplicitlyTaggable {
                 try coder.serialize(self.critical)
             }
 
-            try coder.serialize(ASN1.ASN1OctetString(contentBytes: self.value))
+            try coder.serialize(ASN1OctetString(contentBytes: self.value))
         }
     }
 }

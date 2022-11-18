@@ -25,8 +25,8 @@ import SwiftASN1
 ///    singleExtensions   [1]       EXPLICIT Extensions OPTIONAL }
 /// ```
 ///
-struct OCSPSingleResponse: ASN1ImplicitlyTaggable, Hashable {
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -34,16 +34,16 @@ struct OCSPSingleResponse: ASN1ImplicitlyTaggable, Hashable {
 
     var certStatus: OCSPCertStatus
 
-    var thisUpdate: ASN1.GeneralizedTime
+    var thisUpdate: GeneralizedTime
 
-    var nextUpdate: ASN1.GeneralizedTime?
+    var nextUpdate: GeneralizedTime?
 
     var extensions: [Certificate.Extension]?
 
     init(certID: OCSPCertID,
          certStatus: OCSPCertStatus,
-         thisUpdate: ASN1.GeneralizedTime,
-         nextUpdate: ASN1.GeneralizedTime?,
+         thisUpdate: GeneralizedTime,
+         nextUpdate: GeneralizedTime?,
          extensions: [Certificate.Extension]?) {
         self.certID = certID
         self.certStatus = certStatus
@@ -52,16 +52,16 @@ struct OCSPSingleResponse: ASN1ImplicitlyTaggable, Hashable {
         self.extensions = extensions
     }
 
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let certID = try OCSPCertID(asn1Encoded: &nodes)
-            let certStatus = try OCSPCertStatus(asn1Encoded: &nodes)
-            let thisUpdate = try ASN1.GeneralizedTime(asn1Encoded: &nodes)
-            let nextUpdate = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
-                try ASN1.GeneralizedTime(asn1Encoded: node)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let certID = try OCSPCertID(derEncoded: &nodes)
+            let certStatus = try OCSPCertStatus(derEncoded: &nodes)
+            let thisUpdate = try GeneralizedTime(derEncoded: &nodes)
+            let nextUpdate = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                try GeneralizedTime(derEncoded: node)
             }
-            let extensions = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { node in
-                try ASN1.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
+            let extensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { node in
+                try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
             }
 
             return .init(certID: certID,
@@ -72,7 +72,7 @@ struct OCSPSingleResponse: ASN1ImplicitlyTaggable, Hashable {
         }
     }
 
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.certID)
             try coder.serialize(self.certStatus)

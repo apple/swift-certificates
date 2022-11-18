@@ -108,20 +108,20 @@ extension RelativeDistinguishedName: CustomStringConvertible {
     }
 }
 
-extension RelativeDistinguishedName: ASN1ImplicitlyTaggable {
+extension RelativeDistinguishedName: DERImplicitlyTaggable {
     @inlinable
-    public static var defaultIdentifier: ASN1.ASN1Identifier {
+    public static var defaultIdentifier: ASN1Identifier {
         .set
     }
 
     @inlinable
-    public init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.set(rootNode, identifier: identifier) { nodes in
+    public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.set(rootNode, identifier: identifier) { nodes in
             // TODO: We need to validate that these are lexicographically sorted. Perhaps ASN1.set should do it?
             var elements = Array<RelativeDistinguishedName.Attribute>()
 
             while let node = nodes.next() {
-                try elements.append(.init(asn1Encoded: node))
+                try elements.append(.init(derEncoded: node))
             }
 
             return try RelativeDistinguishedName(elements)
@@ -129,7 +129,7 @@ extension RelativeDistinguishedName: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    public func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { rootCoder in
             for element in self.attributes {
                 try element.serialize(into: &rootCoder)
@@ -144,11 +144,11 @@ extension RelativeDistinguishedName: ASN1ImplicitlyTaggable {
         // This is weird. We need to individually serialize each element, then lexicographically compare
         // them and then write them out. We could do this in place but for now let's not worry about it.
         try! elements.sort { lhs, rhs in
-            var serializer = ASN1.Serializer()
+            var serializer = DER.Serializer()
             try serializer.serialize(lhs)
             let lhsBytes = serializer.serializedBytes
 
-            serializer = ASN1.Serializer()
+            serializer = DER.Serializer()
             try serializer.serialize(rhs)
             let rhsBytes = serializer.serializedBytes
 

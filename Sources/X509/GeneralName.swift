@@ -14,75 +14,75 @@
 
 import SwiftASN1
 
-public enum GeneralName: Hashable, Sendable, ASN1Parseable, ASN1Serializable {
+public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
     case otherName(OtherName)
     case rfc822Name(String)
     case dNSName(String)
-    case x400Address(ASN1.ASN1Any)
+    case x400Address(ASN1Any)
     case directoryName(DistinguishedName)
-    case ediPartyName(ASN1.ASN1Any)
+    case ediPartyName(ASN1Any)
     case uniformResourceIdentifier(String)
-    case iPAddress(ASN1.ASN1OctetString)
-    case registeredID(ASN1.ASN1ObjectIdentifier)
+    case iPAddress(ASN1OctetString)
+    case registeredID(ASN1ObjectIdentifier)
 
     @usableFromInline
-    static let otherNameTag = ASN1.ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific, constructed: true)
+    static let otherNameTag = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
     @usableFromInline
-    static let rfc822NameTag = ASN1.ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific, constructed: false)
+    static let rfc822NameTag = ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific)
     @usableFromInline
-    static let dNSNameTag = ASN1.ASN1Identifier(tagWithNumber: 2, tagClass: .contextSpecific, constructed: false)
+    static let dNSNameTag = ASN1Identifier(tagWithNumber: 2, tagClass: .contextSpecific)
     @usableFromInline
-    static let x400AddressTag = ASN1.ASN1Identifier(tagWithNumber: 3, tagClass: .contextSpecific, constructed: true)
+    static let x400AddressTag = ASN1Identifier(tagWithNumber: 3, tagClass: .contextSpecific)
     @usableFromInline
-    static let directoryNameTag = ASN1.ASN1Identifier(tagWithNumber: 4, tagClass: .contextSpecific, constructed: true)
+    static let directoryNameTag = ASN1Identifier(tagWithNumber: 4, tagClass: .contextSpecific)
     @usableFromInline
-    static let ediPartyNameTag = ASN1.ASN1Identifier(tagWithNumber: 5, tagClass: .contextSpecific, constructed: true)
+    static let ediPartyNameTag = ASN1Identifier(tagWithNumber: 5, tagClass: .contextSpecific)
     @usableFromInline
-    static let uriTag = ASN1.ASN1Identifier(tagWithNumber: 6, tagClass: .contextSpecific, constructed: false)
+    static let uriTag = ASN1Identifier(tagWithNumber: 6, tagClass: .contextSpecific)
     @usableFromInline
-    static let iPAddressTag = ASN1.ASN1Identifier(tagWithNumber: 7, tagClass: .contextSpecific, constructed: false)
+    static let iPAddressTag = ASN1Identifier(tagWithNumber: 7, tagClass: .contextSpecific)
     @usableFromInline
-    static let registeredIDTag = ASN1.ASN1Identifier(tagWithNumber: 8, tagClass: .contextSpecific, constructed: false)
+    static let registeredIDTag = ASN1Identifier(tagWithNumber: 8, tagClass: .contextSpecific)
 
     @inlinable
-    public init(asn1Encoded rootNode: ASN1.ASN1Node) throws {
+    public init(derEncoded rootNode: ASN1Node) throws {
         switch rootNode.identifier {
         case Self.otherNameTag:
-            self = try .otherName(OtherName(asn1Encoded: rootNode, withIdentifier: Self.otherNameTag))
+            self = try .otherName(OtherName(derEncoded: rootNode, withIdentifier: Self.otherNameTag))
         case Self.rfc822NameTag:
-            let result = try ASN1.ASN1IA5String(asn1Encoded: rootNode, withIdentifier: Self.rfc822NameTag)
+            let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.rfc822NameTag)
             self = .rfc822Name(String(result))
         case Self.dNSNameTag:
-            let result = try ASN1.ASN1IA5String(asn1Encoded: rootNode, withIdentifier: Self.dNSNameTag)
+            let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.dNSNameTag)
             self = .dNSName(String(result))
         case Self.x400AddressTag:
-            self = .x400Address(ASN1.ASN1Any(asn1Encoded: rootNode))
+            self = .x400Address(ASN1Any(derEncoded: rootNode))
         case Self.directoryNameTag:
-            self = try .directoryName(DistinguishedName(asn1Encoded: rootNode, withIdentifier: Self.directoryNameTag))
+            self = try .directoryName(DistinguishedName(derEncoded: rootNode, withIdentifier: Self.directoryNameTag))
         case Self.ediPartyNameTag:
-            self = .ediPartyName(ASN1.ASN1Any(asn1Encoded: rootNode))
+            self = .ediPartyName(ASN1Any(derEncoded: rootNode))
         case Self.uriTag:
-            let result = try ASN1.ASN1IA5String(asn1Encoded: rootNode, withIdentifier: Self.uriTag)
+            let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.uriTag)
             self = .uniformResourceIdentifier(String(result))
         case Self.iPAddressTag:
-            self = try .iPAddress(ASN1.ASN1OctetString(asn1Encoded: rootNode, withIdentifier: Self.iPAddressTag))
+            self = try .iPAddress(ASN1OctetString(derEncoded: rootNode, withIdentifier: Self.iPAddressTag))
         case Self.registeredIDTag:
-            self = try .registeredID(ASN1.ASN1ObjectIdentifier(asn1Encoded: rootNode, withIdentifier: Self.registeredIDTag))
+            self = try .registeredID(ASN1ObjectIdentifier(derEncoded: rootNode, withIdentifier: Self.registeredIDTag))
         default:
             throw ASN1Error.invalidFieldIdentifier
         }
     }
 
     @inlinable
-    public func serialize(into coder: inout ASN1.Serializer) throws {
+    public func serialize(into coder: inout DER.Serializer) throws {
         switch self {
         case .otherName(let otherName):
             try otherName.serialize(into: &coder, withIdentifier: Self.otherNameTag)
         case .rfc822Name(let name):
-            let ia5String = try ASN1.ASN1IA5String(name)
+            let ia5String = try ASN1IA5String(name)
             try ia5String.serialize(into: &coder, withIdentifier: Self.rfc822NameTag)
         case .dNSName(let name):
-            let ia5String = try ASN1.ASN1IA5String(name)
+            let ia5String = try ASN1IA5String(name)
             try ia5String.serialize(into: &coder, withIdentifier: Self.dNSNameTag)
         case .x400Address(let orAddress):
             try orAddress.serialize(into: &coder)
@@ -91,7 +91,7 @@ public enum GeneralName: Hashable, Sendable, ASN1Parseable, ASN1Serializable {
         case .ediPartyName(let name):
             try name.serialize(into: &coder)
         case .uniformResourceIdentifier(let name):
-            let ia5String = try ASN1.ASN1IA5String(name)
+            let ia5String = try ASN1IA5String(name)
             try ia5String.serialize(into: &coder, withIdentifier: Self.uriTag)
         case .iPAddress(let ipAddress):
             try ipAddress.serialize(into: &coder, withIdentifier: Self.iPAddressTag)
@@ -147,28 +147,28 @@ extension GeneralName: CustomStringConvertible {
 //     partyName               [1]     DirectoryString }
 
 extension GeneralName {
-    public struct OtherName: Hashable, Sendable, ASN1ImplicitlyTaggable {
+    public struct OtherName: Hashable, Sendable, DERImplicitlyTaggable {
         @inlinable
-        public static var defaultIdentifier: ASN1.ASN1Identifier {
+        public static var defaultIdentifier: ASN1Identifier {
             .sequence
         }
 
-        public var typeID: ASN1.ASN1ObjectIdentifier
+        public var typeID: ASN1ObjectIdentifier
 
-        public var value: ASN1.ASN1Any?
+        public var value: ASN1Any?
 
         @inlinable
-        public init(typeID: ASN1.ASN1ObjectIdentifier, value: ASN1.ASN1Any?) {
+        public init(typeID: ASN1ObjectIdentifier, value: ASN1Any?) {
             self.typeID = typeID
             self.value = value
         }
 
         @inlinable
-        public init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-            self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-                let typeID = try ASN1.ASN1ObjectIdentifier(asn1Encoded: &nodes)
-                let value = try ASN1.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
-                    ASN1.ASN1Any(asn1Encoded: $0)
+        public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+            self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+                let typeID = try ASN1ObjectIdentifier(derEncoded: &nodes)
+                let value = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                    ASN1Any(derEncoded: $0)
                 }
 
                 return OtherName(typeID: typeID, value: value)
@@ -176,11 +176,11 @@ extension GeneralName {
         }
 
         @inlinable
-        public func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+        public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
             try coder.appendConstructedNode(identifier: identifier) { coder in
                 try coder.serialize(self.typeID)
                 if let value = self.value {
-                    try coder.serialize(value, explicitlyTaggedWithIdentifier: .init(explicitTagWithNumber: 0, tagClass: .contextSpecific))
+                    try coder.serialize(value, explicitlyTaggedWithIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific))
                 }
             }
         }
@@ -195,9 +195,9 @@ extension GeneralName.OtherName: CustomStringConvertible {
 }
 
 @usableFromInline
-struct GeneralNames: ASN1ImplicitlyTaggable {
+struct GeneralNames: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -210,12 +210,12 @@ struct GeneralNames: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.names = try ASN1.sequence(of: GeneralName.self, identifier: identifier, rootNode: rootNode)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.names = try DER.sequence(of: GeneralName.self, identifier: identifier, rootNode: rootNode)
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             for name in names {
                 try coder.serialize(name)

@@ -29,8 +29,8 @@ import SwiftASN1
 
 /// ```
 ///
-enum OCSPResponseStatus: ASN1ImplicitlyTaggable, Hashable {
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+enum OCSPResponseStatus: DERImplicitlyTaggable, Hashable {
+    static var defaultIdentifier: ASN1Identifier {
         .enumerated
     }
 
@@ -41,8 +41,8 @@ enum OCSPResponseStatus: ASN1ImplicitlyTaggable, Hashable {
     case sigRequired
     case unauthorized
 
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        let rawValue = try Int(asn1Encoded: rootNode, withIdentifier: identifier)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        let rawValue = try Int(derEncoded: rootNode, withIdentifier: identifier)
 
         switch rawValue {
         case 0:
@@ -62,7 +62,7 @@ enum OCSPResponseStatus: ASN1ImplicitlyTaggable, Hashable {
         }
     }
 
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         let integerValue: Int
 
         switch self {

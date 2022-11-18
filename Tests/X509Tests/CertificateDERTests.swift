@@ -165,7 +165,7 @@ final class CertificateDERTests: XCTestCase {
 
     func testSimpleDecode() throws {
         let binary = Array(Data(base64Encoded: Self.base64EncodedSampleCert, options: .ignoreUnknownCharacters)!)
-        let cert = try Certificate(asn1Encoded: binary)
+        let cert = try Certificate(derEncoded: binary)
 
         let expectedPublicKey = try P256.Signing.PublicKey(
             x963Representation: [
@@ -231,7 +231,7 @@ final class CertificateDERTests: XCTestCase {
 
     func testMatchingExtensionsViaExtensionBuilder() throws {
         let binary = Array(Data(base64Encoded: Self.base64EncodedSampleCert, options: .ignoreUnknownCharacters)!)
-        let cert = try Certificate(asn1Encoded: binary)
+        let cert = try Certificate(derEncoded: binary)
 
         let expectedExtensions = try Certificate.Extensions {
             Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: [0xE0, 0x85, 0x48, 0x7D, 0x13, 0xA6, 0xD3, 0x10, 0x19, 0x9F, 0x5C, 0xCB, 0x6B, 0x78, 0x24, 0x92, 0xF8, 0xAE, 0x1B, 0xAE])
@@ -290,13 +290,13 @@ final class CertificateDERTests: XCTestCase {
 
     func testRSARootCert() throws {
         let binary = Array(Data(base64Encoded: Self.base64EncodedRSARootCert, options: .ignoreUnknownCharacters)!)
-        let cert = try Certificate(asn1Encoded: binary)
+        let cert = try Certificate(derEncoded: binary)
         XCTAssertTrue(cert.publicKey.isValidSignature(cert.signature, for: cert))
     }
 
     func testCodesignChain() throws {
         let binaryCerts = Self.codesignCerts.map { Array(Data(base64Encoded: $0, options: .ignoreUnknownCharacters)!) }
-        let certs = try binaryCerts.map { try Certificate(asn1Encoded: $0) }
+        let certs = try binaryCerts.map { try Certificate(derEncoded: $0) }
 
         // Confirm basic signature validation.
         XCTAssertTrue(certs[1].publicKey.isValidSignature(certs[0].signature, for: certs[0]))

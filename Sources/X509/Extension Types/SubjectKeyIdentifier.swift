@@ -41,10 +41,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.subjectKeyIdentifier else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.subjectKeyIdentifier), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectKeyIdentifier), got \(ext.oid)")
             }
 
-            let asn1KeyIdentifier = try ASN1.ASN1OctetString(asn1Encoded: ext.value)
+            let asn1KeyIdentifier = try ASN1OctetString(derEncoded: ext.value)
             self.keyIdentifier = asn1KeyIdentifier.bytes
         }
     }
@@ -68,8 +68,8 @@ extension Certificate.Extension {
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
     public init(_ ski: Certificate.Extensions.SubjectKeyIdentifier, critical: Bool) throws {
-        let asn1Representation = ASN1.ASN1OctetString(contentBytes: ski.keyIdentifier)
-        var serializer = ASN1.Serializer()
+        let asn1Representation = ASN1OctetString(contentBytes: ski.keyIdentifier)
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.subjectKeyIdentifier, critical: critical, value: serializer.serializedBytes[...])
     }

@@ -37,7 +37,7 @@ To parse a certificate from DER, we can construct it with a helper initializer f
 
 ```swift
 let derBytes: [UInt8] = // get these from somewhere
-let certificate = try Certificate(asn1Encoded: derBytes)
+let certificate = try Certificate(derEncoded: derBytes)
 ```
 
 Assuming the certificate is well-formed, this constructor will build us a ``Certificate`` object

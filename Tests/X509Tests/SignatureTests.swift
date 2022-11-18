@@ -35,7 +35,7 @@ final class SignatureTests: XCTestCase {
         ]
         let signature = try Certificate.Signature(
             signatureAlgorithm: .ecdsaWithSHA384,
-            signatureBytes: ASN1.ASN1BitString(bytes: signatureBytes[...])
+            signatureBytes: ASN1BitString(bytes: signatureBytes[...])
         )
         guard case .p384 = signature.backing else {
             XCTFail("Invalid signature decode")

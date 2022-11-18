@@ -39,10 +39,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.basicConstraints else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)")
             }
 
-            let basicConstraintsValue = try BasicConstraintsValue(asn1Encoded: ext.value)
+            let basicConstraintsValue = try BasicConstraintsValue(derEncoded: ext.value)
             if basicConstraintsValue.isCA {
                 self = .isCertificateAuthority(maxPathLength: basicConstraintsValue.pathLenConstraint)
             } else {
@@ -78,7 +78,7 @@ extension Certificate.Extension {
     @inlinable
     public init(_ basicConstraints: Certificate.Extensions.BasicConstraints, critical: Bool) throws {
         let asn1Representation = BasicConstraintsValue(basicConstraints)
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.basicConstraints, critical: critical, value: serializer.serializedBytes[...])
     }
@@ -92,9 +92,9 @@ extension Certificate.Extensions.BasicConstraints: CertificateExtensionConvertib
 
 // MARK: ASN1 helpers
 @usableFromInline
-struct BasicConstraintsValue: ASN1ImplicitlyTaggable {
+struct BasicConstraintsValue: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -128,16 +128,16 @@ struct BasicConstraintsValue: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let isCA: Bool = try ASN1.decodeDefault(&nodes, defaultValue: false)
-            let pathLenConstraint: Int? = try ASN1.optionalImplicitlyTagged(&nodes)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let isCA: Bool = try DER.decodeDefault(&nodes, defaultValue: false)
+            let pathLenConstraint: Int? = try DER.optionalImplicitlyTagged(&nodes)
             return try BasicConstraintsValue(isCA: isCA, pathLenConstraint: pathLenConstraint)
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             if self.isCA != false {
                 try coder.serialize(self.isCA)

@@ -48,10 +48,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.subjectAlternativeName else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName), got \(ext.oid)")
             }
 
-            let asn1SAN = try GeneralNames(asn1Encoded: ext.value)
+            let asn1SAN = try GeneralNames(derEncoded: ext.value)
             self.names = asn1SAN.names
         }
     }
@@ -103,7 +103,7 @@ extension Certificate.Extension {
     @inlinable
     public init(_ san: Certificate.Extensions.SubjectAlternativeNames, critical: Bool) throws {
         let asn1Representation = GeneralNames(san.names)
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.subjectAlternativeName, critical: critical, value: serializer.serializedBytes[...])
     }

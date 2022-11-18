@@ -15,43 +15,43 @@
 import SwiftASN1
 
 @usableFromInline
-struct AlgorithmIdentifier: ASN1ImplicitlyTaggable, Hashable, Sendable {
+struct AlgorithmIdentifier: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     @usableFromInline
-    var algorithm: ASN1.ASN1ObjectIdentifier
+    var algorithm: ASN1ObjectIdentifier
 
     @usableFromInline
-    var parameters: ASN1.ASN1Any?
+    var parameters: ASN1Any?
 
     @inlinable
-    init(algorithm: ASN1.ASN1ObjectIdentifier, parameters: ASN1.ASN1Any?) {
+    init(algorithm: ASN1ObjectIdentifier, parameters: ASN1Any?) {
         self.algorithm = algorithm
         self.parameters = parameters
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         // The AlgorithmIdentifier block looks like this.
         //
         // AlgorithmIdentifier  ::=  SEQUENCE  {
         //   algorithm   OBJECT IDENTIFIER,
         //   parameters  ANY DEFINED BY algorithm OPTIONAL
         // }
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let algorithmOID = try ASN1.ASN1ObjectIdentifier(asn1Encoded: &nodes)
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let algorithmOID = try ASN1ObjectIdentifier(derEncoded: &nodes)
 
-            let parameters = nodes.next().map { ASN1.ASN1Any(asn1Encoded: $0) }
+            let parameters = nodes.next().map { ASN1Any(derEncoded: $0) }
 
             return .init(algorithm: algorithmOID, parameters: parameters)
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.algorithm)
             if let parameters = self.parameters {
@@ -65,15 +65,15 @@ struct AlgorithmIdentifier: ASN1ImplicitlyTaggable, Hashable, Sendable {
 extension AlgorithmIdentifier {
     @usableFromInline
     static let p256PublicKey = AlgorithmIdentifier(algorithm: .AlgorithmIdentifier.idEcPublicKey,
-                                                   parameters: try! .init(erasing: ASN1.ASN1ObjectIdentifier.NamedCurves.secp256r1))
+                                                   parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp256r1))
 
     @usableFromInline
     static let p384PublicKey = AlgorithmIdentifier(algorithm: .AlgorithmIdentifier.idEcPublicKey,
-                                                   parameters: try! .init(erasing: ASN1.ASN1ObjectIdentifier.NamedCurves.secp384r1))
+                                                   parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp384r1))
 
     @usableFromInline
     static let p521PublicKey = AlgorithmIdentifier(algorithm: .AlgorithmIdentifier.idEcPublicKey,
-                                                   parameters: try! .init(erasing: ASN1.ASN1ObjectIdentifier.NamedCurves.secp521r1))
+                                                   parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp521r1))
 
     @usableFromInline
     static let ecdsaWithSHA256 = AlgorithmIdentifier(algorithm: .AlgorithmIdentifier.ecdsaWithSHA256,
@@ -91,7 +91,7 @@ extension AlgorithmIdentifier {
     // We include both here, and the usage sites need to handle the equivalent.
     @usableFromInline
     static let sha1WithRSAEncryption = AlgorithmIdentifier(
-        algorithm: .AlgorithmIdentifier.sha1WithRSAEncryption, parameters: try! ASN1.ASN1Any(erasing: ASN1.ASN1Null())
+        algorithm: .AlgorithmIdentifier.sha1WithRSAEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 
     @usableFromInline
@@ -101,7 +101,7 @@ extension AlgorithmIdentifier {
 
     @usableFromInline
     static let sha256WithRSAEncryption = AlgorithmIdentifier(
-        algorithm: .AlgorithmIdentifier.sha256WithRSAEncryption, parameters: try! ASN1.ASN1Any(erasing: ASN1.ASN1Null())
+        algorithm: .AlgorithmIdentifier.sha256WithRSAEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 
     @usableFromInline
@@ -111,7 +111,7 @@ extension AlgorithmIdentifier {
 
     @usableFromInline
     static let sha384WithRSAEncryption = AlgorithmIdentifier(
-        algorithm: .AlgorithmIdentifier.sha384WithRSAEncryption, parameters: try! ASN1.ASN1Any(erasing: ASN1.ASN1Null())
+        algorithm: .AlgorithmIdentifier.sha384WithRSAEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 
     @usableFromInline
@@ -121,7 +121,7 @@ extension AlgorithmIdentifier {
 
     @usableFromInline
     static let sha512WithRSAEncryption = AlgorithmIdentifier(
-        algorithm: .AlgorithmIdentifier.sha512WithRSAEncryption, parameters: try! ASN1.ASN1Any(erasing: ASN1.ASN1Null())
+        algorithm: .AlgorithmIdentifier.sha512WithRSAEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 
     @usableFromInline
@@ -131,7 +131,7 @@ extension AlgorithmIdentifier {
 
     @usableFromInline
     static let rsaPublicKey = AlgorithmIdentifier(
-        algorithm: .AlgorithmIdentifier.rsaEncryption, parameters: try! ASN1.ASN1Any(erasing: ASN1.ASN1Null())
+        algorithm: .AlgorithmIdentifier.rsaEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 }
 
@@ -167,12 +167,12 @@ extension AlgorithmIdentifier: CustomStringConvertible {
 // Relevant note: the PKCS1v1.5 versions need to treat having no parameters and a NULL parameters as identical. This is probably general,
 // so we may need a custom equatable implementation there.
 
-extension ASN1.ASN1ObjectIdentifier.AlgorithmIdentifier {
-    static let ecdsaWithSHA256: ASN1.ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 2]
+extension ASN1ObjectIdentifier.AlgorithmIdentifier {
+    static let ecdsaWithSHA256: ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 2]
 
-    static let ecdsaWithSHA384: ASN1.ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 3]
+    static let ecdsaWithSHA384: ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 3]
 
-    static let ecdsaWithSHA512: ASN1.ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 4]
+    static let ecdsaWithSHA512: ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 4]
 
-    static let sha1WithRSAEncryption: ASN1.ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 1, 5]
+    static let sha1WithRSAEncryption: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 1, 5]
 }

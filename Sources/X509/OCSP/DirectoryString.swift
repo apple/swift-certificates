@@ -27,33 +27,33 @@ import SwiftASN1
 /// Note that these upper bounds are measured in _characters_, not bytes.
 ///
 @usableFromInline
-enum DirectoryString: ASN1Parseable, ASN1Serializable, Hashable {
-    case teletexString(ASN1.ASN1TeletexString)
-    case printableString(ASN1.ASN1PrintableString)
-    case universalString(ASN1.ASN1UniversalString)
-    case utf8String(ASN1.ASN1UTF8String)
-    case bmpString(ASN1.ASN1BMPString)
+enum DirectoryString: DERParseable, DERSerializable, Hashable {
+    case teletexString(ASN1TeletexString)
+    case printableString(ASN1PrintableString)
+    case universalString(ASN1UniversalString)
+    case utf8String(ASN1UTF8String)
+    case bmpString(ASN1BMPString)
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node) throws {
+    init(derEncoded rootNode: ASN1Node) throws {
         switch rootNode.identifier {
-        case .primitiveTeletexString:
-            self = .teletexString(try ASN1.ASN1TeletexString(asn1Encoded: rootNode))
-        case .primitivePrintableString:
-            self = .printableString(try ASN1.ASN1PrintableString(asn1Encoded: rootNode))
-        case .primitiveUniversalString:
-            self = .universalString(try ASN1.ASN1UniversalString(asn1Encoded: rootNode))
-        case .primitiveUTF8String:
-            self = .utf8String(try ASN1.ASN1UTF8String(asn1Encoded: rootNode))
-        case .primitiveBMPString:
-            self = .bmpString(try ASN1.ASN1BMPString(asn1Encoded: rootNode))
+        case .teletexString:
+            self = .teletexString(try ASN1TeletexString(derEncoded: rootNode))
+        case .printableString:
+            self = .printableString(try ASN1PrintableString(derEncoded: rootNode))
+        case .universalString:
+            self = .universalString(try ASN1UniversalString(derEncoded: rootNode))
+        case .utf8String:
+            self = .utf8String(try ASN1UTF8String(derEncoded: rootNode))
+        case .bmpString:
+            self = .bmpString(try ASN1BMPString(derEncoded: rootNode))
         default:
             throw ASN1Error.unexpectedFieldType
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer) throws {
+    func serialize(into coder: inout DER.Serializer) throws {
         switch self {
         case .teletexString(let string):
             try string.serialize(into: &coder)

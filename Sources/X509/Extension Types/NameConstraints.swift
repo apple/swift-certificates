@@ -75,7 +75,7 @@ extension Certificate.Extensions {
         /// This represents a subnet root and its mask.
         ///
         /// Any IP address attested that falls within one of these subnets matches the constraint.
-        public var permittedIPRanges: [ASN1.ASN1OctetString] {
+        public var permittedIPRanges: [ASN1OctetString] {
             get {
                 self.permittedSubtrees.compactMap {
                     if case .iPAddress(let address) = $0 {
@@ -100,7 +100,7 @@ extension Certificate.Extensions {
         /// This represents a subnet root and its mask.
         ///
         /// Any IP address attested that falls within one of these subnets matches the constraint.
-        public var excludedIPRanges: [ASN1.ASN1OctetString] {
+        public var excludedIPRanges: [ASN1OctetString] {
             get {
                 self.excludedSubtrees.compactMap {
                     if case .iPAddress(let address) = $0 {
@@ -230,8 +230,8 @@ extension Certificate.Extensions {
         public init(
             permittedDNSDomains: [String] = [],
             excludedDNSDomains: [String] = [],
-            permittedIPRanges: [ASN1.ASN1OctetString] = [],
-            excludedIPRanges: [ASN1.ASN1OctetString] = [],
+            permittedIPRanges: [ASN1OctetString] = [],
+            excludedIPRanges: [ASN1OctetString] = [],
             permittedEmailAddresses: [String] = [],
             excludedEmailAddresses: [String] = [],
             permittedURIDomains: [String] = [],
@@ -273,10 +273,10 @@ extension Certificate.Extensions {
         @inlinable
         public init(_ ext: Certificate.Extension) throws {
             guard ext.oid == .X509ExtensionID.nameConstraints else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1.ASN1ObjectIdentifier.X509ExtensionID.nameConstraints), got \(ext.oid)")
+                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.nameConstraints), got \(ext.oid)")
             }
 
-            let nameConstraintsValue = try NameConstraintsValue(asn1Encoded: ext.value)
+            let nameConstraintsValue = try NameConstraintsValue(derEncoded: ext.value)
             guard nameConstraintsValue.permittedSubtrees != nil || nameConstraintsValue.excludedSubtrees != nil else {
                 throw ASN1Error.invalidASN1Object
             }
@@ -315,7 +315,7 @@ extension Certificate.Extension {
     @inlinable
     public init(_ nameConstraints: Certificate.Extensions.NameConstraints, critical: Bool) throws {
         let asn1Representation = NameConstraintsValue(nameConstraints)
-        var serializer = ASN1.Serializer()
+        var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
         self.init(oid: .X509ExtensionID.nameConstraints, critical: critical, value: serializer.serializedBytes[...])
     }
@@ -329,9 +329,9 @@ extension Certificate.Extensions.NameConstraints: CertificateExtensionConvertibl
 
 // MARK: ASN1 Helpers
 @usableFromInline
-struct NameConstraintsValue: ASN1ImplicitlyTaggable {
+struct NameConstraintsValue: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -358,35 +358,35 @@ struct NameConstraintsValue: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            let permittedSubtrees: GeneralSubtrees? = try ASN1.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 0, tagClass: .contextSpecific, constructed: true))
-            let excludedSubtrees: GeneralSubtrees? = try ASN1.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific, constructed: true))
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            let permittedSubtrees: GeneralSubtrees? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 0, tagClass: .contextSpecific))
+            let excludedSubtrees: GeneralSubtrees? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific))
 
             return NameConstraintsValue(permittedSubtrees: permittedSubtrees.map { $0.base }, excludedSubtrees: excludedSubtrees.map { $0.base })
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serializeOptionalImplicitlyTagged(
                 self.permittedSubtrees.map { GeneralSubtrees($0) },
-                withIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific, constructed: true)
+                withIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific)
             )
 
             try coder.serializeOptionalImplicitlyTagged(
                 self.excludedSubtrees.map { GeneralSubtrees($0) },
-                withIdentifier: .init(tagWithNumber: 1, tagClass: .contextSpecific, constructed: true)
+                withIdentifier: .init(tagWithNumber: 1, tagClass: .contextSpecific)
             )
         }
     }
 }
 
 @usableFromInline
-struct GeneralSubtrees: ASN1ImplicitlyTaggable {
+struct GeneralSubtrees: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -399,20 +399,20 @@ struct GeneralSubtrees: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.base = try ASN1.sequence(identifier: identifier, rootNode: rootNode)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.base = try DER.sequence(identifier: identifier, rootNode: rootNode)
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.serializeSequenceOf(self.base, identifier: identifier)
     }
 }
 
 @usableFromInline
-struct GeneralSubtree: ASN1ImplicitlyTaggable {
+struct GeneralSubtree: DERImplicitlyTaggable {
     @inlinable
-    static var defaultIdentifier: ASN1.ASN1Identifier {
+    static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -425,14 +425,14 @@ struct GeneralSubtree: ASN1ImplicitlyTaggable {
     }
 
     @inlinable
-    init(asn1Encoded rootNode: ASN1.ASN1Node, withIdentifier identifier: ASN1.ASN1Identifier) throws {
-        self.base = try ASN1.sequence(rootNode, identifier: identifier) { nodes in
-            try GeneralName(asn1Encoded: &nodes)
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.base = try DER.sequence(rootNode, identifier: identifier) { nodes in
+            try GeneralName(derEncoded: &nodes)
         }
     }
 
     @inlinable
-    func serialize(into coder: inout ASN1.Serializer, withIdentifier identifier: ASN1.ASN1Identifier) throws {
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.base)
         }
