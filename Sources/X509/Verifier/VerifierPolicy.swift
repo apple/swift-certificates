@@ -30,6 +30,8 @@ public struct PolicySet: VerifierPolicy {
             case .failsToMeetPolicy(reason: let reason):
                 return .failsToMeetPolicy(reason: reason)
             }
+
+            self.policies.formIndex(after: &policyIndex)
         }
 
         return .meetsPolicy
