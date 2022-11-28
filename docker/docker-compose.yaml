@@ -1,0 +1,34 @@
+# this file is not designed to be run directly
+# instead, use the docker-compose.<os>.<swift> files
+# eg docker-compose -f docker/docker-compose.yaml -f docker/docker-compose.2204.57.yaml run test
+version: "3"
+
+services:
+
+  runtime-setup:
+    image: swift-certificates:default
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  common: &common
+    image: swift-certificates:default
+    depends_on: [runtime-setup]
+    volumes:
+      - ~/.ssh:/root/.ssh
+      - ..:/code:z
+    working_dir: /code
+
+  soundness:
+    <<: *common
+    command: /bin/bash -xcl "swift -version && uname -a && ./scripts/soundness.sh"
+
+  test:
+    <<: *common
+    command: /bin/bash -xcl "swift $${SWIFT_TEST_VERB-test} $${WARN_AS_ERROR_ARG-} $${SANITIZER_ARG-} $${IMPORT_CHECK_ARG-}"
+
+  # util
+
+  shell:
+    <<: *common
+    entrypoint: /bin/bash
