@@ -15,11 +15,8 @@ services:
     image: swift-certificates:default
     depends_on: [runtime-setup]
     volumes:
-#     - ~/.ssh:/root/.ssh
-      - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
+      - ~/.ssh:/root/.ssh
       - ..:/code:z
-    environment:
-      - SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
     working_dir: /code
 
   soundness:
