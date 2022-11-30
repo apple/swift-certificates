@@ -15,7 +15,7 @@ services:
     image: swift-certificates:default
     depends_on: [runtime-setup]
     volumes:
-      - ~/.ssh:/root/.ssh
+#      - ~/.ssh:/root/.ssh
       - ..:/code:z
     working_dir: /code
 
