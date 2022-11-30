@@ -16,10 +16,10 @@ services:
     depends_on: [runtime-setup]
     volumes:
 #     - ~/.ssh:/root/.ssh
-      - $SSH_AUTH_SOCK:/tmp/ssh-auth-socket
+      - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
       - ..:/code:z
     environment:
-      - SSH_AUTH_SOCK=/tmp/ssh-auth-socket
+      - SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
     working_dir: /code
 
   soundness:
