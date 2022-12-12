@@ -7,7 +7,7 @@
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
-// See CONTRIBUTORS.md for the list of SwiftCertificates project authors
+// See CONTRIBUTORS.txt for the list of SwiftCertificates project authors
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -30,7 +30,9 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.2.1"),
-        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.3.0")),
+        // swift-asn1 repo is private, so we can't access it anonymously yet
+        // .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.3.0")),
+        .package(url: "git@github.com:apple/swift-asn1.git", .upToNextMinor(from: "0.3.0")),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
