@@ -26,7 +26,7 @@ final class CertificateTests: XCTestCase {
     func testPrintingVersions() {
         XCTAssertEqual(String(describing: Certificate.Version.v1), "X509v1")
         XCTAssertEqual(String(describing: Certificate.Version.v3), "X509v3")
-        XCTAssertEqual(String(describing: Certificate.Version(rawValue: 5)), "X509v4")
+        XCTAssertEqual(String(describing: Certificate.Version(rawValue: 5)), "X509v6")
     }
 
     func testPrintingGeneralName() throws {

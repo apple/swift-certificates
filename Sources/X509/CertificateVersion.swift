@@ -54,7 +54,7 @@ extension Certificate.Version: CustomStringConvertible {
         case .v3:
             return "X509v3"
         case let unknown:
-            return "X509v\(unknown.rawValue - 1)"
+            return "X509v\(unknown.rawValue + 1)"
         }
     }
 }
