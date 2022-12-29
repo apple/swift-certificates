@@ -29,8 +29,10 @@ import SwiftASN1
 struct OCSPCertID: DERImplicitlyTaggable, Hashable {
     var hashAlgorithm: AlgorithmIdentifier
 
+    /// Hash of issuer's DN
     var issuerNameHash: ASN1OctetString
 
+    /// Hash of issuer's public key
     var issuerKeyHash: ASN1OctetString
 
     var serialNumber: ArraySlice<UInt8>
