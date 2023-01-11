@@ -28,18 +28,6 @@ public protocol OCSPRequester: Sendable {
     // TODO: If yes, how should this method signal a timeout? throw an error or return an enum with a success and timeout case?
 }
 
-
-// TODO: define verify modes and enforce them
-public struct OCSPVerifierMode {
-    public static let required = Self(backing: .required)
-    public static let soft = Self(backing: .soft)
-    enum Backing {
-        case required
-        case soft
-    }
-    var backing: Backing
-}
-
 extension ASN1ObjectIdentifier {
     static let sha256NoSign: Self = [2, 16, 840, 1, 101, 3, 4, 2, 1]
     static let sha1NoSign: Self = [1, 3, 14, 3, 2, 26]
@@ -87,12 +75,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         }
     }
     var requester: Requester
-    var mode: OCSPVerifierMode
     var requestHashAlgorithm: RequestHashAlgorithm
     
-    public init(requester: Requester, mode: OCSPVerifierMode) {
+    public init(requester: Requester) {
         self.requester = requester
-        self.mode = mode
         self.requestHashAlgorithm = .insecureSha1
     }
     
@@ -125,7 +111,8 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
                 return .failsToMeetPolicy(reason: "expected OCSP location to be a URI but got \(ocspAccessDescription.location)")
             }
             
-            let request = try request(certificate: certificate, issuer: issuer)
+            let requestNonce = OCSPNonce()
+            let request = try request(certificate: certificate, issuer: issuer, nonce: requestNonce)
             
             var serializer = DER.Serializer()
             try serializer.serialize(request)
@@ -135,16 +122,27 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             let response = try OCSPResponse(derEncoded: responseDer[...])
             switch response {
             case .successful(let basicResponse):
+                guard basicResponse.responseData.version == .v1 else {
+                    return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
+                }
+                // OCSP responders are allowed to not include the nonce, but if they do it needs to match
+                if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce {
+                    guard requestNonce == responseNonce else {
+                        return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
+                    }
+                }
                 guard let response = basicResponse.responseData.responses.first else {
-                    return .failsToMeetPolicy(reason: "empty response")
+                    return .failsToMeetPolicy(reason: "empty OCSP response")
                 }
                 switch response.certStatus {
                 case .good:
                     // TODO: verify signature
                     // TODO: verify time
                     return .meetsPolicy
-                case .revoked, .unknown:
-                    return .failsToMeetPolicy(reason: "bad OCSP response: \(response)")
+                case .revoked(let info):
+                    return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
+                case .unknown:
+                    return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
                 }
             case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
                 return .failsToMeetPolicy(reason: "OCSP request failed \(response)")
@@ -155,8 +153,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         }
     }
     
-    func request(certificate: Certificate, issuer: Certificate) throws -> OCSPRequest {
-        // TODO: add nonce
+    func request(certificate: Certificate, issuer: Certificate, nonce: OCSPNonce) throws -> OCSPRequest {
         OCSPRequest(tbsRequest: OCSPTBSRequest(
             version: .v1,
             requestList: [
@@ -164,9 +161,12 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
                     hashAlgorithm: .init(algorithm: requestHashAlgorithm.oid, parameters: nil),
                     issuerNameHash: .init(contentBytes: try requestHashAlgorithm.issuerNameHashed(issuer)),
                     issuerKeyHash: .init(contentBytes: requestHashAlgorithm.issuerPublicKeyHashed(issuer)),
-                    serialNumber: certificate.serialNumber.bytes
+                    serialNumber: certificate.serialNumber
                 ))
-            ]
+            ],
+            requestExtensions: try .init(builder: {
+                nonce
+            })
         ))
     }
 }
