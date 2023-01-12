@@ -14,7 +14,6 @@
 
 import SwiftASN1
 import Crypto
-import Algorithms
 import protocol Foundation.DataProtocol
 
 public protocol OCSPRequester: Sendable {
@@ -83,7 +82,9 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     }
     
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        for (certificate, issuer) in chain.adjacentPairs() {
+        for index in chain.dropLast().indices {
+            let certificate = chain[index]
+            let issuer = chain[chain.index(after: index)]
             switch await certificateMeetsPolicyRequirements(certificate, issuer: issuer) {
             case .meetsPolicy:
                 continue

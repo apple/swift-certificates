@@ -30,7 +30,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.2.1"),
-        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.0.0"),
         // swift-asn1 repo is private, so we can't access it anonymously yet
         // .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.3.0")),
         .package(url: "git@github.com:apple/swift-asn1.git", .upToNextMinor(from: "0.3.0")),
@@ -43,7 +42,6 @@ let package = Package(
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
-                .product(name: "Algorithms", package: "swift-algorithms"),
             ]),
         .testTarget(
             name: "X509Tests",
