@@ -48,7 +48,7 @@ final class OCSPTests: XCTestCase {
                         hashAlgorithm: .ecdsaWithSHA256,
                         issuerNameHash: .init(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8]),
                         issuerKeyHash: .init(contentBytes: [10, 11, 12, 13, 14, 15, 16, 17, 18]),
-                        serialNumber: [20, 21, 22, 23, 24, 25, 26, 27, 28]
+                        serialNumber: .init(bytes: [20, 21, 22, 23, 24, 25, 26, 27, 28])
                     ),
                     singleRequestExtensions: nil
                 )],
