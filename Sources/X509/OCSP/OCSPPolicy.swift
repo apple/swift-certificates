@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
-import CryptoKit
+import Crypto
 import Algorithms
 import protocol Foundation.DataProtocol
 
