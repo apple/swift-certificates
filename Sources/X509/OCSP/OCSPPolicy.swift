@@ -15,17 +15,21 @@
 import SwiftASN1
 import Crypto
 import protocol Foundation.DataProtocol
+import struct Foundation.Date
+import typealias Foundation.TimeInterval
 
 public protocol OCSPRequester: Sendable {
-    /// Called with a OCSP Request
+    /// Called with a OCSP Request.
+    ///
+    /// The ``OCSPVerifierPolicy`` will call this method for each certificate witch contains a OCSP URI and will cancel the call if it reaches a deadline.
+    /// Therefore the implementation of this method should **not** set a deadline on the HTTP request.
     /// - Parameters:
     ///   - request: DER-encoded request bytes
-    ///   - uri: uri of the
+    ///   - uri: uri of the OCSP responder
     /// - Returns: DER-encoded response bytes
     func query(request: [UInt8], uri: String) async throws -> [UInt8]
-    // TODO: Do we need to handle a request timeout gracefully?
-    // TODO: If yes, how should this method signal a timeout? throw an error or return an enum with a success and timeout case?
 }
+
 
 extension ASN1ObjectIdentifier {
     static let sha256NoSign: Self = [2, 16, 840, 1, 101, 3, 4, 2, 1]
@@ -35,7 +39,7 @@ extension ASN1ObjectIdentifier {
 public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     enum RequestHashAlgorithm {
         case insecureSha1
-        // TODO: can we somehow automatically figure out that a responder will support sha256?
+        // we can't yet enable sha256 by default but we want in the future
         case sha256
         
         var oid: ASN1ObjectIdentifier {
@@ -76,27 +80,49 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     var requester: Requester
     var requestHashAlgorithm: RequestHashAlgorithm
     
+    /// max duration the policy verification is allowed in total
+    ///
+    /// This is not the duration for a single OCSP request but the total duration of all OCSP requests.
+    var maxDuration: TimeInterval
+    
     public init(requester: Requester) {
         self.requester = requester
         self.requestHashAlgorithm = .insecureSha1
+        self.maxDuration = 10
     }
     
-    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+    public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+        await withDeadline(maxDuration) {
+            await verifyWithoutDeadline(chain: chain)
+        }
+    }
+    
+    private func verifyWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         for index in chain.dropLast().indices {
             let certificate = chain[index]
             let issuer = chain[chain.index(after: index)]
-            switch await certificateMeetsPolicyRequirements(certificate, issuer: issuer) {
+            switch await self.certificateMeetsPolicyRequirements(certificate, issuer: issuer) {
             case .meetsPolicy:
                 continue
             case .failsToMeetPolicy(let reason):
                 return .failsToMeetPolicy(reason: reason)
             }
         }
+        
+        do {
+            let hasRootCertificateOCSPURI = try chain.last?.extensions.authorityInformationAccess?.contains(where: { $0.method == .ocspServer }) ?? false
+            guard !hasRootCertificateOCSPURI else {
+                return .failsToMeetPolicy(reason: "root certificate is not allowed to have an OCSP URI")
+            }
+        } catch {
+            return .failsToMeetPolicy(reason: "failed to parse AuthorityInformationAccess extension")
+        }
         return .meetsPolicy
-        // TODO: should we verify that the last certificate doesn't have an OCSP extension set?
     }
     
-    public mutating func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
+    
+    
+    private func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
         guard let description = certificate.extensions[oid: .X509ExtensionID.authorityInformationAccess] else {
             // OCSP not necessary for certificate
             return .meetsPolicy
@@ -105,55 +131,70 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             let authorityInformationAccess = try Certificate.Extensions.AuthorityInformationAccess(description)
             
             guard let ocspAccessDescription = authorityInformationAccess.first(where: { $0.method == .ocspServer }) else {
+                // OCSP not necessary for certificate
                 return .meetsPolicy
             }
  
             guard case .uniformResourceIdentifier(let uri) = ocspAccessDescription.location else {
                 return .failsToMeetPolicy(reason: "expected OCSP location to be a URI but got \(ocspAccessDescription.location)")
             }
-            
-            let requestNonce = OCSPNonce()
-            let request = try request(certificate: certificate, issuer: issuer, nonce: requestNonce)
-            
-            var serializer = DER.Serializer()
-            try serializer.serialize(request)
-            
-            let responseDer = try await requester.query(request: serializer.serializedBytes, uri: uri)
-            
-            let response = try OCSPResponse(derEncoded: responseDer[...])
-            switch response {
-            case .successful(let basicResponse):
-                guard basicResponse.responseData.version == .v1 else {
-                    return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
-                }
-                // OCSP responders are allowed to not include the nonce, but if they do it needs to match
-                if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce {
-                    guard requestNonce == responseNonce else {
-                        return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
+            do {
+                let requestNonce = OCSPNonce()
+                let request = try request(certificate: certificate, issuer: issuer, nonce: requestNonce)
+                
+                var serializer = DER.Serializer()
+                try serializer.serialize(request)
+                do {
+                    let responseDer = try await requester.query(request: serializer.serializedBytes, uri: uri)
+                    do {
+                        let response = try OCSPResponse(derEncoded: responseDer[...])
+                        switch response {
+                        case .successful(let basicResponse):
+                            guard basicResponse.responseData.version == .v1 else {
+                                return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
+                            }
+                            // OCSP responders are allowed to not include the nonce, but if they do it needs to match
+                            if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce {
+                                guard requestNonce == responseNonce else {
+                                    return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
+                                }
+                            }
+                            guard let response = basicResponse.responseData.responses.first else {
+                                return .failsToMeetPolicy(reason: "empty OCSP response")
+                            }
+                            switch response.certStatus {
+                            case .good:
+                                switch response.verifyTime() {
+                                case .meetsPolicy:
+                                    break
+                                case .failsToMeetPolicy(let reason):
+                                    return .failsToMeetPolicy(reason: reason)
+                                }
+                                
+                                // TODO: verify signature
+                                return .meetsPolicy
+                            case .revoked(let info):
+                                return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
+                            case .unknown:
+                                return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
+                            }
+                        case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
+                            return .failsToMeetPolicy(reason: "OCSP request failed \(response)")
+                        }
+                    } catch {
+                        return .failsToMeetPolicy(reason: "OCSP deserialisation failed \(error)")
                     }
-                }
-                guard let response = basicResponse.responseData.responses.first else {
-                    return .failsToMeetPolicy(reason: "empty OCSP response")
-                }
-                switch response.certStatus {
-                case .good:
-                    // TODO: verify signature
-                    // TODO: verify time
+                } catch {
+                    // the request can fail for various reasons and we need to tolerate this
                     return .meetsPolicy
-                case .revoked(let info):
-                    return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
-                case .unknown:
-                    return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
                 }
-            case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
-                return .failsToMeetPolicy(reason: "OCSP request failed \(response)")
+            } catch {
+                return .failsToMeetPolicy(reason: "OCSP serialisation failed \(error)")
             }
-            
         } catch {
-            return .failsToMeetPolicy(reason: "OCSP failed: \(error)")
+            return .failsToMeetPolicy(reason: "failed to decode AuthorityInformationAccess \(error)")
         }
     }
-    
     func request(certificate: Certificate, issuer: Certificate, nonce: OCSPNonce) throws -> OCSPRequest {
         OCSPRequest(tbsRequest: OCSPTBSRequest(
             version: .v1,
@@ -169,5 +210,58 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
                 nonce
             })
         ))
+    }
+
+}
+
+extension OCSPSingleResponse {
+    func verifyTime(now: Date = Date()) -> PolicyEvaluationResult {
+        guard let nextUpdateGeneralizedTime = self.nextUpdate else {
+            return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` is nil")
+        }
+        
+        guard
+            let thisUpdate = Date(self.thisUpdate),
+            let nextUpdate = Date(nextUpdateGeneralizedTime)
+        else {
+            return .failsToMeetPolicy(reason: "could not convert time specified in certificate to a `Date`")
+        }
+        guard thisUpdate <= now else {
+            return .failsToMeetPolicy(reason: "OCSP response `thisUpdate` (\(self.thisUpdate) is in the future but should be in the past")
+        }
+        
+        guard nextUpdate >= now else {
+            return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` (\(nextUpdateGeneralizedTime) is in the past but should be in the future")
+        }
+        
+        return .meetsPolicy
+    }
+}
+
+
+/// Executes the given `task` up to `maxDuration` seconds and cancel it it exceeds this deadline.
+/// - Parameters:
+///   - maxDuration: max execution duration of
+///   - task: the async task to execute and cancel after `maxDuration` seconds
+/// - Returns: the result of `task`
+private func withDeadline<Result>(
+    _ maxDuration: TimeInterval,
+    task: @escaping () async -> Result
+) async -> Result {
+    let resultTask = Task<Result, Never> {
+        await task()
+    }
+    
+    let cancelationTask = Task {
+        // seconds -> milliseconds -> microseconds -> nanoseconds
+        try await Task.sleep(nanoseconds: UInt64(maxDuration * 1000 * 1000 * 1000))
+        resultTask.cancel()
+    }
+    defer { cancelationTask.cancel() }
+    
+    return await withTaskCancellationHandler {
+        await resultTask.value
+    } onCancel: {
+        resultTask.cancel()
     }
 }
