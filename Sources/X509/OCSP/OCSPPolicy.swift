@@ -93,11 +93,11 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     
     public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         await withDeadline(maxDuration) {
-            await verifyWithoutDeadline(chain: chain)
+            await chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
         }
     }
     
-    private func verifyWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+    private func chainMeetsPolicyRequirementsWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         for index in chain.dropLast().indices {
             let certificate = chain[index]
             let issuer = chain[chain.index(after: index)]
@@ -110,7 +110,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         }
         
         do {
-            let hasRootCertificateOCSPURI = try chain.last?.extensions.authorityInformationAccess?.contains(where: { $0.method == .ocspServer }) ?? false
+            let hasRootCertificateOCSPURI = try chain.last?.extensions.authorityInformationAccess?.contains { $0.method == .ocspServer } ?? false
             guard !hasRootCertificateOCSPURI else {
                 return .failsToMeetPolicy(reason: "root certificate is not allowed to have an OCSP URI")
             }
@@ -127,91 +127,121 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             // OCSP not necessary for certificate
             return .meetsPolicy
         }
+        let authorityInformationAccess: Certificate.Extensions.AuthorityInformationAccess
         do {
-            let authorityInformationAccess = try Certificate.Extensions.AuthorityInformationAccess(description)
-            
-            guard let ocspAccessDescription = authorityInformationAccess.first(where: { $0.method == .ocspServer }) else {
-                // OCSP not necessary for certificate
-                return .meetsPolicy
-            }
- 
-            guard case .uniformResourceIdentifier(let uri) = ocspAccessDescription.location else {
-                return .failsToMeetPolicy(reason: "expected OCSP location to be a URI but got \(ocspAccessDescription.location)")
-            }
-            do {
-                let requestNonce = OCSPNonce()
-                let request = try request(certificate: certificate, issuer: issuer, nonce: requestNonce)
-                
-                var serializer = DER.Serializer()
-                try serializer.serialize(request)
-                do {
-                    let responseDer = try await requester.query(request: serializer.serializedBytes, uri: uri)
-                    do {
-                        let response = try OCSPResponse(derEncoded: responseDer[...])
-                        switch response {
-                        case .successful(let basicResponse):
-                            guard basicResponse.responseData.version == .v1 else {
-                                return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
-                            }
-                            // OCSP responders are allowed to not include the nonce, but if they do it needs to match
-                            if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce {
-                                guard requestNonce == responseNonce else {
-                                    return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
-                                }
-                            }
-                            guard let response = basicResponse.responseData.responses.first else {
-                                return .failsToMeetPolicy(reason: "empty OCSP response")
-                            }
-                            switch response.certStatus {
-                            case .good:
-                                switch response.verifyTime() {
-                                case .meetsPolicy:
-                                    break
-                                case .failsToMeetPolicy(let reason):
-                                    return .failsToMeetPolicy(reason: reason)
-                                }
-                                
-                                // TODO: verify signature
-                                return .meetsPolicy
-                            case .revoked(let info):
-                                return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
-                            case .unknown:
-                                return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
-                            }
-                        case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
-                            return .failsToMeetPolicy(reason: "OCSP request failed \(response)")
-                        }
-                    } catch {
-                        return .failsToMeetPolicy(reason: "OCSP deserialisation failed \(error)")
-                    }
-                } catch {
-                    // the request can fail for various reasons and we need to tolerate this
-                    return .meetsPolicy
-                }
-            } catch {
-                return .failsToMeetPolicy(reason: "OCSP serialisation failed \(error)")
-            }
+            authorityInformationAccess = try .init(description)
         } catch {
             return .failsToMeetPolicy(reason: "failed to decode AuthorityInformationAccess \(error)")
         }
+        guard let ocspAccessDescription = authorityInformationAccess.first(where: { $0.method == .ocspServer }) else {
+            // OCSP not necessary for certificate
+            return .meetsPolicy
+        }
+
+        guard case .uniformResourceIdentifier(let responderURI) = ocspAccessDescription.location else {
+            return .failsToMeetPolicy(reason: "expected OCSP location to be a URI but got \(ocspAccessDescription.location)")
+        }
+        
+        let certID: OCSPCertID
+        do {
+            certID = try self.certID(certificate: certificate, issuer: issuer)
+        } catch {
+            return .failsToMeetPolicy(reason: "failed to create OCSPCertID \(error)")
+        }
+        
+        return await queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI)
     }
-    func request(certificate: Certificate, issuer: Certificate, nonce: OCSPNonce) throws -> OCSPRequest {
+    
+    private func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String) async -> PolicyEvaluationResult {
+        let requestNonce = OCSPNonce()
+        let requestBytes: [UInt8]
+        do {
+            let request = try request(certID: certID, nonce: requestNonce)
+            var serializer = DER.Serializer()
+            try serializer.serialize(request)
+            requestBytes = serializer.serializedBytes
+        } catch {
+            return .failsToMeetPolicy(reason: "failed to create OCSPRequest \(error)")
+        }
+        
+        let responseDerEncoded: [UInt8]
+        do {
+            responseDerEncoded = try await requester.query(request: requestBytes, uri: responderURI)
+        } catch {
+            // the request can fail for various reasons and we need to tolerate this
+            return .meetsPolicy
+        }
+        let response: OCSPResponse
+        do {
+            response = try OCSPResponse(derEncoded: responseDerEncoded[...])
+        } catch {
+            return .failsToMeetPolicy(reason: "OCSP deserialisation failed \(error)")
+        }
+        
+        return verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce)
+    }
+    
+    private func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce) -> PolicyEvaluationResult {
+        switch response {
+        case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
+            return .failsToMeetPolicy(reason: "OCSP request failed \(OCSPResponseStatus(response))")
+        case .successful(let basicResponse):
+            guard basicResponse.responseData.version == .v1 else {
+                return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
+            }
+            do {
+                // OCSP responders are allowed to not include the nonce, but if they do it needs to match
+                if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce {
+                    guard requestNonce == responseNonce else {
+                        return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
+                    }
+                }
+            } catch {
+                return .failsToMeetPolicy(reason: "failed to decode nonce response \(error)")
+            }
+            guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
+                return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate")
+            }
+            
+            switch response.certStatus {
+            case .good:
+                switch response.verifyTime() {
+                case .meetsPolicy:
+                    break
+                case .failsToMeetPolicy(let reason):
+                    return .failsToMeetPolicy(reason: reason)
+                }
+                
+                // TODO: verify signature
+                return .meetsPolicy
+            case .revoked(let info):
+                return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
+            case .unknown:
+                return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
+            }
+        }
+    }
+    
+    func certID(certificate: Certificate, issuer: Certificate) throws -> OCSPCertID {
+        OCSPCertID(
+            hashAlgorithm: .init(algorithm: requestHashAlgorithm.oid, parameters: nil),
+            issuerNameHash: .init(contentBytes: try requestHashAlgorithm.issuerNameHashed(issuer)),
+            issuerKeyHash: .init(contentBytes: requestHashAlgorithm.issuerPublicKeyHashed(issuer)),
+            serialNumber: certificate.serialNumber
+        )
+    }
+    
+    func request(certID: OCSPCertID, nonce: OCSPNonce) throws -> OCSPRequest {
         OCSPRequest(tbsRequest: OCSPTBSRequest(
             version: .v1,
             requestList: [
-                OCSPSingleRequest(certID: OCSPCertID(
-                    hashAlgorithm: .init(algorithm: requestHashAlgorithm.oid, parameters: nil),
-                    issuerNameHash: .init(contentBytes: try requestHashAlgorithm.issuerNameHashed(issuer)),
-                    issuerKeyHash: .init(contentBytes: requestHashAlgorithm.issuerPublicKeyHashed(issuer)),
-                    serialNumber: certificate.serialNumber
-                ))
+                OCSPSingleRequest(certID: certID)
             ],
             requestExtensions: try .init(builder: {
                 nonce
             })
         ))
     }
-
 }
 
 extension OCSPSingleResponse {
