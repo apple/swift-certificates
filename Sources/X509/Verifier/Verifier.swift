@@ -24,12 +24,73 @@ public struct Verifier {
     }
 
     public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((String) -> Void)? = nil) async -> VerificationResult {
-        return .validCertificate
+        var partialChains: [CandidatePartialChain] = [CandidatePartialChain(leaf: leafCertificate)]
+
+        var policyFailures: [VerificationResult.PolicyFailure] = []
+
+        // This is essentially a DFS of the certificate tree. We attempt to iteratively build up possible chains.
+        while let nextPartialCandidate = partialChains.popLast() {
+            // We want to search for parents. Our preferred parent comes from the root store, as this will potentially
+            // produce smaller chains.
+            if var rootParents = rootCertificates[nextPartialCandidate.currentTip.issuer] {
+                // We then want to sort by suitability.
+                rootParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
+
+                // Each of these is now potentially a valid unverified chain.
+                for root in rootParents {
+                    if Self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root) {
+                        continue
+                    }
+
+                    let unverifiedChain = UnverifiedCertificateChain(chain: nextPartialCandidate, root: root)
+
+                    switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
+                    case .meetsPolicy:
+                        // We're good!
+                        return .validCertificate(unverifiedChain.certificates)
+
+                    case .failsToMeetPolicy(reason: let reason):
+                        policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
+                    }
+                }
+            }
+
+            if var intermediateParents = intermediates[nextPartialCandidate.currentTip.issuer] {
+                // We then want to sort by suitability.
+                intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
+
+                for parent in intermediateParents {
+                    if Self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent) {
+                        continue
+                    }
+
+                    let nextChain = CandidatePartialChain(appending: parent, to: nextPartialCandidate)
+                    partialChains.append(nextChain)
+                }
+            }
+        }
+
+        return .couldNotValidate(policyFailures)
+    }
+
+    private static func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
+        // We don't want to re-add the same certificate to the chain: that will always produce a chain that
+        // could have been shorter.
+        if partialChain.contains(certificate: nextCertificate) {
+            return true
+        }
+
+        // We check the signature here: if the signature isn't valid, don't try to apply policy.
+        guard nextCertificate.publicKey.isValidSignature(partialChain.currentTip.signature, for: partialChain.currentTip) else {
+            return true
+        }
+
+        return false
     }
 }
 
 public enum VerificationResult: Hashable, Sendable {
-    case validCertificate
+    case validCertificate([Certificate])
     case couldNotValidate([PolicyFailure])
 }
 
@@ -43,5 +104,89 @@ extension VerificationResult {
             self.chain = chain
             self.policyFailureReason = policyFailureReason
         }
+    }
+}
+
+fileprivate struct CandidatePartialChain {
+    var chain: [Certificate]
+
+    var currentTip: Certificate
+
+    init(leaf: Certificate) {
+        self.chain = []
+        self.currentTip = leaf
+    }
+
+    init(appending newElement: Certificate, to partialChain: CandidatePartialChain) {
+        self.chain = partialChain.chain
+        self.chain.append(partialChain.currentTip)
+        self.currentTip = newElement
+    }
+
+    /// Whether this partial chain already contains this certificate.
+    func contains(certificate: Certificate) -> Bool {
+        // We don't do direct equality, as RFC 4158 § 2.4.1 notes that even certs that aren't
+        // bytewise equal can cause arbitrarily long trust paths and weird loops. In particular, we're
+        // worried about mutual cross-signtaures, where CA X and CA Y have cross-signed one another. In such
+        // a case, we can end up producing inefficient chains that pass through either or both CAs multiple times,
+        // when they only needed to do so once.
+        //
+        // Instead, we consider a path to "contain" a certificate when the following things match:
+        //
+        // 1. Subject
+        // 2. Public Key
+        // 3. SAN (including presence or absence)
+        //
+        // This criteria is motivated by RFC 4158 § 5.2 (loop detection)
+        func match(_ left: Certificate, _ right: Certificate) -> Bool {
+            (
+                left.subject == right.subject &&
+                left.publicKey == right.publicKey &&
+                left.extensions.subjectAlternativeNameBytes == right.extensions.subjectAlternativeNameBytes
+            )
+        }
+
+        return (
+            self.chain.contains(where: { match($0, certificate) }) ||
+            match(self.currentTip, certificate)
+        )
+    }
+}
+
+extension Array where Element == Certificate {
+    fileprivate mutating func sortBySuitabilityForIssuing(certificate: Certificate) {
+        // First, an early exit. If the subject doesn't have an AKI extension, we don't need
+        // to do anything.
+        guard let aki = try? certificate.extensions.authorityKeyIdentifier else {
+            return
+        }
+
+        self.sort(by: { $0.issuerPreference(subjectAKI: aki) < $1.issuerPreference(subjectAKI: aki) })
+    }
+}
+
+extension Certificate {
+    func issuerPreference(subjectAKI: Certificate.Extensions.AuthorityKeyIdentifier) -> Int {
+        guard let ski = try? self.extensions.subjectKeyIdentifier else {
+            // Medium preference: we have no SKI.
+            return 0
+        }
+
+        // The SKI is present. If the two match, this is higher preference: if they don't match, it's lower.
+        return subjectAKI.keyIdentifier == ski.keyIdentifier ? 1 : -1
+    }
+}
+
+extension UnverifiedCertificateChain {
+    fileprivate init(chain: CandidatePartialChain, root: Certificate) {
+        self = .init(chain.chain)
+        self.certificates.append(chain.currentTip)
+        self.certificates.append(root)
+    }
+}
+
+extension Certificate.Extensions {
+    fileprivate var subjectAlternativeNameBytes: ArraySlice<UInt8>? {
+        return self[oid: .X509ExtensionID.subjectAlternativeName].map { $0.value }
     }
 }
