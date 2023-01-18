@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+
+  runtime-setup:
+    image: swift-certificates:22.04-5.8
+    build:
+      args:
+        base_image: "swiftlang/swift:nightly-5.8-jammy"
+
+  test:
+    image: swift-certificates:22.04-5.8
+    environment:
+      - WARN_AS_ERROR_ARG=-Xswiftc -warnings-as-errors
+      - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
+      # - SANITIZER_ARG=--sanitize=thread # TSan broken still
+
+  shell:
+    image: swift-certificates:22.04-5.8
