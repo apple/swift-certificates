@@ -50,7 +50,7 @@ struct OCSPTBSRequest: DERImplicitlyTaggable, Hashable {
             let requestorName = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
                 try GeneralName(derEncoded: $0)
             }
-            let requestList = try DER.sequence(of: OCSPSingleRequest.self,identifier: .sequence, nodes: &nodes)
+            let requestList = try DER.sequence(of: OCSPSingleRequest.self, identifier: .sequence, nodes: &nodes)
             let extensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 2, tagClass: .contextSpecific) {
                 try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: $0)
             }

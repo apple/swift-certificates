@@ -40,12 +40,12 @@ struct OCSPSignature: DERImplicitlyTaggable, Hashable {
     
     init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
-            let algorithmIIdentifier = try AlgorithmIdentifier(derEncoded: &nodes)
+            let algorithmIdentifier = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1BitString(derEncoded: &nodes)
             let certs = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 try DER.sequence(of: Certificate.self, identifier: .sequence, rootNode: node)
             }
-            return .init(algorithmIIdentifier: algorithmIIdentifier, signature: signature, certs: certs)
+            return .init(algorithmIIdentifier: algorithmIdentifier, signature: signature, certs: certs)
         }
     }
     

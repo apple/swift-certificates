@@ -46,7 +46,7 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
          responderID: ResponderID,
          producedAt: GeneralizedTime,
          responses: [OCSPSingleResponse],
-         responseExtensions: Certificate.Extensions?) {
+         responseExtensions: Certificate.Extensions? = nil) {
         self.version = version
         self.responderID = responderID
         self.producedAt = producedAt

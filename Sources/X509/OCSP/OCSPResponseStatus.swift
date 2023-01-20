@@ -74,7 +74,7 @@ enum OCSPResponseStatus: DERImplicitlyTaggable, Hashable {
     }
 
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        try integerValue.serialize(into: &coder, withIdentifier: identifier)
+        try self.integerValue.serialize(into: &coder, withIdentifier: identifier)
     }
 }
 

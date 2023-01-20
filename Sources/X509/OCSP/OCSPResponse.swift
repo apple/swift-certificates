@@ -50,22 +50,25 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
                 }
                 return .successful(try BasicOCSPResponse(derEncoded: responseBytes.response.bytes))
             case .malformedRequest:
-                guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
-                return .malformedRequest
+                return try .init(unsuccessfulStatus: .malformedRequest, responseBytes: responseBytes)
             case .internalError:
-                guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
-                return .internalError
+                return try .init(unsuccessfulStatus: .internalError, responseBytes: responseBytes)
             case .tryLater:
-                guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
-                return .tryLater
+                return try .init(unsuccessfulStatus: .tryLater, responseBytes: responseBytes)
             case .sigRequired:
-                guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
-                return .sigRequired
+                return try .init(unsuccessfulStatus: .sigRequired, responseBytes: responseBytes)
             case .unauthorized:
-                guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
-                return .unauthorized
+                return try .init(unsuccessfulStatus: .unauthorized, responseBytes: responseBytes)
             }
         }
+    }
+    
+    private init(unsuccessfulStatus: OCSPResponse, responseBytes: OCSPResponseBytes?) throws {
+        if case .successful = unsuccessfulStatus {
+            preconditionFailure("this init is not allowed to be called with a successful response status")
+        }
+        guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
+        self = unsuccessfulStatus
     }
 
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {

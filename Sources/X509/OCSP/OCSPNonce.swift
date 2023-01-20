@@ -32,7 +32,7 @@ struct OCSPNonce: DERImplicitlyTaggable, Hashable, Sendable {
     }
     
     init(generator: inout some RandomNumberGenerator) {
-        self.rawValue = .init(contentBytes: (0..<32).map { _ in UInt8.random(in: 0...255, using: &generator) }[...] )
+        self.rawValue = .init(contentBytes: generator.bytes(count: 32))
     }
     
     init(_ ext: Certificate.Extension) throws {
