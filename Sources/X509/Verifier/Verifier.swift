@@ -64,7 +64,7 @@ public struct Verifier {
                         continue
                     }
 
-                    let nextChain = CandidatePartialChain(appending: parent, to: nextPartialCandidate)
+                    let nextChain = nextPartialCandidate.appending(parent)
                     partialChains.append(nextChain)
                 }
             }
@@ -117,12 +117,6 @@ fileprivate struct CandidatePartialChain {
         self.currentTip = leaf
     }
 
-    init(appending newElement: Certificate, to partialChain: CandidatePartialChain) {
-        self.chain = partialChain.chain
-        self.chain.append(partialChain.currentTip)
-        self.currentTip = newElement
-    }
-
     /// Whether this partial chain already contains this certificate.
     func contains(certificate: Certificate) -> Bool {
         // We don't do direct equality, as RFC 4158 § 2.4.1 notes that even certs that aren't
@@ -150,6 +144,13 @@ fileprivate struct CandidatePartialChain {
             self.chain.contains(where: { match($0, certificate) }) ||
             match(self.currentTip, certificate)
         )
+    }
+
+    func appending(_ newElement: Certificate) -> CandidatePartialChain {
+        var newChain = self
+        newChain.chain.append(newChain.currentTip)
+        newChain.currentTip = newElement
+        return newChain
     }
 }
 
