@@ -29,11 +29,13 @@ import SwiftASN1
 struct OCSPCertID: DERImplicitlyTaggable, Hashable {
     var hashAlgorithm: AlgorithmIdentifier
 
+    /// Hash of issuer's DN
     var issuerNameHash: ASN1OctetString
 
+    /// Hash of issuer's public key
     var issuerKeyHash: ASN1OctetString
 
-    var serialNumber: ArraySlice<UInt8>
+    var serialNumber: Certificate.SerialNumber
 
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -42,7 +44,7 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
     init(hashAlgorithm: AlgorithmIdentifier,
          issuerNameHash: ASN1OctetString,
          issuerKeyHash: ASN1OctetString,
-         serialNumber: ArraySlice<UInt8>) {
+         serialNumber: Certificate.SerialNumber) {
         self.hashAlgorithm = hashAlgorithm
         self.issuerNameHash = issuerNameHash
         self.issuerKeyHash = issuerKeyHash
@@ -59,7 +61,7 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
             return .init(hashAlgorithm: hashAlgorithm,
                          issuerNameHash: issuerNameHash,
                          issuerKeyHash: issuerKeyHash,
-                         serialNumber: serialNumber)
+                         serialNumber: .init(bytes: serialNumber))
         }
     }
 
@@ -68,7 +70,7 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
             try self.hashAlgorithm.serialize(into: &coder)
             try self.issuerNameHash.serialize(into: &coder)
             try self.issuerKeyHash.serialize(into: &coder)
-            try self.serialNumber.serialize(into: &coder)
+            try self.serialNumber.bytes.serialize(into: &coder)
         }
     }
 }

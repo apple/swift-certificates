@@ -44,7 +44,7 @@ struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
          certStatus: OCSPCertStatus,
          thisUpdate: GeneralizedTime,
          nextUpdate: GeneralizedTime?,
-         extensions: [Certificate.Extension]?) {
+         extensions: [Certificate.Extension]? = nil) {
         self.certID = certID
         self.certStatus = certStatus
         self.thisUpdate = thisUpdate

@@ -64,13 +64,7 @@ extension Certificate {
         @inlinable
         public init() {
             var rng = SystemRandomNumberGenerator()
-            var bytes = [UInt8]()
-
-            while bytes.count < 20 {
-                bytes.appendLittleEndianBytes(rng.next())
-            }
-
-            self.bytes = bytes[..<20]
+            self.bytes = rng.bytes(count: 20)
         }
     }
 }
@@ -82,17 +76,5 @@ extension Certificate.SerialNumber: Sendable { }
 extension Certificate.SerialNumber: CustomStringConvertible {
     public var description: String {
         return self.bytes.lazy.map { String($0, radix: 16) }.joined(separator: ":")
-    }
-}
-
-extension Array where Element == UInt8 {
-    @inlinable
-    mutating func appendLittleEndianBytes(_ number: UInt64) {
-        let number = number.littleEndian
-
-        for byte in 0..<(MemoryLayout<UInt64>.size) {
-            let shifted = number >> (byte * 8)
-            self.append(UInt8(truncatingIfNeeded: shifted))
-        }
     }
 }

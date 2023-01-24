@@ -32,7 +32,7 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
         .sequence
     }
 
-    var version: Int
+    var version: OCSPVersion
 
     var responderID: ResponderID
 
@@ -40,13 +40,13 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
 
     var responses: [OCSPSingleResponse]
 
-    var responseExtensions: [Certificate.Extension]?
+    var responseExtensions: Certificate.Extensions?
 
-    init(version: Int = 0,
+    init(version: OCSPVersion = .v1,
          responderID: ResponderID,
          producedAt: GeneralizedTime,
          responses: [OCSPSingleResponse],
-         responseExtensions: [Certificate.Extension]?) {
+         responseExtensions: Certificate.Extensions? = nil) {
         self.version = version
         self.responderID = responderID
         self.producedAt = producedAt
@@ -67,14 +67,14 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
                 try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
             }
 
-            return .init(version: version, responderID: responderID, producedAt: producedAt, responses: responses, responseExtensions: responseExtensions)
+            return .init(version: .init(rawValue: version), responderID: responderID, producedAt: producedAt, responses: responses, responseExtensions: responseExtensions.map { .init($0) })
         }
     }
 
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
-            if self.version != 0 {
-                try coder.serialize(self.version, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)
+            if self.version != .v1 {
+                try coder.serialize(self.version.rawValue, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)
             }
 
             try coder.serialize(self.responderID)

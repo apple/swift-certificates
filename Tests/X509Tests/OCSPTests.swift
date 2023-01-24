@@ -28,17 +28,43 @@
 import XCTest
 
 @testable import SwiftASN1
+@testable import X509
 
 final class OCSPTests: XCTestCase {
-    // TODO: Make these work.
-    #if false
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
         var serializer = DER.Serializer()
         try serializer.serialize(value)
         let parsed = try ASN1Object(derEncoded: serializer.serializedBytes)
         XCTAssertEqual(parsed, value)
     }
-
+    
+    func testRequestRoundtrip() throws {
+        let ocspRequest = OCSPRequest(
+            tbsRequest: OCSPTBSRequest(
+                version: .v1,
+                requestorName: GeneralName.dNSName("swift.org"),
+                requestList: [OCSPSingleRequest(
+                    certID: OCSPCertID(
+                        hashAlgorithm: .ecdsaWithSHA256,
+                        issuerNameHash: .init(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8]),
+                        issuerKeyHash: .init(contentBytes: [10, 11, 12, 13, 14, 15, 16, 17, 18]),
+                        serialNumber: .init(bytes: [20, 21, 22, 23, 24, 25, 26, 27, 28])
+                    ),
+                    singleRequestExtensions: nil
+                )],
+                requestExtensions: nil),
+            signature: OCSPSignature(
+                algorithmIIdentifier: .p256PublicKey,
+                signature: .init(bytes: [31, 32, 33, 34, 35, 36, 37, 38]),
+                certs: nil
+            )
+        )
+        
+        try assertRoundTrips(ocspRequest)
+    }
+    
+    // TODO: Make these work.
+    #if false
     func testResponderIDByNameRoundTrips() throws {
         let id = ASN1.ResponderID.byName(
             ASN1.DistinguishedName(elements: [
