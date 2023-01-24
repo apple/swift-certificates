@@ -149,3 +149,21 @@ struct CRLReason: DERImplicitlyTaggable, Hashable, RawRepresentable {
     static let privilegeWithdrawn = CRLReason(rawValue: 9)
     static let aaCompromise = CRLReason(rawValue: 10)
 }
+
+extension CRLReason: CustomStringConvertible {
+    var description: String {
+        switch rawValue {
+        case 0: return "unspecified"
+        case 1: return "keyCompromise"
+        case 2: return "caCompromise"
+        case 3: return "affiliationChanged"
+        case 4: return "superseded"
+        case 5: return "cessationOfOperation"
+        case 6: return "certificateHold"
+        case 8: return "removeFromCRL"
+        case 9: return "privilegeWithdrawn"
+        case 10: return "aaCompromise"
+        default: return "unknown reason \(rawValue)"
+        }
+    }
+}

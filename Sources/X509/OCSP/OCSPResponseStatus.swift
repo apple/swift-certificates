@@ -61,25 +61,32 @@ enum OCSPResponseStatus: DERImplicitlyTaggable, Hashable {
             throw ASN1Error.invalidASN1Object
         }
     }
+    
+    var integerValue: Int {
+        switch self {
+        case .successful: return 0
+        case .malformedRequest: return 1
+        case .internalError: return 2
+        case .tryLater: return 3
+        case .sigRequired: return 5
+        case .unauthorized: return 6
+        }
+    }
 
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        let integerValue: Int
+        try self.integerValue.serialize(into: &coder, withIdentifier: identifier)
+    }
+}
 
+extension OCSPResponseStatus: CustomStringConvertible {
+    var description: String {
         switch self {
-        case .successful:
-            integerValue = 0
-        case .malformedRequest:
-            integerValue = 1
-        case .internalError:
-            integerValue = 2
-        case .tryLater:
-            integerValue = 3
-        case .sigRequired:
-            integerValue = 5
-        case .unauthorized:
-            integerValue = 6
+        case .successful: return "successful"
+        case .malformedRequest: return "malformedRequest"
+        case .internalError: return "internalError"
+        case .tryLater: return "tryLater"
+        case .sigRequired: return "sigRequired"
+        case .unauthorized: return "unauthorized"
         }
-
-        try integerValue.serialize(into: &coder, withIdentifier: identifier)
     }
 }

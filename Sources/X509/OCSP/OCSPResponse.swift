@@ -23,19 +23,17 @@ import SwiftASN1
 ///
 /// ```
 ///
-struct OCSPResponse: DERImplicitlyTaggable, Hashable {
+enum OCSPResponse: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
-    var responseStatus: OCSPResponseStatus
-
-    var responseBytes: OCSPResponseBytes?
-
-    init(responseStatus: OCSPResponseStatus, responseBytes: OCSPResponseBytes?) {
-        self.responseStatus = responseStatus
-        self.responseBytes = responseBytes
-    }
+    case successful(BasicOCSPResponse)
+    case malformedRequest
+    case internalError
+    case tryLater
+    case sigRequired
+    case unauthorized
 
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
@@ -43,17 +41,72 @@ struct OCSPResponse: DERImplicitlyTaggable, Hashable {
             let responseBytes = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 try OCSPResponseBytes(derEncoded: node)
             }
-
-            return .init(responseStatus: responseStatus, responseBytes: responseBytes)
+            switch responseStatus {
+            case .successful:
+                guard let responseBytes,
+                      responseBytes.responseType == .OCSP.basicResponse
+                else {
+                    throw ASN1Error.invalidASN1Object
+                }
+                return .successful(try BasicOCSPResponse(derEncoded: responseBytes.response.bytes))
+            case .malformedRequest:
+                return try .init(unsuccessfulStatus: .malformedRequest, responseBytes: responseBytes)
+            case .internalError:
+                return try .init(unsuccessfulStatus: .internalError, responseBytes: responseBytes)
+            case .tryLater:
+                return try .init(unsuccessfulStatus: .tryLater, responseBytes: responseBytes)
+            case .sigRequired:
+                return try .init(unsuccessfulStatus: .sigRequired, responseBytes: responseBytes)
+            case .unauthorized:
+                return try .init(unsuccessfulStatus: .unauthorized, responseBytes: responseBytes)
+            }
         }
+    }
+    
+    private init(unsuccessfulStatus: OCSPResponse, responseBytes: OCSPResponseBytes?) throws {
+        if case .successful = unsuccessfulStatus {
+            preconditionFailure("this init is not allowed to be called with a successful response status")
+        }
+        guard responseBytes == nil else { throw ASN1Error.invalidASN1Object }
+        self = unsuccessfulStatus
     }
 
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
-            try coder.serialize(self.responseStatus)
-            if let responseBytes = self.responseBytes {
+            try coder.serialize(OCSPResponseStatus(self))
+            switch self {
+            case .successful(let basicResponse):
+                var serializer = DER.Serializer()
+                try serializer.serialize(basicResponse)
+                let responseBytes = OCSPResponseBytes(responseType: .OCSP.basicResponse, response: .init(contentBytes: serializer.serializedBytes[...]))
                 try coder.serialize(responseBytes, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)
+                
+            case .malformedRequest,
+                    .internalError,
+                    .tryLater,
+                    .sigRequired,
+                    .unauthorized:
+                break
             }
+        }
+    }
+}
+
+extension OCSPResponseStatus {
+    init(_ response: OCSPResponse) {
+        switch response {
+        case .successful:
+            self = .successful
+        case .malformedRequest:
+            self = .malformedRequest
+        case .internalError:
+            self = .internalError
+        case .tryLater:
+            self = .tryLater
+        case .sigRequired:
+            self = .sigRequired
+        case .unauthorized:
+            self = .unauthorized
         }
     }
 }
