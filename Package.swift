@@ -42,6 +42,9 @@ let package = Package(
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
+            ],
+            exclude: [
+                "CMakeLists.txt",
             ]),
         .testTarget(
             name: "X509Tests",
