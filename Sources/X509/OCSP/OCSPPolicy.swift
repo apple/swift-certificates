@@ -36,49 +36,51 @@ extension ASN1ObjectIdentifier {
     static let sha1NoSign: Self = [1, 3, 14, 3, 2, 26]
 }
 
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
-    enum RequestHashAlgorithm {
-        case insecureSha1
-        // we can't yet enable sha256 by default but we want in the future
-        case sha256
-        
-        var oid: ASN1ObjectIdentifier {
-            switch self {
-            case .insecureSha1: return .sha1NoSign
-            case .sha256: return .sha256NoSign
-            }
-        }
-        private func hashed(_ value: some DataProtocol) -> ArraySlice<UInt8> {
-            switch self {
-            case .insecureSha1:
-                var hashAlgorithm = Insecure.SHA1()
-                hashAlgorithm.update(data: value)
-                return Array(hashAlgorithm.finalize())[...]
-            case .sha256:
-                var hashAlgorithm = SHA256()
-                hashAlgorithm.update(data: value)
-                return Array(hashAlgorithm.finalize())[...]
-            }
-        }
-        
-        fileprivate func issuerNameHashed(_ certificate: Certificate) throws -> ArraySlice<UInt8> {
-            /// issuerNameHash is the hash of the issuer's distinguished name
-            /// (DN).  The hash shall be calculated over the DER encoding of the
-            /// issuer's name field in the certificate being checked.
-            var serializer = DER.Serializer()
-            try serializer.serialize(certificate.subject)
-            return self.hashed(serializer.serializedBytes)
-        }
-        
-        fileprivate func issuerPublicKeyHashed(_ certificate: Certificate) -> ArraySlice<UInt8> {
-            /// issuerKeyHash is the hash of the issuer's public key.  The hash
-            /// shall be calculated over the value (excluding tag and length) of
-            /// the subject public key field in the issuer's certificate.
-            self.hashed(SubjectPublicKeyInfo(certificate.publicKey).key.bytes)
+enum OCSPRequestHashAlgorithm {
+    case insecureSha1
+    // we can't yet enable sha256 by default but we want in the future
+    case sha256
+    
+    var oid: ASN1ObjectIdentifier {
+        switch self {
+        case .insecureSha1: return .sha1NoSign
+        case .sha256: return .sha256NoSign
         }
     }
+    private func hashed(_ value: ArraySlice<UInt8>) -> ArraySlice<UInt8> {
+        switch self {
+        case .insecureSha1:
+            var hashAlgorithm = Insecure.SHA1()
+            hashAlgorithm.update(data: value)
+            return Array(hashAlgorithm.finalize())[...]
+        case .sha256:
+            var hashAlgorithm = SHA256()
+            hashAlgorithm.update(data: value)
+            return Array(hashAlgorithm.finalize())[...]
+        }
+    }
+    
+    fileprivate func issuerNameHashed(_ certificate: Certificate) throws -> ArraySlice<UInt8> {
+        /// issuerNameHash is the hash of the issuer's distinguished name
+        /// (DN).  The hash shall be calculated over the DER encoding of the
+        /// issuer's name field in the certificate being checked.
+        var serializer = DER.Serializer()
+        try serializer.serialize(certificate.subject)
+        return self.hashed(serializer.serializedBytes[...])
+    }
+    
+    fileprivate func issuerPublicKeyHashed(_ certificate: Certificate) -> ArraySlice<UInt8> {
+        /// issuerKeyHash is the hash of the issuer's public key.  The hash
+        /// shall be calculated over the value (excluding tag and length) of
+        /// the subject public key field in the issuer's certificate.
+        self.hashed(SubjectPublicKeyInfo(certificate.publicKey).key.bytes)
+    }
+}
+
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
+    
     private var requester: Requester
-    private var requestHashAlgorithm: RequestHashAlgorithm
+    private var requestHashAlgorithm: OCSPRequestHashAlgorithm
     
     /// max duration the policy verification is allowed in total
     ///
@@ -121,7 +123,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         
         do {
             let hasRootCertificateOCSPURI = try chain.last?.extensions.authorityInformationAccess?.contains { $0.method == .ocspServer } ?? false
-            guard !hasRootCertificateOCSPURI else {
+            if hasRootCertificateOCSPURI {
                 return .failsToMeetPolicy(reason: "root certificate is not allowed to have an OCSP URI")
             }
         } catch {
@@ -133,28 +135,38 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     
     
     private func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
-        guard let description = certificate.extensions[oid: .X509ExtensionID.authorityInformationAccess] else {
-            // OCSP not necessary for certificate
-            return .meetsPolicy
-        }
-        let authorityInformationAccess: Certificate.Extensions.AuthorityInformationAccess
+        
+        let authorityInformationAccess: Certificate.Extensions.AuthorityInformationAccess?
         do {
-            authorityInformationAccess = try .init(description)
+            authorityInformationAccess = try certificate.extensions.authorityInformationAccess
         } catch {
             return .failsToMeetPolicy(reason: "failed to decode AuthorityInformationAccess \(error)")
         }
-        guard let ocspAccessDescription = authorityInformationAccess.first(where: { $0.method == .ocspServer }) else {
+        guard let authorityInformationAccess else {
             // OCSP not necessary for certificate
             return .meetsPolicy
         }
-
-        guard case .uniformResourceIdentifier(let responderURI) = ocspAccessDescription.location else {
-            return .failsToMeetPolicy(reason: "expected OCSP location to be a URI but got \(ocspAccessDescription.location)")
+        
+        let ocspAccessDescriptions = authorityInformationAccess.lazy.filter { $0.method == .ocspServer }
+        if ocspAccessDescriptions.isEmpty {
+            // OCSP not necessary for certificate
+            return .meetsPolicy
+        }
+        
+        // We could find more than one ocsp server, where only one has a uri. We want to find the first one with a uri.
+        let responderURI = ocspAccessDescriptions.lazy.compactMap { description -> String? in
+            guard case .uniformResourceIdentifier(let responderURI) = description.location else {
+                return nil
+            }
+            return responderURI
+        }.first
+        guard let responderURI else {
+            return .failsToMeetPolicy(reason: "expected OCSP location to be a URI but got \(ocspAccessDescriptions)")
         }
         
         let certID: OCSPCertID
         do {
-            certID = try self.certID(certificate: certificate, issuer: issuer)
+            certID = try OCSPCertID(hashAlgorithm: requestHashAlgorithm, certificate: certificate, issuer: issuer)
         } catch {
             return .failsToMeetPolicy(reason: "failed to create OCSPCertID \(error)")
         }
@@ -166,7 +178,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         let requestNonce = OCSPNonce()
         let requestBytes: [UInt8]
         do {
-            let request = try request(certID: certID, nonce: requestNonce)
+            let request = try OCSPRequest(certID: certID, nonce: requestNonce)
             var serializer = DER.Serializer()
             try serializer.serialize(request)
             requestBytes = serializer.serializedBytes
@@ -201,10 +213,9 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             }
             do {
                 // OCSP responders are allowed to not include the nonce, but if they do it needs to match
-                if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce {
-                    guard requestNonce == responseNonce else {
-                        return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
-                    }
+                if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce,
+                   requestNonce != responseNonce {
+                    return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
                 }
             } catch {
                 return .failsToMeetPolicy(reason: "failed to decode nonce response \(error)")
@@ -222,7 +233,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
                     return .failsToMeetPolicy(reason: reason)
                 }
                 
-                // TODO: verify signature
+                // TODO: verify signature: rdar://104687979
                 return .meetsPolicy
             case .revoked(let info):
                 return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
@@ -231,18 +242,22 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             }
         }
     }
-    
-    private func certID(certificate: Certificate, issuer: Certificate) throws -> OCSPCertID {
-        OCSPCertID(
-            hashAlgorithm: .init(algorithm: requestHashAlgorithm.oid, parameters: nil),
-            issuerNameHash: .init(contentBytes: try requestHashAlgorithm.issuerNameHashed(issuer)),
-            issuerKeyHash: .init(contentBytes: requestHashAlgorithm.issuerPublicKeyHashed(issuer)),
+}
+
+extension OCSPCertID {
+    init(hashAlgorithm: OCSPRequestHashAlgorithm, certificate: Certificate, issuer: Certificate) throws {
+        self.init(
+            hashAlgorithm: .init(algorithm: hashAlgorithm.oid, parameters: nil),
+            issuerNameHash: .init(contentBytes: try hashAlgorithm.issuerNameHashed(issuer)),
+            issuerKeyHash: .init(contentBytes: hashAlgorithm.issuerPublicKeyHashed(issuer)),
             serialNumber: certificate.serialNumber
         )
     }
-    
-    private func request(certID: OCSPCertID, nonce: OCSPNonce) throws -> OCSPRequest {
-        OCSPRequest(tbsRequest: OCSPTBSRequest(
+}
+
+extension OCSPRequest {
+    init(certID: OCSPCertID, nonce: OCSPNonce) throws {
+        self.init(tbsRequest: OCSPTBSRequest(
             version: .v1,
             requestList: [
                 OCSPSingleRequest(certID: certID)
@@ -278,30 +293,31 @@ extension OCSPSingleResponse {
     }
 }
 
-
 /// Executes the given `task` up to `maxDuration` seconds and cancel it it exceeds this deadline.
+/// If `task` takes longer than `maxDuration` seconds, this method returns `.meetsPolicy`.
 /// - Parameters:
-///   - maxDuration: max execution duration of
+///   - maxDuration: max execution duration in seconds of `task`
 ///   - task: the async task to execute and cancel after `maxDuration` seconds
-/// - Returns: the result of `task`
-private func withDeadline<Result>(
+/// - Returns: the result of `task` or `.meetsPolicy` if the execution of `task` exceeds `maxDuration` seconds
+private func withDeadline(
     _ maxDuration: TimeInterval,
-    task: @escaping () async -> Result
-) async -> Result {
-    let resultTask = Task<Result, Never> {
-        await task()
-    }
-    
-    let cancelationTask = Task {
-        // seconds -> milliseconds -> microseconds -> nanoseconds
-        try await Task.sleep(nanoseconds: UInt64(maxDuration * 1000 * 1000 * 1000))
-        resultTask.cancel()
-    }
-    defer { cancelationTask.cancel() }
-    
-    return await withTaskCancellationHandler {
-        await resultTask.value
-    } onCancel: {
-        resultTask.cancel()
+    task: @escaping @Sendable () async -> PolicyEvaluationResult
+) async -> PolicyEvaluationResult {
+    await withTaskGroup(of: PolicyEvaluationResult.self) { group in
+        group.addTask(operation: task)
+        _ = group.addTaskUnlessCancelled {
+            do {
+                try await Task.sleep(nanoseconds: UInt64(maxDuration * 1000 * 1000 * 1000))
+            } catch {
+                // can only throw if we got canceled which is fine
+            }
+            // if we got cancelled we still need to succeed the verification
+            return .meetsPolicy
+        }
+        // force unwrapping is okay because we have added at least one task
+        let result = await group.next()!
+        group.cancelAll()
+        await group.waitForAll()
+        return result
     }
 }
