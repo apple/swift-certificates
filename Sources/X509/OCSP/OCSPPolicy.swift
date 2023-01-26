@@ -293,31 +293,32 @@ extension OCSPSingleResponse {
     }
 }
 
-/// Executes the given `task` up to `maxDuration` seconds and cancel it it exceeds this deadline.
-/// If `task` takes longer than `maxDuration` seconds, this method returns `.meetsPolicy`.
+/// Executes the given `operation` up to `maxDuration` seconds and cancels it if it exceeds this deadline.
 /// - Parameters:
-///   - maxDuration: max execution duration in seconds of `task`
-///   - task: the async task to execute and cancel after `maxDuration` seconds
-/// - Returns: the result of `task` or `.meetsPolicy` if the execution of `task` exceeds `maxDuration` seconds
-private func withDeadline(
+///   - maxDuration: max execution duration in seconds of `operation`
+///   - operation: the task to start and cancel after `maxDuration` seconds
+/// - Returns: the result of `operation`
+private func withDeadline<Result>(
     _ maxDuration: TimeInterval,
-    task: @escaping @Sendable () async -> PolicyEvaluationResult
-) async -> PolicyEvaluationResult {
-    await withTaskGroup(of: PolicyEvaluationResult.self) { group in
-        group.addTask(operation: task)
-        _ = group.addTaskUnlessCancelled {
-            do {
-                try await Task.sleep(nanoseconds: UInt64(maxDuration * 1000 * 1000 * 1000))
-            } catch {
-                // can only throw if we got canceled which is fine
-            }
-            // if we got cancelled we still need to succeed the verification
-            return .meetsPolicy
+    operation: @escaping @Sendable () async -> Result
+) async -> Result {
+    await withTaskGroup(of: Optional<Result>.self) { group in
+        // add actual operation
+        group.addTask(operation: operation)
+        // add watchdog
+        group.addTask {
+            try? await Task.sleep(nanoseconds: UInt64(maxDuration * 1000 * 1000 * 1000))
+            return nil
         }
-        // force unwrapping is okay because we have added at least one task
-        let result = await group.next()!
+        // we add two tasks and it is therefore safe to unwrap two calls to `group.next()`
+        let firstResult = await group.next()!
+        // either the operation or the watchdog has finished
+        // regardless of which finished first, we need to cancel the second task
         group.cancelAll()
-        await group.waitForAll()
-        return result
+        let secondResult = await group.next()!
+        // the watchdog and the actually operation have now completed.
+        // the result of the operation is non-nil and must be in either firstResult or secondResult
+        // therefore it is safe to unwrap it
+        return (firstResult ?? secondResult)!
     }
 }
