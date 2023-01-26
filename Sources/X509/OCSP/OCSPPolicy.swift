@@ -104,7 +104,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     }
     
     public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        await withDeadline(maxDuration) {
+        await withTimeout(maxDuration) {
             await chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
         }
     }
@@ -271,6 +271,11 @@ extension OCSPRequest {
 
 extension OCSPSingleResponse {
     fileprivate func verifyTime(now: Date) -> PolicyEvaluationResult {
+        /// Clients MUST check for the existence of the nextUpdate field and MUST
+        /// ensure the current time, expressed in GMT time as described in
+        /// Section 2.2.4, falls between the thisUpdate and nextUpdate times.  Ifhttps://www.rfc-editor.org/rfc/rfc5019#section-4
+        /// the nextUpdate field is absent, the client MUST reject the response.
+        /// https://www.rfc-editor.org/rfc/rfc5019#section-4
         guard let nextUpdateGeneralizedTime = self.nextUpdate else {
             return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` is nil")
         }
@@ -293,12 +298,12 @@ extension OCSPSingleResponse {
     }
 }
 
-/// Executes the given `operation` up to `maxDuration` seconds and cancels it if it exceeds this deadline.
+/// Executes the given `operation` up to `maxDuration` seconds and cancels it if it exceeds the timeout.
 /// - Parameters:
 ///   - maxDuration: max execution duration in seconds of `operation`
 ///   - operation: the task to start and cancel after `maxDuration` seconds
 /// - Returns: the result of `operation`
-private func withDeadline<Result>(
+private func withTimeout<Result>(
     _ maxDuration: TimeInterval,
     operation: @escaping @Sendable () async -> Result
 ) async -> Result {
