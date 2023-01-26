@@ -19,9 +19,9 @@ import struct Foundation.Date
 import typealias Foundation.TimeInterval
 
 public protocol OCSPRequester: Sendable {
-    /// Called with a OCSP Request.
+    /// Called with an OCSP Request.
     ///
-    /// The ``OCSPVerifierPolicy`` will call this method for each certificate witch contains a OCSP URI and will cancel the call if it reaches a deadline.
+    /// The ``OCSPVerifierPolicy`` will call this method for each certificate that contains an OCSP URI and will cancel the call if it reaches a deadline.
     /// Therefore the implementation of this method should **not** set a deadline on the HTTP request.
     /// - Parameters:
     ///   - request: DER-encoded request bytes
@@ -67,14 +67,14 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             /// issuer's name field in the certificate being checked.
             var serializer = DER.Serializer()
             try serializer.serialize(certificate.subject)
-            return hashed(serializer.serializedBytes)
+            return self.hashed(serializer.serializedBytes)
         }
         
         fileprivate func issuerPublicKeyHashed(_ certificate: Certificate) -> ArraySlice<UInt8> {
             /// issuerKeyHash is the hash of the issuer's public key.  The hash
             /// shall be calculated over the value (excluding tag and length) of
             /// the subject public key field in the issuer's certificate.
-            hashed(SubjectPublicKeyInfo(certificate.publicKey).key.bytes)
+            self.hashed(SubjectPublicKeyInfo(certificate.publicKey).key.bytes)
         }
     }
     private var requester: Requester
@@ -159,7 +159,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             return .failsToMeetPolicy(reason: "failed to create OCSPCertID \(error)")
         }
         
-        return await queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI)
+        return await self.queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI)
     }
     
     private func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String) async -> PolicyEvaluationResult {
@@ -176,7 +176,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         
         let responseDerEncoded: [UInt8]
         do {
-            responseDerEncoded = try await requester.query(request: requestBytes, uri: responderURI)
+            responseDerEncoded = try await self.requester.query(request: requestBytes, uri: responderURI)
         } catch {
             // the request can fail for various reasons and we need to tolerate this
             return .meetsPolicy
@@ -188,7 +188,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             return .failsToMeetPolicy(reason: "OCSP deserialisation failed \(error)")
         }
         
-        return verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce)
+        return self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce)
     }
     
     private func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce) -> PolicyEvaluationResult {
