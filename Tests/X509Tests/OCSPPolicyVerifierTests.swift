@@ -350,14 +350,6 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
 }
 
-extension TimeInterval {
-     private static let oneDay: TimeInterval = 60 * 60 * 24
-
-     static func days(_ days: Int) -> TimeInterval {
-         return Double(days) * oneDay
-     }
-}
-
 extension GeneralizedTime {
     init(_ date: Date) throws {
         let components = gregorianCalendar.dateComponents(in: utcTimeZone, from: date)
