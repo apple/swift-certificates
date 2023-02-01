@@ -21,8 +21,8 @@
 ///
 /// ```swift
 /// let name = try DistinguishedName {
-///     CountryName(printableString: "US")
-///     OrganizationName(printableString: "Apple Inc.")
+///     CountryName("US")
+///     OrganizationName("Apple Inc.")
 ///     CommonName("Apple Public EV Server ECC CA 1 - G1")
 /// }
 /// ```
