@@ -39,6 +39,7 @@ import SwiftASN1
 ///   otherCertFormat OBJECT IDENTIFIER,
 ///   otherCert ANY DEFINED BY otherCertFormat }
 /// ```
+/// - Note: At the moment we don't support `crls` (`RevocationInfoChoices`)
 struct CMSSignedData {
     var version: CMSVersion
     var digestAlgorithms: [AlgorithmIdentifier]

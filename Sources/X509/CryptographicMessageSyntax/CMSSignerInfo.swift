@@ -32,6 +32,7 @@ import SwiftASN1
 /// - Note: If the `SignerIdentifier` is the CHOICE `issuerAndSerialNumber`,
 /// then the `version` MUST be 1.  If the `SignerIdentifier` is `subjectKeyIdentifier`,
 /// then the `version` MUST be 3.
+/// - Note: At the moment we neither support `signedAttrs` (`SignedAttributes`) nor `unsignedAttrs` (`UnsignedAttributes`)
 struct CMSSignerInfo {
     var version: CMSVersion
     var signerIdentifier: CMSSignerIdentifier

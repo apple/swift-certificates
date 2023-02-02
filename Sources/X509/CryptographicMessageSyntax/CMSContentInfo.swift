@@ -21,6 +21,19 @@ import SwiftASN1
 ///   content [0] EXPLICIT ANY DEFINED BY contentType }
 /// ContentType ::= OBJECT IDENTIFIER
 /// ```
-enum CMSContentInfo {
-    case signedData(CMSSignedData)
+struct CMSContentInfo {
+    var contentType: ASN1ObjectIdentifier
+    var content: ASN1Any
+}
+
+extension CMSContentInfo {
+    init(_ signedData: CMSSignedData) {
+        fatalError("TODO: not implemented")
+    }
+    
+    var signedData: CMSSignedData? {
+        get throws {
+            fatalError("TODO: not implemented")
+        }
+    }
 }
