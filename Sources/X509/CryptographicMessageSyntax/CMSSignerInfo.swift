@@ -96,13 +96,13 @@ struct CMSSignerInfo: DERImplicitlyTaggable, Hashable {
             let digestAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             
             // we don't support signedAttrs yet but we still need to skip them
-            _ = try DER._optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 0, tagClass: .contextSpecific)) { _ in }
+            _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { _ in }
             
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1OctetString(derEncoded: &nodes)
             
             // we don't support unsignedAttrs yet but we still need to skip them
-            _ = try DER._optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific)) { _ in }
+            _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
             
             return .init(
                 version: version,

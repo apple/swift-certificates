@@ -80,13 +80,13 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
             }
             
             let encapContentInfo = try CMSEncapsulatedContentInfo(derEncoded: &nodes)
-            let certificates = try DER._optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 0, tagClass: .contextSpecific)) { node in
+            let certificates = try DER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 // TODO: this is actually a SET OF so we need to verify that the binary representation of each element is lexicographically sorted.
                 try DER.sequence(of: Certificate.self, identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific), rootNode: node)
             }
             
             // we need to skip this node even though we don't support it
-            _ = try DER._optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific)) { _ in }
+            _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
             
             let signerInfos = try DER.sequence(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
             
@@ -124,36 +124,5 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
             // TODO: this is actually a SET OF. We need to sort the binary representation of each element lexicographically before encoding.
             try coder.serializeSequenceOf(self.signerInfos, identifier: .set)
         }
-    }
-}
-
-extension DER {
-    /// Parses an optional implicitly tagged element.
-    ///
-    /// - parameters:
-    ///     - nodes: The ``ASN1NodeCollection/Iterator`` to parse this element out of.
-    ///     - tag: The implicit tag.
-    ///
-    /// - returns: The parsed element, if it was present, or `nil` if it was not.
-    static func _optionalImplicitlyTagged<T>(
-        _ nodes: inout ASN1NodeCollection.Iterator,
-        tag: ASN1Identifier,
-        _ builder: (ASN1Node) throws -> T
-    ) throws -> T? {
-        
-        var localNodesCopy = nodes
-        guard let node = localNodesCopy.next() else {
-            // Node not present, return nil.
-            return nil
-        }
-        
-        guard node.identifier == tag else {
-            // Node is a mismatch, with the wrong tag. Our optional isn't present.
-            return nil
-        }
-        nodes = localNodesCopy
-        
-        // We're good: pass the node on.
-        return try builder(node)
     }
 }
