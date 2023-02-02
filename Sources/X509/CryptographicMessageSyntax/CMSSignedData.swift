@@ -92,7 +92,7 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
             
             // TODO: support multiple signer infos. For this we need to validate that the binary representation of each element is lexicographically sorted.
             guard signerInfos.count <= 1 else {
-                throw Error.multipleDigestAlgorithmsAreNotSupportedYet
+                throw Error.multipleSignerInfosAreNotSupportedYet
             }
             
             return .init(
