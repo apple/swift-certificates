@@ -86,10 +86,7 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
             }
             
             // we need to skip this node even though we don't support it
-            let _: CMSRevocationInfoChoices? = try DER._optionalImplicitlyTagged(
-                &nodes,
-                tag: .init(tagWithNumber: 1, tagClass: .contextSpecific)
-            )
+            _ = try DER._optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific)) { _ in }
             
             let signerInfos = try DER.sequence(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
             
@@ -130,61 +127,7 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
     }
 }
 
-fileprivate enum CMSCertificateChoices: DERParseable, DERSerializable {
-    static var defaultIdentifier: SwiftASN1.ASN1Identifier {
-        .enumerated
-    }
-    
-    case certificate(Certificate)
-    
-    init(derEncoded: ASN1Node) throws {
-        guard derEncoded.identifier == Certificate.defaultIdentifier else {
-            throw ASN1Error.unexpectedFieldType
-        }
-        self = try .certificate(.init(derEncoded: derEncoded))
-    }
-    func serialize(into coder: inout DER.Serializer) throws {
-        switch self {
-        case .certificate(let certificate):
-            try coder.serialize(certificate)
-        }
-    }
-}
-
-/// Not yet supported
-fileprivate struct CMSRevocationInfoChoices: DERParseable, DERSerializable {
-    init(derEncoded: ASN1Node) throws {}
-    func serialize(into coder: inout DER.Serializer) throws {}
-}
-
 extension DER {
-    /// Parses an optional implicitly tagged element.
-    ///
-    /// - parameters:
-    ///     - nodes: The ``ASN1NodeCollection/Iterator`` to parse this element out of.
-    ///     - tag: The implicit tag.
-    ///
-    /// - returns: The parsed element, if it was present, or `nil` if it was not.
-    static func _optionalImplicitlyTagged<T: DERParseable>(
-        _ nodes: inout ASN1NodeCollection.Iterator,
-        tag: ASN1Identifier
-    ) throws -> T? {
-        
-        var localNodesCopy = nodes
-        guard let node = localNodesCopy.next() else {
-            // Node not present, return nil.
-            return nil
-        }
-        
-        guard node.identifier == tag else {
-            // Node is a mismatch, with the wrong tag. Our optional isn't present.
-            return nil
-        }
-        
-        // We're good: pass the node on.
-        return try T(derEncoded: &nodes)
-    }
-    
     /// Parses an optional implicitly tagged element.
     ///
     /// - parameters:
