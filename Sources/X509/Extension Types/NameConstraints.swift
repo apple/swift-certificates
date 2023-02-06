@@ -278,7 +278,7 @@ extension Certificate.Extensions {
 
             let nameConstraintsValue = try NameConstraintsValue(derEncoded: ext.value)
             guard nameConstraintsValue.permittedSubtrees != nil || nameConstraintsValue.excludedSubtrees != nil else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "Name Constraints has no permitted or excluded subtrees")
             }
 
             self.permittedSubtrees = nameConstraintsValue.permittedSubtrees ?? []

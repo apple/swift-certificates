@@ -31,7 +31,7 @@ enum Time: DERParseable, DERSerializable, Hashable, Sendable {
         case UTCTime.defaultIdentifier:
             self = .utcTime(try UTCTime(derEncoded: rootNode))
         default:
-            throw ASN1Error.invalidASN1Object
+            throw ASN1Error.unexpectedFieldType(rootNode.identifier)
         }
     }
 

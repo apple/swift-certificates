@@ -46,7 +46,7 @@ struct OCSPNonce: DERImplicitlyTaggable, Hashable, Sendable {
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self.rawValue = try ASN1OctetString(derEncoded: rootNode, withIdentifier: identifier)
         guard (1...32).contains(self.rawValue.bytes.count) else {
-            throw ASN1Error.unsupportedFieldLength
+            throw ASN1Error.unsupportedFieldLength(reason: "OCSP Nonce has invalid number of bytes: \(self.rawValue.bytes.count)")
         }
     }
     

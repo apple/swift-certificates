@@ -48,7 +48,7 @@ enum DirectoryString: DERParseable, DERSerializable, Hashable {
         case .bmpString:
             self = .bmpString(try ASN1BMPString(derEncoded: rootNode))
         default:
-            throw ASN1Error.unexpectedFieldType
+            throw ASN1Error.unexpectedFieldType(rootNode.identifier)
         }
     }
 

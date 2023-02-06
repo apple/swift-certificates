@@ -264,7 +264,7 @@ extension Certificate: DERImplicitlyTaggable {
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             guard let tbsCertificateNode = nodes.next() else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "TBSCertificate missing")
             }
             let tbsCertificate = try TBSCertificate(derEncoded: tbsCertificateNode)
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)

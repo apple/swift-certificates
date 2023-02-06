@@ -106,7 +106,7 @@ struct TBSCertificate: DERImplicitlyTaggable, Hashable, Sendable {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let version = try DER.decodeDefaultExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific, defaultValue: Int(0))
             guard (0...2).contains(version) else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "Invalid X.509 version \(version)")
             }
 
             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)

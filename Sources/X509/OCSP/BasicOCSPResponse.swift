@@ -129,26 +129,26 @@ enum ResponderID: DERParseable, DERSerializable, Hashable {
         switch derEncoded.identifier {
         case ResponderID.nameIdentifier:
             guard case .constructed(let nodes) = derEncoded.content else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "ResponderID content must be constructed.")
             }
             var iterator = nodes.makeIterator()
             guard let rootNode = iterator.next(), iterator.next() == nil else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "Invalid number of responder nodes.")
             }
 
             self = try .byName(.init(derEncoded: rootNode))
         case ResponderID.keyIdentifier:
             guard case .constructed(let nodes) = derEncoded.content else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "ResponderID content must be constructed")
             }
             var iterator = nodes.makeIterator()
             guard let rootNode = iterator.next(), iterator.next() == nil else {
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "Invalid number of responder nodes")
             }
 
             self = try .byKey(.init(derEncoded: rootNode))
         default:
-            throw ASN1Error.unexpectedFieldType
+            throw ASN1Error.unexpectedFieldType(derEncoded.identifier)
         }
     }
 
