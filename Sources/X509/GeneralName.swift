@@ -69,7 +69,7 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case Self.registeredIDTag:
             self = try .registeredID(ASN1ObjectIdentifier(derEncoded: rootNode, withIdentifier: Self.registeredIDTag))
         default:
-            throw ASN1Error.invalidFieldIdentifier
+            throw ASN1Error.unexpectedFieldType(rootNode.identifier)
         }
     }
 

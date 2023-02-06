@@ -65,7 +65,7 @@ enum OCSPCertStatus: DERParseable, DERSerializable, Hashable {
             self = .unknown
 
         default:
-            throw ASN1Error.invalidASN1Object
+            throw ASN1Error.unexpectedFieldType(node.identifier)
         }
     }
 

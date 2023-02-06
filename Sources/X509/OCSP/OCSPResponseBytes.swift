@@ -60,7 +60,7 @@ struct OCSPResponseBytes: DERImplicitlyTaggable, Hashable {
 extension BasicOCSPResponse {
     init(decoding original: OCSPResponseBytes) throws {
         guard original.responseType == .OCSP.basicResponse else {
-            throw ASN1Error.invalidASN1Object
+            throw ASN1Error.invalidASN1Object(reason: "Cannot decode BasicOCSPResponse from \(original.responseType)")
         }
 
         self = try .init(derEncoded: original.response.bytes)

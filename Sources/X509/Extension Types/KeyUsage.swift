@@ -259,16 +259,16 @@ extension Certificate.Extensions {
                 precondition(bitstring.paddingBits < 8)
                 let bitMask = UInt8(0x01) << bitstring.paddingBits
                 if (bitstring.bytes[bitstring.bytes.startIndex] & bitMask) == 0 {
-                    throw ASN1Error.invalidASN1Object
+                    throw ASN1Error.invalidASN1Object(reason: "Invalid leading padding bit")
                 }
             case 2 where bitstring.paddingBits == 7:
                 // This is fine, there are 9 valid bits: 8 from the prior byte and 1 here.
                 if (bitstring.bytes[bitstring.bytes.startIndex &+ 1] & 0x80) == 0 {
-                    throw ASN1Error.invalidASN1Object
+                    throw ASN1Error.invalidASN1Object(reason: "Invalid padding bit")
                 }
             default:
                 // Too many bits!
-                throw ASN1Error.invalidASN1Object
+                throw ASN1Error.invalidASN1Object(reason: "Too many bits for Key Usage")
             }
         }
     }

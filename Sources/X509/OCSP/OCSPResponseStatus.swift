@@ -58,7 +58,7 @@ enum OCSPResponseStatus: DERImplicitlyTaggable, Hashable {
         case 6:
             self = .unauthorized
         default:
-            throw ASN1Error.invalidASN1Object
+            throw ASN1Error.invalidASN1Object(reason: "Unexpected OCSP response status: \(rawValue)")
         }
     }
     

@@ -36,7 +36,7 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable {
             self = try .subjectKeyIdentifier(.init(keyIdentifier: .init(derEncoded: node, withIdentifier: Self.skiIdentifier)))
 
         default:
-            throw ASN1Error.invalidASN1Object
+            throw ASN1Error.unexpectedFieldType(node.identifier)
         }
     }
     
