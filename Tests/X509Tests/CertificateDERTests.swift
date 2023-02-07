@@ -234,21 +234,21 @@ final class CertificateDERTests: XCTestCase {
         let cert = try Certificate(derEncoded: binary)
 
         let expectedExtensions = try Certificate.Extensions {
-            Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: [0xE0, 0x85, 0x48, 0x7D, 0x13, 0xA6, 0xD3, 0x10, 0x19, 0x9F, 0x5C, 0xCB, 0x6B, 0x78, 0x24, 0x92, 0xF8, 0xAE, 0x1B, 0xAE])
+            SubjectKeyIdentifier(keyIdentifier: [0xE0, 0x85, 0x48, 0x7D, 0x13, 0xA6, 0xD3, 0x10, 0x19, 0x9F, 0x5C, 0xCB, 0x6B, 0x78, 0x24, 0x92, 0xF8, 0xAE, 0x1B, 0xAE])
 
-            Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: [0xB3, 0xDB, 0x48, 0xA4, 0xF9, 0xA1, 0xC5, 0xD8, 0xAE, 0x36, 0x41, 0xCC, 0x11, 0x63, 0x69, 0x62, 0x29, 0xBC, 0x4B, 0xC6])
-
-            Critical(
-                Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
-            )
-
-            Certificate.Extensions.ExtendedKeyUsage([.serverAuth, .clientAuth])
+            AuthorityKeyIdentifier(keyIdentifier: [0xB3, 0xDB, 0x48, 0xA4, 0xF9, 0xA1, 0xC5, 0xD8, 0xAE, 0x36, 0x41, 0xCC, 0x11, 0x63, 0x69, 0x62, 0x29, 0xBC, 0x4B, 0xC6])
 
             Critical(
-                Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
             )
 
-            Certificate.Extensions.AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
+            ExtendedKeyUsage([.serverAuth, .clientAuth])
+
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+            )
+
+            AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
 
             // CRL Distribution Points
             Certificate.Extension(

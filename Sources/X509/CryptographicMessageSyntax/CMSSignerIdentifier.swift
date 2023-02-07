@@ -25,7 +25,7 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable {
     private static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
     
     case issuerAndSerialNumber(CMSIssuerAndSerialNumber)
-    case subjectKeyIdentifier(Certificate.Extensions.SubjectKeyIdentifier)
+    case subjectKeyIdentifier(SubjectKeyIdentifier)
     
     init(derEncoded node: ASN1Node) throws {
         switch node.identifier {

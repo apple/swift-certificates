@@ -72,7 +72,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func testPrintingAIAExtension() throws {
-        let ext = Certificate.Extensions.AuthorityInformationAccess([
+        let ext = AuthorityInformationAccess([
             .init(method: .issuingCA, location: .uniformResourceIdentifier("https://example.com/ca")),
             .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp")),
             .init(method: .init(.unknownType([1, 2, 3, 4])), location: .rfc822Name("mail@example.com")),
@@ -85,7 +85,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func testPrintingAKIExtension() throws {
-        var ext = Certificate.Extensions.AuthorityKeyIdentifier(
+        var ext = AuthorityKeyIdentifier(
             keyIdentifier: [10, 20, 30, 40],
             authorityCertIssuer: [.uniformResourceIdentifier("https://example.com/ca")],
             authorityCertSerialNumber: .init(bytes: [50, 60, 70, 80])
@@ -119,13 +119,13 @@ final class CertificateTests: XCTestCase {
     }
 
     func testPrintingSKIExtension() throws {
-        let ext = Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: [10, 20, 30, 40])
+        let ext = SubjectKeyIdentifier(keyIdentifier: [10, 20, 30, 40])
         let s = String(describing: ext)
         XCTAssertEqual(s, "a:14:1e:28")
     }
 
     func testPrintingKeyUsageExtension() {
-        var ext = Certificate.Extensions.KeyUsage()
+        var ext = KeyUsage()
         var s = String(describing: ext)
         XCTAssertEqual(s, "")
 
@@ -183,7 +183,7 @@ final class CertificateTests: XCTestCase {
 
     func testPrintingSANFields() throws {
         // This is mostly redundant with general name, so we're only checking formatting.
-        let san = Certificate.Extensions.SubjectAlternativeNames([
+        let san = SubjectAlternativeNames([
             .dNSName("example.com"),
             .dNSName("example.org"),
             .iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
@@ -196,7 +196,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func testPrintingBasicConstraints() throws {
-        var ext = Certificate.Extensions.BasicConstraints.notCertificateAuthority
+        var ext = BasicConstraints.notCertificateAuthority
         XCTAssertEqual(
             String(describing: ext),
             "CA=FALSE"
@@ -217,7 +217,7 @@ final class CertificateTests: XCTestCase {
 
     func testPrintingNameConstraints() throws {
         // This test is again mostly redundant with general name, so we're just testing the composition
-        var ext = Certificate.Extensions.NameConstraints(
+        var ext = NameConstraints(
             permittedSubtrees: [.dNSName("example.com"), .uniformResourceIdentifier("http://example.com")],
             excludedSubtrees: [.dNSName("example.org"), .rfc822Name("mail@example.com")]
         )
@@ -240,7 +240,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func testPrintingEKU() throws {
-        let eku = Certificate.Extensions.ExtendedKeyUsage([
+        let eku = ExtendedKeyUsage([
             .any,
             .certificateTransparency,
             .timeStamping,

@@ -14,55 +14,53 @@
 
 import SwiftASN1
 
-extension Certificate.Extensions {
-    /// Provides details on how to access information about the certificate issuer.
-    ///
-    /// This extension behaves as a collection of ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/AccessDescription`` objects.
-    ///
-    /// In practice this most commonly contains OCSP servers and links to the issuing CA certificate.
-    public struct AuthorityInformationAccess {
-        @usableFromInline
-        var descriptions: [AccessDescription]
+/// Provides details on how to access information about the certificate issuer.
+///
+/// This extension behaves as a collection of ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/AccessDescription`` objects.
+///
+/// In practice this most commonly contains OCSP servers and links to the issuing CA certificate.
+public struct AuthorityInformationAccess {
+    @usableFromInline
+    var descriptions: [AccessDescription]
 
-        /// Create a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/`` object
-        /// containing specific access descriptions.
-        ///
-        /// - Parameter descriptions: The descriptions to include in the AIA extension.
-        @inlinable
-        public init<Descriptions: Sequence>(_ descriptions: Descriptions) where Descriptions.Element == AccessDescription {
-            self.descriptions = Array(descriptions)
+    /// Create a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/`` object
+    /// containing specific access descriptions.
+    ///
+    /// - Parameter descriptions: The descriptions to include in the AIA extension.
+    @inlinable
+    public init<Descriptions: Sequence>(_ descriptions: Descriptions) where Descriptions.Element == AccessDescription {
+        self.descriptions = Array(descriptions)
+    }
+
+    /// Create a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct`` object
+    /// by unwrapping a ``Certificate/Extension``.
+    ///
+    /// - Parameter ext: The ``Certificate/Extension`` to unwrap
+    /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
+    ///     `ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess`.
+    @inlinable
+    public init(_ ext: Certificate.Extension) throws {
+        guard ext.oid == .X509ExtensionID.authorityInformationAccess else {
+            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess), got \(ext.oid)")
         }
 
-        /// Create a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct`` object
-        /// by unwrapping a ``Certificate/Extension``.
-        ///
-        /// - Parameter ext: The ``Certificate/Extension`` to unwrap
-        /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
-        ///     `ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess`.
-        @inlinable
-        public init(_ ext: Certificate.Extension) throws {
-            guard ext.oid == .X509ExtensionID.authorityInformationAccess else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess), got \(ext.oid)")
-            }
-
-            let aiaSyntax = try AuthorityInfoAccessSyntax(derEncoded: ext.value)
-            self.descriptions = aiaSyntax.descriptions.map { AccessDescription($0) }
-        }
+        let aiaSyntax = try AuthorityInfoAccessSyntax(derEncoded: ext.value)
+        self.descriptions = aiaSyntax.descriptions.map { AccessDescription($0) }
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess: Hashable { }
+extension AuthorityInformationAccess: Hashable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess: Sendable { }
+extension AuthorityInformationAccess: Sendable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess: CustomStringConvertible {
+extension AuthorityInformationAccess: CustomStringConvertible {
     public var description: String {
         return self.map { String(describing: $0) }.joined(separator: ", ")
     }
 }
 
 // TODO(cory): Probably also RangeReplaceableCollection, even though it's kinda crap.
-extension Certificate.Extensions.AuthorityInformationAccess: RandomAccessCollection {
+extension AuthorityInformationAccess: RandomAccessCollection {
     @inlinable
     public var startIndex: Int {
         self.descriptions.startIndex
@@ -85,7 +83,7 @@ extension Certificate.Extensions.AuthorityInformationAccess: RandomAccessCollect
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess {
+extension AuthorityInformationAccess {
     /// Describes the location and format of additional information provided
     /// by the issuer of a given certificate.
     public struct AccessDescription {
@@ -110,17 +108,17 @@ extension Certificate.Extensions.AuthorityInformationAccess {
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription: Hashable { }
+extension AuthorityInformationAccess.AccessDescription: Hashable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription: Sendable { }
+extension AuthorityInformationAccess.AccessDescription: Sendable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription: CustomStringConvertible {
+extension AuthorityInformationAccess.AccessDescription: CustomStringConvertible {
     public var description: String {
         return "\(self.method): \(self.location)"
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription {
+extension AuthorityInformationAccess.AccessDescription {
     /// The format and meaning of the information included in a single
     /// ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/AccessDescription``
     /// object.
@@ -160,11 +158,11 @@ extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription {
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod: Hashable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod: Hashable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod: Sendable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod: Sendable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod: CustomStringConvertible {
+extension AuthorityInformationAccess.AccessDescription.AccessMethod: CustomStringConvertible {
     @inlinable
     public var description: String {
         switch self.backing {
@@ -178,9 +176,9 @@ extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.Ac
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Hashable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Hashable { }
 
-extension Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Sendable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Sendable { }
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this AIA extension.
@@ -189,7 +187,7 @@ extension Certificate.Extension {
     ///   - aia: The extension to wrap
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
-    public init(_ aia: Certificate.Extensions.AuthorityInformationAccess, critical: Bool) throws {
+    public init(_ aia: AuthorityInformationAccess, critical: Bool) throws {
         let asn1Representation = AuthorityInfoAccessSyntax(aia)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
@@ -197,7 +195,7 @@ extension Certificate.Extension {
     }
 }
 
-extension Certificate.Extensions.AuthorityInformationAccess: CertificateExtensionConvertible {
+extension AuthorityInformationAccess: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
     }
@@ -222,7 +220,7 @@ struct AuthorityInfoAccessSyntax: DERImplicitlyTaggable {
     var descriptions: [AIAAccessDescription]
 
     @inlinable
-    init(_ aia: Certificate.Extensions.AuthorityInformationAccess) {
+    init(_ aia: AuthorityInformationAccess) {
         self.descriptions = aia.descriptions.map { .init($0) }
     }
 
@@ -261,7 +259,7 @@ struct AIAAccessDescription: DERImplicitlyTaggable {
     }
 
     @inlinable
-    init(_ description: Certificate.Extensions.AuthorityInformationAccess.AccessDescription) {
+    init(_ description: AuthorityInformationAccess.AccessDescription) {
         self.accessMethod = ASN1ObjectIdentifier(accessMethod: description.method)
         self.accessLocation = description.location
     }
@@ -295,7 +293,7 @@ extension ASN1ObjectIdentifier {
     }
 
     @inlinable
-    public init(accessMethod: Certificate.Extensions.AuthorityInformationAccess.AccessDescription.AccessMethod) {
+    public init(accessMethod: AuthorityInformationAccess.AccessDescription.AccessMethod) {
         switch accessMethod.backing {
         case .ocspServer:
             self = .AccessMethodIdentifiers.ocspServer

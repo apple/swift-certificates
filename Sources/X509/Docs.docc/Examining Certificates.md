@@ -114,7 +114,7 @@ for the ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.stru
 ```swift
 let opaqueSANExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
 if let opaqueSanExtension {
-    let unwrappedSanExtension = try Certificate.Extensions.SubjectAlternativeName(opaqueSanExtension)
+    let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
 }
 ```
 
@@ -123,7 +123,7 @@ to search for a specific extension. The above code could be replaced by:
 
 ```swift
 if let opaqueSanExtension = certificate.extensions[oid: .X509ExtensionID.subjectAlternativeName] {
-    let unwrappedSanExtension = try Certificate.Extensions.SubjectAlternativeName(opaqueSanExtension)
+    let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
 }
 ```
 

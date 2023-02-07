@@ -136,7 +136,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     
     private func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
         
-        let authorityInformationAccess: Certificate.Extensions.AuthorityInformationAccess?
+        let authorityInformationAccess: AuthorityInformationAccess?
         do {
             authorityInformationAccess = try certificate.extensions.authorityInformationAccess
         } catch {

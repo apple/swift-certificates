@@ -14,60 +14,58 @@
 
 import SwiftASN1
 
-extension Certificate.Extensions {
-    /// Allows identities to be bound to the subject of a certificate.
+/// Allows identities to be bound to the subject of a certificate.
+///
+/// The identities attested in this extension belong to the subject of the certificate.
+/// Users of the certificate may validate that these names correspond to a name they are
+/// expecting, depending on the context.
+public struct SubjectAlternativeNames {
+    @usableFromInline
+    var names: [GeneralName]
+
+    /// Construct a Subject Alternative Name extension from a sequence of
+    /// ``GeneralName``s.
     ///
-    /// The identities attested in this extension belong to the subject of the certificate.
-    /// Users of the certificate may validate that these names correspond to a name they are
-    /// expecting, depending on the context.
-    public struct SubjectAlternativeNames {
-        @usableFromInline
-        var names: [GeneralName]
+    /// - Parameter names: The names to bind to the subject of the certificate.
+    @inlinable
+    public init<Names: Sequence>(_ names: Names) where Names.Element == GeneralName {
+        self.names = Array(names)
+    }
 
-        /// Construct a Subject Alternative Name extension from a sequence of
-        /// ``GeneralName``s.
-        ///
-        /// - Parameter names: The names to bind to the subject of the certificate.
-        @inlinable
-        public init<Names: Sequence>(_ names: Names) where Names.Element == GeneralName {
-            self.names = Array(names)
+    /// Construct a Subject Alternative Name extension that attests to no names.
+    @inlinable
+    public init() {
+        self.names = []
+    }
+
+    /// Create a new ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct`` object
+    /// by unwrapping a ``Certificate/Extension``.
+    ///
+    /// - Parameter ext: The ``Certificate/Extension`` to unwrap
+    /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
+    ///     `ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName`.
+    @inlinable
+    public init(_ ext: Certificate.Extension) throws {
+        guard ext.oid == .X509ExtensionID.subjectAlternativeName else {
+            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName), got \(ext.oid)")
         }
 
-        /// Construct a Subject Alternative Name extension that attests to no names.
-        @inlinable
-        public init() {
-            self.names = []
-        }
-
-        /// Create a new ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct`` object
-        /// by unwrapping a ``Certificate/Extension``.
-        ///
-        /// - Parameter ext: The ``Certificate/Extension`` to unwrap
-        /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
-        ///     `ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName`.
-        @inlinable
-        public init(_ ext: Certificate.Extension) throws {
-            guard ext.oid == .X509ExtensionID.subjectAlternativeName else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName), got \(ext.oid)")
-            }
-
-            let asn1SAN = try GeneralNames(derEncoded: ext.value)
-            self.names = asn1SAN.names
-        }
+        let asn1SAN = try GeneralNames(derEncoded: ext.value)
+        self.names = asn1SAN.names
     }
 }
 
-extension Certificate.Extensions.SubjectAlternativeNames: Hashable { }
+extension SubjectAlternativeNames: Hashable { }
 
-extension Certificate.Extensions.SubjectAlternativeNames: Sendable { }
+extension SubjectAlternativeNames: Sendable { }
 
-extension Certificate.Extensions.SubjectAlternativeNames: CustomStringConvertible {
+extension SubjectAlternativeNames: CustomStringConvertible {
     public var description: String {
         self.lazy.map { String(describing: $0) }.joined(separator: ", ")
     }
 }
 
-extension Certificate.Extensions.SubjectAlternativeNames: RandomAccessCollection, MutableCollection, RangeReplaceableCollection {
+extension SubjectAlternativeNames: RandomAccessCollection, MutableCollection, RangeReplaceableCollection {
     @inlinable
     public var startIndex: Int {
         self.names.startIndex
@@ -101,7 +99,7 @@ extension Certificate.Extension {
     ///   - san: The extension to wrap
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
-    public init(_ san: Certificate.Extensions.SubjectAlternativeNames, critical: Bool) throws {
+    public init(_ san: SubjectAlternativeNames, critical: Bool) throws {
         let asn1Representation = GeneralNames(san.names)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
@@ -109,7 +107,7 @@ extension Certificate.Extension {
     }
 }
 
-extension Certificate.Extensions.SubjectAlternativeNames: CertificateExtensionConvertible {
+extension SubjectAlternativeNames: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
     }

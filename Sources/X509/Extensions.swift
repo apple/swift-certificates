@@ -63,16 +63,16 @@ extension Certificate {
     /// ```swift
     /// let extensions = Certificate.Extensions {
     ///     Critical(
-    ///         Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
+    ///         KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
     ///     )
     ///
-    ///     Certificate.Extensions.ExtendedKeyUsage([.serverAuth, .clientAuth])
+    ///     ExtendedKeyUsage([.serverAuth, .clientAuth])
     ///
     ///     Critical(
-    ///         Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+    ///         BasicConstraints.isCertificateAuthority(maxPathLength: 0)
     ///     )
     ///
-    ///     Certificate.Extensions.AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
+    ///     AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
     /// }
     /// ```
     ///
@@ -108,16 +108,16 @@ extension Certificate {
         /// ```swift
         /// let extensions = Certificate.Extensions {
         ///     Critical(
-        ///         Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
+        ///         KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
         ///     )
         ///
-        ///     Certificate.Extensions.ExtendedKeyUsage([.serverAuth, .clientAuth])
+        ///     ExtendedKeyUsage([.serverAuth, .clientAuth])
         ///
         ///     Critical(
-        ///         Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+        ///         BasicConstraints.isCertificateAuthority(maxPathLength: 0)
         ///     )
         ///
-        ///     Certificate.Extensions.AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
+        ///     AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
         /// }
         /// ```
         ///
@@ -214,7 +214,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the AIA extension.
     @inlinable
-    public var authorityInformationAccess: Certificate.Extensions.AuthorityInformationAccess? {
+    public var authorityInformationAccess: AuthorityInformationAccess? {
         get throws {
             try self[oid: .X509ExtensionID.authorityInformationAccess].map { try .init($0) }
         }
@@ -225,7 +225,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the SKI extension.
     @inlinable
-    public var subjectKeyIdentifier: Certificate.Extensions.SubjectKeyIdentifier? {
+    public var subjectKeyIdentifier: SubjectKeyIdentifier? {
         get throws {
             try self[oid: .X509ExtensionID.subjectKeyIdentifier].map { try .init($0) }
         }
@@ -236,7 +236,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the AKI extension.
     @inlinable
-    public var authorityKeyIdentifier: Certificate.Extensions.AuthorityKeyIdentifier? {
+    public var authorityKeyIdentifier: AuthorityKeyIdentifier? {
         get throws {
             try self[oid: .X509ExtensionID.authorityKeyIdentifier].map { try .init($0) }
         }
@@ -247,7 +247,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the EKU extension.
     @inlinable
-    public var extendedKeyUsage: Certificate.Extensions.ExtendedKeyUsage? {
+    public var extendedKeyUsage: ExtendedKeyUsage? {
         get throws {
             try self[oid: .X509ExtensionID.extendedKeyUsage].map { try .init($0) }
         }
@@ -258,7 +258,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the basic constraints extension.
     @inlinable
-    public var basicConstraints: Certificate.Extensions.BasicConstraints? {
+    public var basicConstraints: BasicConstraints? {
         get throws {
             try self[oid: .X509ExtensionID.basicConstraints].map { try .init($0) }
         }
@@ -269,7 +269,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the key usage extension.
     @inlinable
-    public var keyUsage: Certificate.Extensions.KeyUsage? {
+    public var keyUsage: KeyUsage? {
         get throws {
             try self[oid: .X509ExtensionID.keyUsage].map { try .init($0) }
         }
@@ -280,7 +280,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the name constraints extension.
     @inlinable
-    public var nameConstraints: Certificate.Extensions.NameConstraints? {
+    public var nameConstraints: NameConstraints? {
         get throws {
             try self[oid: .X509ExtensionID.nameConstraints].map { try .init($0) }
         }
@@ -291,7 +291,7 @@ extension Certificate.Extensions {
     ///
     /// Throws if it is not possible to decode the SAN extension.
     @inlinable
-    public var subjectAlternativeNames: Certificate.Extensions.SubjectAlternativeNames? {
+    public var subjectAlternativeNames: SubjectAlternativeNames? {
         get throws {
             try self[oid: .X509ExtensionID.subjectAlternativeName].map { try .init($0) }
         }

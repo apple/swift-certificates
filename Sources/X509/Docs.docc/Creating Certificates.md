@@ -94,12 +94,12 @@ We can use the helpful builder syntax for this:
 ```swift
 let extensions = try Certificate.Extensions {
     Critical(
-        Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+        BasicConstraints.isCertificateAuthority(maxPathLength: nil)
     )
     Critical(
-        Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true)
+        KeyUsage(digitalSignature: true, keyCertSign: true)
     )
-    Certificate.Extensions.SubjectAlternativeNames([.dNSName("localhost")])
+    SubjectAlternativeNames([.dNSName("localhost")])
 }
 ```
 
@@ -152,12 +152,12 @@ let now = Date()
 
 let extensions = try Certificate.Extensions {
     Critical(
-        Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+        BasicConstraints.isCertificateAuthority(maxPathLength: nil)
     )
     Critical(
-        Certificate.Extensions.KeyUsage(keyCertSign: true)
+        KeyUsage(keyCertSign: true)
     )
-    Certificate.Extensions.SubjectAlternativeNames([.dNSName("localhost")])
+    SubjectAlternativeNames([.dNSName("localhost")])
 }
 
 let certificate = try Certificate(
