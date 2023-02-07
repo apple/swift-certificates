@@ -33,7 +33,7 @@ extension Certificate {
     /// is semantic and is preserved either in or from the serialized representation.
     ///
     /// However, ``Certificate/Extensions-swift.struct`` is also conceptually a dictionary keyed by ``Certificate/Extension/oid``.
-    /// For that reason, in addition to the index-based subscript ``Certificate/Extensions-swift.struct/subscript(_:)-5rodj``, this type also offers
+    /// For that reason, in addition to the index-based subscript ``subscript(_:)-5rodj``, this type also offers
     /// ``subscript(oid:)`` to enable finding the extension with a specific OID. This API also lets users replace
     /// the value of a specific extension.
     ///
@@ -41,14 +41,14 @@ extension Certificate {
     ///
     /// To make it easier to decode specific extensions, this type provides a number of helpers for known extension types:
     ///
-    /// - ``authorityInformationAccess-swift.property``
-    /// - ``subjectKeyIdentifier-swift.property``
-    /// - ``authorityKeyIdentifier-swift.property``
-    /// - ``extendedKeyUsage-swift.property``
-    /// - ``basicConstraints-swift.property``
-    /// - ``keyUsage-swift.property``
-    /// - ``nameConstraints-swift.property``
-    /// - ``subjectAlternativeNames-swift.property``
+    /// - ``authorityInformationAccess``
+    /// - ``subjectKeyIdentifier``
+    /// - ``authorityKeyIdentifier``
+    /// - ``extendedKeyUsage``
+    /// - ``basicConstraints``
+    /// - ``keyUsage``
+    /// - ``nameConstraints``
+    /// - ``subjectAlternativeNames``
     ///
     /// Users who add their own extension types (see ``Certificate/Extension`` for more) are encouraged to add their
     /// own helper getters for those types.
@@ -63,16 +63,16 @@ extension Certificate {
     /// ```swift
     /// let extensions = Certificate.Extensions {
     ///     Critical(
-    ///         Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
+    ///         KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
     ///     )
     ///
-    ///     Certificate.Extensions.ExtendedKeyUsage([.serverAuth, .clientAuth])
+    ///     ExtendedKeyUsage([.serverAuth, .clientAuth])
     ///
     ///     Critical(
-    ///         Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+    ///         BasicConstraints.isCertificateAuthority(maxPathLength: 0)
     ///     )
     ///
-    ///     Certificate.Extensions.AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
+    ///     AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
     /// }
     /// ```
     ///
@@ -108,16 +108,16 @@ extension Certificate {
         /// ```swift
         /// let extensions = Certificate.Extensions {
         ///     Critical(
-        ///         Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
+        ///         KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
         ///     )
         ///
-        ///     Certificate.Extensions.ExtendedKeyUsage([.serverAuth, .clientAuth])
+        ///     ExtendedKeyUsage([.serverAuth, .clientAuth])
         ///
         ///     Critical(
-        ///         Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+        ///         BasicConstraints.isCertificateAuthority(maxPathLength: 0)
         ///     )
         ///
-        ///     Certificate.Extensions.AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
+        ///     AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
         /// }
         /// ```
         ///
@@ -209,89 +209,89 @@ extension Certificate.Extensions {
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct``
+    /// Loads the ``AuthorityInformationAccess``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the AIA extension.
     @inlinable
-    public var authorityInformationAccess: Certificate.Extensions.AuthorityInformationAccess? {
+    public var authorityInformationAccess: AuthorityInformationAccess? {
         get throws {
             try self[oid: .X509ExtensionID.authorityInformationAccess].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/SubjectKeyIdentifier-swift.struct``
+    /// Loads the ``SubjectKeyIdentifier``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the SKI extension.
     @inlinable
-    public var subjectKeyIdentifier: Certificate.Extensions.SubjectKeyIdentifier? {
+    public var subjectKeyIdentifier: SubjectKeyIdentifier? {
         get throws {
             try self[oid: .X509ExtensionID.subjectKeyIdentifier].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct``
+    /// Loads the ``AuthorityKeyIdentifier``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the AKI extension.
     @inlinable
-    public var authorityKeyIdentifier: Certificate.Extensions.AuthorityKeyIdentifier? {
+    public var authorityKeyIdentifier: AuthorityKeyIdentifier? {
         get throws {
             try self[oid: .X509ExtensionID.authorityKeyIdentifier].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
+    /// Loads the ``ExtendedKeyUsage``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the EKU extension.
     @inlinable
-    public var extendedKeyUsage: Certificate.Extensions.ExtendedKeyUsage? {
+    public var extendedKeyUsage: ExtendedKeyUsage? {
         get throws {
             try self[oid: .X509ExtensionID.extendedKeyUsage].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum``
+    /// Loads the ``BasicConstraints``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the basic constraints extension.
     @inlinable
-    public var basicConstraints: Certificate.Extensions.BasicConstraints? {
+    public var basicConstraints: BasicConstraints? {
         get throws {
             try self[oid: .X509ExtensionID.basicConstraints].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct``
+    /// Loads the ``KeyUsage``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the key usage extension.
     @inlinable
-    public var keyUsage: Certificate.Extensions.KeyUsage? {
+    public var keyUsage: KeyUsage? {
         get throws {
             try self[oid: .X509ExtensionID.keyUsage].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/NameConstraints-swift.struct``
+    /// Loads the ``NameConstraints``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the name constraints extension.
     @inlinable
-    public var nameConstraints: Certificate.Extensions.NameConstraints? {
+    public var nameConstraints: NameConstraints? {
         get throws {
             try self[oid: .X509ExtensionID.nameConstraints].map { try .init($0) }
         }
     }
 
-    /// Loads the ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct``
+    /// Loads the ``SubjectAlternativeNames``
     /// extension, if it is present.
     ///
     /// Throws if it is not possible to decode the SAN extension.
     @inlinable
-    public var subjectAlternativeNames: Certificate.Extensions.SubjectAlternativeNames? {
+    public var subjectAlternativeNames: SubjectAlternativeNames? {
         get throws {
             try self[oid: .X509ExtensionID.subjectAlternativeName].map { try .init($0) }
         }

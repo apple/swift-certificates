@@ -21,16 +21,16 @@
 /// ```swift
 /// let extensions = Certificate.Extensions {
 ///     Critical(
-///         Certificate.Extensions.KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
+///         KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
 ///     )
 ///
-///     Certificate.Extensions.ExtendedKeyUsage([.serverAuth, .clientAuth])
+///     ExtendedKeyUsage([.serverAuth, .clientAuth])
 ///
 ///     Critical(
-///         Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+///         BasicConstraints.isCertificateAuthority(maxPathLength: 0)
 ///     )
 ///
-///     Certificate.Extensions.AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
+///     AuthorityInformationAccess([.init(method: .ocspServer, location: .uniformResourceIdentifier("http://ocsp.digicert.com"))])
 /// }
 /// ```
 ///

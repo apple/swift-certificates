@@ -18,35 +18,35 @@ extension ASN1ObjectIdentifier {
     /// OIDs that identify known X509 extensions.
     public enum X509ExtensionID {
         /// Identifies the authority key identifier extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct``.
+        /// ``AuthorityKeyIdentifier``.
         public static let authorityKeyIdentifier: ASN1ObjectIdentifier = [2, 5, 29, 35]
 
         /// Identifies the subject key identifier extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/SubjectKeyIdentifier-swift.struct``.
+        /// ``SubjectKeyIdentifier``.
         public static let subjectKeyIdentifier: ASN1ObjectIdentifier = [2, 5, 29, 14]
 
         /// Identifies the key usgae extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct``.
+        /// ``KeyUsage``.
         public static let keyUsage: ASN1ObjectIdentifier = [2, 5, 29, 15]
 
         /// Identifies the subject alternative name extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct``.
+        /// ``SubjectAlternativeNames``.
         public static let subjectAlternativeName: ASN1ObjectIdentifier = [2, 5, 29, 17]
 
         /// Identifies the basic constraints extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum``.
+        /// ``BasicConstraints``.
         public static let basicConstraints: ASN1ObjectIdentifier = [2, 5, 29, 19]
 
         /// Identifies the name constraints extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/NameConstraints-swift.struct``.
+        /// ``NameConstraints``.
         public static let nameConstraints: ASN1ObjectIdentifier = [2, 5, 29, 30]
 
         /// Identifies the extended key usage extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``.
+        /// ``ExtendedKeyUsage``.
         public static let extendedKeyUsage: ASN1ObjectIdentifier = [2, 5, 29, 37]
 
         /// Identifies the authority information access extension, corresponding to
-        /// ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct``.
+        /// ``AuthorityInformationAccess``.
         public static let authorityInformationAccess: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 1, 1]
     }
 }

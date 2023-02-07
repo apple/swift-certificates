@@ -167,7 +167,7 @@ extension Array where Element == Certificate {
 }
 
 extension Certificate {
-    func issuerPreference(subjectAKI: Certificate.Extensions.AuthorityKeyIdentifier) -> Int {
+    func issuerPreference(subjectAKI: AuthorityKeyIdentifier) -> Int {
         guard let ski = try? self.extensions.subjectKeyIdentifier else {
             // Medium preference: we have no SKI.
             return 0

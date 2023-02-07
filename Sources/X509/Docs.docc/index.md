@@ -47,14 +47,14 @@ certificate authorities, authenticating peers, and more.
 
 ### Supported Extension Types
 
-- ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct``
-- ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct``
-- ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum``
-- ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
-- ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct``
-- ``Certificate/Extensions-swift.struct/NameConstraints-swift.struct``
-- ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct``
-- ``Certificate/Extensions-swift.struct/SubjectKeyIdentifier-swift.struct``
+- ``AuthorityInformationAccess``
+- ``AuthorityKeyIdentifier``
+- ``BasicConstraints``
+- ``ExtendedKeyUsage``
+- ``KeyUsage``
+- ``NameConstraints``
+- ``SubjectAlternativeNames``
+- ``SubjectKeyIdentifier``
 - ``Critical``
 
 ### Names

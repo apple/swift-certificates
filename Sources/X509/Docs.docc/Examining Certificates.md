@@ -99,22 +99,22 @@ bytes in an extension, as well as wrap themselves back into the opaque ``Certifi
 
 Out of the box, ``X509`` ships support for the following extension types:
 
-- ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct``
-- ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct``
-- ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum``
-- ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
-- ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct``
-- ``Certificate/Extensions-swift.struct/NameConstraints-swift.struct``
-- ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct``
-- ``Certificate/Extensions-swift.struct/SubjectKeyIdentifier-swift.struct``
+- ``AuthorityInformationAccess``
+- ``AuthorityKeyIdentifier``
+- ``BasicConstraints``
+- ``ExtendedKeyUsage``
+- ``KeyUsage``
+- ``NameConstraints``
+- ``SubjectAlternativeNames``
+- ``SubjectKeyIdentifier``
 
 To decode an extension usually requires examining its ``Certificate/Extension/oid`` field. For example, to search
-for the ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct``, the typical code would be:
+for the ``SubjectAlternativeNames``, the typical code would be:
 
 ```swift
 let opaqueSANExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
 if let opaqueSanExtension {
-    let unwrappedSanExtension = try Certificate.Extensions.SubjectAlternativeName(opaqueSanExtension)
+    let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
 }
 ```
 
@@ -123,21 +123,21 @@ to search for a specific extension. The above code could be replaced by:
 
 ```swift
 if let opaqueSanExtension = certificate.extensions[oid: .X509ExtensionID.subjectAlternativeName] {
-    let unwrappedSanExtension = try Certificate.Extensions.SubjectAlternativeName(opaqueSanExtension)
+    let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
 }
 ```
 
 This pattern is itself still somewhat repetitive, so ``Certificate/Extensions-swift.struct`` offers a number of helper properties
 that can be used to get a specific typed extension:
 
-- ``Certificate/Extensions-swift.struct/authorityInformationAccess-swift.property``
-- ``Certificate/Extensions-swift.struct/authorityKeyIdentifier-swift.property``
-- ``Certificate/Extensions-swift.struct/basicConstraints-swift.property``
-- ``Certificate/Extensions-swift.struct/extendedKeyUsage-swift.property``
-- ``Certificate/Extensions-swift.struct/keyUsage-swift.property``
-- ``Certificate/Extensions-swift.struct/nameConstraints-swift.property``
-- ``Certificate/Extensions-swift.struct/subjectAlternativeNames-swift.property``
-- ``Certificate/Extensions-swift.struct/subjectKeyIdentifier-swift.property``
+- ``Certificate/Extensions-swift.struct/authorityInformationAccess``
+- ``Certificate/Extensions-swift.struct/authorityKeyIdentifier``
+- ``Certificate/Extensions-swift.struct/basicConstraints``
+- ``Certificate/Extensions-swift.struct/extendedKeyUsage``
+- ``Certificate/Extensions-swift.struct/keyUsage``
+- ``Certificate/Extensions-swift.struct/nameConstraints``
+- ``Certificate/Extensions-swift.struct/subjectAlternativeNames``
+- ``Certificate/Extensions-swift.struct/subjectKeyIdentifier``
 
 This lets us reduce the above code to a single line:
 
