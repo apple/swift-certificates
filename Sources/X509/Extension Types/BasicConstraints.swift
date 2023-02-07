@@ -109,7 +109,7 @@ struct BasicConstraintsValue: DERImplicitlyTaggable {
 
         // CA's must not assert the path len constraint field unless isCA is true.
         guard pathLenConstraint == nil || isCA else {
-            throw ASN1Error.invalidASN1Object(reason: "Invalid combination of isCA (\(isCA)) and path length constraint (\(pathLenConstraint)")
+            throw ASN1Error.invalidASN1Object(reason: "Invalid combination of isCA (\(isCA)) and path length constraint (\(String(describing: pathLenConstraint))")
         }
     }
 

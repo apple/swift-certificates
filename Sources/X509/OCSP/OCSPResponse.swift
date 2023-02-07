@@ -46,7 +46,7 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
                 guard let responseBytes,
                       responseBytes.responseType == .OCSP.basicResponse
                 else {
-                    throw ASN1Error.invalidASN1Object(reason: "Successful response does not have appropriate response bytes: \(responseBytes)")
+                    throw ASN1Error.invalidASN1Object(reason: "Successful response does not have appropriate response bytes: \(String(describing: responseBytes))")
                 }
                 return .successful(try BasicOCSPResponse(derEncoded: responseBytes.response.bytes))
             case .malformedRequest:
