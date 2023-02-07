@@ -14,46 +14,44 @@
 
 import SwiftASN1
 
-extension Certificate.Extensions {
-    /// Indicates one or more purposes for which the certified public key
-    /// may be used, in addition to or instead of the the purposes indicated
-    /// in the ``KeyUsage-swift.struct`` extension.
-    public struct ExtendedKeyUsage {
-        @usableFromInline
-        var usages: [Usage]
+/// Indicates one or more purposes for which the certified public key
+/// may be used, in addition to or instead of the the purposes indicated
+/// in the ``KeyUsage`` extension.
+public struct ExtendedKeyUsage {
+    @usableFromInline
+    var usages: [Usage]
 
-        /// Construct an ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct`` extension containing the
-        /// given usages.
-        ///
-        /// - Parameter usages: The purposes for which the certificate may be used.
-        @inlinable
-        public init<Usages: Sequence>(_ usages: Usages) where Usages.Element == Usage {
-            self.usages = Array(usages)
+    /// Construct an ``ExtendedKeyUsage`` extension containing the
+    /// given usages.
+    ///
+    /// - Parameter usages: The purposes for which the certificate may be used.
+    @inlinable
+    public init<Usages: Sequence>(_ usages: Usages) where Usages.Element == Usage {
+        self.usages = Array(usages)
+    }
+
+    /// Create a new ``ExtendedKeyUsage`` object
+    /// by unwrapping a ``Certificate/Extension``.
+    ///
+    /// - Parameter ext: The ``Certificate/Extension`` to unwrap
+    /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
+    ///     `ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage`.
+    @inlinable
+    public init(_ ext: Certificate.Extension) throws {
+        guard ext.oid == .X509ExtensionID.extendedKeyUsage else {
+            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage), got \(ext.oid)")
         }
 
-        /// Create a new ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct`` object
-        /// by unwrapping a ``Certificate/Extension``.
-        ///
-        /// - Parameter ext: The ``Certificate/Extension`` to unwrap
-        /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
-        ///     `ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage`.
-        @inlinable
-        public init(_ ext: Certificate.Extension) throws {
-            guard ext.oid == .X509ExtensionID.extendedKeyUsage else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage), got \(ext.oid)")
-            }
-
-            let asn1EKU = try ASN1ExtendedKeyUsage(derEncoded: ext.value)
-            self.usages = asn1EKU.usages.map { Usage(oid: $0) }
-        }
+        let asn1EKU = try ASN1ExtendedKeyUsage(derEncoded: ext.value)
+        self.usages = asn1EKU.usages.map { Usage(oid: $0) }
     }
 }
 
-extension Certificate.Extensions.ExtendedKeyUsage: Hashable { }
+extension ExtendedKeyUsage: Hashable { }
 
-extension Certificate.Extensions.ExtendedKeyUsage: Sendable { }
+extension ExtendedKeyUsage: Sendable { }
 
-extension Certificate.Extensions.ExtendedKeyUsage: CustomStringConvertible {
+extension ExtendedKeyUsage: CustomStringConvertible {
     public var description: String {
         return self.map {
             String(describing: $0)
@@ -62,7 +60,7 @@ extension Certificate.Extensions.ExtendedKeyUsage: CustomStringConvertible {
 }
 
 // TODO(cory): Probably also RangeReplaceableCollection, even though it's kinda crap.
-extension Certificate.Extensions.ExtendedKeyUsage: RandomAccessCollection {
+extension ExtendedKeyUsage: RandomAccessCollection {
     public var startIndex: Int {
         self.usages.startIndex
     }
@@ -82,9 +80,9 @@ extension Certificate.Extensions.ExtendedKeyUsage: RandomAccessCollection {
     }
 }
 
-extension Certificate.Extensions.ExtendedKeyUsage {
+extension ExtendedKeyUsage {
     /// An acceptable usage for a certificate as attested in an
-    /// ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
+    /// ``ExtendedKeyUsage``
     /// extension.
     public struct Usage {
         @usableFromInline
@@ -108,7 +106,7 @@ extension Certificate.Extensions.ExtendedKeyUsage {
             self.backing = backing
         }
 
-        /// Constructs a ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct/Usage`` from an opaque oid.
+        /// Constructs a ``ExtendedKeyUsage/Usage`` from an opaque oid.
         ///
         /// - Parameter oid: The OID of the usage.
         @inlinable
@@ -161,11 +159,11 @@ extension Certificate.Extensions.ExtendedKeyUsage {
     }
 }
 
-extension Certificate.Extensions.ExtendedKeyUsage.Usage: Hashable { }
+extension ExtendedKeyUsage.Usage: Hashable { }
 
-extension Certificate.Extensions.ExtendedKeyUsage.Usage: Sendable { }
+extension ExtendedKeyUsage.Usage: Sendable { }
 
-extension Certificate.Extensions.ExtendedKeyUsage.Usage: CustomStringConvertible {
+extension ExtendedKeyUsage.Usage: CustomStringConvertible {
     public var description: String {
         switch self.backing {
         case .any:
@@ -190,9 +188,9 @@ extension Certificate.Extensions.ExtendedKeyUsage.Usage: CustomStringConvertible
     }
 }
 
-extension Certificate.Extensions.ExtendedKeyUsage.Usage.Backing: Hashable { }
+extension ExtendedKeyUsage.Usage.Backing: Hashable { }
 
-extension Certificate.Extensions.ExtendedKeyUsage.Usage.Backing: Sendable { }
+extension ExtendedKeyUsage.Usage.Backing: Sendable { }
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Extended Key Usage extension.
@@ -201,7 +199,7 @@ extension Certificate.Extension {
     ///   - eku: The extension to wrap
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
-    public init(_ eku: Certificate.Extensions.ExtendedKeyUsage, critical: Bool) throws {
+    public init(_ eku: ExtendedKeyUsage, critical: Bool) throws {
         let asn1Representation = ASN1ExtendedKeyUsage(eku)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
@@ -209,7 +207,7 @@ extension Certificate.Extension {
     }
 }
 
-extension Certificate.Extensions.ExtendedKeyUsage: CertificateExtensionConvertible {
+extension ExtendedKeyUsage: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
     }
@@ -220,7 +218,7 @@ extension ASN1ObjectIdentifier {
     ///
     /// - Parameter usage: the EKU to use to construct the OID.
     @inlinable
-    public init(_ usage: Certificate.Extensions.ExtendedKeyUsage.Usage) {
+    public init(_ usage: X509.ExtendedKeyUsage.Usage) {
         switch usage.backing {
         case .serverAuth:
             self = .ExtendedKeyUsage.serverAuth
@@ -244,7 +242,7 @@ extension ASN1ObjectIdentifier {
     }
 
     /// An acceptable usage for a certificate as attested in an
-    /// ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
+    /// ``ExtendedKeyUsage``
     /// extension.
     public enum ExtendedKeyUsage {
         /// The public key may be used for any purpose.
@@ -289,7 +287,7 @@ struct ASN1ExtendedKeyUsage: DERImplicitlyTaggable {
     }
 
     @inlinable
-    init(_ eku: Certificate.Extensions.ExtendedKeyUsage) {
+    init(_ eku: ExtendedKeyUsage) {
         self.usages = eku.usages.map { ASN1ObjectIdentifier($0) }
     }
 

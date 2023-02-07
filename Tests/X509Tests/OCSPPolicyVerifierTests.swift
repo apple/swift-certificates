@@ -91,8 +91,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: .init {
                 if let ocspServer {
-                    Certificate.Extensions.AuthorityInformationAccess([
-                        Certificate.Extensions.AuthorityInformationAccess.AccessDescription(
+                    AuthorityInformationAccess([
+                        AuthorityInformationAccess.AccessDescription(
                             method: .ocspServer,
                             location: GeneralName.uniformResourceIdentifier(ocspServer))
                     ])

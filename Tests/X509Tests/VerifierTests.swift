@@ -37,10 +37,10 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -57,11 +57,11 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca2PrivateKey)
         )
@@ -79,10 +79,10 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -106,10 +106,10 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca2PrivateKey)
         )
@@ -126,11 +126,11 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -154,11 +154,11 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -175,9 +175,9 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
+                KeyUsage(keyCertSign: true)
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -194,11 +194,11 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -223,10 +223,10 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.notCertificateAuthority
+                    BasicConstraints.notCertificateAuthority
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: try! intermediate1.extensions.subjectKeyIdentifier!.keyIdentifier)
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! intermediate1.extensions.subjectKeyIdentifier!.keyIdentifier)
             },
             issuerPrivateKey: .init(intermediate1PrivateKey)
         )
@@ -318,14 +318,14 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
 
                 // Note this is the SKI for the _wrong key_.
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
-                Certificate.Extensions.SubjectAlternativeNames([.dNSName("example.com")])
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectAlternativeNames([.dNSName("example.com")])
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -342,9 +342,9 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
+                KeyUsage(keyCertSign: true)
             },
             issuerPrivateKey: .init(xKey)
         )
@@ -361,10 +361,10 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(xKey)
         )
@@ -381,10 +381,10 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(t1t2Key)
         )
@@ -401,11 +401,11 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
-                Certificate.Extensions.KeyUsage(keyCertSign: true)
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
-                Certificate.Extensions.SubjectAlternativeNames([.dNSName("foo.example.com")])
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                SubjectAlternativeNames([.dNSName("foo.example.com")])
             },
             issuerPrivateKey: .init(t1t2Key)
         )
@@ -422,9 +422,9 @@ final class VerifierTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             extensions: Certificate.Extensions {
                 Critical(
-                    Certificate.Extensions.BasicConstraints.notCertificateAuthority
+                    BasicConstraints.notCertificateAuthority
                 )
-                Certificate.Extensions.AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
             },
             issuerPrivateKey: .init(t3Key)
         )

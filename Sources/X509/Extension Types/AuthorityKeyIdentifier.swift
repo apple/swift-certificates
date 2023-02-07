@@ -14,60 +14,58 @@
 
 import SwiftASN1
 
-extension Certificate.Extensions {
-    /// Provides information about the public key corresponding to the private key that was
-    /// used to sign a specific certificate.
-    public struct AuthorityKeyIdentifier {
-        /// An opaque sequence of bytes uniquely derived from the public key of the issuing
-        /// CA.
-        ///
-        /// This is commonly a hash of the subject public key info from the issuing certificate.
-        public var keyIdentifier: ArraySlice<UInt8>?
+/// Provides information about the public key corresponding to the private key that was
+/// used to sign a specific certificate.
+public struct AuthorityKeyIdentifier {
+    /// An opaque sequence of bytes uniquely derived from the public key of the issuing
+    /// CA.
+    ///
+    /// This is commonly a hash of the subject public key info from the issuing certificate.
+    public var keyIdentifier: ArraySlice<UInt8>?
 
-        /// The name of the issuer of the issuing cert.
-        public var authorityCertIssuer: [GeneralName]?
+    /// The name of the issuer of the issuing cert.
+    public var authorityCertIssuer: [GeneralName]?
 
-        /// The serial number of the issuing cert.
-        public var authorityCertSerialNumber: Certificate.SerialNumber?
+    /// The serial number of the issuing cert.
+    public var authorityCertSerialNumber: Certificate.SerialNumber?
 
-        /// Create a new ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct`` extension value.
-        ///
-        /// - Parameters:
-        ///   - keyIdentifier: An opaque sequence of bytes uniquely derived from the public key of the issuing CA.
-        ///   - authorityCertIssuer: The name of the issuer of the issuing cert.
-        ///   - authorityCertSerialNumber: The serial number of the issuing cert.
-        @inlinable
-        public init(keyIdentifier: ArraySlice<UInt8>? = nil, authorityCertIssuer: [GeneralName]? = nil, authorityCertSerialNumber: Certificate.SerialNumber? = nil) {
-            self.keyIdentifier = keyIdentifier
-            self.authorityCertIssuer = authorityCertIssuer
-            self.authorityCertSerialNumber = authorityCertSerialNumber
+    /// Create a new ``AuthorityKeyIdentifier`` extension value.
+    ///
+    /// - Parameters:
+    ///   - keyIdentifier: An opaque sequence of bytes uniquely derived from the public key of the issuing CA.
+    ///   - authorityCertIssuer: The name of the issuer of the issuing cert.
+    ///   - authorityCertSerialNumber: The serial number of the issuing cert.
+    @inlinable
+    public init(keyIdentifier: ArraySlice<UInt8>? = nil, authorityCertIssuer: [GeneralName]? = nil, authorityCertSerialNumber: Certificate.SerialNumber? = nil) {
+        self.keyIdentifier = keyIdentifier
+        self.authorityCertIssuer = authorityCertIssuer
+        self.authorityCertSerialNumber = authorityCertSerialNumber
+    }
+
+    /// Create a new ``AuthorityKeyIdentifier`` object
+    /// by unwrapping a ``Certificate/Extension``.
+    ///
+    /// - Parameter ext: The ``Certificate/Extension`` to unwrap
+    /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
+    ///     `ASN1ObjectIdentifier.X509ExtensionID.authorityKeyIdentifier`.
+    @inlinable
+    public init(_ ext: Certificate.Extension) throws {
+        guard ext.oid == .X509ExtensionID.authorityKeyIdentifier else {
+            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityKeyIdentifier), got \(ext.oid)")
         }
 
-        /// Create a new ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct`` object
-        /// by unwrapping a ``Certificate/Extension``.
-        ///
-        /// - Parameter ext: The ``Certificate/Extension`` to unwrap
-        /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
-        ///     `ASN1ObjectIdentifier.X509ExtensionID.authorityKeyIdentifier`.
-        @inlinable
-        public init(_ ext: Certificate.Extension) throws {
-            guard ext.oid == .X509ExtensionID.authorityKeyIdentifier else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityKeyIdentifier), got \(ext.oid)")
-            }
-
-            let asn1KeyIdentifier = try AuthorityKeyIdentifierValue(derEncoded: ext.value)
-            self.keyIdentifier = asn1KeyIdentifier.keyIdentifier.map { $0.bytes }
-            self.authorityCertIssuer = asn1KeyIdentifier.authorityCertIssuer
-            self.authorityCertSerialNumber = asn1KeyIdentifier.authorityCertSerialNumber.map { Certificate.SerialNumber(bytes: $0) }
-        }
+        let asn1KeyIdentifier = try AuthorityKeyIdentifierValue(derEncoded: ext.value)
+        self.keyIdentifier = asn1KeyIdentifier.keyIdentifier.map { $0.bytes }
+        self.authorityCertIssuer = asn1KeyIdentifier.authorityCertIssuer
+        self.authorityCertSerialNumber = asn1KeyIdentifier.authorityCertSerialNumber.map { Certificate.SerialNumber(bytes: $0) }
     }
 }
 
-extension Certificate.Extensions.AuthorityKeyIdentifier: Hashable { }
+extension AuthorityKeyIdentifier: Hashable { }
 
-extension Certificate.Extensions.AuthorityKeyIdentifier: Sendable { }
+extension AuthorityKeyIdentifier: Sendable { }
 
-extension Certificate.Extensions.AuthorityKeyIdentifier: CustomStringConvertible {
+extension AuthorityKeyIdentifier: CustomStringConvertible {
     public var description: String {
         var elements: [String] = []
 
@@ -94,7 +92,7 @@ extension Certificate.Extension {
     ///   - aki: The extension to wrap
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
-    public init(_ aki: Certificate.Extensions.AuthorityKeyIdentifier, critical: Bool) throws {
+    public init(_ aki: AuthorityKeyIdentifier, critical: Bool) throws {
         let asn1Representation = AuthorityKeyIdentifierValue(aki)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
@@ -102,7 +100,7 @@ extension Certificate.Extension {
     }
 }
 
-extension Certificate.Extensions.AuthorityKeyIdentifier: CertificateExtensionConvertible {
+extension AuthorityKeyIdentifier: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
     }
@@ -133,7 +131,7 @@ struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable {
     }
 
     @inlinable
-    init(_ aki: Certificate.Extensions.AuthorityKeyIdentifier) {
+    init(_ aki: AuthorityKeyIdentifier) {
         self.keyIdentifier = aki.keyIdentifier.map { ASN1OctetString(contentBytes: $0) }
         self.authorityCertIssuer = aki.authorityCertIssuer
         self.authorityCertSerialNumber = aki.authorityCertSerialNumber.map { $0.bytes }

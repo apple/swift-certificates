@@ -24,14 +24,14 @@ extension Certificate {
     /// it does not understand. A number of extensions have built-in support, and can be decoded directly from an ``Extension``
     /// value. These are:
     ///
-    /// - ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct``
-    /// - ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct``
-    /// - ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum``
-    /// - ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
-    /// - ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct``
-    /// - ``Certificate/Extensions-swift.struct/NameConstraints-swift.struct``
-    /// - ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct``
-    /// - ``Certificate/Extensions-swift.struct/SubjectKeyIdentifier-swift.struct``
+    /// - ``AuthorityInformationAccess``
+    /// - ``AuthorityKeyIdentifier``
+    /// - ``BasicConstraints``
+    /// - ``ExtendedKeyUsage``
+    /// - ``KeyUsage``
+    /// - ``NameConstraints``
+    /// - ``SubjectAlternativeNames``
+    /// - ``SubjectKeyIdentifier``
     ///
     /// Users can write their own types by using a similar approach to these types, when it is necessary to add support for
     /// different X.509 extension.

@@ -14,49 +14,47 @@
 
 import SwiftASN1
 
-extension Certificate.Extensions {
-    /// Identifies whether the subject of the certificate is a CA and the
-    /// maximum verification depth of valid certificate paths that include this
+/// Identifies whether the subject of the certificate is a CA and the
+/// maximum verification depth of valid certificate paths that include this
+/// certificate.
+public enum BasicConstraints {
+    /// This entity is a certificate authority.
+    ///
+    /// If `maxPathLength` is non-nil, this length is the maximum number of intermediate
+    /// certificates that may follow this one in a valid certification path. Note that this
+    /// excludes the leaf, so a valid (and common) `maxPathLength` is `0`.
+    case isCertificateAuthority(maxPathLength: Int?)
+
+    /// This entity is not a certificate authority, and may not be a valid issuer of any
     /// certificate.
-    public enum BasicConstraints {
-        /// This entity is a certificate authority.
-        ///
-        /// If `maxPathLength` is non-nil, this length is the maximum number of intermediate
-        /// certificates that may follow this one in a valid certification path. Note that this
-        /// excludes the leaf, so a valid (and common) `maxPathLength` is `0`.
-        case isCertificateAuthority(maxPathLength: Int?)
+    case notCertificateAuthority
 
-        /// This entity is not a certificate authority, and may not be a valid issuer of any
-        /// certificate.
-        case notCertificateAuthority
+    /// Create a new ``BasicConstraints`` object
+    /// by unwrapping a ``Certificate/Extension``.
+    ///
+    /// - Parameter ext: The ``Certificate/Extension`` to unwrap
+    /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
+    ///     `ASN1ObjectIdentifier.X509ExtensionID.basicConstraints`.
+    @inlinable
+    public init(_ ext: Certificate.Extension) throws {
+        guard ext.oid == .X509ExtensionID.basicConstraints else {
+            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)")
+        }
 
-        /// Create a new ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum`` object
-        /// by unwrapping a ``Certificate/Extension``.
-        ///
-        /// - Parameter ext: The ``Certificate/Extension`` to unwrap
-        /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
-        ///     `ASN1ObjectIdentifier.X509ExtensionID.basicConstraints`.
-        @inlinable
-        public init(_ ext: Certificate.Extension) throws {
-            guard ext.oid == .X509ExtensionID.basicConstraints else {
-                throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)")
-            }
-
-            let basicConstraintsValue = try BasicConstraintsValue(derEncoded: ext.value)
-            if basicConstraintsValue.isCA {
-                self = .isCertificateAuthority(maxPathLength: basicConstraintsValue.pathLenConstraint)
-            } else {
-                self = .notCertificateAuthority
-            }
+        let basicConstraintsValue = try BasicConstraintsValue(derEncoded: ext.value)
+        if basicConstraintsValue.isCA {
+            self = .isCertificateAuthority(maxPathLength: basicConstraintsValue.pathLenConstraint)
+        } else {
+            self = .notCertificateAuthority
         }
     }
 }
 
-extension Certificate.Extensions.BasicConstraints: Hashable { }
+extension BasicConstraints: Hashable { }
 
-extension Certificate.Extensions.BasicConstraints: Sendable { }
+extension BasicConstraints: Sendable { }
 
-extension Certificate.Extensions.BasicConstraints: CustomStringConvertible {
+extension BasicConstraints: CustomStringConvertible {
     public var description: String {
         switch self {
         case .isCertificateAuthority(maxPathLength: nil):
@@ -76,7 +74,7 @@ extension Certificate.Extension {
     ///   - basicConstraints: The extension to wrap
     ///   - critical: Whether this extension should have the critical bit set.
     @inlinable
-    public init(_ basicConstraints: Certificate.Extensions.BasicConstraints, critical: Bool) throws {
+    public init(_ basicConstraints: BasicConstraints, critical: Bool) throws {
         let asn1Representation = BasicConstraintsValue(basicConstraints)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
@@ -84,7 +82,7 @@ extension Certificate.Extension {
     }
 }
 
-extension Certificate.Extensions.BasicConstraints: CertificateExtensionConvertible {
+extension BasicConstraints: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
     }
@@ -116,7 +114,7 @@ struct BasicConstraintsValue: DERImplicitlyTaggable {
     }
 
     @inlinable
-    init(_ ext: Certificate.Extensions.BasicConstraints) {
+    init(_ ext: BasicConstraints) {
         switch ext {
         case .isCertificateAuthority(maxPathLength: let maxPathLen):
             self.isCA = true
