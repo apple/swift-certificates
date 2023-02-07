@@ -17,7 +17,7 @@ import SwiftASN1
 /// Constraints the namespace within which all subject names issued by a given CA must reside.
 ///
 /// These constraints apply both to the ``Certificate/subject`` and also to any
-/// ``SubjectAlternativeNames-swift.struct`` that may be present. Restrictions are applied to
+/// ``SubjectAlternativeNames`` that may be present. Restrictions are applied to
 /// specific name _forms_, and when the form is not present then the restriction does not apply.
 ///
 /// Restrictions are defined in terms of both permitted and forbidden subtrees. The forbidden trees
@@ -263,7 +263,7 @@ public struct NameConstraints {
         self.excludedSubtrees = excludedSubtrees
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/NameConstraints-swift.struct`` object
+    /// Create a new ``NameConstraints`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap

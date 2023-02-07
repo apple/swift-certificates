@@ -25,13 +25,13 @@ public struct KeyUsage {
     @usableFromInline
     internal var rawValue: UInt16
 
-    /// Construct a ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct`` extension with no usages set.
+    /// Construct a ``KeyUsage`` extension with no usages set.
     @inlinable
     public init() {
         self.rawValue = 0
     }
 
-    /// Construct a ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct`` extension with some usages set.
+    /// Construct a ``KeyUsage`` extension with some usages set.
     ///
     /// - Parameters:
     ///   - digitalSignature: This is true when the subject public key is used for verifying digital signatures,
@@ -80,7 +80,7 @@ public struct KeyUsage {
         self.decipherOnly = decipherOnly
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct`` object
+    /// Create a new ``KeyUsage`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap

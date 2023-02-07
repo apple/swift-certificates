@@ -29,7 +29,7 @@ public struct AuthorityKeyIdentifier {
     /// The serial number of the issuing cert.
     public var authorityCertSerialNumber: Certificate.SerialNumber?
 
-    /// Create a new ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct`` extension value.
+    /// Create a new ``AuthorityKeyIdentifier`` extension value.
     ///
     /// - Parameters:
     ///   - keyIdentifier: An opaque sequence of bytes uniquely derived from the public key of the issuing CA.
@@ -42,7 +42,7 @@ public struct AuthorityKeyIdentifier {
         self.authorityCertSerialNumber = authorityCertSerialNumber
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/AuthorityKeyIdentifier-swift.struct`` object
+    /// Create a new ``AuthorityKeyIdentifier`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap

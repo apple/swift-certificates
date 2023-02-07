@@ -16,14 +16,14 @@ import SwiftASN1
 
 /// Provides details on how to access information about the certificate issuer.
 ///
-/// This extension behaves as a collection of ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/AccessDescription`` objects.
+/// This extension behaves as a collection of ``AuthorityInformationAccess/AccessDescription`` objects.
 ///
 /// In practice this most commonly contains OCSP servers and links to the issuing CA certificate.
 public struct AuthorityInformationAccess {
     @usableFromInline
     var descriptions: [AccessDescription]
 
-    /// Create a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/`` object
+    /// Create a new ``AuthorityInformationAccess/`` object
     /// containing specific access descriptions.
     ///
     /// - Parameter descriptions: The descriptions to include in the AIA extension.
@@ -32,7 +32,7 @@ public struct AuthorityInformationAccess {
         self.descriptions = Array(descriptions)
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct`` object
+    /// Create a new ``AuthorityInformationAccess`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap
@@ -93,7 +93,7 @@ extension AuthorityInformationAccess {
         /// The location where the information may be found.
         public var location: GeneralName
 
-        /// Construct a new ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/AccessDescription`` from constituent parts.
+        /// Construct a new ``AuthorityInformationAccess/AccessDescription`` from constituent parts.
         @inlinable
         public init(method: AccessMethod, location: GeneralName) {
             self.method = method
@@ -120,7 +120,7 @@ extension AuthorityInformationAccess.AccessDescription: CustomStringConvertible 
 
 extension AuthorityInformationAccess.AccessDescription {
     /// The format and meaning of the information included in a single
-    /// ``Certificate/Extensions-swift.struct/AuthorityInformationAccess-swift.struct/AccessDescription``
+    /// ``AuthorityInformationAccess/AccessDescription``
     /// object.
     public struct AccessMethod {
         @usableFromInline

@@ -29,7 +29,7 @@ public enum BasicConstraints {
     /// certificate.
     case notCertificateAuthority
 
-    /// Create a new ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum`` object
+    /// Create a new ``BasicConstraints`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap

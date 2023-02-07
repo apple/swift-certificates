@@ -16,12 +16,12 @@ import SwiftASN1
 
 /// Indicates one or more purposes for which the certified public key
 /// may be used, in addition to or instead of the the purposes indicated
-/// in the ``KeyUsage-swift.struct`` extension.
+/// in the ``KeyUsage`` extension.
 public struct ExtendedKeyUsage {
     @usableFromInline
     var usages: [Usage]
 
-    /// Construct an ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct`` extension containing the
+    /// Construct an ``ExtendedKeyUsage`` extension containing the
     /// given usages.
     ///
     /// - Parameter usages: The purposes for which the certificate may be used.
@@ -30,7 +30,7 @@ public struct ExtendedKeyUsage {
         self.usages = Array(usages)
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct`` object
+    /// Create a new ``ExtendedKeyUsage`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap
@@ -82,7 +82,7 @@ extension ExtendedKeyUsage: RandomAccessCollection {
 
 extension ExtendedKeyUsage {
     /// An acceptable usage for a certificate as attested in an
-    /// ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
+    /// ``ExtendedKeyUsage``
     /// extension.
     public struct Usage {
         @usableFromInline
@@ -106,7 +106,7 @@ extension ExtendedKeyUsage {
             self.backing = backing
         }
 
-        /// Constructs a ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct/Usage`` from an opaque oid.
+        /// Constructs a ``ExtendedKeyUsage/Usage`` from an opaque oid.
         ///
         /// - Parameter oid: The OID of the usage.
         @inlinable
@@ -242,7 +242,7 @@ extension ASN1ObjectIdentifier {
     }
 
     /// An acceptable usage for a certificate as attested in an
-    /// ``Certificate/Extensions-swift.struct/ExtendedKeyUsage-swift.struct``
+    /// ``ExtendedKeyUsage``
     /// extension.
     public enum ExtendedKeyUsage {
         /// The public key may be used for any purpose.

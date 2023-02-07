@@ -17,7 +17,7 @@ import SwiftASN1
 /// Provides a means of identifying a certificate that contains a particular public key.
 ///
 /// This extension contains a value derived from the public key of the certificate in which it appears.
-/// That value can be used to build the ``AuthorityKeyIdentifier-swift.struct/keyIdentifier`` field in
+/// That value can be used to build the ``AuthorityKeyIdentifier/keyIdentifier`` field in
 /// any certificate issued by this certificate. This makes it possible to identify a certificate
 /// possessing the key that issued another certificate.
 public struct SubjectKeyIdentifier {
@@ -31,7 +31,7 @@ public struct SubjectKeyIdentifier {
         self.keyIdentifier = keyIdentifier
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/SubjectKeyIdentifier-swift.struct`` object
+    /// Create a new ``SubjectKeyIdentifier`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap

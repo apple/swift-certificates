@@ -84,9 +84,9 @@ certificate. For self-signed certificates, the issuer and the subject are identi
 The bulk of the semantic information in a certificate is contained in its extensions. For our case, we care about only a small
 few.
 
-We need ``Certificate/Extensions-swift.struct/BasicConstraints-swift.enum`` to be present, and set to
-`isCertificateAuthority`. We also need ``Certificate/Extensions-swift.struct/KeyUsage-swift.struct`` with the appropriate bits
-set. Finally, we want to set ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct`` to include the domain
+We need ``BasicConstraints`` to be present, and set to
+`isCertificateAuthority`. We also need ``KeyUsage`` with the appropriate bits
+set. Finally, we want to set ``SubjectAlternativeNames`` to include the domain
 name we're going to be self-signing for, which in this case we'll set to `localhost`.
 
 We can use the helpful builder syntax for this:

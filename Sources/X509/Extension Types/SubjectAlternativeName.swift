@@ -38,7 +38,7 @@ public struct SubjectAlternativeNames {
         self.names = []
     }
 
-    /// Create a new ``Certificate/Extensions-swift.struct/SubjectAlternativeNames-swift.struct`` object
+    /// Create a new ``SubjectAlternativeNames`` object
     /// by unwrapping a ``Certificate/Extension``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to unwrap
