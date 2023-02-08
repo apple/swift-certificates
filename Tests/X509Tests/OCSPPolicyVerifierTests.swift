@@ -141,7 +141,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .meetsPolicy = result else {
-            return XCTFail("fails to validate \(result)", file: file, line: line)
+            XCTFail("fails to validate \(result)", file: file, line: line)
+            dump(chain) // TODO: replace with Certificate.description and include it in XCTFail message above once implemented
+            return
         }
         let queryCount = await requester.queryCount
         XCTAssertEqual(queryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
@@ -161,7 +163,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .failsToMeetPolicy(let actualReason) = result else {
-            return XCTFail("chain did not fail validation", file: file, line: line)
+            XCTFail("chain did not fail validation", file: file, line: line)
+            dump(chain) // TODO: replace with Certificate.description and include it in XCTFail message above once implemented
+            return
         }
         if let expectedReason {
             XCTAssertEqual(actualReason, expectedReason, "unexpected policy failure reason", file: file, line: line)
