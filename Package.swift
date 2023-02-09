@@ -32,7 +32,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.2.1"),
         // swift-asn1 repo is private, so we can't access it anonymously yet
         // .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.5.0")),
-        .package(url: "git@github.com:apple/swift-asn1.git", .upToNextMinor(from: "0.5.0")),
+        .package(url: "git@github.com:apple/swift-asn1.git", branch: "dn-set-of"),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
