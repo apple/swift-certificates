@@ -16,7 +16,11 @@ import XCTest
 import Crypto
 import SwiftASN1
 @testable import X509
+#if canImport(Darwin)
 import Foundation
+#else
+@preconcurrency import Foundation
+#endif
 
 actor TestRequester: OCSPRequester {
     private let queryClosure: @Sendable (OCSPRequest, String) async throws -> OCSPResponse
