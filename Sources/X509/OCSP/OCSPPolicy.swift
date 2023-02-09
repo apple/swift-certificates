@@ -77,7 +77,7 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
     
     private var requester: Requester
     private var requestHashAlgorithm: OCSPRequestHashAlgorithm
@@ -303,7 +303,7 @@ extension OCSPSingleResponse {
 ///   - maxDuration: max execution duration in seconds of `operation`
 ///   - operation: the task to start and cancel after `maxDuration` seconds
 /// - Returns: the result of `operation`
-private func withTimeout<Result>(
+private func withTimeout<Result: Sendable>(
     _ maxDuration: TimeInterval,
     operation: @escaping @Sendable () async -> Result
 ) async -> Result {

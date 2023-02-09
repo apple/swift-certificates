@@ -159,7 +159,7 @@ final class DistinguishedNameTests: XCTestCase {
                 StateOrProvinceName("DigiLand")
             }
 
-            for name in ["foo", "bar", "baz"].filter { $0 == "baz" } {
+            for name in ["foo", "bar", "baz"].filter({ $0 == "baz" }) {
                 CommonName(name)
             }
         }
