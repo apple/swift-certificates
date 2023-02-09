@@ -15,6 +15,7 @@
 import SwiftASN1
 @preconcurrency import Crypto
 @preconcurrency import _CryptoExtras
+import Foundation
 
 extension Certificate {
     /// An abstract representation of the cryptographic signature on a certificate.
