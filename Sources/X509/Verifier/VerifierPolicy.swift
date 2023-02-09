@@ -16,7 +16,7 @@ public protocol VerifierPolicy {
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
 }
 
-public enum PolicyEvaluationResult {
+public enum PolicyEvaluationResult: Sendable {
     case meetsPolicy
     case failsToMeetPolicy(reason: String)
 }
