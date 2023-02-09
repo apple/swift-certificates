@@ -14,9 +14,13 @@
 
 import SwiftASN1
 import Crypto
-import protocol Foundation.DataProtocol
-import struct Foundation.Date
-import typealias Foundation.TimeInterval
+#if canImport(Darwin)
+import Foundation
+#else
+// swift-corelibs-foundation hasn't marked anything Sendable yet https://github.com/apple/swift-corelibs-foundation/issues/4687
+@preconcurrency import Foundation
+#endif
+
 
 public protocol OCSPRequester: Sendable {
     /// Called with an OCSP Request.
