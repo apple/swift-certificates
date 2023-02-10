@@ -98,10 +98,15 @@ extension Certificate.PublicKey {
     /// - Returns: Whether the signature was produced by signing `certificate` with the private key corresponding to this public key.
     @inlinable
     public func isValidSignature(_ signature: Certificate.Signature, for certificate: Certificate) -> Bool {
+        return self.isValidSignature(signature, for: certificate.tbsCertificateBytes, signatureAlgorithm: certificate.signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<Bytes: DataProtocol>(_ signature: Certificate.Signature, for bytes: Bytes, signatureAlgorithm: Certificate.SignatureAlgorithm) -> Bool {
         let digest: Digest
         do {
-            let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: certificate.signatureAlgorithm)
-            digest = try Digest.computeDigest(for: certificate.tbsCertificateBytes, using: digestAlgorithm)
+            let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+            digest = try Digest.computeDigest(for: bytes, using: digestAlgorithm)
         } catch {
             return false
         }
@@ -116,7 +121,7 @@ extension Certificate.PublicKey {
         case .rsa(let rsa):
             // TODO: Extend for PSS?
             do {
-                let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: certificate.signatureAlgorithm)
+                let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
                 return rsa.isValidSignature(signature, for: digest, padding: padding)
             } catch {
                 return false

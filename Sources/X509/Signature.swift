@@ -144,3 +144,19 @@ extension ASN1BitString {
         }
     }
 }
+
+extension ASN1OctetString {
+    @inlinable
+    init(_ signature: Certificate.Signature) {
+        switch signature.backing {
+        case .p256(let sig):
+            self = ASN1OctetString(contentBytes: ArraySlice(sig.derRepresentation))
+        case .p384(let sig):
+            self = ASN1OctetString(contentBytes: ArraySlice(sig.derRepresentation))
+        case .p521(let sig):
+            self = ASN1OctetString(contentBytes: ArraySlice(sig.derRepresentation))
+        case .rsa(let sig):
+            self = ASN1OctetString(contentBytes: ArraySlice(sig.rawRepresentation))
+        }
+    }
+}
