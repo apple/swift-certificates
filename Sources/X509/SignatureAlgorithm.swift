@@ -64,6 +64,27 @@ extension Certificate {
 
         /// This value represents an RSA signature with PKCS1v1.5 padding and SHA521 as the hash function.
         public static let sha512WithRSAEncryption = Self(algorithmIdentifier: .sha512WithRSAEncryption)
+
+        /// Whether this algorithm represents an ECDSA signature.
+        @inlinable
+        var isECDSA: Bool {
+            switch self {
+            case .ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512:
+                return true
+            default:
+                return false
+            }
+        }
+
+        @inlinable
+        var isRSA: Bool {
+            switch self {
+            case .sha1WithRSAEncryption, .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption:
+                return true
+            default:
+                return false
+            }
+        }
     }
 }
 
@@ -99,5 +120,23 @@ extension AlgorithmIdentifier {
     @inlinable
     init(_ signatureAlgorithm: Certificate.SignatureAlgorithm) {
         self = signatureAlgorithm._algorithmIdentifier
+    }
+
+    @inlinable
+    init(digestAlgorithmFor signatureAlgorithm: Certificate.SignatureAlgorithm) throws {
+        // Per RFC 5754 § 2, we must produce digest algorithm identifiers with
+        // absent parameters, so we do.
+        switch signatureAlgorithm {
+        case .ecdsaWithSHA256, .sha256WithRSAEncryption:
+            self = .sha256UsingNil
+        case .ecdsaWithSHA384, .sha384WithRSAEncryption:
+            self = .sha384UsingNil
+        case .ecdsaWithSHA512, .sha512WithRSAEncryption:
+            self = .sha512UsingNil
+        case .sha1WithRSAEncryption:
+            self = .sha1
+        default:
+            throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot generate digest algorithm for \(signatureAlgorithm)")
+        }
     }
 }

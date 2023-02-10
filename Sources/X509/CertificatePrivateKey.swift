@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 @preconcurrency import Crypto
 @preconcurrency import _CryptoExtras
 
@@ -62,19 +63,20 @@ extension Certificate {
         }
 
         @inlinable
-        internal func sign(tbsCertificateBytes: ArraySlice<UInt8>) throws -> Signature {
+        internal func sign<Bytes: DataProtocol>(bytes: Bytes, signatureAlgorithm: SignatureAlgorithm) throws -> Signature {
+            try self.validateAlgorithmForKey(algorithm: signatureAlgorithm)
+            let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+
             switch self.backing {
             case .p256(let p256):
-                let sig = try p256.signature(for: tbsCertificateBytes)
-                return Signature(backing: .p256(sig))
+                return try p256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             case .p384(let p384):
-                let sig = try p384.signature(for: tbsCertificateBytes)
-                return Signature(backing: .p384(sig))
+                return try p384.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             case .p521(let p521):
-                let sig = try p521.signature(for: tbsCertificateBytes)
-                return Signature(backing: .p521(sig))
-            case .rsa:
-                fatalError("TODO: not implemented")
+                return try p521.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+            case .rsa(let rsa):
+                let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
+                return try rsa.signature(for: bytes, digestAlgorithm: digestAlgorithm, padding: padding)
             }
         }
 
@@ -91,6 +93,20 @@ extension Certificate {
                 return PublicKey(p521.publicKey)
             case .rsa(let rsa):
                 return PublicKey(rsa.publicKey)
+            }
+        }
+
+        @inlinable
+        func validateAlgorithmForKey(algorithm: SignatureAlgorithm) throws {
+            switch self.backing {
+            case .p256, .p384, .p521:
+                if !algorithm.isECDSA {
+                    throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with ECDSA key \(self)")
+                }
+            case .rsa:
+                if !algorithm.isRSA {
+                    throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with RSA key \(self)")
+                }
             }
         }
     }
