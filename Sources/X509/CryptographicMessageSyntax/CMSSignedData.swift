@@ -42,10 +42,6 @@ import SwiftASN1
 /// ```
 /// - Note: At the moment we don't support `crls` (`RevocationInfoChoices`)
 struct CMSSignedData: DERImplicitlyTaggable, Hashable {
-    private enum Error: Swift.Error {
-        case multipleDigestAlgorithmsAreNotSupportedYet
-        case multipleSignerInfosAreNotSupportedYet
-    }
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
