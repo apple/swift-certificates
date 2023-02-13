@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import SwiftASN1
+
 /// Set the State or Province Name (ST) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.

@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import SwiftASN1
+
 /// Set the Country Name (C) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.

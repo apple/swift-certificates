@@ -15,6 +15,7 @@
 import Foundation
 @preconcurrency import Crypto
 @preconcurrency import _CryptoExtras
+import Foundation
 
 extension Certificate {
     /// A private key that can be used with a certificate.
