@@ -14,9 +14,13 @@
 
 import SwiftASN1
 import Crypto
-import protocol Foundation.DataProtocol
-import struct Foundation.Date
-import typealias Foundation.TimeInterval
+#if canImport(Darwin)
+import Foundation
+#else
+// swift-corelibs-foundation hasn't marked anything Sendable yet https://github.com/apple/swift-corelibs-foundation/issues/4687
+@preconcurrency import Foundation
+#endif
+
 
 public protocol OCSPRequester: Sendable {
     /// Called with an OCSP Request.
@@ -77,7 +81,7 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
     
     private var requester: Requester
     private var requestHashAlgorithm: OCSPRequestHashAlgorithm
@@ -303,7 +307,7 @@ extension OCSPSingleResponse {
 ///   - maxDuration: max execution duration in seconds of `operation`
 ///   - operation: the task to start and cancel after `maxDuration` seconds
 /// - Returns: the result of `operation`
-private func withTimeout<Result>(
+private func withTimeout<Result: Sendable>(
     _ maxDuration: TimeInterval,
     operation: @escaping @Sendable () async -> Result
 ) async -> Result {

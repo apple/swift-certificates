@@ -116,25 +116,12 @@ extension RelativeDistinguishedName: DERImplicitlyTaggable {
 
     @inlinable
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
-        self = try DER.set(rootNode, identifier: identifier) { nodes in
-            // TODO: We need to validate that these are lexicographically sorted. Perhaps ASN1.set should do it?
-            var elements = Array<RelativeDistinguishedName.Attribute>()
-
-            while let node = nodes.next() {
-                try elements.append(.init(derEncoded: node))
-            }
-
-            return try RelativeDistinguishedName(elements)
-        }
+        try self.init(DER.set(identifier: identifier, rootNode: rootNode))
     }
 
     @inlinable
     public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        try coder.appendConstructedNode(identifier: identifier) { rootCoder in
-            for element in self.attributes {
-                try element.serialize(into: &rootCoder)
-            }
-        }
+        try coder.serializeSetOf(self.attributes, identifier: identifier)
     }
 
     @inlinable

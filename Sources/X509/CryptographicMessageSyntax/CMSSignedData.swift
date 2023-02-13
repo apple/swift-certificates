@@ -42,10 +42,6 @@ import SwiftASN1
 /// ```
 /// - Note: At the moment we don't support `crls` (`RevocationInfoChoices`)
 struct CMSSignedData: DERImplicitlyTaggable, Hashable {
-    private enum Error: Swift.Error {
-        case multipleDigestAlgorithmsAreNotSupportedYet
-        case multipleSignerInfosAreNotSupportedYet
-    }
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
@@ -73,27 +69,17 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
     init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
             let version = try CMSVersion(rawValue: Int.init(derEncoded: &nodes))
-            let digestAlgorithms = try DER.sequence(of: AlgorithmIdentifier.self, identifier: .set, nodes: &nodes)
-            // TODO: support multiple digest algorithms. For this we need to validate that the binary representation of each element is lexicographically sorted.
-            guard digestAlgorithms.count <= 1 else {
-                throw Error.multipleDigestAlgorithmsAreNotSupportedYet
-            }
+            let digestAlgorithms = try DER.set(of: AlgorithmIdentifier.self, identifier: .set, nodes: &nodes)
             
             let encapContentInfo = try CMSEncapsulatedContentInfo(derEncoded: &nodes)
             let certificates = try DER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
-                // TODO: this is actually a SET OF so we need to verify that the binary representation of each element is lexicographically sorted.
-                try DER.sequence(of: Certificate.self, identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific), rootNode: node)
+                try DER.set(of: Certificate.self, identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific), rootNode: node)
             }
             
             // we need to skip this node even though we don't support it
             _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
             
-            let signerInfos = try DER.sequence(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
-            
-            // TODO: support multiple signer infos. For this we need to validate that the binary representation of each element is lexicographically sorted.
-            guard signerInfos.count <= 1 else {
-                throw Error.multipleSignerInfosAreNotSupportedYet
-            }
+            let signerInfos = try DER.set(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
             
             return .init(
                 version: version,
@@ -108,21 +94,12 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(version.rawValue)
-            guard self.digestAlgorithms.count <= 1 else {
-                throw Error.multipleDigestAlgorithmsAreNotSupportedYet
-            }
-            // TODO: this is actually a SET OF. We need to sort the binary representation of each element lexicographically before encoding.
-            try coder.serializeSequenceOf(self.digestAlgorithms, identifier: .set)
+            try coder.serializeSetOf(self.digestAlgorithms)
             try coder.serialize(self.encapContentInfo)
             if let certificates {
-                // TODO: this is actually a SET OF. We need to sort the binary representation of each element lexicographically before encoding.
-                try coder.serializeSequenceOf(certificates, identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific))
+                try coder.serializeSetOf(certificates, identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific))
             }
-            guard self.signerInfos.count <= 1 else {
-                throw Error.multipleSignerInfosAreNotSupportedYet
-            }
-            // TODO: this is actually a SET OF. We need to sort the binary representation of each element lexicographically before encoding.
-            try coder.serializeSequenceOf(self.signerInfos, identifier: .set)
+            try coder.serializeSetOf(self.signerInfos, identifier: .set)
         }
     }
 }

@@ -16,7 +16,11 @@ import XCTest
 import Crypto
 import SwiftASN1
 @testable import X509
+#if canImport(Darwin)
 import Foundation
+#else
+@preconcurrency import Foundation
+#endif
 
 actor TestRequester: OCSPRequester {
     private let queryClosure: @Sendable (OCSPRequest, String) async throws -> OCSPResponse
@@ -187,6 +191,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testSingleCertWithOCSP() async {
+        let now = self.now
         await self.assertChainMeetsPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: .noThrow { request, uri -> OCSPResponse in
@@ -198,14 +203,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 return .successful(.signed(responses: [OCSPSingleResponse(
                     certID: singleRequest.certID,
                     certStatus: .good,
-                    thisUpdate: try .init(self.now - .days(1)),
-                    nextUpdate: try .init(self.now + .days(1))
+                    thisUpdate: try .init(now - .days(1)),
+                    nextUpdate: try .init(now + .days(1))
                 )], responseExtensions: { nonce }))
             }
         )
     }
     
     func testWrongNonce() async {
+        let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: .noThrow { request, uri -> OCSPResponse in
@@ -217,14 +223,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 return .successful(.signed(responses: [OCSPSingleResponse(
                     certID: singleRequest.certID,
                     certStatus: .good,
-                    thisUpdate: try .init(self.now - .days(1)),
-                    nextUpdate: try .init(self.now + .days(1))
+                    thisUpdate: try .init(now - .days(1)),
+                    nextUpdate: try .init(now + .days(1))
                 )], responseExtensions: { OCSPNonce() }))
             }
         )
     }
     
     func testRevokedCert() async {
+        let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: .noThrow { request, uri -> OCSPResponse in
@@ -236,17 +243,18 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 return .successful(.signed(responses: [OCSPSingleResponse(
                     certID: singleRequest.certID,
                     certStatus: .revoked(.init(
-                        revocationTime: try .init(self.now),
+                        revocationTime: try .init(now),
                         revocationReason: .unspecified
                     )),
-                    thisUpdate: try .init(self.now - .days(1)),
-                    nextUpdate: try .init(self.now + .days(1))
+                    thisUpdate: try .init(now - .days(1)),
+                    nextUpdate: try .init(now + .days(1))
                 )], responseExtensions: { nonce }))
             }
         )
     }
     
     func testResponseDoesNotIncludeResponseForRequestedCert() async {
+        let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: .noThrow { request, uri -> OCSPResponse in
@@ -262,8 +270,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                         serialNumber: .init()
                     ),
                     certStatus: .good,
-                    thisUpdate: try .init(self.now - .days(1)),
-                    nextUpdate: try .init(self.now + .days(1))
+                    thisUpdate: try .init(now - .days(1)),
+                    nextUpdate: try .init(now + .days(1))
                 )], responseExtensions: { nonce }))
             }
         )
