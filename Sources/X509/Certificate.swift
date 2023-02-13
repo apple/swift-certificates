@@ -231,7 +231,7 @@ public struct Certificate {
         var serializer = DER.Serializer()
         try serializer.serialize(self.tbsCertificate)
         let tbsCertificateBytes = serializer.serializedBytes[...]
-        self.signature = try issuerPrivateKey.sign(tbsCertificateBytes: tbsCertificateBytes)
+        self.signature = try issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
     }
 

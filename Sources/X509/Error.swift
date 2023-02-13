@@ -113,6 +113,20 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
             )
         )
     }
+
+    /// A digest algorithm isn't supported
+    /// - Parameter reason: A detailed reason indicating the algorithm identifier for the unsupported digest.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedDigestAlgorithm``.
+    @inline(never)
+    public static func unsupportedDigestAlgorithm(
+        reason: String, file: String = #fileID, line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .unsupportedDigestAlgorithm, reason: reason, file: file, line: line
+            )
+        )
+    }
 }
 
 extension CertificateError {
@@ -127,6 +141,7 @@ extension CertificateError {
             case unsupportedPublicKeyAlgorithm
             case invalidSignatureForCertificate
             case incorrectOIDForExtension
+            case unsupportedDigestAlgorithm
         }
 
         fileprivate var backingCode: BackingCode
@@ -146,6 +161,9 @@ extension CertificateError {
 
         /// An extension has the wrong OID.
         public static let incorrectOIDForExtension = ErrorCode(.incorrectOIDForExtension)
+
+        /// The digest algorithm isn't supported.
+        public static let unsupportedDigestAlgorithm = ErrorCode(.unsupportedDigestAlgorithm)
 
         public var description: String {
             return String(describing: self.backingCode)

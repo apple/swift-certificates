@@ -13,10 +13,21 @@
 //===----------------------------------------------------------------------===//
 
 import XCTest
+import Crypto
+import _CryptoExtras
 import SwiftASN1
 @testable import X509
 
 final class SignatureTests: XCTestCase {
+    static let now = Date()
+    static let oneYearFromNow = {
+        now + (60 * 60 * 24 * 365)
+    }()
+    static let p256Key = P256.Signing.PrivateKey()
+    static let p384Key = P384.Signing.PrivateKey()
+    static let p521Key = P521.Signing.PrivateKey()
+    static let rsaKey = try! _RSA.Signing.PrivateKey(keySize: .bits2048)
+
     func testP384Signature() throws {
         // This is the P384 signature over LetsEncrypt Intermediate E1.
         let signatureBytes: [UInt8] = [
@@ -43,5 +54,151 @@ final class SignatureTests: XCTestCase {
         }
 
         // TODO: test that the signature is valid over the TBSCertificate.
+    }
+
+    // The base test implementation for the hash function mismatch tests. This test case validates that, if the combination is valid, we can
+    // create and then verify a certificate signature using this pair of key and algorithm. If it's invalid, it confirms that we can't create
+    // a signature of this combination, and that attempting to validate a signature would also fail.
+    private func hashFunctionMismatchTest(privateKey: Certificate.PrivateKey, signatureAlgorithm: Certificate.SignatureAlgorithm, validCombination: Bool) throws {
+        let name = try DistinguishedName {
+            CommonName("Hash function mismatch CA")
+        }
+
+        let extensions = try Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        }
+
+        do {
+            let certificate = try Certificate(
+                version: .v3,
+                serialNumber: .init(),
+                publicKey: privateKey.publicKey,
+                notValidBefore: Self.now,
+                notValidAfter: Self.oneYearFromNow,
+                issuer: name,
+                subject: name,
+                signatureAlgorithm: signatureAlgorithm,
+                extensions: extensions,
+                issuerPrivateKey: privateKey
+            )
+            XCTAssertTrue(validCombination, "Incorrectly able to create cert combining \(privateKey) and \(signatureAlgorithm)")
+            XCTAssertTrue(privateKey.publicKey.isValidSignature(certificate.signature, for: certificate), "Unable to validate signature combining \(privateKey) and \(signatureAlgorithm)")
+        } catch {
+            XCTAssertFalse(validCombination, "Unable to create cert combining \(privateKey) and \(signatureAlgorithm)")
+        }
+    }
+
+    func testHashFunctionMismatch_p256_ecdsaWithSHA256() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .ecdsaWithSHA256, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p256_ecdsaWithSHA384() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .ecdsaWithSHA384, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p256_ecdsaWithSHA512() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .ecdsaWithSHA512, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p256_sha1WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .sha1WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p256_sha256WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .sha256WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p256_sha384WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .sha384WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p256_sha512WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p256Key), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p384_ecdsaWithSHA256() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .ecdsaWithSHA256, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p384_ecdsaWithSHA384() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .ecdsaWithSHA384, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p384_ecdsaWithSHA512() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .ecdsaWithSHA512, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p384_sha1WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .sha1WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p384_sha256WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .sha256WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p384_sha384WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .sha384WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p384_sha512WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p384Key), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p521_ecdsaWithSHA256() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .ecdsaWithSHA256, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p521_ecdsaWithSHA384() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .ecdsaWithSHA384, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p521_ecdsaWithSHA512() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .ecdsaWithSHA512, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_p521_sha1WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .sha1WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p521_sha256WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .sha256WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p521_sha384WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .sha384WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_p521_sha512WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.p521Key), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_rsa_ecdsaWithSHA256() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .ecdsaWithSHA256, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_rsa_ecdsaWithSHA384() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .ecdsaWithSHA384, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_rsa_ecdsaWithSHA512() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .ecdsaWithSHA512, validCombination: false)
+    }
+
+    func testHashFunctionMismatch_rsa_sha1WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .sha1WithRSAEncryption, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_rsa_sha256WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .sha256WithRSAEncryption, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_rsa_sha384WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .sha384WithRSAEncryption, validCombination: true)
+    }
+
+    func testHashFunctionMismatch_rsa_sha512WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: true)
     }
 }

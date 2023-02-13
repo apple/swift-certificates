@@ -133,6 +133,46 @@ extension AlgorithmIdentifier {
     static let rsaPublicKey = AlgorithmIdentifier(
         algorithm: .AlgorithmIdentifier.rsaEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
+
+    @usableFromInline
+    static let sha1UsingNil = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha1, parameters: nil
+    )
+
+    @usableFromInline
+    static let sha1 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha1, parameters: try! ASN1Any(erasing: ASN1Null())
+    )
+
+    @usableFromInline
+    static let sha256UsingNil = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha256, parameters: nil
+    )
+
+    @usableFromInline
+    static let sha256 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha256, parameters: try! ASN1Any(erasing: ASN1Null())
+    )
+
+    @usableFromInline
+    static let sha384UsingNil = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha384, parameters: nil
+    )
+
+    @usableFromInline
+    static let sha384 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha384, parameters: try! ASN1Any(erasing: ASN1Null())
+    )
+
+    @usableFromInline
+    static let sha512UsingNil = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha512, parameters: nil
+    )
+
+    @usableFromInline
+    static let sha512 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.sha512, parameters: try! ASN1Any(erasing: ASN1Null())
+    )
 }
 
 extension AlgorithmIdentifier: CustomStringConvertible {
@@ -157,6 +197,14 @@ extension AlgorithmIdentifier: CustomStringConvertible {
             return "sha384WithRSAEncryption"
         case .p521PublicKey, .sha512WithRSAEncryptionUsingNil:
             return "sha512WithRSAEncryption"
+        case .sha1, .sha1UsingNil:
+            return "sha1"
+        case .sha256, .sha256UsingNil:
+            return "sha256"
+        case .sha384, .sha384UsingNil:
+            return "sha384"
+        case .sha512, .sha512UsingNil:
+            return "sha512"
         default:
             return "AlgorithmIdentifier(\(self.algorithm) - \(String(describing: self.parameters)))"
         }
@@ -175,4 +223,12 @@ extension ASN1ObjectIdentifier.AlgorithmIdentifier {
     static let ecdsaWithSHA512: ASN1ObjectIdentifier = [1, 2, 840, 10045, 4, 3, 4]
 
     static let sha1WithRSAEncryption: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 1, 5]
+
+    static let sha1: ASN1ObjectIdentifier = [1, 3, 14, 3, 2, 26]
+
+    static let sha256: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 1]
+
+    static let sha384: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 2]
+
+    static let sha512: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 3]
 }

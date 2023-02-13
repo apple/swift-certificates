@@ -98,35 +98,29 @@ extension Certificate.PublicKey {
     /// - Returns: Whether the signature was produced by signing `certificate` with the private key corresponding to this public key.
     @inlinable
     public func isValidSignature(_ signature: Certificate.Signature, for certificate: Certificate) -> Bool {
-        // TODO(cory): I'm not sure this API is sensible, but for now I'm sticking with it.
-        switch (signature.backing, self.backing) {
-        case (.p256(let p256Sig), .p256(let p256Key)):
-            return p256Key.isValidSignature(p256Sig, for: certificate.tbsCertificateBytes)
-        case (.p384(let p384Sig), .p384(let p384Key)):
-            return p384Key.isValidSignature(p384Sig, for: certificate.tbsCertificateBytes)
-        case (.p521(let p521Sig), .p521(let p521Key)):
-            return p521Key.isValidSignature(p521Sig, for: certificate.tbsCertificateBytes)
-        case (.rsa(let rsaSig), .rsa(let rsaKey)):
-            switch certificate.signatureAlgorithm {
-            case .sha1WithRSAEncryption:
-                let digest = Insecure.SHA1.hash(data: certificate.tbsCertificateBytes)
-                return rsaKey.isValidSignature(rsaSig, for: digest, padding: .insecurePKCS1v1_5)
-            case .sha256WithRSAEncryption:
-                let digest = SHA256.hash(data: certificate.tbsCertificateBytes)
-                return rsaKey.isValidSignature(rsaSig, for: digest, padding: .insecurePKCS1v1_5)
-            case .sha384WithRSAEncryption:
-                let digest = SHA384.hash(data: certificate.tbsCertificateBytes)
-                return rsaKey.isValidSignature(rsaSig, for: digest, padding: .insecurePKCS1v1_5)
-            case .sha512WithRSAEncryption:
-                let digest = SHA512.hash(data: certificate.tbsCertificateBytes)
-                return rsaKey.isValidSignature(rsaSig, for: digest, padding: .insecurePKCS1v1_5)
-            default:
-                // Huh, we have an RSA signature but we don't know how to validate it.
-                // TODO: Extend for PSS?
+        let digest: Digest
+        do {
+            let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: certificate.signatureAlgorithm)
+            digest = try Digest.computeDigest(for: certificate.tbsCertificateBytes, using: digestAlgorithm)
+        } catch {
+            return false
+        }
+
+        switch self.backing {
+        case .p256(let p256):
+            return p256.isValidSignature(signature, for: digest)
+        case .p384(let p384):
+            return p384.isValidSignature(signature, for: digest)
+        case .p521(let p521):
+            return p521.isValidSignature(signature, for: digest)
+        case .rsa(let rsa):
+            // TODO: Extend for PSS?
+            do {
+                let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: certificate.signatureAlgorithm)
+                return rsa.isValidSignature(signature, for: digest, padding: padding)
+            } catch {
                 return false
             }
-        default:
-            return false
         }
     }
 }
@@ -208,5 +202,18 @@ extension SubjectPublicKeyInfo {
 
         self.algorithmIdentifier = algorithmIdentifier
         self.key = key
+    }
+}
+
+extension _RSA.Signing.Padding {
+    @inlinable
+    init(forSignatureAlgorithm signatureAlgorithm: Certificate.SignatureAlgorithm) throws {
+        switch signatureAlgorithm {
+        case .sha1WithRSAEncryption, .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption:
+            self = .insecurePKCS1v1_5
+        default:
+            // Either this is RSA PSS, or we hit a bug. Either way, unsupported.
+            throw CertificateError.unsupportedSignatureAlgorithm(reason: "Unable to determine RSA padding mode for \(signatureAlgorithm)")
+        }
     }
 }
