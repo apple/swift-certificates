@@ -225,7 +225,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
                 return .failsToMeetPolicy(reason: "failed to decode nonce response \(error)")
             }
             guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
-                return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate")
+                return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)")
             }
             
             switch response.certStatus {
