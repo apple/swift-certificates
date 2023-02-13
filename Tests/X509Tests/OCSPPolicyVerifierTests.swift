@@ -145,10 +145,24 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .meetsPolicy = result else {
-            return XCTFail("fails to validate \(result)", file: file, line: line)
+            XCTFail("fails to validate \(result)", file: file, line: line)
+            printChainForDebugging(chain)
+            return
         }
         let queryCount = await requester.queryCount
         XCTAssertEqual(queryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
+    }
+    
+    func printChainForDebugging(_ chain: [Certificate]) {
+        dump(chain) // TODO: replace with Certificate.description once implemented
+        do {
+            var serializer = DER.Serializer()
+            try serializer.serializeSequenceOf(chain)
+            print("base64 DER representation of chain:")
+            print(Data(serializer.serializedBytes).base64EncodedString())
+        } catch {
+            print("failed to serialise chain \(error)")
+        }
     }
     
     func assertChainFailsToMeetPolicy(
@@ -165,7 +179,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .failsToMeetPolicy(let actualReason) = result else {
-            return XCTFail("chain did not fail validation", file: file, line: line)
+            XCTFail("chain did not fail validation", file: file, line: line)
+            printChainForDebugging(chain)
+            return
         }
         if let expectedReason {
             XCTAssertEqual(actualReason, expectedReason, "unexpected policy failure reason", file: file, line: line)
