@@ -232,6 +232,33 @@ final class VerifierTests: XCTestCase {
         )
     }()
 
+    private static let isolatedSelfSignedCertKey = P256.Signing.PrivateKey()
+    private static let isolatedSelfSignedCert: Certificate = {
+        let isolatedSelfSignedCertName = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("Isolated Self-Signed Cert")
+        }
+
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(isolatedSelfSignedCertKey.publicKey),
+            notValidBefore: Date() - .days(365),
+            notValidAfter: Date() + .days(365),
+            issuer: isolatedSelfSignedCertName,
+            subject: isolatedSelfSignedCertName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+            },
+            issuerPrivateKey: .init(isolatedSelfSignedCertKey)
+        )
+    }()
+
     // MARK: Deeply insane PKI
     //
     // This section defines a deeply insane PKI. The PKI has one root CA and two intermediate CAs, and looks roughly like this:
@@ -597,6 +624,60 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1])
+    }
+
+    func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async throws {
+        let roots = CertificateStore([Self.ca1])
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: []))
+        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]))
+
+        guard case .couldNotValidate = result else {
+            XCTFail("Incorrectly validated: \(result)")
+            return
+        }
+    }
+
+    func testSelfSignedCertsAreTrustedWhenInTrustStore() async throws {
+        let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCert])
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: []))
+        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [Self.isolatedSelfSignedCert])
+    }
+
+    func testTrustRootsCanBeNonSelfSignedLeaves() async throws {
+        let roots = CertificateStore([Self.localhostLeaf])
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: []))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [Self.localhostLeaf])
+    }
+
+    func testTrustRootsCanBeNonSelfSignedIntermediates() async throws {
+        let roots = CertificateStore([Self.intermediate1])
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: []))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1])
     }
 }
 

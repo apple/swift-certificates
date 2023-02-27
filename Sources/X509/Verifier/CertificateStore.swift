@@ -49,4 +49,9 @@ public struct CertificateStore: Sendable, Hashable {
             self._certificates[subject] = newValue
         }
     }
+
+    @inlinable
+    func contains(_ certificate: Certificate) -> Bool {
+        return self[certificate.subject]?.contains(certificate) ?? false
+    }
 }
