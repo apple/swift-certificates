@@ -72,7 +72,7 @@ on minor changes such as a missing `self.` or similar formatting issues.
 
 For frequent contributors, we recommend adding the script as a [git pre-push hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks), which you can do via executing the following command in the project root directory: 
 
-```bash
+```
 cat << EOF > .git/hooks/pre-push
 #!/bin/bash
 
