@@ -19,11 +19,13 @@ in code signing infrastructure.
 This module makes it possible to serialize, deserialize, create, and interact
 with X.509 certificates. This is an essential building-block for a wide range
 of PKI applications. It enables building verifiers, interacting with
-certificate authorities, authenticating peers, and more.
+certificate authorities, authenticating peers, and more. It also ships with
+a default verifier and a number of built-in verifier policies.
 
-## Supported Versions
+## Supported Swift Versions
 
-This library was introduced with support for Swift 5.7 or later.
+This library was introduced with support for Swift 5.7 or later. This library will
+support the latest stable Swift version and the two versions prior.
 
 ## Getting Started
 
