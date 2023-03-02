@@ -9,3 +9,5 @@ DerivedData/
 .netrc
 Package.resolved
 .swiftpm
+/out
+
