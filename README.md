@@ -48,3 +48,4 @@ dependencies: [
 ```
 
 For detailed usage and API documentation, check [the documentation](https://swiftpackageindex.com/apple/swift-certificates/main/documentation/x509).
+
