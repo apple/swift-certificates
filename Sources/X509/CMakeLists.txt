@@ -81,13 +81,13 @@ add_library(X509
   "X509BaseTypes/Time.swift"
   "X509BaseTypes/Validity.swift")
 
-target_link_libraries(SwiftCertificates PUBLIC
+target_link_libraries(X509 PUBLIC
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>
-  SwiftCrypto::Crypto
-  SwiftCrypto::_CryptoExtras
-  SwiftASN1::SwiftASN1)
-set_target_properties(SwiftCertificates PROPERTIES
+  Crypto
+  _CryptoExtras
+  SwiftASN1)
+set_target_properties(X509 PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 
-_install_target(SwiftCertificates)
-set_property(GLOBAL APPEND PROPERTY SWIFT_CERTIFICATES_EXPORTS SwiftCertificates)
+_install_target(X509)
+set_property(GLOBAL APPEND PROPERTY SWIFT_CERTIFICATES_EXPORTS X509)
