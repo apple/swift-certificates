@@ -82,6 +82,7 @@ add_library(X509
   "X509BaseTypes/Validity.swift")
 
 target_link_libraries(X509 PUBLIC
+  $<$<NOT:$<PLATFORM_ID:Darwin>>:dispatch>
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>
   Crypto
   _CryptoExtras
