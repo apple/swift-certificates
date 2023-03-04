@@ -38,6 +38,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
+  find_package(dispatch CONFIG)
   find_package(Foundation CONFIG)
 endif()
                         
