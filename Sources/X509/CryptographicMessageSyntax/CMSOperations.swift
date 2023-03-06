@@ -143,7 +143,7 @@ public enum CMS {
             case .validCertificate:
                 return .validSignature(.init(signer: signingCert))
             case .couldNotValidate(let validationFailures):
-                return .unableToValidateSigner(.init(validationFailures: validationFailures))
+                return .unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert))
             }
         } catch {
             return .invalidCMSBlock(.init(reason: String(describing: error)))
@@ -173,9 +173,12 @@ public enum CMS {
         public struct SignerValidationFailure: Hashable, Swift.Error {
             public var validationFailures: [VerificationResult.PolicyFailure]
 
+            public var signer: Certificate
+
             @inlinable
-            public init(validationFailures: [VerificationResult.PolicyFailure]) {
+            public init(validationFailures: [VerificationResult.PolicyFailure], signer: Certificate) {
                 self.validationFailures = validationFailures
+                self.signer = signer
             }
         }
 
