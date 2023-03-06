@@ -20,6 +20,7 @@ public enum CMS {
     public static func sign<Bytes: DataProtocol>(
         _ bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey
     ) throws -> [UInt8] {
@@ -27,6 +28,7 @@ public enum CMS {
         return try sign(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
+            additionalCertificates: additionalCertificates,
             certificate: certificate
         )
     }
@@ -36,9 +38,15 @@ public enum CMS {
     public static func sign(
         signatureBytes: ASN1OctetString,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalCertificates: [Certificate] = [],
         certificate: Certificate
     ) throws -> [UInt8] {
-        let signedData = try self.generateSignedData(signatureBytes: signatureBytes, signatureAlgorithm: signatureAlgorithm, certificate: certificate)
+        let signedData = try self.generateSignedData(
+            signatureBytes: signatureBytes,
+            signatureAlgorithm: signatureAlgorithm,
+            additionalCertificates: additionalCertificates,
+            certificate: certificate
+        )
 
         var serializer = DER.Serializer()
         try serializer.serialize(signedData)
@@ -49,6 +57,7 @@ public enum CMS {
     static func generateSignedData(
         signatureBytes: ASN1OctetString,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalCertificates: [Certificate],
         certificate: Certificate
     ) throws -> CMSContentInfo {
         let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
@@ -61,11 +70,14 @@ public enum CMS {
             signature: signatureBytes
         )
 
+        var certificates = additionalCertificates
+        certificates.append(certificate)
+
         let signedData = CMSSignedData(
             version: .v1,
             digestAlgorithms: [digestAlgorithm],
             encapContentInfo: contentInfo,
-            certificates: [certificate],
+            certificates: certificates,
             signerInfos: [signerInfo]
         )
         return try CMSContentInfo(signedData)
@@ -79,6 +91,7 @@ public enum CMS {
     >(
         dataBytes: DataBytes,
         signatureBytes: SignatureBytes,
+        additionalIntermediateCertificates: [Certificate] = [],
         trustRoots: CertificateStore,
         policy: PolicySet
     ) async -> SignatureVerificationResult {
@@ -135,7 +148,9 @@ public enum CMS {
 
             // Ok, the signature was signed by the private key associated with this cert. Now we need to validate the certificate.
             // This force-unwrap is safe: we know there are certificates because we've located at least one certificate from this set!
-            let untrustedIntermediates = CertificateStore(signedData.certificates!)
+            var untrustedIntermediates = CertificateStore(signedData.certificates!)
+            untrustedIntermediates.insert(contentsOf: additionalIntermediateCertificates)
+            
             var verifier = Verifier(rootCertificates: trustRoots, policy: policy)
             let result = await verifier.validate(leafCertificate: signingCert, intermediates: untrustedIntermediates)
 

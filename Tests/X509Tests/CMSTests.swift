@@ -84,6 +84,50 @@ final class CMSTests: XCTestCase {
         issuerPrivateKey: secondRootKey
     )
 
+    static let intermediateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
+    static let intermediateName = try! DistinguishedName {
+        CommonName("CMS Intermediate CA 1")
+    }
+    static let intermediateCert = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: intermediateKey.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: rootCertName,
+        subject: intermediateName,
+        signatureAlgorithm: .ecdsaWithSHA256,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        },
+        issuerPrivateKey: rootCertKey
+    )
+
+    static let leaf2Key = Certificate.PrivateKey(P256.Signing.PrivateKey())
+    static let leaf2Name = try! DistinguishedName {
+        CommonName("CMS Leaf 2")
+    }
+    static let leaf2Cert = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: leaf2Key.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: intermediateName,
+        subject: leaf2Name,
+        signatureAlgorithm: .ecdsaWithSHA256,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.notCertificateAuthority
+            )
+            // This can be any random thing.
+            SubjectKeyIdentifier(keyIdentifier: [1, 2, 3, 4, 5])
+        },
+        issuerPrivateKey: intermediateKey
+    )
+
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
         var serializer = DER.Serializer()
         try serializer.serialize(value)
@@ -477,6 +521,67 @@ final class CMSTests: XCTestCase {
         )
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
+
+    func testNotInsertingIntermediatesLeadsToCertValidationFailures() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signature = try CMS.sign(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf2Cert, privateKey: Self.leaf2Key)
+        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.rootCert]), policy: PolicySet(policies: []))
+        XCTAssertUnableToValidateSigner(isValidSignature)
+    }
+
+    func testCanProvideIntermediatesDuringVerification() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signature = try CMS.sign(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf2Cert, privateKey: Self.leaf2Key)
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            additionalIntermediateCertificates: [Self.intermediateCert],
+            trustRoots: CertificateStore([Self.rootCert]),
+            policy: PolicySet(policies: [])
+        )
+        XCTAssertValidSignature(isValidSignature)
+    }
+
+    func testCanProvideIntermediatesInSigningProcess() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            additionalCertificates: [Self.intermediateCert],
+            certificate: Self.leaf2Cert,
+            privateKey: Self.leaf2Key
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rootCert]),
+            policy: PolicySet(policies: [])
+        )
+        XCTAssertValidSignature(isValidSignature)
+    }
+
+    func testDuplicateIntermediatesIsNotAnIssue() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            additionalCertificates: [Self.intermediateCert],
+            certificate: Self.leaf2Cert,
+            privateKey: Self.leaf2Key
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            additionalIntermediateCertificates: [Self.intermediateCert],
+            trustRoots: CertificateStore([Self.rootCert]),
+            policy: PolicySet(policies: [])
+        )
+        XCTAssertValidSignature(isValidSignature)
+    }
 }
 
 extension DERSerializable {
@@ -514,6 +619,7 @@ extension CMS {
     static func generateSignedTestData<Bytes: DataProtocol>(
         _ bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey
     ) throws -> CMSContentInfo {
@@ -521,6 +627,7 @@ extension CMS {
         return try generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
+            additionalCertificates: additionalCertificates,
             certificate: certificate
         )
     }
