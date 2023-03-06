@@ -3,7 +3,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2022-2023 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 import PackageDescription
+import class Foundation.ProcessInfo
 
 let package = Package(
     name: "swift-certificates",
@@ -28,13 +29,6 @@ let package = Package(
             name: "X509",
             targets: ["X509"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.2.1"),
-        // swift-asn1 repo is private, so we can't access it anonymously yet
-        // .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.6.0")),
-        .package(url: "git@github.com:apple/swift-asn1.git", .upToNextMinor(from: "0.6.0")),
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
-    ],
     targets: [
         .target(
             name: "X509",
@@ -42,6 +36,9 @@ let package = Package(
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
+            ],
+            exclude: [
+                "CMakeLists.txt",
             ]),
         .testTarget(
             name: "X509Tests",
@@ -52,3 +49,19 @@ let package = Package(
             ]),
     ]
 )
+
+// If the `SWIFTCI_USE_LOCAL_DEPS` environment variable is set,
+// we're building in the Swift.org CI system alongside other projects in the Swift toolchain and
+// we can depend on local versions of our dependencies instead of fetching them remotely.
+if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
+    package.dependencies += [
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.2.1"),
+        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.6.0")),
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+    ]
+} else {
+    package.dependencies += [
+        .package(path: "../swift-crypto"),
+        .package(path: "../swift-asn1"),
+    ]
+}
