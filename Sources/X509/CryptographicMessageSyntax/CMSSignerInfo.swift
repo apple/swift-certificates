@@ -33,20 +33,25 @@ import SwiftASN1
 /// then the `version` MUST be 1.  If the `SignerIdentifier` is `subjectKeyIdentifier`,
 /// then the `version` MUST be 3.
 /// - Note: At the moment we neither support `signedAttrs` (`SignedAttributes`) nor `unsignedAttrs` (`UnsignedAttributes`)
+@usableFromInline
 struct CMSSignerInfo: DERImplicitlyTaggable, Hashable {
+    @usableFromInline
     enum Error: Swift.Error {
         case versionAndSignerIdentifierMismatch(String)
     }
+
+    @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
     
-    var version: CMSVersion
-    var signerIdentifier: CMSSignerIdentifier
-    var digestAlgorithm: AlgorithmIdentifier
-    var signatureAlgorithm: AlgorithmIdentifier
-    var signature: ASN1OctetString
-    
+    @usableFromInline var version: CMSVersion
+    @usableFromInline var signerIdentifier: CMSSignerIdentifier
+    @usableFromInline var digestAlgorithm: AlgorithmIdentifier
+    @usableFromInline var signatureAlgorithm: AlgorithmIdentifier
+    @usableFromInline var signature: ASN1OctetString
+
+    @inlinable
     init(
         signerIdentifier: CMSSignerIdentifier,
         digestAlgorithm: AlgorithmIdentifier,
@@ -64,7 +69,8 @@ struct CMSSignerInfo: DERImplicitlyTaggable, Hashable {
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
     }
-    
+
+    @inlinable
     init(
         version: CMSVersion,
         signerIdentifier: CMSSignerIdentifier,
@@ -78,7 +84,8 @@ struct CMSSignerInfo: DERImplicitlyTaggable, Hashable {
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
     }
-    
+
+    @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let version = try CMSVersion(rawValue: Int(derEncoded: &nodes))
@@ -113,7 +120,8 @@ struct CMSSignerInfo: DERImplicitlyTaggable, Hashable {
             )
         }
     }
-    
+
+    @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.version.rawValue)
