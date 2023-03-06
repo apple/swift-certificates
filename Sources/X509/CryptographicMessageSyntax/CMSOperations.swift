@@ -20,7 +20,7 @@ public enum CMS {
     public static func sign<Bytes: DataProtocol>(
         _ bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
-        additionalCertificates: [Certificate] = [],
+        additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey
     ) throws -> [UInt8] {
@@ -28,7 +28,7 @@ public enum CMS {
         return try sign(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
-            additionalCertificates: additionalCertificates,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate
         )
     }
@@ -38,13 +38,13 @@ public enum CMS {
     public static func sign(
         signatureBytes: ASN1OctetString,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
-        additionalCertificates: [Certificate] = [],
+        additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate
     ) throws -> [UInt8] {
         let signedData = try self.generateSignedData(
             signatureBytes: signatureBytes,
             signatureAlgorithm: signatureAlgorithm,
-            additionalCertificates: additionalCertificates,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate
         )
 
@@ -57,7 +57,7 @@ public enum CMS {
     static func generateSignedData(
         signatureBytes: ASN1OctetString,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
-        additionalCertificates: [Certificate],
+        additionalIntermediateCertificates: [Certificate],
         certificate: Certificate
     ) throws -> CMSContentInfo {
         let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
@@ -70,7 +70,7 @@ public enum CMS {
             signature: signatureBytes
         )
 
-        var certificates = additionalCertificates
+        var certificates = additionalIntermediateCertificates
         certificates.append(certificate)
 
         let signedData = CMSSignedData(
@@ -98,14 +98,14 @@ public enum CMS {
         do {
             let parsedSignature = try CMSContentInfo(derEncoded: ArraySlice(signatureBytes))
             guard let signedData = try parsedSignature.signedData else {
-                return .init(invalidCMSBlockReason: "Unable to parse signed data")
+                return .failure(.init(invalidCMSBlockReason: "Unable to parse signed data"))
             }
 
             // We have a bunch of very specific requirements here: in particular, we need to have only one signature. We also only want
             // to tolerate v1 signatures and detacted signatures.
             guard signedData.version == .v1, signedData.signerInfos.count == 1, signedData.encapContentInfo.eContentType == .cmsData,
                   signedData.encapContentInfo.eContent == nil else {
-                return .init(invalidCMSBlockReason: "Invalid signed data: \(signedData)")
+                return .failure(.init(invalidCMSBlockReason: "Invalid signed data: \(signedData)"))
             }
 
             // This subscript is safe, we confirmed a count of 1 above.
@@ -121,7 +121,7 @@ public enum CMS {
             // > Implementations MAY fail to validate signatures that use a digest
             // > algorithm that is not included in this set.
             guard signedData.digestAlgorithms.contains(signer.digestAlgorithm) else {
-                return .init(invalidCMSBlockReason: "Digest algorithm mismatch")
+                return .failure(.init(invalidCMSBlockReason: "Digest algorithm mismatch"))
             }
 
             // Convert the signature algorithm to confirm we understand it.
@@ -129,13 +129,13 @@ public enum CMS {
             let signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: signer.signatureAlgorithm)
             let expectedDigestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
             guard expectedDigestAlgorithm == signer.digestAlgorithm else {
-                return .init(invalidCMSBlockReason: "Digest and signature algorithm mismatch")
+                return .failure(.init(invalidCMSBlockReason: "Digest and signature algorithm mismatch"))
             }
 
             // Ok, now we need to find the signer. We expect to find them in the list of certificates provided
             // in the signature.
             guard let signingCert = try signedData.certificates?.certificate(signerInfo: signer) else {
-                return .init(invalidCMSBlockReason: "Unable to locate signing certificate")
+                return .failure(.init(invalidCMSBlockReason: "Unable to locate signing certificate"))
             }
 
             // Ok at this point we've done the cheap stuff and we're fairly confident we have the entity who should have
@@ -143,7 +143,7 @@ public enum CMS {
             // the digest and validate the signature.
             let signature = try Certificate.Signature(signatureAlgorithm: signatureAlgorithm, signatureBytes: signer.signature)
             guard signingCert.publicKey.isValidSignature(signature, for: dataBytes, signatureAlgorithm: signatureAlgorithm) else {
-                return .init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)")
+                return .failure(.init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)"))
             }
 
             // Ok, the signature was signed by the private key associated with this cert. Now we need to validate the certificate.
@@ -156,12 +156,12 @@ public enum CMS {
 
             switch result {
             case .validCertificate:
-                return .validSignature(.init(signer: signingCert))
+                return .success(.init(signer: signingCert))
             case .couldNotValidate(let validationFailures):
-                return .unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert))
+                return .failure(.unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert)))
             }
         } catch {
-            return .invalidCMSBlock(.init(reason: String(describing: error)))
+            return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
         }
     }
 
@@ -171,19 +171,20 @@ public enum CMS {
     }
 
     @_spi(CMS)
-    public enum SignatureVerificationResult {
-        case validSignature(Valid)
+    public typealias SignatureVerificationResult = Result<Valid, VerificationError>
+
+    public struct Valid: Hashable {
+        public var signer: Certificate
+
+        @inlinable
+        public init(signer: Certificate) {
+            self.signer = signer
+        }
+    }
+
+    @_spi(CMS) public enum VerificationError: Swift.Error, Hashable {
         case unableToValidateSigner(SignerValidationFailure)
         case invalidCMSBlock(InvalidCMSBlock)
-
-        public struct Valid: Hashable {
-            public var signer: Certificate
-
-            @inlinable
-            public init(signer: Certificate) {
-                self.signer = signer
-            }
-        }
 
         public struct SignerValidationFailure: Hashable, Swift.Error {
             public var validationFailures: [VerificationResult.PolicyFailure]

@@ -550,7 +550,7 @@ final class CMSTests: XCTestCase {
         let signature = try CMS.sign(
             data,
             signatureAlgorithm: .ecdsaWithSHA256,
-            additionalCertificates: [Self.intermediateCert],
+            additionalIntermediateCertificates: [Self.intermediateCert],
             certificate: Self.leaf2Cert,
             privateKey: Self.leaf2Key
         )
@@ -569,7 +569,7 @@ final class CMSTests: XCTestCase {
         let signature = try CMS.sign(
             data,
             signatureAlgorithm: .ecdsaWithSHA256,
-            additionalCertificates: [Self.intermediateCert],
+            additionalIntermediateCertificates: [Self.intermediateCert],
             certificate: Self.leaf2Cert,
             privateKey: Self.leaf2Key
         )
@@ -595,21 +595,21 @@ extension DERSerializable {
 }
 
 fileprivate func XCTAssertValidSignature(_ result: CMS.SignatureVerificationResult, file: StaticString = #file, line: UInt = #line) {
-    guard case .validSignature = result else {
+    guard case .success = result else {
         XCTFail("Expected valid signature, got \(result)", file: file, line: line)
         return
     }
 }
 
 fileprivate func XCTAssertInvalidCMSBlock(_ result: CMS.SignatureVerificationResult, file: StaticString = #file, line: UInt = #line) {
-    guard case .invalidCMSBlock = result else {
+    guard case .failure(.invalidCMSBlock) = result else {
         XCTFail("Expected invalid CMS Block, got \(result)", file: file, line: line)
         return
     }
 }
 
 fileprivate func XCTAssertUnableToValidateSigner(_ result: CMS.SignatureVerificationResult, file: StaticString = #file, line: UInt = #line) {
-    guard case .unableToValidateSigner = result else {
+    guard case .failure(.unableToValidateSigner) = result else {
         XCTFail("Expected unable to validate signer, got \(result)", file: file, line: line)
         return
     }
@@ -619,7 +619,7 @@ extension CMS {
     static func generateSignedTestData<Bytes: DataProtocol>(
         _ bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
-        additionalCertificates: [Certificate] = [],
+        additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey
     ) throws -> CMSContentInfo {
@@ -627,7 +627,7 @@ extension CMS {
         return try generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
-            additionalCertificates: additionalCertificates,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate
         )
     }
