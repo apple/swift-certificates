@@ -73,6 +73,8 @@ add_library(X509
   "Signature.swift"
   "SignatureAlgorithm.swift"
   "Verifier/CertificateStore.swift"
+  "Verifier/RFC5280/ExpiryPolicy.swift"
+  "Verifier/RFC5280/RFC5280Policy.swift"
   "Verifier/UnverifiedChain.swift"
   "Verifier/Verifier.swift"
   "Verifier/VerifierPolicy.swift"
