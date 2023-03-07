@@ -15,10 +15,24 @@
 import Foundation
 import XCTest
 import SwiftASN1
-import X509
+@testable import X509
 import Crypto
 
 final class RFC5280PolicyTests: XCTestCase {
+    enum PolicyFactory {
+        case rfc5280
+        case expiry
+
+        func create(_ validationTime: Date) -> VerifierPolicy {
+            switch self {
+            case .rfc5280:
+                return RFC5280Policy(validationTime: validationTime)
+            case .expiry:
+                return ExpiryPolicy(validationTime: validationTime)
+            }
+        }
+    }
+
     func testValidCertsAreAccepted() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
@@ -34,7 +48,7 @@ final class RFC5280PolicyTests: XCTestCase {
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
 
-    func testExpiredLeafIsRejected() async throws {
+    private func _expiredLeafIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
             notValidBefore: TestPKI.startDate + 1.0,
@@ -43,7 +57,37 @@ final class RFC5280PolicyTests: XCTestCase {
         )
 
         var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.startDate + 3.0)])
+            rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 3.0)])
+        )
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        guard case .couldNotValidate(let policyFailures) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(policyFailures.count, 1)
+    }
+
+    func testExpiredLeafIsRejected() async throws {
+        try await self._expiredLeafIsRejected(.rfc5280)
+    }
+
+    func testExpiredLeafIsRejectedBasePolicy() async throws {
+        try await self._expiredLeafIsRejected(.expiry)
+    }
+
+    func _expiredIntermediateIsRejected(_ policyFactory: PolicyFactory) async throws {
+        let roots = CertificateStore([TestPKI.unconstrainedCA])
+        let leaf = TestPKI.issueLeaf(
+            notValidBefore: TestPKI.startDate,
+            notValidAfter: TestPKI.unconstrainedIntermediate.notValidAfter + 2.0,  // Later than the intermediate.
+            issuer: .unconstrainedIntermediate
+        )
+
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedIntermediate.notValidAfter + 1.0)])
         )
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
@@ -56,16 +100,24 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testExpiredIntermediateIsRejected() async throws {
+        try await self._expiredIntermediateIsRejected(.rfc5280)
+    }
+
+    func testExpiredIntermediateIsRejectedBasePolicy() async throws {
+        try await self._expiredIntermediateIsRejected(.expiry)
+    }
+
+    func _expiredRootIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
             notValidBefore: TestPKI.startDate,
-            notValidAfter: TestPKI.unconstrainedIntermediate.notValidAfter + 2.0,  // Later than the intermediate.
-            issuer: .unconstrainedIntermediate
+            notValidAfter: TestPKI.unconstrainedCA.notValidAfter + 2.0,  // Later than the root.
+            issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
 
         var verifier = Verifier(
             rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.unconstrainedIntermediate.notValidAfter + 1.0)])
+            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedCA.notValidAfter + 1.0)])
         )
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
@@ -78,16 +130,23 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testExpiredRootIsRejected() async throws {
+        try await self._expiredRootIsRejected(.rfc5280)
+    }
+
+    func testExpiredRootIsRejectedBasePolicy() async throws {
+        try await self._expiredRootIsRejected(.expiry)
+    }
+
+    func _notYetValidLeafIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
-            notValidBefore: TestPKI.startDate,
-            notValidAfter: TestPKI.unconstrainedCA.notValidAfter + 2.0,  // Later than the root.
-            issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
+            notValidBefore: TestPKI.startDate + 2.0,
+            notValidAfter: TestPKI.startDate + 3.0,  // One second validity window
+            issuer: .unconstrainedIntermediate
         )
 
         var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.unconstrainedCA.notValidAfter + 1.0)])
+            rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 1.0)])
         )
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
@@ -100,15 +159,24 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testNotYetValidLeafIsRejected() async throws {
+        try await self._notYetValidLeafIsRejected(.rfc5280)
+    }
+
+    func testNotYetValidLeafIsRejectedBasePolicy() async throws {
+        try await self._notYetValidLeafIsRejected(.expiry)
+    }
+
+    func _notYetValidIntermediateIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
-            notValidBefore: TestPKI.startDate + 2.0,
-            notValidAfter: TestPKI.startDate + 3.0,  // One second validity window
+            notValidBefore: TestPKI.unconstrainedIntermediate.notValidBefore - 2.0,  // Earlier than the intermediate
+            notValidAfter: TestPKI.unconstrainedIntermediate.notValidAfter,
             issuer: .unconstrainedIntermediate
         )
 
         var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.startDate + 1.0)])
+            rootCertificates: roots,
+            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedIntermediate.notValidBefore - 1.0)])
         )
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
@@ -121,16 +189,24 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testNotYetValidIntermediateIsRejected() async throws {
+        try await self._notYetValidIntermediateIsRejected(.rfc5280)
+    }
+
+    func testNotYetValidIntermediateIsRejectedBasePolicy() async throws {
+        try await self._notYetValidIntermediateIsRejected(.expiry)
+    }
+
+    func _notYetValidRootIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
-            notValidBefore: TestPKI.unconstrainedIntermediate.notValidBefore - 2.0,  // Earlier than the intermediate
-            notValidAfter: TestPKI.unconstrainedIntermediate.notValidAfter,
-            issuer: .unconstrainedIntermediate
+            notValidBefore: TestPKI.unconstrainedCA.notValidBefore - 2.0,  // Earlier than the root
+            notValidAfter: TestPKI.startDate,
+            issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
 
         var verifier = Verifier(
             rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.unconstrainedIntermediate.notValidBefore - 1.0)])
+            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedCA.notValidBefore - 1.0)])
         )
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
@@ -143,16 +219,23 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testNotYetValidRootIsRejected() async throws {
+        try await self._notYetValidRootIsRejected(.rfc5280)
+    }
+
+    func testNotYetValidRootIsRejectedBasePolicy() async throws {
+        try await self._notYetValidRootIsRejected(.expiry)
+    }
+
+    func _malformedExpiryIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
-            notValidBefore: TestPKI.unconstrainedCA.notValidBefore - 2.0,  // Earlier than the root
-            notValidAfter: TestPKI.startDate,
-            issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
+            notValidBefore: TestPKI.startDate + 3.0,
+            notValidAfter: TestPKI.startDate + 2.0,  // invalid order
+            issuer: .unconstrainedIntermediate
         )
 
         var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.unconstrainedCA.notValidBefore - 1.0)])
+            rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
         )
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
@@ -165,24 +248,11 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testMalformedExpiryIsRejected() async throws {
-        let roots = CertificateStore([TestPKI.unconstrainedCA])
-        let leaf = TestPKI.issueLeaf(
-            notValidBefore: TestPKI.startDate + 3.0,
-            notValidAfter: TestPKI.startDate + 2.0,  // invalid order
-            issuer: .unconstrainedIntermediate
-        )
+        try await self._malformedExpiryIsRejected(.rfc5280)
+    }
 
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: TestPKI.startDate + 2.5)])
-        )
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
-
-        guard case .couldNotValidate(let policyFailures) = result else {
-            XCTFail("Failed to validate: \(result)")
-            return
-        }
-
-        XCTAssertEqual(policyFailures.count, 1)
+    func testMalformedExpiryIsRejectedBasePolicy() async throws {
+        try await self._malformedExpiryIsRejected(.expiry)
     }
 }
 

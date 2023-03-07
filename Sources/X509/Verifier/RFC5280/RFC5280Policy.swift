@@ -21,37 +21,17 @@ import Foundation
 /// 1. Expiry. Expired certificates are rejected.
 public struct RFC5280Policy: VerifierPolicy {
     @usableFromInline
-    let validationTime: Date
+    let expiryPolicy: ExpiryPolicy
 
     @inlinable
     public init(validationTime: Date) {
-        self.validationTime = validationTime
+        self.expiryPolicy = ExpiryPolicy(validationTime: validationTime)
     }
 
     @inlinable
     public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
-        if case .failsToMeetPolicy(let reason) = self._validateExpiry(chain) {
+        if case .failsToMeetPolicy(let reason) = self.expiryPolicy.chainMeetsPolicyRequirements(chain: chain) {
             return .failsToMeetPolicy(reason: reason)
-        }
-
-        return .meetsPolicy
-    }
-
-    @inlinable
-    func _validateExpiry(_ chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
-        // This is an easy check: confirm all the certs are valid.
-        for cert in chain {
-            if cert.notValidBefore > cert.notValidAfter {
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) has invalid expiry, notValidAfter is earlier than notValidBefore")
-            }
-
-            if self.validationTime < cert.notValidBefore {
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) is not yet valid")
-            }
-
-            if self.validationTime > cert.notValidAfter {
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) has expired")
-            }
         }
 
         return .meetsPolicy
