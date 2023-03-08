@@ -19,18 +19,26 @@ import SwiftASN1
 ///  CMSVersion ::= INTEGER
 ///                 { v0(0), v1(1), v2(2), v3(3), v4(4), v5(5) }
 /// ```
+@usableFromInline
 struct CMSVersion: RawRepresentable, Hashable {
+    @usableFromInline
     var rawValue: Int
+
+    @inlinable
+    init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
     
-    static let v0 = Self(rawValue: 0)
-    static let v1 = Self(rawValue: 1)
-    static let v2 = Self(rawValue: 2)
-    static let v3 = Self(rawValue: 3)
-    static let v4 = Self(rawValue: 4)
-    static let v5 = Self(rawValue: 5)
+    @usableFromInline static let v0 = Self(rawValue: 0)
+    @usableFromInline static let v1 = Self(rawValue: 1)
+    @usableFromInline static let v2 = Self(rawValue: 2)
+    @usableFromInline static let v3 = Self(rawValue: 3)
+    @usableFromInline static let v4 = Self(rawValue: 4)
+    @usableFromInline static let v5 = Self(rawValue: 5)
 }
 
 extension CMSVersion: CustomStringConvertible {
+    @inlinable
     var description: String {
         "CMSv\(rawValue)"
     }

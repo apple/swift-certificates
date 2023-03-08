@@ -22,14 +22,17 @@ import SwiftASN1
 /// ```
 /// The definition of `Name` is taken from X.501 [X.501-88], and the
 /// definition of `CertificateSerialNumber` is taken from X.509 [X.509-97].
+@usableFromInline
 struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable {
+    @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
     
-    var issuer: DistinguishedName
-    var serialNumber: Certificate.SerialNumber
-    
+    @usableFromInline var issuer: DistinguishedName
+    @usableFromInline var serialNumber: Certificate.SerialNumber
+
+    @inlinable
     init(
         issuer: DistinguishedName,
         serialNumber: Certificate.SerialNumber
@@ -37,7 +40,8 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable {
         self.issuer = issuer
         self.serialNumber = serialNumber
     }
-    
+
+    @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let issuer = try DistinguishedName(derEncoded: &nodes)
@@ -46,6 +50,7 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable {
         }
     }
 
+    @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.issuer)

@@ -41,17 +41,20 @@ import SwiftASN1
 ///   otherCert ANY DEFINED BY otherCertFormat }
 /// ```
 /// - Note: At the moment we don't support `crls` (`RevocationInfoChoices`)
+@usableFromInline
 struct CMSSignedData: DERImplicitlyTaggable, Hashable {
+    @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
     
-    var version: CMSVersion
-    var digestAlgorithms: [AlgorithmIdentifier]
-    var encapContentInfo: CMSEncapsulatedContentInfo
-    var certificates: [Certificate]?
-    var signerInfos: [CMSSignerInfo]
-    
+    @usableFromInline var version: CMSVersion
+    @usableFromInline var digestAlgorithms: [AlgorithmIdentifier]
+    @usableFromInline var encapContentInfo: CMSEncapsulatedContentInfo
+    @usableFromInline var certificates: [Certificate]?
+    @usableFromInline var signerInfos: [CMSSignerInfo]
+
+    @inlinable
     init(
         version: CMSVersion,
         digestAlgorithms: [AlgorithmIdentifier],
@@ -65,7 +68,8 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
         self.certificates = certificates
         self.signerInfos = signerInfos
     }
-    
+
+    @inlinable
     init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
             let version = try CMSVersion(rawValue: Int.init(derEncoded: &nodes))
@@ -90,7 +94,8 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable {
             )
         }
     }
-    
+
+    @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(version.rawValue)

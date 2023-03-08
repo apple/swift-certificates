@@ -98,23 +98,19 @@ extension Certificate.PublicKey {
     /// - Returns: Whether the signature was produced by signing `certificate` with the private key corresponding to this public key.
     @inlinable
     public func isValidSignature(_ signature: Certificate.Signature, for certificate: Certificate) -> Bool {
-        self.isValidSignature(signature, for: certificate.tbsCertificateBytes, using: certificate.signatureAlgorithm)
+        return self.isValidSignature(signature, for: certificate.tbsCertificateBytes, signatureAlgorithm: certificate.signatureAlgorithm)
     }
-    
+
     @inlinable
-    internal func isValidSignature(
-        _ signature: Certificate.Signature,
-        for tbsBytes: ArraySlice<UInt8>,
-        using signatureAlgorithm: Certificate.SignatureAlgorithm
-    ) -> Bool {
+    internal func isValidSignature<Bytes: DataProtocol>(_ signature: Certificate.Signature, for bytes: Bytes, signatureAlgorithm: Certificate.SignatureAlgorithm) -> Bool {
         let digest: Digest
         do {
             let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-            digest = try Digest.computeDigest(for: tbsBytes, using: digestAlgorithm)
+            digest = try Digest.computeDigest(for: bytes, using: digestAlgorithm)
         } catch {
             return false
         }
-        
+
         switch self.backing {
         case .p256(let p256):
             return p256.isValidSignature(signature, for: digest)

@@ -20,13 +20,16 @@ import SwiftASN1
 ///   issuerAndSerialNumber IssuerAndSerialNumber,
 ///   subjectKeyIdentifier [0] SubjectKeyIdentifier }
 ///  ```
+@usableFromInline
 enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable {
-    
-    private static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
+
+    @usableFromInline
+    static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
     
     case issuerAndSerialNumber(CMSIssuerAndSerialNumber)
     case subjectKeyIdentifier(SubjectKeyIdentifier)
-    
+
+    @inlinable
     init(derEncoded node: ASN1Node) throws {
         switch node.identifier {
         case CMSIssuerAndSerialNumber.defaultIdentifier:
@@ -39,7 +42,8 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable {
             throw ASN1Error.unexpectedFieldType(node.identifier)
         }
     }
-    
+
+    @inlinable
     func serialize(into coder: inout DER.Serializer) throws {
         switch self {
         case .issuerAndSerialNumber(let issuerAndSerialNumber):
@@ -49,5 +53,10 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable {
             try subjectKeyIdentifier.keyIdentifier.serialize(into: &coder, withIdentifier: Self.skiIdentifier)
             
         }
+    }
+
+    @inlinable
+    init(issuerAndSerialNumber certificate: Certificate) {
+        self = .issuerAndSerialNumber(.init(issuer: certificate.issuer, serialNumber: certificate.serialNumber))
     }
 }

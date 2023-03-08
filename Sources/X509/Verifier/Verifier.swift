@@ -28,6 +28,25 @@ public struct Verifier: Sendable {
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
 
+        // First check: is this leaf _already in_ the certificate store? If it is, we can just trust it directly.
+        //
+        // Note that this requires an _exact match_: if there isn't an exact match, we'll fall back to chain building,
+        // which may let us chain through another variant of this certificate and build a valid chain. This is a very
+        // deliberate choice: certificates that assert the same combination of (subject, public key, SAN) but different
+        // extensions or policies should not be tolerated by this check, and will be ignored.
+        if self.rootCertificates.contains(leafCertificate) {
+            let unverifiedChain = UnverifiedCertificateChain([leafCertificate])
+
+            switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
+            case .meetsPolicy:
+                // We're good!
+                return .validCertificate(unverifiedChain.certificates)
+
+            case .failsToMeetPolicy(reason: let reason):
+                policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
+            }
+        }
+
         // This is essentially a DFS of the certificate tree. We attempt to iteratively build up possible chains.
         while let nextPartialCandidate = partialChains.popLast() {
             // We want to search for parents. Our preferred parent comes from the root store, as this will potentially
@@ -180,9 +199,10 @@ extension Certificate {
 
 extension UnverifiedCertificateChain {
     fileprivate init(chain: CandidatePartialChain, root: Certificate) {
-        self = .init(chain.chain)
-        self.certificates.append(chain.currentTip)
-        self.certificates.append(root)
+        var certificates = chain.chain
+        certificates.append(chain.currentTip)
+        certificates.append(root)
+        self = .init(certificates)
     }
 }
 

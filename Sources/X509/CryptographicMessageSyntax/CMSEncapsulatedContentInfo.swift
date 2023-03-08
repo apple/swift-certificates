@@ -21,19 +21,26 @@ import SwiftASN1
 ///   eContent [0] EXPLICIT OCTET STRING OPTIONAL }
 /// ContentType ::= OBJECT IDENTIFIER
 /// ```
+@usableFromInline
 struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable {
+    @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
+    @usableFromInline
     var eContentType: ASN1ObjectIdentifier
+
+    @usableFromInline
     var eContent: ASN1OctetString?
-    
+
+    @inlinable
     init(eContentType: ASN1ObjectIdentifier, eContent: ASN1OctetString? = nil) {
         self.eContentType = eContentType
         self.eContent = eContent
     }
-    
+
+    @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let eContentType = try ASN1ObjectIdentifier(derEncoded: &nodes)
@@ -44,7 +51,8 @@ struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable {
             return .init(eContentType: eContentType, eContent: eContent)
         }
     }
-    
+
+    @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier, { coder in
             try coder.serialize(eContentType)
