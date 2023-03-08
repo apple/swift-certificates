@@ -87,13 +87,13 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
 
     var signature: ASN1BitString
 
-    // Yup, you read this right: for the moment, we don't decode certs. We need a strategy for this.
-    //var certs: []
+    var certs: [Certificate]?
 
-    init(responseData: OCSPResponseData, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString) {
+    init(responseData: OCSPResponseData, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, certs: [Certificate]?) {
         self.responseData = responseData
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
+        self.certs = certs
     }
 
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
@@ -102,10 +102,12 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1BitString(derEncoded: &nodes)
 
-            // We need to consume the certificate nodes, but we don't _yet_ parse it.
-            _ = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { _ in }
+            
+            let certs = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                try DER.sequence(of: Certificate.self, identifier: .sequence, rootNode: node)
+            }
 
-            return .init(responseData: responseData, signatureAlgorithm: signatureAlgorithm, signature: signature)
+            return .init(responseData: responseData, signatureAlgorithm: signatureAlgorithm, signature: signature, certs: certs)
         }
     }
 
@@ -114,6 +116,11 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
             try coder.serialize(self.responseData)
             try coder.serialize(self.signatureAlgorithm)
             try coder.serialize(self.signature)
+            if let certs {
+                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { serilizer in
+                    try serilizer.serializeSequenceOf(certs)
+                }
+            }
         }
     }
 }

@@ -96,24 +96,34 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     /// note that this is only used for testing purposes
     private var now: Date?
     
+    private var verifier: Verifier
+    
     public init(requester: Requester) {
-        self.init(requester: requester, now: nil)
+        self.init(requester: requester, now: nil, verifier: Verifier(
+            rootCertificates: CertificateStore([]),
+            policy: PolicySet(policies: [])
+        ))
     }
     
-    internal init(requester: Requester, now: Date?) {
+    internal init(requester: Requester, now: Date?, verifier: Verifier) {
         self.requester = requester
         self.requestHashAlgorithm = .insecureSha1
         self.maxDuration = 10
         self.now = now
+        self.verifier = verifier
     }
     
-    public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        await withTimeout(maxDuration) {
-            await chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
+    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+        let (modifiedSelf, result) = await withTimeout(maxDuration) { [self] in
+            var selfCopy = self
+            let result = await selfCopy.chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
+            return (selfCopy, result)
         }
+        self = modifiedSelf
+        return result
     }
     
-    private func chainMeetsPolicyRequirementsWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+    private mutating func chainMeetsPolicyRequirementsWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         for index in chain.dropLast().indices {
             let certificate = chain[index]
             let issuer = chain[chain.index(after: index)]
@@ -138,7 +148,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     
     
     
-    private func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
+    private mutating func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
         
         let authorityInformationAccess: AuthorityInformationAccess?
         do {
@@ -178,7 +188,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         return await self.queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI)
     }
     
-    private func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String) async -> PolicyEvaluationResult {
+    private mutating func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String) async -> PolicyEvaluationResult {
         let requestNonce = OCSPNonce()
         let requestBytes: [UInt8]
         do {
@@ -204,10 +214,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             return .failsToMeetPolicy(reason: "OCSP deserialisation failed \(error)")
         }
         
-        return self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce)
+        return await self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce)
     }
     
-    private func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce) -> PolicyEvaluationResult {
+    private mutating func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce) async -> PolicyEvaluationResult {
         switch response {
         case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
             return .failsToMeetPolicy(reason: "OCSP request failed \(OCSPResponseStatus(response))")
@@ -229,6 +239,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             }
             
             switch response.certStatus {
+            case .revoked(let info):
+                return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
+            case .unknown:
+                return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
             case .good:
                 switch response.verifyTime(now: self.now ?? Date()) {
                 case .meetsPolicy:
@@ -236,14 +250,59 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
                 case .failsToMeetPolicy(let reason):
                     return .failsToMeetPolicy(reason: reason)
                 }
+                guard let certificates = basicResponse.certs,
+                      let leafCertificate = certificates.first else {
+                    return .failsToMeetPolicy(reason: "OCSP response does not contain any certificate")
+                }
                 
-                // TODO: verify signature: rdar://104687979
-                return .meetsPolicy
-            case .revoked(let info):
-                return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
-            case .unknown:
-                return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
+                let validationResult = await verifier.validate(leafCertificate: leafCertificate, intermediates: CertificateStore(certificates.dropFirst()))
+                let validatedLeaf: Certificate
+                switch validationResult {
+                case .couldNotValidate(let failures):
+                    return .failsToMeetPolicy(reason: "could not validate certificates \(failures)")
+                case .validCertificate(let chain):
+                    // force unwrap is safe because a valid chain always contains a at least the leaf certificate
+                    validatedLeaf = chain.first!
+                }
+                
+                
+                return self.validateSignature(
+                    certificate: validatedLeaf,
+                    tbsResponse: basicResponse.responseData,
+                    signatureBytes: basicResponse.signature.bytes,
+                    signatureAlgorithmIdentifier: basicResponse.signatureAlgorithm
+                )
             }
+        }
+    }
+    
+    private func validateSignature(
+        certificate: Certificate,
+        tbsResponse: OCSPResponseData,
+        signatureBytes: ArraySlice<UInt8>,
+        signatureAlgorithmIdentifier: AlgorithmIdentifier
+    ) -> PolicyEvaluationResult {
+        let signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: signatureAlgorithmIdentifier)
+        let signature: Certificate.Signature
+        do {
+            signature = try Certificate.Signature(signatureAlgorithm: signatureAlgorithm, signatureBytes: .init(bytes: signatureBytes))
+        } catch {
+            return .failsToMeetPolicy(reason: "could not create signature for OCSP response \(error)")
+        }
+        
+        let tbsBytes: [UInt8]
+        do {
+            var serializer = DER.Serializer()
+            try serializer.serialize(tbsResponse)
+            tbsBytes = serializer.serializedBytes
+        } catch {
+            return .failsToMeetPolicy(reason: "could not serialise response to check OCSP response signature \(error)")
+        }
+        
+        if certificate.publicKey.isValidSignature(signature, for: tbsBytes[...], using: signatureAlgorithm) {
+            return .meetsPolicy
+        } else {
+            return .failsToMeetPolicy(reason: "OCSP response signature is not valid")
         }
     }
 }
@@ -260,14 +319,16 @@ extension OCSPCertID {
 }
 
 extension OCSPRequest {
-    init(certID: OCSPCertID, nonce: OCSPNonce) throws {
+    init(certID: OCSPCertID, nonce: OCSPNonce?) throws {
         self.init(tbsRequest: OCSPTBSRequest(
             version: .v1,
             requestList: [
                 OCSPSingleRequest(certID: certID)
             ],
             requestExtensions: try .init(builder: {
-                nonce
+                if let nonce {
+                    nonce
+                }
             })
         ))
     }
