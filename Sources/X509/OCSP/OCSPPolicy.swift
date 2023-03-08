@@ -94,25 +94,23 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     private var maxDuration: TimeInterval
     
     /// the time used to decide if the request is relatively recent
-    /// if nil, the current system time is used
-    /// note that this is only used for testing purposes
-    private var now: Date?
+    private var validationTime: Date
     
     private var verifier: Verifier
     
-    public init(requester: Requester) {
-        self.init(requester: requester, now: nil, verifier: Verifier(
+    public init(requester: Requester, validationTime: Date) {
+        self.init(requester: requester, validationTime: validationTime, verifier: Verifier(
+            // TODO: use real root certificates
             rootCertificates: CertificateStore([]),
-            // TODO: use appropriate policy
-            policy: PolicySet(policies: [])
+            policy: PolicySet(policies: [RFC5280Policy(validationTime: validationTime)])
         ))
     }
     
-    internal init(requester: Requester, now: Date?, verifier: Verifier) {
+    internal init(requester: Requester, validationTime: Date, verifier: Verifier) {
         self.requester = requester
         self.requestHashAlgorithm = .insecureSha1
         self.maxDuration = 10
-        self.now = now
+        self.validationTime = validationTime
         self.verifier = verifier
     }
     
@@ -247,7 +245,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             case .unknown:
                 return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
             case .good:
-                switch response.verifyTime(now: self.now ?? Date()) {
+                switch response.verifyTime(validationTime: self.validationTime) {
                 case .meetsPolicy:
                     break
                 case .failsToMeetPolicy(let reason):
@@ -338,7 +336,7 @@ extension OCSPRequest {
 }
 
 extension OCSPSingleResponse {
-    fileprivate func verifyTime(now: Date) -> PolicyEvaluationResult {
+    fileprivate func verifyTime(validationTime: Date) -> PolicyEvaluationResult {
         /// Clients MUST check for the existence of the nextUpdate field and MUST
         /// ensure the current time, expressed in GMT time as described in
         /// Section 2.2.4, falls between the thisUpdate and nextUpdate times.  Ifhttps://www.rfc-editor.org/rfc/rfc5019#section-4
@@ -354,11 +352,11 @@ extension OCSPSingleResponse {
         else {
             return .failsToMeetPolicy(reason: "could not convert time specified in certificate to a `Date`")
         }
-        guard thisUpdate <= now else {
+        guard thisUpdate <= validationTime else {
             return .failsToMeetPolicy(reason: "OCSP response `thisUpdate` (\(self.thisUpdate) is in the future but should be in the past")
         }
         
-        guard nextUpdate >= now else {
+        guard nextUpdate >= validationTime else {
             return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` (\(nextUpdateGeneralizedTime) is in the past but should be in the future")
         }
         

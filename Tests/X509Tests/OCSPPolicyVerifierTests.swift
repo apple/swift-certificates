@@ -198,7 +198,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     ) async {
         var policy = OCSPVerifierPolicy(
             requester: requester,
-            now: self.now,
+            validationTime: self.now,
             verifier: Self.verifier
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
@@ -233,7 +233,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     ) async {
         var policy = OCSPVerifierPolicy(
             requester: requester,
-            now: self.now,
+            validationTime: self.now,
             verifier: Self.verifier
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
