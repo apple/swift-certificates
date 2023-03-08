@@ -103,6 +103,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     public init(requester: Requester) {
         self.init(requester: requester, now: nil, verifier: Verifier(
             rootCertificates: CertificateStore([]),
+            // TODO: use appropriate policy
             policy: PolicySet(policies: [])
         ))
     }
