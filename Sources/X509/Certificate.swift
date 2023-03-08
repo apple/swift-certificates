@@ -133,6 +133,20 @@ public struct Certificate {
     /// The signature algorithm used to produce ``signature-swift.property``.
     public let signatureAlgorithm: SignatureAlgorithm
 
+    /// The bytes of the ``Signature``.
+    ///
+    /// These are preserved to ensure that we reserialize exactly what we deserialized, regardless
+    /// of any canonicalisation we might do.
+    @usableFromInline
+    internal let signatureBytes: ArraySlice<UInt8>
+
+    /// The bytes of the ``signatureAlgorithm-swift.property``.
+    ///
+    /// These are preserved to ensure that we reserialize exactly what we deserialized, regardless of
+    /// any canonicalisation we might do.
+    @usableFromInline
+    internal let signatureAlgorithmBytes: ArraySlice<UInt8>
+
     /// Construct a certificate from constituent parts.
     ///
     /// This API is generally not recommended for use, as it makes it very easy to construct a ``Certificate``
@@ -176,10 +190,9 @@ public struct Certificate {
         // TODO: enforce that signature algorithm and signature have the same algorithm.
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
-
-        var serializer = DER.Serializer()
-        try serializer.serialize(self.tbsCertificate)
-        self.tbsCertificateBytes = serializer.serializedBytes[...]
+        self.tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))
     }
 
     /// Construct a certificate from constituent parts, signed by an issuer key.
@@ -228,19 +241,28 @@ public struct Certificate {
         // TODO: validate that signature algorithm is comoatible with the signature.
         self.signatureAlgorithm = signatureAlgorithm
 
-        var serializer = DER.Serializer()
-        try serializer.serialize(self.tbsCertificate)
-        let tbsCertificateBytes = serializer.serializedBytes[...]
+        let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)
         self.signature = try issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))
     }
 
     @inlinable
-    init(tbsCertificate: TBSCertificate, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, tbsCertificateBytes: ArraySlice<UInt8>) throws {
+    init(
+        tbsCertificate: TBSCertificate,
+        signatureAlgorithm: AlgorithmIdentifier,
+        signature: ASN1BitString,
+        tbsCertificateBytes: ArraySlice<UInt8>,
+        signatureAlgorithmBytes: ArraySlice<UInt8>,
+        signatureBytes: ArraySlice<UInt8>
+    ) throws {
         self.tbsCertificate = tbsCertificate
         self.signatureAlgorithm = SignatureAlgorithm(algorithmIdentifier: signatureAlgorithm)
         self.signature = try Signature(signatureAlgorithm: self.signatureAlgorithm, signatureBytes: signature)
         self.tbsCertificateBytes = tbsCertificateBytes
+        self.signatureAlgorithmBytes = signatureAlgorithmBytes
+        self.signatureBytes = signatureBytes
     }
 }
 
@@ -263,22 +285,41 @@ extension Certificate: DERImplicitlyTaggable {
     @inlinable
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            guard let tbsCertificateNode = nodes.next() else {
-                throw ASN1Error.invalidASN1Object(reason: "TBSCertificate missing")
+            guard let tbsCertificateNode = nodes.next(),
+                  let signatureAlgorithmNode = nodes.next(),
+                  let signatureNode = nodes.next()
+            else {
+                throw ASN1Error.invalidASN1Object(reason: "Invalid certificate object, insufficient ASN.1 nodes")
             }
             let tbsCertificate = try TBSCertificate(derEncoded: tbsCertificateNode)
-            let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
-            let signature = try ASN1BitString(derEncoded: &nodes)
-            return try Certificate(tbsCertificate: tbsCertificate, signatureAlgorithm: signatureAlgorithm, signature: signature, tbsCertificateBytes: tbsCertificateNode.encodedBytes)
+            let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: signatureAlgorithmNode)
+            let signature = try ASN1BitString(derEncoded: signatureNode)
+            return try Certificate(
+                tbsCertificate: tbsCertificate,
+                signatureAlgorithm: signatureAlgorithm,
+                signature: signature,
+                tbsCertificateBytes: tbsCertificateNode.encodedBytes,
+                signatureAlgorithmBytes: signatureAlgorithmNode.encodedBytes,
+                signatureBytes: signatureNode.encodedBytes
+            )
         }
     }
 
     @inlinable
     public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        try coder.appendConstructedNode(identifier: identifier) { coder in
-            try coder.serialize(self.tbsCertificate)
-            try coder.serialize(AlgorithmIdentifier(self.signatureAlgorithm))
-            try coder.serialize(ASN1BitString(self.signature))
+        coder.appendConstructedNode(identifier: identifier) { coder in
+            coder.serializeRawBytes(self.tbsCertificateBytes)
+            coder.serializeRawBytes(self.signatureAlgorithmBytes)
+            coder.serializeRawBytes(self.signatureBytes)
         }
+    }
+}
+
+extension DER.Serializer {
+    @inlinable
+    static func serialized<Element: DERSerializable>(element: Element) throws -> ArraySlice<UInt8> {
+        var serializer = DER.Serializer()
+        try serializer.serialize(element)
+        return serializer.serializedBytes[...]
     }
 }
