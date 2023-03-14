@@ -39,7 +39,7 @@ extension NameConstraintsPolicy {
     }
 }
 
-extension ArraySlice where Element == UInt8 {
+extension ArraySlice<UInt8> {
     @inlinable
     var isValidCIDRMask: Bool {
         // Quick check: is the first byte zero? If it is, we can skip the rest: it matches nothing,
