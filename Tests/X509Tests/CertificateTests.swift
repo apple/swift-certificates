@@ -256,4 +256,43 @@ final class CertificateTests: XCTestCase {
             "anyKeyUsage, certificateTransparency, timeStamping, ocspSigning, 1.2.3.4, clientAuth, serverAuth, codeSigning, emailProtection"
         )
     }
+    
+    func testSerialNumberRandomNumberGenerator() {
+        struct StaticNumberGenerator: RandomNumberGenerator {
+            var numbers: [UInt8]
+            var nextIndex: Int = 0
+
+            mutating func next() -> UInt64 {
+                defer { nextIndex += 1}
+                
+                let startOffset = nextIndex * MemoryLayout<UInt64>.size
+                precondition(numbers.indices.contains(startOffset), "static number generator is out of numbers")
+                
+                // assemble UInt64 from eight UInt8s
+                var uint64 = UInt64()
+                for byte in 0..<(MemoryLayout<UInt64>.size) {
+                    let offset = startOffset + byte
+                    guard numbers.indices.contains(offset) else {
+                        continue
+                    }
+                    let number = UInt64(numbers[startOffset + byte])
+                    let shifted = number << (byte * 8)
+                    uint64 |= shifted
+                }
+                return uint64
+            }
+        }
+        
+        var rngWithLeadingZero = StaticNumberGenerator(numbers: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+        XCTAssertEqual(Certificate.SerialNumber(generator: &rngWithLeadingZero).bytes, [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+        
+        var rngWithZeroAtTheSecondPosition = StaticNumberGenerator(numbers: [1, 0, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+        XCTAssertEqual(Certificate.SerialNumber(generator: &rngWithZeroAtTheSecondPosition).bytes, [1, 0, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+        
+        var rngWithoutLeadingZero = StaticNumberGenerator(numbers: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+        XCTAssertEqual(Certificate.SerialNumber(generator: &rngWithoutLeadingZero).bytes, [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+        
+        var rngWithTrailingZero = StaticNumberGenerator(numbers: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0])
+        XCTAssertEqual(Certificate.SerialNumber(generator: &rngWithTrailingZero).bytes, [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0])
+    }
 }
