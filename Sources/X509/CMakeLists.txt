@@ -82,6 +82,7 @@ add_library(X509
   "Verifier/Verifier.swift"
   "Verifier/VerifierPolicy.swift"
   "X509BaseTypes/AlgorithmIdentifier.swift"
+  "X509BaseTypes/RSAPKCS1PublicKey.swift"
   "X509BaseTypes/SubjectPublicKeyInfo.swift"
   "X509BaseTypes/TBSCertificate.swift"
   "X509BaseTypes/Time.swift"

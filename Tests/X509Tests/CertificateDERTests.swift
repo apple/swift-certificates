@@ -356,4 +356,17 @@ final class CertificateDERTests: XCTestCase {
 
         XCTAssertEqual(reserializedCert, serializedCert)
     }
+
+    func testRSAKeyFormatOutputIsCorrect() throws {
+        // A quick test here, we just encode and decode an RSA key.
+        let publicKey = try Certificate.PublicKey(_RSA.Signing.PrivateKey(keySize: .bits2048).publicKey)
+        let spki = SubjectPublicKeyInfo(publicKey)
+
+        var encoder = DER.Serializer()
+        try encoder.serialize(spki)
+
+        let decodedSPKI = try SubjectPublicKeyInfo(derEncoded: encoder.serializedBytes)
+        let newKey = try Certificate.PublicKey(spki: decodedSPKI)
+        XCTAssertEqual(publicKey, newKey)
+    }
 }
