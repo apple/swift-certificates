@@ -53,7 +53,21 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
 
     init(derEncoded node: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(node, identifier: identifier) { nodes in
-            let hashAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
+            let hashAlgorithm: AlgorithmIdentifier = try {
+                let hashAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
+                switch hashAlgorithm {
+                case .sha1, .sha1UsingNil:
+                    return .sha1UsingNil
+                case .sha256, .sha256UsingNil:
+                    return .sha256UsingNil
+                case .sha384, .sha384UsingNil:
+                    return .sha384UsingNil
+                case .sha512, .sha1UsingNil:
+                    return .sha512UsingNil
+                default:
+                    return hashAlgorithm
+                }
+            }()
             let issuerNameHash = try ASN1OctetString(derEncoded: &nodes)
             let issuerKeyHash = try ASN1OctetString(derEncoded: &nodes)
             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)

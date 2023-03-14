@@ -114,7 +114,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     private static let ca1: Certificate = ca()
     
-    private static let intermediatePrivateKey = P384.Signing.PrivateKey()
+    fileprivate static let intermediatePrivateKey = P384.Signing.PrivateKey()
     private static let leafPrivateKey = P384.Signing.PrivateKey()
     private static func certificate(
         subject: DistinguishedName,
@@ -145,7 +145,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
     
-    private static let intermediate1Name = try! DistinguishedName {
+    fileprivate static let intermediate1Name = try! DistinguishedName {
         CountryName("US")
         OrganizationName("Apple")
         CommonName("Swift Certificate Test Intermediate CA 1")
@@ -186,8 +186,26 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         CommonName("Swift OCSP Test Responder")
     })
     
+    private static let responderIntermediate1Name = try! DistinguishedName {
+        CountryName("US")
+        OrganizationName("Apple")
+        CommonName("Swift Certificate Test Responder Intermediate 1")
+    }
+    private static let responderIntermediate1PrivateKey = P384.Signing.PrivateKey()
+    private static let invalidResponderIntermediate1 = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: .init(responderIntermediate1PrivateKey.publicKey),
+        notValidBefore: Date() - .days(365),
+        notValidAfter: Date() + .days(3650),
+        issuer: ca1.subject,
+        subject: responderIntermediate1Name,
+        signatureAlgorithm: .ecdsaWithSHA384,
+        extensions: Certificate.Extensions {},
+        issuerPrivateKey: .init(ca1PrivateKey)
+    )
+    
     private let now = Date()
-    private static let verifier = Verifier(rootCertificates: CertificateStore([responderCa1]), policy: PolicySet(policies: []))
     
     func assertChainMeetsPolicy(
         chain: [Certificate],
@@ -198,8 +216,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     ) async {
         var policy = OCSPVerifierPolicy(
             requester: requester,
-            validationTime: self.now,
-            verifier: Self.verifier
+            validationTime: self.now
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .meetsPolicy = result else {
@@ -233,8 +250,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     ) async {
         var policy = OCSPVerifierPolicy(
             requester: requester,
-            validationTime: self.now,
-            verifier: Self.verifier
+            validationTime: self.now
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .failsToMeetPolicy(let actualReason) = result else {
@@ -335,14 +351,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
+                    responderID: .byName(Self.invalidResponderIntermediate1.subject),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
                         thisUpdate: try .init(now - .days(1)),
                         nextUpdate: try .init(now + .days(1))
                     )],
-                    privateKey: responderLeaf1PrivateKey,
-                    certs: [responderLeaf1]) {
+                    privateKey: Self.responderIntermediate1PrivateKey,
+                    certs: [Self.invalidResponderIntermediate1]) {
                         nonce
                     }
                 )
@@ -381,17 +398,14 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let tbsCertificateBytes = serializer.serializedBytes[...]
                 
                 let digest = SHA384.hash(data: tbsCertificateBytes)
-                let signature = try responderLeaf1PrivateKey.signature(for: digest)
+                let signature = try Self.intermediatePrivateKey.signature(for: digest)
                 
-                let response = BasicOCSPResponse(
+                let response = try BasicOCSPResponse(
                     responseData: responseData,
                     // signature digest was creating using SHA384 but we specify the wrong identifier SHA256
                     signatureAlgorithm: .ecdsaWithSHA256,
                     signature: .init(bytes: Array(signature.derRepresentation)[...]),
-                    certs: [
-                        responderLeaf1,
-                        responderIntermediate1,
-                    ]
+                    certs: []
                 )
                 return .successful(response)
             }
@@ -542,69 +556,6 @@ extension GeneralizedTime {
     }
 }
 
-private let responderCa1Name = try! DistinguishedName {
-    CountryName("US")
-    OrganizationName("Apple")
-    CommonName("Swift Certificate Test Responder CA 1")
-}
-private let responderCa1PrivateKey = P384.Signing.PrivateKey()
-private let responderCa1 = try! Certificate(
-    version: .v3,
-    serialNumber: .init(),
-    publicKey: .init(responderCa1PrivateKey.publicKey),
-    notValidBefore: Date() - .days(365),
-    notValidAfter: Date() + .days(3650),
-    issuer: responderCa1Name,
-    subject: responderCa1Name,
-    signatureAlgorithm: .ecdsaWithSHA384,
-    extensions: Certificate.Extensions {
-        Critical(
-            BasicConstraints.isCertificateAuthority(maxPathLength: nil)
-        )
-        KeyUsage(keyCertSign: true)
-        SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: responderCa1PrivateKey.publicKey.derRepresentation)))
-    },
-    issuerPrivateKey: .init(responderCa1PrivateKey)
-)
-
-private let responderIntermediate1Name = try! DistinguishedName {
-    CountryName("US")
-    OrganizationName("Apple")
-    CommonName("Swift Certificate Test Responder Intermediate 1")
-}
-private let responderIntermediate1PrivateKey = P384.Signing.PrivateKey()
-private let responderIntermediate1 = try! Certificate(
-    version: .v3,
-    serialNumber: .init(),
-    publicKey: .init(responderIntermediate1PrivateKey.publicKey),
-    notValidBefore: Date() - .days(365),
-    notValidAfter: Date() + .days(3650),
-    issuer: responderCa1Name,
-    subject: responderIntermediate1Name,
-    signatureAlgorithm: .ecdsaWithSHA384,
-    extensions: Certificate.Extensions {},
-    issuerPrivateKey: .init(responderCa1PrivateKey)
-)
-
-private let responderLeaf1Name = try! DistinguishedName {
-    CountryName("US")
-    OrganizationName("Apple")
-    CommonName("Swift Certificate Test Responder Leaf 1")
-}
-private let responderLeaf1PrivateKey = P384.Signing.PrivateKey()
-private let responderLeaf1 = try! Certificate(
-    version: .v3,
-    serialNumber: .init(),
-    publicKey: .init(responderLeaf1PrivateKey.publicKey),
-    notValidBefore: Date() - .days(365),
-    notValidAfter: Date() + .days(3650),
-    issuer: responderIntermediate1Name,
-    subject: responderLeaf1Name,
-    signatureAlgorithm: .ecdsaWithSHA384,
-    extensions: Certificate.Extensions {},
-    issuerPrivateKey: .init(responderIntermediate1PrivateKey)
-)
-
 
 extension BasicOCSPResponse {
     static func signed(
@@ -619,7 +570,7 @@ extension BasicOCSPResponse {
         let digest = SHA384.hash(data: tbsCertificateBytes)
         let signature = try privateKey.signature(for: digest)
         
-        return .init(
+        return try .init(
             responseData: responseData,
             signatureAlgorithm: .ecdsaWithSHA384,
             signature: .init(bytes: Array(signature.derRepresentation)[...]),
@@ -628,14 +579,11 @@ extension BasicOCSPResponse {
     }
     static func signed(
         version: OCSPVersion = .v1,
-        responderID: ResponderID = OCSPVerifierPolicyTests.responderId,
+        responderID: ResponderID = .byName(OCSPVerifierPolicyTests.intermediate1Name),
         producedAt: GeneralizedTime = try! .init(Date()),
         responses: [OCSPSingleResponse],
-        privateKey: P384.Signing.PrivateKey = responderLeaf1PrivateKey,
-        certs: [Certificate]? = [
-            responderLeaf1,
-            responderIntermediate1,
-        ],
+        privateKey: P384.Signing.PrivateKey = OCSPVerifierPolicyTests.intermediatePrivateKey,
+        certs: [Certificate]? = [],
         @ExtensionsBuilder responseExtensions: () -> Certificate.Extensions = { .init() }
     ) throws -> Self {
         try .signed(
@@ -649,5 +597,45 @@ extension BasicOCSPResponse {
             privateKey: privateKey,
             certs: certs
         )
+    }
+    
+    init(
+        responseData: OCSPResponseData,
+        signatureAlgorithm: AlgorithmIdentifier,
+        signature: ASN1BitString,
+        certs: [Certificate]?
+    ) throws {
+        self.init(
+            responseData: responseData,
+            responseDataBytes: try Self.responseDataBytes(
+                responseData: responseData,
+                signatureAlgorithm: signatureAlgorithm,
+                signature: signature,
+                certs: certs
+            ),
+            signatureAlgorithm: signatureAlgorithm,
+            signature: signature,
+            certs: certs
+        )
+    }
+    
+    static func responseDataBytes(
+        responseData: OCSPResponseData,
+        signatureAlgorithm: AlgorithmIdentifier,
+        signature: ASN1BitString,
+        certs: [Certificate]?
+    ) throws -> ArraySlice<UInt8> {
+        var coder = DER.Serializer()
+        try coder.appendConstructedNode(identifier: Self.defaultIdentifier) { coder in
+            try coder.serialize(responseData)
+            try coder.serialize(signatureAlgorithm)
+            try coder.serialize(signature)
+            if let certs {
+                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { serilizer in
+                    try serilizer.serializeSequenceOf(certs)
+                }
+            }
+        }
+        return coder.serializedBytes[...]
     }
 }

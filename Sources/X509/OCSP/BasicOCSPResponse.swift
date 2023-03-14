@@ -76,12 +76,14 @@ import SwiftASN1
 /// ```
 ///
 /// This type is generic because our different backends want to use different bignum representations.
-struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
+struct BasicOCSPResponse: DERParseable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
     var responseData: OCSPResponseData
+    
+    var responseDataBytes: ArraySlice<UInt8>
 
     var signatureAlgorithm: AlgorithmIdentifier
 
@@ -89,16 +91,20 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
 
     var certs: [Certificate]?
 
-    init(responseData: OCSPResponseData, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, certs: [Certificate]?) {
+    init(responseData: OCSPResponseData, responseDataBytes: ArraySlice<UInt8>, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, certs: [Certificate]?) {
         self.responseData = responseData
+        self.responseDataBytes = responseDataBytes
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
         self.certs = certs
     }
 
-    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
-        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let responseData = try OCSPResponseData(derEncoded: &nodes)
+    init(derEncoded rootNode: ASN1Node) throws {
+        self = try DER.sequence(rootNode, identifier: BasicOCSPResponse.defaultIdentifier) { nodes in
+            guard let responseDataNode = nodes.next() else {
+                throw ASN1Error.invalidASN1Object(reason: "missing OCSP response data")
+            }
+            let responseData = try OCSPResponseData(derEncoded: responseDataNode)
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1BitString(derEncoded: &nodes)
 
@@ -107,20 +113,7 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
                 try DER.sequence(of: Certificate.self, identifier: .sequence, rootNode: node)
             }
 
-            return .init(responseData: responseData, signatureAlgorithm: signatureAlgorithm, signature: signature, certs: certs)
-        }
-    }
-
-    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        try coder.appendConstructedNode(identifier: identifier) { coder in
-            try coder.serialize(self.responseData)
-            try coder.serialize(self.signatureAlgorithm)
-            try coder.serialize(self.signature)
-            if let certs {
-                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { serilizer in
-                    try serilizer.serializeSequenceOf(certs)
-                }
-            }
+            return .init(responseData: responseData, responseDataBytes: responseDataNode.encodedBytes, signatureAlgorithm: signatureAlgorithm, signature: signature, certs: certs)
         }
     }
 }

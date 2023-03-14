@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SwiftASN1
+@testable import SwiftASN1
 import Crypto
 #if canImport(Darwin)
 import Foundation
@@ -96,22 +96,11 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     /// the time used to decide if the request is relatively recent
     private var validationTime: Date
     
-    private var verifier: Verifier
-    
     public init(requester: Requester, validationTime: Date) {
-        self.init(requester: requester, validationTime: validationTime, verifier: Verifier(
-            // TODO: use real root certificates
-            rootCertificates: CertificateStore([]),
-            policy: PolicySet(policies: [RFC5280Policy(validationTime: validationTime)])
-        ))
-    }
-    
-    internal init(requester: Requester, validationTime: Date, verifier: Verifier) {
         self.requester = requester
         self.requestHashAlgorithm = .insecureSha1
         self.maxDuration = 10
         self.validationTime = validationTime
-        self.verifier = verifier
     }
     
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
@@ -186,10 +175,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             return .failsToMeetPolicy(reason: "failed to create OCSPCertID \(error)")
         }
         
-        return await self.queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI)
+        return await self.queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI, issuer: issuer)
     }
     
-    private mutating func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String) async -> PolicyEvaluationResult {
+    private mutating func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String, issuer: Certificate) async -> PolicyEvaluationResult {
         let requestNonce = OCSPNonce()
         let requestBytes: [UInt8]
         do {
@@ -215,10 +204,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             return .failsToMeetPolicy(reason: "OCSP deserialisation failed \(error)")
         }
         
-        return await self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce)
+        return await self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce, issuer: issuer)
     }
     
-    private mutating func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce) async -> PolicyEvaluationResult {
+    private mutating func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce, issuer: Certificate) async -> PolicyEvaluationResult {
         switch response {
         case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
             return .failsToMeetPolicy(reason: "OCSP request failed \(OCSPResponseStatus(response))")
@@ -226,6 +215,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             guard basicResponse.responseData.version == .v1 else {
                 return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
             }
+            
             do {
                 // OCSP responders are allowed to not include the nonce, but if they do it needs to match
                 if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce,
@@ -239,47 +229,76 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
                 return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)")
             }
             
+            switch await validateResponseSignature(basicResponse, issuer: issuer) {
+            case .meetsPolicy:
+                break
+            case .failsToMeetPolicy(let reason):
+                return .failsToMeetPolicy(reason: reason)
+            }
+            
+            switch response.verifyTime(validationTime: self.validationTime) {
+            case .meetsPolicy:
+                break
+            case .failsToMeetPolicy(let reason):
+                return .failsToMeetPolicy(reason: reason)
+            }
+            
             switch response.certStatus {
             case .revoked(let info):
                 return .failsToMeetPolicy(reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")")
             case .unknown:
                 return .failsToMeetPolicy(reason: "OCSP response returned as status unknown")
             case .good:
-                switch response.verifyTime(validationTime: self.validationTime) {
-                case .meetsPolicy:
-                    break
-                case .failsToMeetPolicy(let reason):
-                    return .failsToMeetPolicy(reason: reason)
-                }
-                guard let certificates = basicResponse.certs,
-                      let leafCertificate = certificates.first else {
-                    return .failsToMeetPolicy(reason: "OCSP response does not contain any certificate")
-                }
-                
-                let validationResult = await verifier.validate(leafCertificate: leafCertificate, intermediates: CertificateStore(certificates.dropFirst()))
-                let validatedLeaf: Certificate
-                switch validationResult {
-                case .couldNotValidate(let failures):
-                    return .failsToMeetPolicy(reason: "could not validate certificates \(failures)")
-                case .validCertificate(let chain):
-                    // force unwrap is safe because a valid chain always contains a at least the leaf certificate
-                    validatedLeaf = chain.first!
-                }
-                
-                
-                return self.validateSignature(
-                    certificate: validatedLeaf,
-                    tbsResponse: basicResponse.responseData,
-                    signatureBytes: basicResponse.signature.bytes,
-                    signatureAlgorithmIdentifier: basicResponse.signatureAlgorithm
-                )
+                return .meetsPolicy
             }
         }
     }
     
+    private func validateResponseSignature(
+        _ basicResponse: BasicOCSPResponse,
+        issuer: Certificate
+    ) async -> PolicyEvaluationResult {
+        let responderID = basicResponse.responseData.responderID
+        let potentialCertificates = [issuer] + [basicResponse.certs?.first].compactMap { $0 }
+        let leafCertificate = potentialCertificates.first { certificate in
+            switch responderID {
+            case .byName(let subject):
+                return certificate.subject == subject
+            case .byKey(let subjectKeyIdentifier):
+                return (try? certificate.extensions.subjectKeyIdentifier?.keyIdentifier == subjectKeyIdentifier.bytes) ?? false
+            }
+        }
+        guard let leafCertificate else {
+            return .failsToMeetPolicy(reason: "could not find OCSP responder certificate for id \(responderID)")
+        }
+        
+        var verifier = Verifier(
+            rootCertificates: CertificateStore([issuer]),
+            policy: PolicySet(policies: [RFC5280Policy(validationTime: validationTime)])
+        )
+
+        let validationResult = await verifier.validate(leafCertificate: leafCertificate, intermediates: CertificateStore())
+        let validatedLeaf: Certificate
+        switch validationResult {
+        case .couldNotValidate(let failures):
+            return .failsToMeetPolicy(reason: "could not validate OCSP responder certificates \(failures)")
+        case .validCertificate(let chain):
+            // force unwrap is safe because a valid chain always contains a at least the leaf certificate
+            validatedLeaf = chain.first!
+        }
+        
+        
+        return self.validateSignature(
+            certificate: validatedLeaf,
+            tbsResponse: basicResponse.responseDataBytes,
+            signatureBytes: basicResponse.signature.bytes,
+            signatureAlgorithmIdentifier: basicResponse.signatureAlgorithm
+        )
+    }
+    
     private func validateSignature(
         certificate: Certificate,
-        tbsResponse: OCSPResponseData,
+        tbsResponse: ArraySlice<UInt8>,
         signatureBytes: ArraySlice<UInt8>,
         signatureAlgorithmIdentifier: AlgorithmIdentifier
     ) -> PolicyEvaluationResult {
@@ -291,16 +310,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             return .failsToMeetPolicy(reason: "could not create signature for OCSP response \(error)")
         }
         
-        let tbsBytes: [UInt8]
-        do {
-            var serializer = DER.Serializer()
-            try serializer.serialize(tbsResponse)
-            tbsBytes = serializer.serializedBytes
-        } catch {
-            return .failsToMeetPolicy(reason: "could not serialise response to check OCSP response signature \(error)")
-        }
-        
-        if certificate.publicKey.isValidSignature(signature, for: tbsBytes[...], signatureAlgorithm: signatureAlgorithm) {
+        if certificate.publicKey.isValidSignature(signature, for: tbsResponse, signatureAlgorithm: signatureAlgorithm) {
             return .meetsPolicy
         } else {
             return .failsToMeetPolicy(reason: "OCSP response signature is not valid")
@@ -347,7 +357,7 @@ extension OCSPSingleResponse {
         }
         
         guard
-            let thisUpdate = Date(self.thisUpdate),
+            let thisUpdate = Date.init(self.thisUpdate),
             let nextUpdate = Date(nextUpdateGeneralizedTime)
         else {
             return .failsToMeetPolicy(reason: "could not convert time specified in certificate to a `Date`")
@@ -391,5 +401,20 @@ private func withTimeout<Result: Sendable>(
         // the result of the operation is non-nil and must be in either firstResult or secondResult
         // therefore it is safe to unwrap it
         return (firstResult ?? secondResult)!
+    }
+}
+
+// TODO: remove me
+extension PEMDocument {
+    init(_ node: some DERSerializable, type: String) throws {
+        var serializer = DER.Serializer()
+        try serializer.serialize(node)
+        self.init(type: type, derBytes: Data(serializer.serializedBytes))
+    }
+}
+
+extension PEMDocument {
+    func write(to url: URL) throws {
+        try Data(self.pemString.utf8).write(to: url)
     }
 }
