@@ -70,6 +70,15 @@ extension NameConstraintsPolicy {
             return true
         }
 
+        // Step 1: Turn these to slices.
+        let dnsName = dnsName[...]
+        var constraint = constraint[...]
+
+        // Step 2: If the constraint ends in a period, drop it.
+        if constraint.last == ASCII_PERIOD {
+            constraint = constraint.dropLast()
+        }
+
         // Next, we get the reverse DNS labels.
         var reverseDNSNameLabels = ReverseDNSLabelSequence(dnsName).makeIterator()
         var reverseConstraintLabels = ReverseDNSLabelSequence(constraint).makeIterator()
@@ -78,16 +87,10 @@ extension NameConstraintsPolicy {
         // While we're here, we're going to confirm that none of the labels are
         // empty except, for the constraint, the last one. If they are,
         // that means that _either_ the domain name is absolute
-        // _or_ there is an empty DNS label. We support neither. We do support the
-        // constraint beginning with a period, however.
-        var processedLabels = 0
+        // _or_ there is an empty DNS label. We support neither.
         while true {
             let nextDNSNameLabel = reverseDNSNameLabels.next()
             let nextConstraintLabel = reverseConstraintLabels.next()
-
-            defer {
-                processedLabels += 1
-            }
 
             switch (nextDNSNameLabel, nextConstraintLabel) {
             case (.none, .none):
@@ -105,12 +108,12 @@ extension NameConstraintsPolicy {
                 // Empty DNS label. This is always forbidden.
                 return false
             case (.some, .some(let constraintLabel)) where constraintLabel.count == 0:
-                // We have an empty constraint label. This must be first or last, so confirm that.
-                if reverseConstraintLabels.hasMoreLabels && processedLabels > 0 {
-                    // This label is empty, which is unacceptable.
+                // We have an empty constraint label. This must be last, so confirm that.
+                if reverseConstraintLabels.hasMoreLabels {
+                    // This label is empty, and not last, which is unacceptable.
                     return false
                 } else {
-                    // Great, this was the first or last label, this matches.
+                    // The period matches everything else, so we're good to go.
                     return true
                 }
             case (.some(let dnsLabel), .some(let constraintLabel)) where dnsLabel.caseInsensitiveASCIIMatch(constraintLabel):
@@ -223,10 +226,10 @@ extension String.UTF8View {
 @usableFromInline
 struct ReverseDNSLabelSequence: Sequence {
     @usableFromInline
-    var base: String.UTF8View
+    var base: String.UTF8View.SubSequence
 
     @inlinable
-    init(_ base: String.UTF8View) {
+    init(_ base: String.UTF8View.SubSequence) {
         self.base = base
     }
 
@@ -241,8 +244,8 @@ struct ReverseDNSLabelSequence: Sequence {
         var base: String.UTF8View.SubSequence?
 
         @inlinable
-        init(_ base: String.UTF8View) {
-            self.base = base[...]
+        init(_ base: String.UTF8View.SubSequence) {
+            self.base = base
         }
 
         @inlinable mutating func next() -> String.UTF8View.SubSequence? {
