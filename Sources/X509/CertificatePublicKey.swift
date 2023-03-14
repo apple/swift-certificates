@@ -40,12 +40,13 @@ extension Certificate {
                 let key = try P521.Signing.PublicKey(x963Representation: spki.key.bytes)
                 self.backing = .p521(key)
             case .rsaPublicKey:
-                // TODO: Confirm that the derRepresentation here only tolerates the representation
-                // we want to allow.
+                // To confirm that only the PKCS#1 format is allowed here, we actually attempt to decode the inner key
+                // format. Sadly, Swift Crypto doesn't have a way to accept the raw numbers directly, so we then ask it
+                // to decode as well.
+                _ = try RSAPKCS1PublicKey(derEncoded: spki.key.bytes)
                 let key = try _RSA.Signing.PublicKey(derRepresentation: spki.key.bytes)
                 self.backing = .rsa(key)
             default:
-                // TODO(cory): RSA keys
                 throw CertificateError.unsupportedPublicKeyAlgorithm(reason: "\(spki.algorithmIdentifier)")
             }
         }
@@ -202,7 +203,7 @@ extension SubjectPublicKeyInfo {
             key = .init(bytes: ArraySlice(p521.x963Representation))
         case .rsa(let rsa):
             algorithmIdentifier = .rsaPublicKey
-            key = .init(bytes: ArraySlice(rsa.derRepresentation))
+            key = .init(bytes: ArraySlice(rsa.pkcs1DERRepresentation))
         }
 
         self.algorithmIdentifier = algorithmIdentifier
