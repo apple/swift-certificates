@@ -64,7 +64,13 @@ extension Certificate {
         @inlinable
         public init() {
             var rng = SystemRandomNumberGenerator()
-            self.bytes = rng.bytes(count: 20)
+            self.init(generator: &rng)
+        }
+        
+        @inlinable
+        internal init(generator: inout some RandomNumberGenerator) {
+            // drop leading zeros as required by the ASN.1 spec for INTEGERs
+            self.bytes = generator.bytes(count: 20).drop(while: { $0 == 0 })
         }
     }
 }
