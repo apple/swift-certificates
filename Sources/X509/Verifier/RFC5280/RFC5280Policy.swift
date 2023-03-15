@@ -23,14 +23,22 @@ public struct RFC5280Policy: VerifierPolicy {
     @usableFromInline
     let expiryPolicy: ExpiryPolicy
 
+    @usableFromInline
+    let basicConstraintsPolicy: BasicConstraintsPolicy
+
     @inlinable
     public init(validationTime: Date) {
         self.expiryPolicy = ExpiryPolicy(validationTime: validationTime)
+        self.basicConstraintsPolicy = BasicConstraintsPolicy()
     }
 
     @inlinable
     public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
         if case .failsToMeetPolicy(let reason) = self.expiryPolicy.chainMeetsPolicyRequirements(chain: chain) {
+            return .failsToMeetPolicy(reason: reason)
+        }
+
+        if case .failsToMeetPolicy(let reason) = self.basicConstraintsPolicy.chainMeetsPolicyRequirements(chain: chain) {
             return .failsToMeetPolicy(reason: reason)
         }
 

@@ -15,8 +15,9 @@
 import Foundation
 import XCTest
 import SwiftASN1
-import X509
+@testable import X509
 import Crypto
+import _CryptoExtras
 
 final class CertificateDERTests: XCTestCase {
     static let base64EncodedSampleCert = """
@@ -301,5 +302,71 @@ final class CertificateDERTests: XCTestCase {
         // Confirm basic signature validation.
         XCTAssertTrue(certs[1].publicKey.isValidSignature(certs[0].signature, for: certs[0]))
         XCTAssertTrue(certs[2].publicKey.isValidSignature(certs[1].signature, for: certs[1]))
+    }
+
+    func testReencodingDoesntChangeTheBytes() throws {
+        // This test validates that we don't change the TBS bytes when we re-encode a certificate.
+        //
+        // The easiest way to do this is to produce a slightly _weird_ certificate that encodes the signature algorithm
+        // in a way we wouldn't.
+        let name = try DistinguishedName {
+            CommonName("Test")
+        }
+        let key = try _RSA.Signing.PrivateKey(keySize: .bits2048)
+
+        var coder = DER.Serializer()
+        try coder.appendConstructedNode(identifier: .sequence) { coder in
+            try coder.serialize(Certificate.Version.v3.rawValue, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)
+            try coder.serialize(Certificate.SerialNumber().bytes)
+            try coder.serialize(AlgorithmIdentifier.sha256WithRSAEncryptionUsingNil)
+            try coder.serialize(name)
+            try coder.serialize(try Validity(notBefore: .makeTime(from: Date()), notAfter: .makeTime(from: Date() + 100)))
+            try coder.serialize(name)
+            try coder.serialize(SubjectPublicKeyInfo(.init(key.publicKey)))
+        }
+
+        let tbsCertificateBytes = coder.serializedBytes
+
+        // Ok, we can construct this into a real certificate now by signing it and producing the signature block.
+        let signature = try Certificate.PrivateKey(key).sign(bytes: tbsCertificateBytes, signatureAlgorithm: .sha256WithRSAEncryption)
+
+        coder = DER.Serializer()
+        try coder.appendConstructedNode(identifier: .sequence) { coder in
+            coder.serializeRawBytes(tbsCertificateBytes)
+            try coder.serialize(AlgorithmIdentifier.sha256WithRSAEncryptionUsingNil)
+            try coder.serialize(ASN1BitString(signature))
+        }
+
+        let serializedCert = coder.serializedBytes
+
+        // Great, done! Now we can deserialize this into a certificate, which should happen without error.
+        // Do a few spot checks to confirm it came out ok.
+        let cert = try Certificate(derEncoded: serializedCert)
+        XCTAssertEqual(cert.subject, name)
+        XCTAssertEqual(cert.issuer, name)
+        XCTAssertEqual(cert.version, .v3)
+        XCTAssertEqual(cert.signatureAlgorithm, .sha256WithRSAEncryption)
+        XCTAssertEqual(cert.publicKey, Certificate.PublicKey(key.publicKey))
+        XCTAssertTrue(Certificate.PublicKey(key.publicKey).isValidSignature(cert.signature, for: cert))
+
+        // Ok, serialize it back. We must not have canonicalised this.
+        coder = DER.Serializer()
+        try coder.serialize(cert)
+        let reserializedCert = coder.serializedBytes
+
+        XCTAssertEqual(reserializedCert, serializedCert)
+    }
+
+    func testRSAKeyFormatOutputIsCorrect() throws {
+        // A quick test here, we just encode and decode an RSA key.
+        let publicKey = try Certificate.PublicKey(_RSA.Signing.PrivateKey(keySize: .bits2048).publicKey)
+        let spki = SubjectPublicKeyInfo(publicKey)
+
+        var encoder = DER.Serializer()
+        try encoder.serialize(spki)
+
+        let decodedSPKI = try SubjectPublicKeyInfo(derEncoded: encoder.serializedBytes)
+        let newKey = try Certificate.PublicKey(spki: decodedSPKI)
+        XCTAssertEqual(publicKey, newKey)
     }
 }
