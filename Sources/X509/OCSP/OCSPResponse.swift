@@ -78,7 +78,7 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
             try coder.serialize(OCSPResponseStatus(self))
             switch self {
             case .successful(let basicResponse):
-                let responseBytes = OCSPResponseBytes(responseType: .OCSP.basicResponse, response: .init(contentBytes: basicResponse.responseDataBytes))
+                let responseBytes = try OCSPResponseBytes(encoding: basicResponse)
                 try coder.serialize(responseBytes, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)
                 
             case .malformedRequest,

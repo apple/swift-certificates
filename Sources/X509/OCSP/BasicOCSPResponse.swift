@@ -76,7 +76,7 @@ import SwiftASN1
 /// ```
 ///
 /// This type is generic because our different backends want to use different bignum representations.
-struct BasicOCSPResponse: DERParseable, Hashable {
+struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
@@ -98,9 +98,8 @@ struct BasicOCSPResponse: DERParseable, Hashable {
         self.signature = signature
         self.certs = certs
     }
-
-    init(derEncoded rootNode: ASN1Node) throws {
-        self = try DER.sequence(rootNode, identifier: BasicOCSPResponse.defaultIdentifier) { nodes in
+    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             guard let responseDataNode = nodes.next() else {
                 throw ASN1Error.invalidASN1Object(reason: "missing OCSP response data")
             }
@@ -114,6 +113,19 @@ struct BasicOCSPResponse: DERParseable, Hashable {
             }
 
             return .init(responseData: responseData, responseDataBytes: responseDataNode.encodedBytes, signatureAlgorithm: signatureAlgorithm, signature: signature, certs: certs)
+        }
+    }
+    
+    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+        try coder.appendConstructedNode(identifier: identifier) { coder in
+            coder.serializeRawBytes(self.responseDataBytes)
+            try coder.serialize(self.signatureAlgorithm)
+            try coder.serialize(self.signature)
+            if let certs {
+                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { coder in
+                    try coder.serializeSequenceOf(certs)
+                }
+            }
         }
     }
 }

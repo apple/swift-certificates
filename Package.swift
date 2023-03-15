@@ -46,6 +46,12 @@ let package = Package(
                 "X509",
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
+            ], resources: [
+                .copy("OCSP Test Resources/www.apple.com.root.der"),
+                .copy("OCSP Test Resources/www.apple.com.intermediate.der"),
+                .copy("OCSP Test Resources/www.apple.com.der"),
+                .copy("OCSP Test Resources/www.apple.com.ocsp-response.der"),
+                .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
             ]),
     ]
 )

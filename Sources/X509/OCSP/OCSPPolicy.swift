@@ -96,6 +96,11 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     /// the time used to decide if the request is relatively recent
     private var validationTime: Date
     
+    /// If true, a nonce is generated per OCSP request and attached to the request.
+    /// If the response contains a nonce, it must match with the initially send nonce.
+    /// currently only set to false for testing
+    var nonceExtensionEnabled: Bool = true
+    
     public init(requester: Requester, validationTime: Date) {
         self.requester = requester
         self.requestHashAlgorithm = .insecureSha1
@@ -104,16 +109,12 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     }
     
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        let (modifiedSelf, result) = await withTimeout(maxDuration) { [self] in
-            var selfCopy = self
-            let result = await selfCopy.chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
-            return (selfCopy, result)
+        await withTimeout(maxDuration) { [self] in
+            await self.chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
         }
-        self = modifiedSelf
-        return result
     }
     
-    private mutating func chainMeetsPolicyRequirementsWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+    private func chainMeetsPolicyRequirementsWithoutDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         for index in chain.dropLast().indices {
             let certificate = chain[index]
             let issuer = chain[chain.index(after: index)]
@@ -138,7 +139,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     
     
     
-    private mutating func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
+    private func certificateMeetsPolicyRequirements(_ certificate: Certificate, issuer: Certificate) async -> PolicyEvaluationResult {
         
         let authorityInformationAccess: AuthorityInformationAccess?
         do {
@@ -178,8 +179,8 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         return await self.queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI, issuer: issuer)
     }
     
-    private mutating func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String, issuer: Certificate) async -> PolicyEvaluationResult {
-        let requestNonce = OCSPNonce()
+    private func queryAndVerifyCertificateStatus(for certID: OCSPCertID, responderURI: String, issuer: Certificate) async -> PolicyEvaluationResult {
+        let requestNonce = nonceExtensionEnabled ? OCSPNonce() : nil
         let requestBytes: [UInt8]
         do {
             let request = try OCSPRequest(certID: certID, nonce: requestNonce)
@@ -207,7 +208,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         return await self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce, issuer: issuer)
     }
     
-    private mutating func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce, issuer: Certificate) async -> PolicyEvaluationResult {
+    private func verifyResponse(_ response: OCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce?, issuer: Certificate) async -> PolicyEvaluationResult {
         switch response {
         case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
             return .failsToMeetPolicy(reason: "OCSP request failed \(OCSPResponseStatus(response))")
@@ -217,10 +218,15 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             }
             
             do {
-                // OCSP responders are allowed to not include the nonce, but if they do it needs to match
-                if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce,
-                   requestNonce != responseNonce {
-                    return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
+                // if requestNonce is nil, `nonceExtensionEnabled` is set to false and we therefore skip nonce verification
+                if let requestNonce {
+                    // OCSP responders are allowed to not include the nonce, but if they do it needs to match
+                    if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce,
+                       requestNonce != responseNonce {
+                        return .failsToMeetPolicy(reason: "OCSP response nonce does not match request nonce")
+                    }
+                } else {
+                    precondition(nonceExtensionEnabled == false)
                 }
             } catch {
                 return .failsToMeetPolicy(reason: "failed to decode nonce response \(error)")

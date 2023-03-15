@@ -59,21 +59,37 @@ actor TestRequester: OCSPRequester {
     }
 }
 
-extension TestRequester {
+extension OCSPRequester {
+    func assertNoThrow(
+        file: StaticString = #file,
+        line: UInt = #line
+    ) -> some OCSPRequester {
+        AssertNoThrowRequester(wrapped: self, file: file, line: line)
+    }
+}
+
+extension OCSPRequester where Self == TestRequester {
     /// makes sure that the given ``query`` closure does **not** throw by failing the test if it does throw.
     static func noThrow(
         query: @escaping @Sendable (OCSPRequest, String) async throws -> OCSPResponse,
         file: StaticString = #file,
         line: UInt = #line
-    ) -> Self {
-        .init(query: { request, uri in
-            do {
-                return try await query(request, uri)
-            } catch {
-                XCTFail("test query closure throw error \(error)", file: file, line: line)
-                throw error
-            }
-        }, file: file, line: line)
+    ) -> some OCSPRequester {
+        TestRequester(query: query).assertNoThrow(file: file, line: line)
+    }
+}
+
+struct AssertNoThrowRequester<Wrapped: OCSPRequester>: OCSPRequester {
+    var wrapped: Wrapped
+    var file: StaticString
+    var line: UInt
+    func query(request: [UInt8], uri: String) async throws -> [UInt8] {
+        do {
+            return try await wrapped.query(request: request, uri: uri)
+        } catch {
+            XCTFail("test query closure throw error \(error)", file: file, line: line)
+            throw error
+        }
     }
 }
 
@@ -121,6 +137,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         publicKey: P384.Signing.PublicKey,
         issuer: DistinguishedName,
         issuerPrivateKey: P384.Signing.PrivateKey,
+        isIntermediate: Bool,
         ocspServer: String? = nil
     ) -> Certificate {
         try! Certificate(
@@ -133,6 +150,11 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             subject: subject,
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: .init {
+                if isIntermediate {
+                    Critical(
+                        BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                    )
+                }
                 if let ocspServer {
                     AuthorityInformationAccess([
                         AuthorityInformationAccess.AccessDescription(
@@ -162,6 +184,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             publicKey: intermediatePrivateKey.publicKey,
             issuer: ca1Name,
             issuerPrivateKey: ca1PrivateKey,
+            isIntermediate: true,
             ocspServer: ocspServer
         )
     }
@@ -172,6 +195,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             publicKey: leafPrivateKey.publicKey,
             issuer: intermediate1Name,
             issuerPrivateKey: intermediatePrivateKey,
+            isIntermediate: false,
             ocspServer: ocspServer
         )
     }
@@ -209,7 +233,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func assertChainMeetsPolicy(
         chain: [Certificate],
-        requester: TestRequester,
+        requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
         file: StaticString = #file,
         line: UInt = #line
@@ -224,8 +248,10 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             printChainForDebugging(chain)
             return
         }
-        let queryCount = await requester.queryCount
-        XCTAssertEqual(queryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
+        if let testRequest = requester as? TestRequester {
+            let queryCount = await testRequest.queryCount
+            XCTAssertEqual(queryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
+        }
     }
     
     func printChainForDebugging(_ chain: [Certificate]) {
@@ -242,7 +268,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func assertChainFailsToMeetPolicy(
         chain: [Certificate],
-        requester: TestRequester,
+        requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
         expectedReason: String? = nil,
         file: StaticString = #file,
@@ -261,15 +287,17 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         if let expectedReason {
             XCTAssertEqual(actualReason, expectedReason, "unexpected policy failure reason", file: file, line: line)
         }
-        let actualQueryCount = await requester.queryCount
-        XCTAssertEqual(actualQueryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
+        if let testRequest = requester as? TestRequester {
+            let actualQueryCount = await testRequest.queryCount
+            XCTAssertEqual(actualQueryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
+        }
     }
     
     func testSingleCertWithOCSP() async {
         let now = self.now
         await self.assertChainMeetsPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -293,7 +321,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 XCTAssertNotNil(try request.tbsRequest.requestExtensions?.ocspNonce)
@@ -317,7 +345,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -344,7 +372,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -371,7 +399,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -416,7 +444,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let now = self.now
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -445,7 +473,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             Self.leaf(),
             Self.intermediate(),
             Self.ca1,
-        ], requester: .noThrow { request, uri -> OCSPResponse in
+        ], requester: TestRequester.noThrow { request, uri -> OCSPResponse in
             struct ShouldNotQueryResponderError: Error {}
             throw ShouldNotQueryResponderError()
         }, expectedQueryCount: 0)
@@ -456,7 +484,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             Self.leaf(),
             Self.intermediate(),
             Self.ca(ocspServer: Self.responderURI),
-        ], requester: .noThrow { request, uri -> OCSPResponse in
+        ], requester: TestRequester.noThrow { request, uri -> OCSPResponse in
             struct ShouldNotQueryResponderError: Error {}
             throw ShouldNotQueryResponderError()
         }, expectedQueryCount: 0)
@@ -465,7 +493,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     func testQueryIsAllowedToFail() async {
         await self.assertChainMeetsPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: .init { request, uri -> OCSPResponse in
+            requester: TestRequester { request, uri -> OCSPResponse in
                 struct QueryErrorsAreAcceptable: Error {}
                 throw QueryErrorsAreAcceptable()
             }
@@ -476,8 +504,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         func responseWithCertStatusGood(
             thisUpdate: Date,
             nextUpdate: Date?
-        ) -> TestRequester {
-            .noThrow { request, uri -> OCSPResponse in
+        ) -> some OCSPRequester {
+            TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -537,6 +565,58 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 thisUpdate: self.now - 2,
                 nextUpdate: self.now - 1
             )
+        )
+    }
+    
+    func testWWWDotAppleDotComResponder() async throws {
+        actor StaticOCSPRequester: OCSPRequester {
+            var responses: [OCSPResponse]
+            init(responses: [OCSPResponse]) {
+                self.responses = responses
+            }
+            var nextIndex: Int = 0
+            func query(request: [UInt8], uri: String) async throws -> [UInt8] {
+                let responseIndex = nextIndex
+                nextIndex += 1
+                guard responses.indices.contains(responseIndex) else {
+                    struct StaticOCSPRequesterRunOutOfResponses: Error {}
+                    throw StaticOCSPRequesterRunOutOfResponses()
+                }
+                let response = responses[responseIndex]
+                return try DER.Serializer.serialized(element: response)
+            }
+        }
+        
+        func load(_ filePath: String, extension: String) throws -> [UInt8] {
+            guard let url = Bundle.module.url(forResource: filePath, withExtension: `extension`) else {
+                struct CouldNotGetURLFromBundle: Error {
+                    var filePath: String
+                    var `extension`: String
+                }
+                throw CouldNotGetURLFromBundle(filePath: filePath, extension: `extension`)
+            }
+            
+            return Array(try Data(contentsOf: url))
+        }
+        func loadCertificate(_ filePath: String, extension: String) throws -> Certificate {
+            try Certificate(derEncoded: load(filePath, extension: `extension`))
+        }
+        func loadOCSPResponse(_ filePath: String, extension: String) throws -> OCSPResponse {
+            try OCSPResponse(derEncoded: load(filePath, extension: `extension`))
+        }
+        
+        let root = try loadCertificate("www.apple.com.root", extension: "der")
+        let intermediate = try loadCertificate("www.apple.com.intermediate", extension: "der")
+        let leaf = try loadCertificate("www.apple.com", extension: "der")
+        let ocspResponseLeaf = try loadOCSPResponse("www.apple.com.ocsp-response", extension: "der")
+        let ocspResponseIntermediate = try loadOCSPResponse("www.apple.com.intermediate.ocsp-response", extension: "der")
+        
+        await self.assertChainMeetsPolicy(
+            chain: [leaf, intermediate, root],
+            requester: StaticOCSPRequester(responses: [
+                ocspResponseLeaf,
+                ocspResponseIntermediate,
+            ]).assertNoThrow()
         )
     }
 }
@@ -607,35 +687,10 @@ extension BasicOCSPResponse {
     ) throws {
         self.init(
             responseData: responseData,
-            responseDataBytes: try Self.responseDataBytes(
-                responseData: responseData,
-                signatureAlgorithm: signatureAlgorithm,
-                signature: signature,
-                certs: certs
-            ),
+            responseDataBytes: try DER.Serializer.serialized(element: responseData)[...],
             signatureAlgorithm: signatureAlgorithm,
             signature: signature,
             certs: certs
         )
-    }
-    
-    static func responseDataBytes(
-        responseData: OCSPResponseData,
-        signatureAlgorithm: AlgorithmIdentifier,
-        signature: ASN1BitString,
-        certs: [Certificate]?
-    ) throws -> ArraySlice<UInt8> {
-        var coder = DER.Serializer()
-        try coder.appendConstructedNode(identifier: Self.defaultIdentifier) { coder in
-            try coder.serialize(responseData)
-            try coder.serialize(signatureAlgorithm)
-            try coder.serialize(signature)
-            if let certs {
-                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { serilizer in
-                    try serilizer.serializeSequenceOf(certs)
-                }
-            }
-        }
-        return coder.serializedBytes[...]
     }
 }
