@@ -232,6 +232,10 @@ final class DNSNamesTests: XCTestCase {
             ("1234567.example.com", "example.com", true),
             ("foo.1234567.example.com", "foo.1234567.example.com", true),
             ("foo.example.123", "foo.example.123", false),
+
+            // Trailing period doesn't always match
+            ("foo.com", "example.bar.", false),
+            ("foo.com", "foo.www.", false),
         ]
 
         for (dnsName, constraint, match) in fixtures {
@@ -245,7 +249,7 @@ final class DNSNamesTests: XCTestCase {
 
     func testReverseDNSLabels() throws {
         func reverse(_ string: String) -> [Substring] {
-            return Array(ReverseDNSLabelSequence(string.utf8)).map { Substring($0) }
+            return Array(ReverseDNSLabelSequence(string.utf8[...])).map { Substring($0) }
         }
 
         XCTAssertEqual(reverse("f."), ["", "f"])
