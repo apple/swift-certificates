@@ -229,18 +229,19 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         issuerPrivateKey: .init(ca1PrivateKey)
     )
     
-    private let now = Date()
+    private let validationTime = Date()
     
     func assertChainMeetsPolicy(
         chain: [Certificate],
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
+        validationTime: Date? = nil,
         file: StaticString = #file,
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
             requester: requester,
-            validationTime: self.now
+            validationTime: validationTime ?? self.validationTime
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .meetsPolicy = result else {
@@ -276,7 +277,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     ) async {
         var policy = OCSPVerifierPolicy(
             requester: requester,
-            validationTime: self.now
+            validationTime: self.validationTime
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .failsToMeetPolicy(let actualReason) = result else {
@@ -294,7 +295,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testSingleCertWithOCSP() async {
-        let now = self.now
+        let now = self.validationTime
         await self.assertChainMeetsPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
@@ -318,7 +319,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testWrongNonce() async {
-        let now = self.now
+        let now = self.validationTime
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
@@ -342,7 +343,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testRevokedCert() async {
-        let now = self.now
+        let now = self.validationTime
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
@@ -369,7 +370,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testInvalidResponderCertChain() async {
-        let now = self.now
+        let now = self.validationTime
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
@@ -396,7 +397,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testResponderSignatureAlgorithmIdentifierMismatch() async {
-        let now = self.now
+        let now = self.validationTime
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
@@ -441,7 +442,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testResponseDoesNotIncludeResponseForRequestedCert() async {
-        let now = self.now
+        let now = self.validationTime
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
@@ -528,8 +529,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         await self.assertChainMeetsPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.now,
-                nextUpdate: self.now + 1
+                thisUpdate: self.validationTime,
+                nextUpdate: self.validationTime + 1
             )
         )
         
@@ -537,7 +538,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.now,
+                thisUpdate: self.validationTime,
                 nextUpdate: nil
             )
         )
@@ -545,8 +546,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.now + 1,
-                nextUpdate: self.now + 2
+                thisUpdate: self.validationTime + 1,
+                nextUpdate: self.validationTime + 2
             )
         )
         
@@ -554,16 +555,16 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.now + 1,
-                nextUpdate: self.now - 1
+                thisUpdate: self.validationTime + 1,
+                nextUpdate: self.validationTime - 1
             )
         )
         /// this update and next update is in the past
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.now - 2,
-                nextUpdate: self.now - 1
+                thisUpdate: self.validationTime - 2,
+                nextUpdate: self.validationTime - 1
             )
         )
     }
@@ -610,13 +611,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let leaf = try loadCertificate("www.apple.com", extension: "der")
         let ocspResponseLeaf = try loadOCSPResponse("www.apple.com.ocsp-response", extension: "der")
         let ocspResponseIntermediate = try loadOCSPResponse("www.apple.com.intermediate.ocsp-response", extension: "der")
+        let timeOfOCSPRequest = try Date(GeneralizedTime(year: 2023, month: 3, day: 15, hours: 15, minutes: 36, seconds: 0, fractionalSeconds: 0.0))!
         
         await self.assertChainMeetsPolicy(
             chain: [leaf, intermediate, root],
             requester: StaticOCSPRequester(responses: [
                 ocspResponseLeaf,
                 ocspResponseIntermediate,
-            ]).assertNoThrow()
+            ]).assertNoThrow(),
+            validationTime: timeOfOCSPRequest
         )
     }
 }

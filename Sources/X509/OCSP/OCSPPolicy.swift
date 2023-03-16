@@ -42,6 +42,39 @@ extension ASN1ObjectIdentifier {
     static let sha1NoSign: Self = [1, 3, 14, 3, 2, 26]
 }
 
+struct OCSPResponderSingingPolicy: VerifierPolicy {
+    /// direct issuer of the certificate for which we check the OCSP status for
+    var issuer: Certificate
+    mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+        guard chain.last == issuer else {
+            return .failsToMeetPolicy(reason: "OCSP response must be signed by the certificate issuer or a certificate that chains up to the issuer")
+        }
+        if chain.count == 1 {
+            // the leaf is the issuer which does not need to have the OCSP singing extended key usage
+            return .meetsPolicy
+        }
+        
+        let leaf = chain.leaf
+        
+        // RFC 6960 Section 4.2.2.2. Authorized Responders
+        // OCSP signing delegation SHALL be designated by the inclusion of
+        // id-kp-OCSPSigning in an extended key usage certificate extension
+        // included in the OCSP response signer's certificate.
+        guard let extendedKeyUsage: ExtendedKeyUsage = try? leaf.extensions.extendedKeyUsage else {
+            return .failsToMeetPolicy(reason: "OCSP response certificate has no extended key usages")
+        }
+        let hasOCSPSingingUsage = extendedKeyUsage.usages.contains {
+            $0 == ExtendedKeyUsage.Usage(oid: .ExtendedKeyUsage.ocspSigning)
+        }
+        guard hasOCSPSingingUsage else {
+            return .failsToMeetPolicy(reason: "OCSP response certificate does not have OCSP singing extended key usage set")
+        }
+        
+        
+        return .meetsPolicy
+    }
+}
+
 enum OCSPRequestHashAlgorithm {
     case insecureSha1
     // we can't yet enable sha256 by default but we want in the future
@@ -280,7 +313,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         
         var verifier = Verifier(
             rootCertificates: CertificateStore([issuer]),
-            policy: PolicySet(policies: [RFC5280Policy(validationTime: validationTime)])
+            policy: PolicySet(policies: [
+                OCSPResponderSingingPolicy(issuer: issuer),
+                RFC5280Policy(validationTime: validationTime),
+            ])
         )
 
         let validationResult = await verifier.validate(leafCertificate: leafCertificate, intermediates: CertificateStore())
@@ -292,7 +328,6 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
             // force unwrap is safe because a valid chain always contains a at least the leaf certificate
             validatedLeaf = chain.first!
         }
-        
         
         return self.validateSignature(
             certificate: validatedLeaf,
@@ -407,20 +442,5 @@ private func withTimeout<Result: Sendable>(
         // the result of the operation is non-nil and must be in either firstResult or secondResult
         // therefore it is safe to unwrap it
         return (firstResult ?? secondResult)!
-    }
-}
-
-// TODO: remove me
-extension PEMDocument {
-    init(_ node: some DERSerializable, type: String) throws {
-        var serializer = DER.Serializer()
-        try serializer.serialize(node)
-        self.init(type: type, derBytes: Data(serializer.serializedBytes))
-    }
-}
-
-extension PEMDocument {
-    func write(to url: URL) throws {
-        try Data(self.pemString.utf8).write(to: url)
     }
 }
