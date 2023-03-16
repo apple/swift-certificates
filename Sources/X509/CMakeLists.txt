@@ -79,6 +79,7 @@ add_library(X509
   "Verifier/RFC5280/IPConstraints.swift"
   "Verifier/RFC5280/NameConstraintsPolicy.swift"
   "Verifier/RFC5280/RFC5280Policy.swift"
+  "Verifier/RFC5280/URIConstraints.swift"
   "Verifier/UnverifiedChain.swift"
   "Verifier/Verifier.swift"
   "Verifier/VerifierPolicy.swift"
