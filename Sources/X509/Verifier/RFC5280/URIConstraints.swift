@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import CoreFoundation
 import Foundation
 
 extension NameConstraintsPolicy {
