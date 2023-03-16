@@ -75,6 +75,7 @@ add_library(X509
   "Verifier/CertificateStore.swift"
   "Verifier/RFC5280/BasicConstraintsPolicy.swift"
   "Verifier/RFC5280/DNSNames.swift"
+  "Verifier/RFC5280/DirectoryNames.swift"
   "Verifier/RFC5280/ExpiryPolicy.swift"
   "Verifier/RFC5280/IPConstraints.swift"
   "Verifier/RFC5280/NameConstraintsPolicy.swift"
