@@ -665,9 +665,7 @@ final class RFC5280PolicyTests: XCTestCase {
                 Critical(
                     BasicConstraints.isCertificateAuthority(maxPathLength: 0)
                 )
-                if let subjectAlternativeNames {
-                    SubjectAlternativeNames(subjectAlternativeNames)
-                }
+                SubjectAlternativeNames(subjectAlternativeNames)
             },
             issuer: .unconstrainedRoot
         )
