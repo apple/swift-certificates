@@ -13,6 +13,12 @@
 //===----------------------------------------------------------------------===//
 import Foundation
 
+#if canImport(Darwin)
+import Foundation
+#else
+@preconcurrency import Foundation
+#endif
+
 /// A sub-policy of the ``RFC5280Policy`` that polices expiry.
 @usableFromInline
 struct ExpiryPolicy: VerifierPolicy {
