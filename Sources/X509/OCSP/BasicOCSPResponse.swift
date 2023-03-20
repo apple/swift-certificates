@@ -36,7 +36,8 @@ import SwiftASN1
 ///    byName               [1] Name,
 ///    byKey                [2] KeyHash }
 ///
-/// KeyHash ::= OCTET STRING
+/// KeyHash ::= OCTET STRING -- SHA-1 hash of responder's public key
+///    (excluding the tag and length fields)
 ///
 /// SingleResponse ::= SEQUENCE {
 ///    certID                       CertID,
@@ -132,6 +133,7 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
 
 enum ResponderID: DERParseable, DERSerializable, Hashable {
     case byName(DistinguishedName)
+    /// SHA-1 hash of responder's public key (excluding the tag and length fields)
     case byKey(ASN1OctetString)
 
     private static let nameIdentifier = ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific)

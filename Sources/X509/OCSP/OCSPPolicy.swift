@@ -425,8 +425,9 @@ extension Certificate {
         switch responderID {
         case .byName(let subject):
             return self.subject == subject
-        case .byKey(let subjectKeyIdentifier):
-            return (try? self.extensions.subjectKeyIdentifier?.keyIdentifier == subjectKeyIdentifier.bytes) ?? false
+        case .byKey(let responderPublicKeyHash):
+            let publicKeyHash = Insecure.SHA1.hash(data: SubjectPublicKeyInfo(self.publicKey).key.bytes)
+            return publicKeyHash == responderPublicKeyHash.bytes
         }
     }
 }
