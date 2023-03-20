@@ -152,7 +152,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             extensions: .init {
                 if isIntermediate {
                     Critical(
-                        BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                        BasicConstraints.isCertificateAuthority(maxPathLength: 0)
                     )
                 }
                 if let ocspServer {
