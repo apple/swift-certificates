@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public protocol VerifierPolicy: Sendable {
+public protocol VerifierPolicy {
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
 }
 

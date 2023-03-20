@@ -14,12 +14,7 @@
 
 import SwiftASN1
 import Crypto
-#if canImport(Darwin)
 import Foundation
-#else
-// swift-corelibs-foundation hasn't marked anything Sendable yet https://github.com/apple/swift-corelibs-foundation/issues/4687
-@preconcurrency import Foundation
-#endif
 
 // Swift CI has implicit concurrency disabled
 import _Concurrency
@@ -117,7 +112,7 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     
     private var requester: Requester
     private var requestHashAlgorithm: OCSPRequestHashAlgorithm

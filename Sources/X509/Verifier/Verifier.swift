@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct Verifier: Sendable {
+public struct Verifier {
     public var rootCertificates: CertificateStore
 
     public var policy: PolicySet
