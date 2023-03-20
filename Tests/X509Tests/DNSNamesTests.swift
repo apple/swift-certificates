@@ -258,43 +258,43 @@ final class DNSNamesTests: XCTestCase {
         XCTAssertEqual(reverse(".example.com"), ["com", "example", ""])
     }
 
+    static func urisThatMatch(_ dnsName: String) -> [String] {
+        return [
+            "http://\(dnsName)/",
+            "https://\(dnsName)",
+            "http://user:password@\(dnsName)",
+            "http://\(dnsName)/index.html",
+            "https://\(dnsName)/foo/bar/baz?x=y",
+            "ftp://user:password@\(dnsName):4343/cat.txt",
+        ]
+    }
+
+    static func urisThatDontMatch(_ dnsName: String) -> [String] {
+        return [
+            // User and password parts don't match.
+            "http://\(dnsName):\(dnsName)@sir.not.appearing.in.this.movie",
+
+            // Scheme doesn't match
+            "\(dnsName)://sir.not.appearing.in.this.movie/",
+
+            // Path doesn't match
+            "http://sir.not.appearing.in.this.movie/\(dnsName)/baz",
+
+            // IP addresses never match
+            "http://127.0.0.1",
+            "http://[fe80::1]",
+
+            // Neither do URIs without host components at all
+            "/foo/bar",
+            "\(dnsName)",
+        ]
+    }
+
     func testURINamesMatchReferenceHostname() throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
-        func urisThatMatch(_ dnsName: String) -> [String] {
-            return [
-                "http://\(dnsName)/",
-                "https://\(dnsName)",
-                "http://user:password@\(dnsName)",
-                "http://\(dnsName)/index.html",
-                "https://\(dnsName)/foo/bar/baz?x=y",
-                "ftp://user:password@\(dnsName):4343/cat.txt",
-            ]
-        }
-
-        func urisThatDontMatch(_ dnsName: String) -> [String] {
-            return [
-                // User and password parts don't match.
-                "http://\(dnsName):\(dnsName)@sir.not.appearing.in.this.movie",
-
-                // Scheme doesn't match
-                "\(dnsName)://sir.not.appearing.in.this.movie/",
-
-                // Path doesn't match
-                "http://sir.not.appearing.in.this.movie/\(dnsName)/baz",
-
-                // IP addresses never match
-                "http://127.0.0.1",
-                "http://[fe80::1]",
-
-                // Neither do URIs without host components at all
-                "/foo/bar",
-                "\(dnsName)",
-            ]
-        }
-
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
-            for uri in urisThatMatch(dnsName) {
+            for uri in DNSNamesTests.urisThatMatch(dnsName) {
                 XCTAssertEqual(
                     match,
                     NameConstraintsPolicy.uriNameMatchesConstraint(uriName: uri, constraint: constraint),
@@ -313,7 +313,7 @@ final class DNSNamesTests: XCTestCase {
                 continue
             }
 
-            for uri in urisThatDontMatch(dnsName) {
+            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
                 XCTAssertFalse(
                     NameConstraintsPolicy.uriNameMatchesConstraint(uriName: uri, constraint: constraint),
                     "\(uri) incorrectly matched \(constraint)"

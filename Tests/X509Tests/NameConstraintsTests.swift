@@ -17,29 +17,29 @@ import SwiftASN1
 @testable import X509
 
 final class NameConstraintsTests: XCTestCase {
+    static let names: [DistinguishedName] = [
+        try! DistinguishedName {
+            CountryName("US")
+            StateOrProvinceName("CA")
+            OrganizationName("Apple")
+        },
+        try! DistinguishedName {
+            CountryName("US")
+            StateOrProvinceName("CA")
+            OrganizationName("Apple")
+            CommonName("Test")
+        },
+        try! DistinguishedName {
+            CountryName("GB")
+            OrganizationName("Apple")
+            CommonName("Test")
+        },
+    ]
+
     func testDirectoryNameMatches() throws {
         // The key here is that a distinguished name only matches a constraint if they're equal.
-        let names: [DistinguishedName] = [
-            try DistinguishedName {
-                CountryName("US")
-                StateOrProvinceName("CA")
-                OrganizationName("Apple")
-            },
-            try DistinguishedName {
-                CountryName("US")
-                StateOrProvinceName("CA")
-                OrganizationName("Apple")
-                CommonName("Test")
-            },
-            try DistinguishedName {
-                CountryName("GB")
-                OrganizationName("Apple")
-                CommonName("Test")
-            },
-        ]
-
-        for firstName in names {
-            for secondName in names {
+        for firstName in NameConstraintsTests.names {
+            for secondName in NameConstraintsTests.names {
                 XCTAssertEqual(
                     NameConstraintsPolicy.directoryNameMatchesConstraint(directoryName: firstName, constraint: secondName),
                     firstName == secondName,

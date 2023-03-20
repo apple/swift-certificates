@@ -26,10 +26,14 @@ public struct RFC5280Policy: VerifierPolicy {
     @usableFromInline
     let basicConstraintsPolicy: BasicConstraintsPolicy
 
+    @usableFromInline
+    let nameConstraintsPolicy: NameConstraintsPolicy
+
     @inlinable
     public init(validationTime: Date) {
         self.expiryPolicy = ExpiryPolicy(validationTime: validationTime)
         self.basicConstraintsPolicy = BasicConstraintsPolicy()
+        self.nameConstraintsPolicy = NameConstraintsPolicy()
     }
 
     @inlinable
@@ -39,6 +43,10 @@ public struct RFC5280Policy: VerifierPolicy {
         }
 
         if case .failsToMeetPolicy(let reason) = self.basicConstraintsPolicy.chainMeetsPolicyRequirements(chain: chain) {
+            return .failsToMeetPolicy(reason: reason)
+        }
+
+        if case .failsToMeetPolicy(let reason) = self.nameConstraintsPolicy.chainMeetsPolicyRequirements(chain: chain) {
             return .failsToMeetPolicy(reason: reason)
         }
 
