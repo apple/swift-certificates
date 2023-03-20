@@ -137,6 +137,8 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         self.validationTime = validationTime
     }
     
+    // this method currently doesn't need to be mutating. However, we want to reserve the right to change our mind
+    // in the future and therefore still declare this method as mutating in the public API.
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         await withTimeout(maxDuration) { [self] in
             await self.chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
@@ -296,14 +298,14 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         issuer: Certificate
     ) async -> PolicyEvaluationResult {
         let responderID = basicResponse.responseData.responderID
-        var potentialCertificates = [Certificate]()
-        potentialCertificates.reserveCapacity(1 + (basicResponse.certs?.count ?? 0))
-        potentialCertificates.append(issuer)
-        if let responseCertificates = basicResponse.certs {
-            potentialCertificates.append(contentsOf: responseCertificates)
+        
+        let leafCertificate: Certificate?
+        if issuer.matches(responderID) {
+            leafCertificate = issuer
+        } else {
+            leafCertificate = basicResponse.certs?.first(where: { $0.matches(responderID) })
         }
         
-        let leafCertificate = potentialCertificates.first(where: { $0.matches(responderID) })
         guard let leafCertificate else {
             return .failsToMeetPolicy(reason: "could not find OCSP responder certificate for id \(responderID)")
         }
