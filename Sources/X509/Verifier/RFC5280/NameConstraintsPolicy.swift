@@ -12,10 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
+import SwiftASN1
 
 /// A sub-policy of the ``RFC5280Policy`` that polices the nameConstraints extension.
 @usableFromInline
 struct NameConstraintsPolicy: VerifierPolicy {
+    @usableFromInline
+    let processedExtensions: [ASN1ObjectIdentifier] = [
+        .X509ExtensionID.nameConstraints
+    ]
+
     @inlinable
     init() { }
 

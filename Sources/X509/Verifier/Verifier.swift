@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import SwiftASN1
 
 public struct Verifier {
     public var rootCertificates: CertificateStore
@@ -57,7 +58,7 @@ public struct Verifier {
 
                 // Each of these is now potentially a valid unverified chain.
                 for root in rootParents {
-                    if Self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root) {
+                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root) {
                         continue
                     }
 
@@ -79,7 +80,7 @@ public struct Verifier {
                 intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
 
                 for parent in intermediateParents {
-                    if Self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent) {
+                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent) {
                         continue
                     }
 
@@ -92,7 +93,12 @@ public struct Verifier {
         return .couldNotValidate(policyFailures)
     }
 
-    private static func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
+    private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
+        // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
+        if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.processedExtensions) {
+            return true
+        }
+
         // We don't want to re-add the same certificate to the chain: that will always produce a chain that
         // could have been shorter.
         if partialChain.contains(certificate: nextCertificate) {
@@ -194,6 +200,16 @@ extension Certificate {
 
         // The SKI is present. If the two match, this is higher preference: if they don't match, it's lower.
         return subjectAKI.keyIdentifier == ski.keyIdentifier ? 1 : -1
+    }
+
+    func hasUnhandledCriticalExtensions(handledExtensions: [ASN1ObjectIdentifier]) -> Bool {
+        for ext in self.extensions where ext.critical {
+            guard handledExtensions.contains(ext.oid) else {
+                return true
+            }
+        }
+
+        return false
     }
 }
 

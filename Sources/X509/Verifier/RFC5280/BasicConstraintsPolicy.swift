@@ -12,10 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
+import SwiftASN1
 
 /// A sub-policy of the ``RFC5280Policy`` that polices the basicConstraints extension.
 @usableFromInline
 struct BasicConstraintsPolicy: VerifierPolicy {
+    @usableFromInline
+    let processedExtensions: [ASN1ObjectIdentifier] = [
+        .X509ExtensionID.basicConstraints
+    ]
+
     @inlinable
     init() { }
 
