@@ -99,7 +99,7 @@ let extensions = try Certificate.Extensions {
     Critical(
         KeyUsage(digitalSignature: true, keyCertSign: true)
     )
-    SubjectAlternativeNames([.dNSName("localhost")])
+    SubjectAlternativeNames([.dnsName("localhost")])
 }
 ```
 
@@ -157,7 +157,7 @@ let extensions = try Certificate.Extensions {
     Critical(
         KeyUsage(keyCertSign: true)
     )
-    SubjectAlternativeNames([.dNSName("localhost")])
+    SubjectAlternativeNames([.dnsName("localhost")])
 }
 
 let certificate = try Certificate(

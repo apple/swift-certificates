@@ -33,7 +33,7 @@ public struct NameConstraints {
         // that will let us support people assigning into this collection.
         get {
             self.permittedSubtrees.compactMap {
-                if case .dNSName(let name) = $0 {
+                if case .dnsName(let name) = $0 {
                     return name
                 } else {
                     return nil
@@ -52,7 +52,7 @@ public struct NameConstraints {
     public var excludedDNSDomains: [String] {
         get {
             self.excludedSubtrees.compactMap {
-                if case .dNSName(let name) = $0 {
+                if case .dnsName(let name) = $0 {
                     return name
                 } else {
                     return nil
@@ -77,7 +77,7 @@ public struct NameConstraints {
     public var permittedIPRanges: [ASN1OctetString] {
         get {
             self.permittedSubtrees.compactMap {
-                if case .iPAddress(let address) = $0 {
+                if case .ipAddress(let address) = $0 {
                     return address
                 } else {
                     return nil
@@ -102,7 +102,7 @@ public struct NameConstraints {
     public var excludedIPRanges: [ASN1OctetString] {
         get {
             self.excludedSubtrees.compactMap {
-                if case .iPAddress(let address) = $0 {
+                if case .ipAddress(let address) = $0 {
                     return address
                 } else {
                     return nil

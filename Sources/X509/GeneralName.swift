@@ -17,12 +17,12 @@ import SwiftASN1
 public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
     case otherName(OtherName)
     case rfc822Name(String)
-    case dNSName(String)
+    case dnsName(String)
     case x400Address(ASN1Any)
     case directoryName(DistinguishedName)
     case ediPartyName(ASN1Any)
     case uniformResourceIdentifier(String)
-    case iPAddress(ASN1OctetString)
+    case ipAddress(ASN1OctetString)
     case registeredID(ASN1ObjectIdentifier)
 
     @usableFromInline
@@ -30,7 +30,7 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
     @usableFromInline
     static let rfc822NameTag = ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific)
     @usableFromInline
-    static let dNSNameTag = ASN1Identifier(tagWithNumber: 2, tagClass: .contextSpecific)
+    static let dnsNameTag = ASN1Identifier(tagWithNumber: 2, tagClass: .contextSpecific)
     @usableFromInline
     static let x400AddressTag = ASN1Identifier(tagWithNumber: 3, tagClass: .contextSpecific)
     @usableFromInline
@@ -40,7 +40,7 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
     @usableFromInline
     static let uriTag = ASN1Identifier(tagWithNumber: 6, tagClass: .contextSpecific)
     @usableFromInline
-    static let iPAddressTag = ASN1Identifier(tagWithNumber: 7, tagClass: .contextSpecific)
+    static let ipAddressTag = ASN1Identifier(tagWithNumber: 7, tagClass: .contextSpecific)
     @usableFromInline
     static let registeredIDTag = ASN1Identifier(tagWithNumber: 8, tagClass: .contextSpecific)
 
@@ -52,9 +52,9 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case Self.rfc822NameTag:
             let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.rfc822NameTag)
             self = .rfc822Name(String(result))
-        case Self.dNSNameTag:
-            let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.dNSNameTag)
-            self = .dNSName(String(result))
+        case Self.dnsNameTag:
+            let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.dnsNameTag)
+            self = .dnsName(String(result))
         case Self.x400AddressTag:
             self = .x400Address(ASN1Any(derEncoded: rootNode))
         case Self.directoryNameTag:
@@ -64,8 +64,8 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case Self.uriTag:
             let result = try ASN1IA5String(derEncoded: rootNode, withIdentifier: Self.uriTag)
             self = .uniformResourceIdentifier(String(result))
-        case Self.iPAddressTag:
-            self = try .iPAddress(ASN1OctetString(derEncoded: rootNode, withIdentifier: Self.iPAddressTag))
+        case Self.ipAddressTag:
+            self = try .ipAddress(ASN1OctetString(derEncoded: rootNode, withIdentifier: Self.ipAddressTag))
         case Self.registeredIDTag:
             self = try .registeredID(ASN1ObjectIdentifier(derEncoded: rootNode, withIdentifier: Self.registeredIDTag))
         default:
@@ -81,9 +81,9 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case .rfc822Name(let name):
             let ia5String = try ASN1IA5String(name)
             try ia5String.serialize(into: &coder, withIdentifier: Self.rfc822NameTag)
-        case .dNSName(let name):
+        case .dnsName(let name):
             let ia5String = try ASN1IA5String(name)
-            try ia5String.serialize(into: &coder, withIdentifier: Self.dNSNameTag)
+            try ia5String.serialize(into: &coder, withIdentifier: Self.dnsNameTag)
         case .x400Address(let orAddress):
             try orAddress.serialize(into: &coder)
         case .directoryName(let name):
@@ -93,8 +93,8 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case .uniformResourceIdentifier(let name):
             let ia5String = try ASN1IA5String(name)
             try ia5String.serialize(into: &coder, withIdentifier: Self.uriTag)
-        case .iPAddress(let ipAddress):
-            try ipAddress.serialize(into: &coder, withIdentifier: Self.iPAddressTag)
+        case .ipAddress(let ipAddress):
+            try ipAddress.serialize(into: &coder, withIdentifier: Self.ipAddressTag)
         case .registeredID(let id):
             try id.serialize(into: &coder, withIdentifier: Self.registeredIDTag)
         }
@@ -105,14 +105,14 @@ extension GeneralName: CustomStringConvertible {
     @inlinable
     public var description: String {
         switch self {
-        case .dNSName(let name):
-            return "dNSName: \(name)"
+        case .dnsName(let name):
+            return "dnsName: \(name)"
         case .directoryName(let directoryName):
             return "directoryName: \(directoryName)"
         case .ediPartyName(let name):
             return "ediPartyName: \(name)"
-        case .iPAddress(let address):
-            return "iPAddress: \(address.bytes)"
+        case .ipAddress(let address):
+            return "ipAddress: \(address.bytes)"
         case .otherName(let otherName):
             return "otherName: \(otherName)"
         case .registeredID(let id):
@@ -130,12 +130,12 @@ extension GeneralName: CustomStringConvertible {
 //GeneralName ::= CHOICE {
 //     otherName                       [0]     OtherName,
 //     rfc822Name                      [1]     IA5String,
-//     dNSName                         [2]     IA5String,
+//     dnsName                         [2]     IA5String,
 //     x400Address                     [3]     ORAddress,
 //     directoryName                   [4]     Name,
 //     ediPartyName                    [5]     EDIPartyName,
 //     uniformResourceIdentifier       [6]     IA5String,
-//     iPAddress                       [7]     OCTET STRING,
+//     ipAddress                       [7]     OCTET STRING,
 //     registeredID                    [8]     OBJECT IDENTIFIER }
 //
 //OtherName ::= SEQUENCE {
