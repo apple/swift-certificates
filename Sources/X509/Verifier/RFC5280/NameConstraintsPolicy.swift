@@ -100,11 +100,11 @@ struct NameConstraintsPolicy: VerifierPolicy {
                 if directoryNameMatchesConstraint(directoryName: presentedName, constraint: constraint) {
                     return .failsToMeetPolicy(reason: "RFC5280Policy: directoryName \(presentedName) is excluded by \(excludedSubtree) in name constraints")
                 }
-            case (.dNSName(let constraint), .dNSName(let presentedName)):
+            case (.dnsName(let constraint), .dnsName(let presentedName)):
                 if dnsNameMatchesConstraint(dnsName: presentedName.utf8, constraint: constraint.utf8) {
-                    return .failsToMeetPolicy(reason: "RFC5280Policy: dNSName \(presentedName) is excluded by \(excludedSubtree) in name constraints")
+                    return .failsToMeetPolicy(reason: "RFC5280Policy: dnsName \(presentedName) is excluded by \(excludedSubtree) in name constraints")
                 }
-            case (.iPAddress(let constraint), .iPAddress(let presentedName)):
+            case (.ipAddress(let constraint), .ipAddress(let presentedName)):
                 if ipAddressMatchesConstraint(ipAddress: presentedName, constraint: constraint) {
                     return .failsToMeetPolicy(reason: "RFC5280Policy: ipAddress \(presentedName) is excluded by \(excludedSubtree) in name constraints")
                 }
@@ -112,7 +112,7 @@ struct NameConstraintsPolicy: VerifierPolicy {
                 if uriNameMatchesConstraint(uriName: presentedName, constraint: constraint) {
                     return .failsToMeetPolicy(reason: "RFC5280Policy: URI \(presentedName) is excluded by \(excludedSubtree) in name constraints")
                 }
-            case (.directoryName, _), (.dNSName, _), (.iPAddress, _), (.uniformResourceIdentifier, _):
+            case (.directoryName, _), (.dnsName, _), (.ipAddress, _), (.uniformResourceIdentifier, _):
                 // We support these, but the current name isn't of that type.
                 continue
             default:
@@ -145,14 +145,14 @@ struct NameConstraintsPolicy: VerifierPolicy {
                     return .meetsPolicy
                 }
 
-            case (.dNSName(let constraint), .dNSName(let presentedName)):
+            case (.dnsName(let constraint), .dnsName(let presentedName)):
                 evaluatedAtLeastOneConstraint = true
 
                 if dnsNameMatchesConstraint(dnsName: presentedName.utf8, constraint: constraint.utf8) {
                     // This is a match, we're good.
                     return .meetsPolicy
                 }
-            case (.iPAddress(let constraint), .iPAddress(let presentedName)):
+            case (.ipAddress(let constraint), .ipAddress(let presentedName)):
                 evaluatedAtLeastOneConstraint = true
 
                 if ipAddressMatchesConstraint(ipAddress: presentedName, constraint: constraint) {
@@ -166,7 +166,7 @@ struct NameConstraintsPolicy: VerifierPolicy {
                     // This is a match, we're good.
                     return .meetsPolicy
                 }
-            case (.directoryName, _), (.dNSName, _), (.iPAddress, _), (.uniformResourceIdentifier, _):
+            case (.directoryName, _), (.dnsName, _), (.ipAddress, _), (.uniformResourceIdentifier, _):
                 // We support these, but the current name isn't of that type. This means we didn't evaluate
                 // this constraint.
                 continue

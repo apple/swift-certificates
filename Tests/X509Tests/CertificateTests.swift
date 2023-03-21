@@ -38,8 +38,8 @@ final class CertificateTests: XCTestCase {
         ])
 
         XCTAssertEqual(
-            String(describing: GeneralName.dNSName("www.apple.com")),
-            "dNSName: www.apple.com"
+            String(describing: GeneralName.dnsName("www.apple.com")),
+            "dnsName: www.apple.com"
         )
         XCTAssertEqual(
             String(describing: GeneralName.directoryName(testDN)),
@@ -50,8 +50,8 @@ final class CertificateTests: XCTestCase {
             "ediPartyName: ASN1Any([5, 0])"
         )
         XCTAssertEqual(
-            String(describing: GeneralName.iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1]))),
-            "iPAddress: [127, 0, 0, 1]"
+            String(describing: GeneralName.ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1]))),
+            "ipAddress: [127, 0, 0, 1]"
         )
         XCTAssertEqual(
             String(describing: GeneralName.registeredID([1, 2, 3, 4, 5])),
@@ -184,14 +184,14 @@ final class CertificateTests: XCTestCase {
     func testPrintingSANFields() throws {
         // This is mostly redundant with general name, so we're only checking formatting.
         let san = SubjectAlternativeNames([
-            .dNSName("example.com"),
-            .dNSName("example.org"),
-            .iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
+            .dnsName("example.com"),
+            .dnsName("example.org"),
+            .ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
         ])
         let s = String(describing: san)
         XCTAssertEqual(
             s,
-            "dNSName: example.com, dNSName: example.org, iPAddress: [127, 0, 0, 1]"
+            "dnsName: example.com, dnsName: example.org, ipAddress: [127, 0, 0, 1]"
         )
     }
 
@@ -218,24 +218,24 @@ final class CertificateTests: XCTestCase {
     func testPrintingNameConstraints() throws {
         // This test is again mostly redundant with general name, so we're just testing the composition
         var ext = NameConstraints(
-            permittedSubtrees: [.dNSName("example.com"), .uniformResourceIdentifier("http://example.com")],
-            excludedSubtrees: [.dNSName("example.org"), .rfc822Name("mail@example.com")]
+            permittedSubtrees: [.dnsName("example.com"), .uniformResourceIdentifier("http://example.com")],
+            excludedSubtrees: [.dnsName("example.org"), .rfc822Name("mail@example.com")]
         )
         XCTAssertEqual(
             String(describing: ext),
-            "permittedSubtrees: dNSName: example.com, uri: http://example.com; excludedSubtrees: dNSName: example.org, rfc822Name: mail@example.com"
+            "permittedSubtrees: dnsName: example.com, uri: http://example.com; excludedSubtrees: dnsName: example.org, rfc822Name: mail@example.com"
         )
 
         ext.permittedSubtrees = []
         XCTAssertEqual(
             String(describing: ext),
-            "excludedSubtrees: dNSName: example.org, rfc822Name: mail@example.com"
+            "excludedSubtrees: dnsName: example.org, rfc822Name: mail@example.com"
         )
 
         swap(&ext.permittedSubtrees, &ext.excludedSubtrees)
         XCTAssertEqual(
             String(describing: ext),
-            "permittedSubtrees: dNSName: example.org, rfc822Name: mail@example.com"
+            "permittedSubtrees: dnsName: example.org, rfc822Name: mail@example.com"
         )
     }
 

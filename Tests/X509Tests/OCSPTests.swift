@@ -42,7 +42,7 @@ final class OCSPTests: XCTestCase {
         let ocspRequest = OCSPRequest(
             tbsRequest: OCSPTBSRequest(
                 version: .v1,
-                requestorName: GeneralName.dNSName("swift.org"),
+                requestorName: GeneralName.dnsName("swift.org"),
                 requestList: [OCSPSingleRequest(
                     certID: OCSPCertID(
                         hashAlgorithm: .ecdsaWithSHA256,

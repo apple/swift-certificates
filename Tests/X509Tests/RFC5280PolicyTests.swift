@@ -719,17 +719,17 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testDNSNameConstraintsExcludedSubtrees() async throws {
-        for (dNSName, constraint, match) in DNSNamesTests.fixtures {
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.dNSName(constraint)], subjectAlternativeNames: [.dNSName(dNSName)], match: match, policyFactory: .rfc5280
+                excludedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .rfc5280
             )
         }
     }
 
     func testDNSNameConstraintsExcludedSubtreesBasePolicy() async throws {
-        for (dNSName, constraint, match) in DNSNamesTests.fixtures {
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.dNSName(constraint)], subjectAlternativeNames: [.dNSName(dNSName)], match: match, policyFactory: .nameConstraints
+                excludedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .nameConstraints
             )
         }
     }
@@ -737,7 +737,7 @@ final class RFC5280PolicyTests: XCTestCase {
     func testIPAddressNameConstraintsExcludedSubtrees() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.iPAddress(constraint)], subjectAlternativeNames: [.iPAddress(ipAddress)], match: match, policyFactory: .rfc5280
+                excludedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .rfc5280
             )
         }
     }
@@ -745,7 +745,7 @@ final class RFC5280PolicyTests: XCTestCase {
     func testIPAddressNameConstraintsExcludedSubtreesBasePolicy() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.iPAddress(constraint)], subjectAlternativeNames: [.iPAddress(ipAddress)], match: match, policyFactory: .nameConstraints
+                excludedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .nameConstraints
             )
         }
     }
@@ -827,17 +827,17 @@ final class RFC5280PolicyTests: XCTestCase {
     }
 
     func testDNSNameConstraintsPermittedSubtrees() async throws {
-        for (dNSName, constraint, match) in DNSNamesTests.fixtures {
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.dNSName(constraint)], subjectAlternativeNames: [.dNSName(dNSName)], match: match, policyFactory: .rfc5280
+                permittedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .rfc5280
             )
         }
     }
 
     func testDNSNameConstraintsPermittedSubtreesBasePolicy() async throws {
-        for (dNSName, constraint, match) in DNSNamesTests.fixtures {
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.dNSName(constraint)], subjectAlternativeNames: [.dNSName(dNSName)], match: match, policyFactory: .nameConstraints
+                permittedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .nameConstraints
             )
         }
     }
@@ -845,7 +845,7 @@ final class RFC5280PolicyTests: XCTestCase {
     func testIPAddressNameConstraintsPermittedSubtrees() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.iPAddress(constraint)], subjectAlternativeNames: [.iPAddress(ipAddress)], match: match, policyFactory: .rfc5280
+                permittedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .rfc5280
             )
         }
     }
@@ -853,7 +853,7 @@ final class RFC5280PolicyTests: XCTestCase {
     func testIPAddressNameConstraintsPermittedSubtreesBasePolicy() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.iPAddress(constraint)], subjectAlternativeNames: [.iPAddress(ipAddress)], match: match, policyFactory: .nameConstraints
+                permittedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .nameConstraints
             )
         }
     }
@@ -963,14 +963,14 @@ final class RFC5280PolicyTests: XCTestCase {
                 CommonName("Excluded")
             }),
             .uniformResourceIdentifier("http://example.com"),
-            .dNSName("example.org"),
-            .iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
+            .dnsName("example.org"),
+            .ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
         ]
         let excludedSubtrees = [
             names[0],
             .uniformResourceIdentifier("example.com"),
             names[2],
-            .iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1, 255, 0, 0, 0])),
+            .ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1, 255, 0, 0, 0])),
         ]
         let alternativeRoot = TestPKI.issueCA(
             extensions: try! Certificate.Extensions {
@@ -1105,7 +1105,7 @@ final class RFC5280PolicyTests: XCTestCase {
                 )
                 Critical(
                     NameConstraints(excludedSubtrees: [
-                        .dNSName("example.com")
+                        .dnsName("example.com")
                     ])
                 )
             }
@@ -1159,8 +1159,8 @@ final class RFC5280PolicyTests: XCTestCase {
 
         // Having a name present in the excluded subtrees overrules the permitted ones.
         let names: [GeneralName] = [
-            .dNSName("example.com"),
-            .iPAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1, 255, 0, 0, 0])),
+            .dnsName("example.com"),
+            .ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1, 255, 0, 0, 0])),
             .uniformResourceIdentifier("example.com"),
             .directoryName(name)
         ]
