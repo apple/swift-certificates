@@ -352,7 +352,7 @@ final class VerifierTests: XCTestCase {
 
                 // Note this is the SKI for the _wrong key_.
                 SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
-                SubjectAlternativeNames([.dNSName("example.com")])
+                SubjectAlternativeNames([.dnsName("example.com")])
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -432,7 +432,7 @@ final class VerifierTests: XCTestCase {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
-                SubjectAlternativeNames([.dNSName("foo.example.com")])
+                SubjectAlternativeNames([.dnsName("foo.example.com")])
             },
             issuerPrivateKey: .init(t1t2Key)
         )
