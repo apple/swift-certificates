@@ -59,10 +59,8 @@ struct OCSPResponderSigningPolicy: VerifierPolicy {
         guard let extendedKeyUsage: ExtendedKeyUsage = try? leaf.extensions.extendedKeyUsage else {
             return .failsToMeetPolicy(reason: "OCSP response certificate has no extended key usages")
         }
-        let hasOCSPSigningUsage = extendedKeyUsage.usages.contains {
-            $0 == ExtendedKeyUsage.Usage(oid: .ExtendedKeyUsage.ocspSigning)
-        }
-        guard hasOCSPSigningUsage else {
+
+        guard extendedKeyUsage.usages.contains(.init(oid: .ExtendedKeyUsage.ocspSigning)) else {
             return .failsToMeetPolicy(reason: "OCSP response certificate does not have OCSP signing extended key usage set")
         }
         
