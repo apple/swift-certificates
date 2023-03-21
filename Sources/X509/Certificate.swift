@@ -190,9 +190,9 @@ public struct Certificate {
         // TODO: enforce that signature algorithm and signature have the same algorithm.
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
-        self.tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)
-        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))
-        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))
+        self.tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
     /// Construct a certificate from constituent parts, signed by an issuer key.
@@ -241,11 +241,11 @@ public struct Certificate {
         // TODO: validate that signature algorithm is comoatible with the signature.
         self.signatureAlgorithm = signatureAlgorithm
 
-        let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)
+        let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
         self.signature = try issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
-        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))
-        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
     @inlinable
@@ -272,7 +272,7 @@ extension Certificate: Sendable { }
 
 extension Certificate: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        return "\(self.subject) - TODO"
     }
 }
 
@@ -317,9 +317,10 @@ extension Certificate: DERImplicitlyTaggable {
 
 extension DER.Serializer {
     @inlinable
-    static func serialized<Element: DERSerializable>(element: Element) throws -> ArraySlice<UInt8> {
+    static func serialized<Element: DERSerializable>(element: Element) throws -> [UInt8] {
         var serializer = DER.Serializer()
         try serializer.serialize(element)
-        return serializer.serializedBytes[...]
+        return serializer.serializedBytes
     }
+
 }

@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+
 import Foundation
 
 /// A sub-policy of the ``RFC5280Policy`` that polices expiry.

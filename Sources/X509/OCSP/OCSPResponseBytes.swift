@@ -70,9 +70,6 @@ extension BasicOCSPResponse {
 extension OCSPResponseBytes {
     init(encoding original: BasicOCSPResponse) throws {
         self.responseType = .OCSP.basicResponse
-
-        var serializer = DER.Serializer()
-        try serializer.serialize(original)
-        self.response = ASN1OctetString(contentBytes: serializer.serializedBytes[...])
+        self.response = ASN1OctetString(contentBytes: try DER.Serializer.serialized(element: original)[...])
     }
 }

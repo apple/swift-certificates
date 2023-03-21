@@ -36,7 +36,8 @@ import SwiftASN1
 ///    byName               [1] Name,
 ///    byKey                [2] KeyHash }
 ///
-/// KeyHash ::= OCTET STRING
+/// KeyHash ::= OCTET STRING -- SHA-1 hash of responder's public key
+///    (excluding the tag and length fields)
 ///
 /// SingleResponse ::= SEQUENCE {
 ///    certID                       CertID,
@@ -82,44 +83,57 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
     }
 
     var responseData: OCSPResponseData
+    
+    var responseDataBytes: ArraySlice<UInt8>
 
     var signatureAlgorithm: AlgorithmIdentifier
 
     var signature: ASN1BitString
 
-    // Yup, you read this right: for the moment, we don't decode certs. We need a strategy for this.
-    //var certs: []
+    var certs: [Certificate]?
 
-    init(responseData: OCSPResponseData, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString) {
+    init(responseData: OCSPResponseData, responseDataBytes: ArraySlice<UInt8>, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, certs: [Certificate]?) {
         self.responseData = responseData
+        self.responseDataBytes = responseDataBytes
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
+        self.certs = certs
     }
-
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let responseData = try OCSPResponseData(derEncoded: &nodes)
+            guard let responseDataNode = nodes.next() else {
+                throw ASN1Error.invalidASN1Object(reason: "missing OCSP response data")
+            }
+            let responseData = try OCSPResponseData(derEncoded: responseDataNode)
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1BitString(derEncoded: &nodes)
 
-            // We need to consume the certificate nodes, but we don't _yet_ parse it.
-            _ = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { _ in }
+            
+            let certs = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                try DER.sequence(of: Certificate.self, identifier: .sequence, rootNode: node)
+            }
 
-            return .init(responseData: responseData, signatureAlgorithm: signatureAlgorithm, signature: signature)
+            return .init(responseData: responseData, responseDataBytes: responseDataNode.encodedBytes, signatureAlgorithm: signatureAlgorithm, signature: signature, certs: certs)
         }
     }
-
+    
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
-            try coder.serialize(self.responseData)
+            coder.serializeRawBytes(self.responseDataBytes)
             try coder.serialize(self.signatureAlgorithm)
             try coder.serialize(self.signature)
+            if let certs {
+                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { coder in
+                    try coder.serializeSequenceOf(certs)
+                }
+            }
         }
     }
 }
 
 enum ResponderID: DERParseable, DERSerializable, Hashable {
     case byName(DistinguishedName)
+    /// SHA-1 hash of responder's public key (excluding the tag and length fields)
     case byKey(ASN1OctetString)
 
     private static let nameIdentifier = ASN1Identifier(tagWithNumber: 1, tagClass: .contextSpecific)
