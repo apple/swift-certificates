@@ -26,7 +26,7 @@ struct NameConstraintsPolicy: VerifierPolicy {
         // Some notes:
         //
         // - RFC 5280 says we MUST validate directoryName constraints, and SHOULD validate rfc822Name,
-        //       URI, dnsName, and ipAddress constraints.
+        //       URI, dNSName, and iPAddress constraints.
         // - If there's a constraint we don't support and can't validate, we MUST reject the cert.
         //
         // Our algorithm is recursive: starting from the root and moving towards the leaf, for each CA
