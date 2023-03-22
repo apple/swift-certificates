@@ -248,6 +248,17 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     }
     
     private func verifySuccessfulResponse(_ basicResponse: BasicOCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce?, issuer: Certificate) async -> PolicyEvaluationResult {
+        guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
+            return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)")
+        }
+        
+        switch await self.validateResponseSignature(basicResponse, issuer: issuer) {
+        case .meetsPolicy:
+            break
+        case .failsToMeetPolicy(let reason):
+            return .failsToMeetPolicy(reason: reason)
+        }
+        
         guard basicResponse.responseData.version == .v1 else {
             return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
         }
@@ -272,16 +283,6 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             }
         } catch {
             return .failsToMeetPolicy(reason: "failed to decode nonce response \(error)")
-        }
-        guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
-            return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)")
-        }
-        
-        switch await self.validateResponseSignature(basicResponse, issuer: issuer) {
-        case .meetsPolicy:
-            break
-        case .failsToMeetPolicy(let reason):
-            return .failsToMeetPolicy(reason: reason)
         }
         
         switch response.verifyTime(validationTime: self.validationTime) {
@@ -400,7 +401,7 @@ extension OCSPRequest {
 }
 
 extension OCSPResponseData {
-    /// 1h15m: 1 hour to address DST/time zone issues, 15 min for clock skew
+    /// 1 hour to address time zone bugs and 15 min for clock skew of the responder/requester
     static let defaultTrustTimeLeeway: TimeInterval = 4500.0
     
     func verifyTime(validationTime: Date, trustTimeLeeway: TimeInterval = Self.defaultTrustTimeLeeway) -> PolicyEvaluationResult {
