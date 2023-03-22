@@ -39,7 +39,7 @@ extension ASN1ObjectIdentifier {
 
 struct OCSPResponderSigningPolicy: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
-
+    
     /// direct issuer of the certificate for which we check the OCSP status for
     var issuer: Certificate
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
@@ -248,8 +248,26 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     }
     
     private func verifySuccessfulResponse(_ basicResponse: BasicOCSPResponse, requestedCertID: OCSPCertID, requestNonce: OCSPNonce?, issuer: Certificate) async -> PolicyEvaluationResult {
+        guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
+            return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)")
+        }
+        
+        switch await self.validateResponseSignature(basicResponse, issuer: issuer) {
+        case .meetsPolicy:
+            break
+        case .failsToMeetPolicy(let reason):
+            return .failsToMeetPolicy(reason: reason)
+        }
+        
         guard basicResponse.responseData.version == .v1 else {
             return .failsToMeetPolicy(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
+        }
+        
+        switch basicResponse.responseData.verifyTime(validationTime: self.validationTime) {
+        case .failsToMeetPolicy(reason: let reason):
+            return .failsToMeetPolicy(reason: reason)
+        case .meetsPolicy:
+            break
         }
         
         do {
@@ -265,16 +283,6 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             }
         } catch {
             return .failsToMeetPolicy(reason: "failed to decode nonce response \(error)")
-        }
-        guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
-            return .failsToMeetPolicy(reason: "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)")
-        }
-        
-        switch await self.validateResponseSignature(basicResponse, issuer: issuer) {
-        case .meetsPolicy:
-            break
-        case .failsToMeetPolicy(let reason):
-            return .failsToMeetPolicy(reason: reason)
         }
         
         switch response.verifyTime(validationTime: self.validationTime) {
@@ -392,8 +400,26 @@ extension OCSPRequest {
     }
 }
 
+extension OCSPResponseData {
+    /// 1 hour to address time zone bugs and 15 min for clock skew of the responder/requester
+    static let defaultTrustTimeLeeway: TimeInterval = 4500.0
+    
+    func verifyTime(validationTime: Date, trustTimeLeeway: TimeInterval = Self.defaultTrustTimeLeeway) -> PolicyEvaluationResult {
+        guard let producedAt = Date(self.producedAt) else {
+            return .failsToMeetPolicy(reason: "could not convert time specified in OCSP response to a `Date`")
+        }
+        
+        guard producedAt <= validationTime.advanced(by: trustTimeLeeway) else {
+            return .failsToMeetPolicy(reason: "OCSP response `producedAt` (\(self.producedAt) is in the future (+\(trustTimeLeeway) seconds leeway) but should be in the past")
+        }
+        
+        return .meetsPolicy
+    }
+}
+
 extension OCSPSingleResponse {
-    fileprivate func verifyTime(validationTime: Date) -> PolicyEvaluationResult {
+    
+    func verifyTime(validationTime: Date, trustTimeLeeway: TimeInterval = OCSPResponseData.defaultTrustTimeLeeway) -> PolicyEvaluationResult {
         /// Clients MUST check for the existence of the nextUpdate field and MUST
         /// ensure the current time, expressed in GMT time as described in
         /// Section 2.2.4, falls between the thisUpdate and nextUpdate times.  Ifhttps://www.rfc-editor.org/rfc/rfc5019#section-4
@@ -404,17 +430,17 @@ extension OCSPSingleResponse {
         }
         
         guard
-            let thisUpdate = Date.init(self.thisUpdate),
+            let thisUpdate = Date(self.thisUpdate),
             let nextUpdate = Date(nextUpdateGeneralizedTime)
         else {
-            return .failsToMeetPolicy(reason: "could not convert time specified in certificate to a `Date`")
+            return .failsToMeetPolicy(reason: "could not convert time specified in OCSP response to a `Date`")
         }
-        guard thisUpdate <= validationTime else {
-            return .failsToMeetPolicy(reason: "OCSP response `thisUpdate` (\(self.thisUpdate) is in the future but should be in the past")
+        guard thisUpdate <= validationTime.advanced(by: trustTimeLeeway) else {
+            return .failsToMeetPolicy(reason: "OCSP response `thisUpdate` (\(self.thisUpdate) is in the future (+\(trustTimeLeeway) seconds leeway) but should be in the past")
         }
         
-        guard nextUpdate >= validationTime else {
-            return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` (\(nextUpdateGeneralizedTime) is in the past but should be in the future")
+        guard nextUpdate >= validationTime.advanced(by: -trustTimeLeeway) else {
+            return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` (\(nextUpdateGeneralizedTime) is in the past (-\(trustTimeLeeway) seconds leeway) but should be in the future")
         }
         
         return .meetsPolicy

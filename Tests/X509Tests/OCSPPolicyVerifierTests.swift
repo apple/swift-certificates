@@ -305,6 +305,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
+                    producedAt: try .init(self.validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
@@ -329,6 +330,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
+                    producedAt: try .init(self.validationTime),
                     responses: [OCSPSingleResponse(
                     certID: singleRequest.certID,
                     certStatus: .good,
@@ -353,6 +355,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
+                    producedAt: try .init(self.validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .revoked(.init(
@@ -381,6 +384,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
                     responderID: .byName(Self.invalidResponderIntermediate1.subject),
+                    producedAt: try .init(self.validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
@@ -451,6 +455,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 return .successful(try .signed(
+                    producedAt: try .init(self.validationTime),
                     responses: [OCSPSingleResponse(
                         certID: .init(
                             hashAlgorithm: .init(algorithm: .sha1NoSign, parameters: nil),
@@ -503,6 +508,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testTimeValidation() async {
         func responseWithCertStatusGood(
+            producedAt: Date = self.validationTime,
             thisUpdate: Date,
             nextUpdate: Date?
         ) -> some OCSPRequester {
@@ -513,6 +519,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
+                    producedAt: try .init(producedAt),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
@@ -525,12 +532,32 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             }
         }
         
+        /// produced at is in the future
+        await self.assertChainFailsToMeetPolicy(
+            chain: Self.chainWithSingleCertWithOCSP,
+            requester: responseWithCertStatusGood(
+                producedAt: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 2,
+                thisUpdate: self.validationTime,
+                nextUpdate: self.validationTime + 1
+            )
+        )
+        
         /// is almost exactly in the current time window
         await self.assertChainMeetsPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 thisUpdate: self.validationTime,
                 nextUpdate: self.validationTime + 1
+            )
+        )
+        
+        /// is almost exactly in the current time window with leeway
+        await self.assertChainMeetsPolicy(
+            chain: Self.chainWithSingleCertWithOCSP,
+            requester: responseWithCertStatusGood(
+                producedAt: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
+                thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
+                nextUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 2
             )
         )
         
@@ -546,8 +573,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.validationTime + 1,
-                nextUpdate: self.validationTime + 2
+                producedAt: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 1,
+                thisUpdate: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 1,
+                nextUpdate: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 2
             )
         )
         
@@ -555,16 +583,16 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.validationTime + 1,
-                nextUpdate: self.validationTime - 1
+                thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
+                nextUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway - 1
             )
         )
         /// this update and next update is in the past
         await self.assertChainFailsToMeetPolicy(
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
-                thisUpdate: self.validationTime - 2,
-                nextUpdate: self.validationTime - 1
+                thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway - 2,
+                nextUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway - 1
             )
         )
     }
@@ -663,7 +691,7 @@ extension BasicOCSPResponse {
     static func signed(
         version: OCSPVersion = .v1,
         responderID: ResponderID = .byName(OCSPVerifierPolicyTests.intermediate1Name),
-        producedAt: GeneralizedTime = try! .init(Date()),
+        producedAt: GeneralizedTime,
         responses: [OCSPSingleResponse],
         privateKey: P384.Signing.PrivateKey = OCSPVerifierPolicyTests.intermediatePrivateKey,
         certs: [Certificate]? = [],
