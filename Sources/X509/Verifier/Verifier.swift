@@ -31,7 +31,7 @@ public struct Verifier {
 
         // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
         // If so, reject the chain.
-        if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.processedExtensions) {
+        if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
             return .couldNotValidate([])
         }
 
@@ -101,7 +101,7 @@ public struct Verifier {
 
     private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
         // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
-        if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.processedExtensions) {
+        if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
             return true
         }
 

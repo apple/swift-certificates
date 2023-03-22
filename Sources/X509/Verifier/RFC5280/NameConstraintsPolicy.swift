@@ -18,7 +18,7 @@ import SwiftASN1
 @usableFromInline
 struct NameConstraintsPolicy: VerifierPolicy {
     @usableFromInline
-    let processedExtensions: [ASN1ObjectIdentifier] = [
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.nameConstraints
     ]
 

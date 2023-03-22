@@ -49,7 +49,7 @@ final class RFC5280PolicyTests: XCTestCase {
 
         // This do-nothing policy
         struct CatchAllPolicy: VerifierPolicy {
-            let processedExtensions: [ASN1ObjectIdentifier] = [
+            let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
                 .X509ExtensionID.basicConstraints,
                 .X509ExtensionID.nameConstraints,
                 .X509ExtensionID.keyUsage

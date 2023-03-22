@@ -21,7 +21,7 @@ import SwiftASN1
 ///
 /// 1. Expiry. Expired certificates are rejected.
 public struct RFC5280Policy: VerifierPolicy {
-    public let processedExtensions: [ASN1ObjectIdentifier] = [
+    public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.basicConstraints,
         .X509ExtensionID.nameConstraints,
 

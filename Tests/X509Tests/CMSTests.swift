@@ -327,7 +327,7 @@ final class CMSTests: XCTestCase {
 
     func testPoliciesAreApplied() async throws {
         final class RejectAllPolicy: VerifierPolicy {
-            let processedExtensions: [ASN1ObjectIdentifier] = []
+            let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
             
             func chainMeetsPolicyRequirements(chain: X509.UnverifiedCertificateChain) async -> X509.PolicyEvaluationResult {
                 return .failsToMeetPolicy(reason: "all chains are forbidden")

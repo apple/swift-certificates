@@ -19,7 +19,7 @@ import SwiftASN1
 @usableFromInline
 struct ExpiryPolicy: VerifierPolicy {
     @usableFromInline
-    let processedExtensions: [ASN1ObjectIdentifier] = []
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     @usableFromInline
     let validationTime: Date

@@ -38,7 +38,7 @@ extension ASN1ObjectIdentifier {
 }
 
 struct OCSPResponderSigningPolicy: VerifierPolicy {
-    let processedExtensions: [ASN1ObjectIdentifier] = []
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     /// direct issuer of the certificate for which we check the OCSP status for
     var issuer: Certificate
@@ -113,7 +113,7 @@ enum OCSPRequestHashAlgorithm {
 }
 
 public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
-    public let processedExtensions: [ASN1ObjectIdentifier] = []
+    public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
     
     private var requester: Requester
     private var requestHashAlgorithm: OCSPRequestHashAlgorithm

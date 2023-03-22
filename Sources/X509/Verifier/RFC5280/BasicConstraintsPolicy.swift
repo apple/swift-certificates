@@ -18,7 +18,7 @@ import SwiftASN1
 @usableFromInline
 struct BasicConstraintsPolicy: VerifierPolicy {
     @usableFromInline
-    let processedExtensions: [ASN1ObjectIdentifier] = [
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.basicConstraints
     ]
 

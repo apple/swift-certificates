@@ -690,7 +690,7 @@ final class VerifierTests: XCTestCase {
     func testTrustRootsCanBeNonSelfSignedLeaves() async throws {
         // we use a custom policy here to ignore the fact that the basic constraints extension is critical.
         struct IgnoreBasicConstraintsPolicy: VerifierPolicy {
-            let processedExtensions: [ASN1ObjectIdentifier] = [.X509ExtensionID.basicConstraints]
+            let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [.X509ExtensionID.basicConstraints]
 
             func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
                 return .meetsPolicy
@@ -738,7 +738,7 @@ final class VerifierTests: XCTestCase {
 }
 
 fileprivate struct FailIfCalledPolicy: VerifierPolicy {
-    let processedExtensions: [ASN1ObjectIdentifier] = []
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     mutating func chainMeetsPolicyRequirements(chain: X509.UnverifiedCertificateChain) async -> X509.PolicyEvaluationResult {
         XCTFail("Policy was called with chain \(chain)")
@@ -747,7 +747,7 @@ fileprivate struct FailIfCalledPolicy: VerifierPolicy {
 }
 
 fileprivate struct FailIfCertInChainPolicy: VerifierPolicy {
-    let processedExtensions: [ASN1ObjectIdentifier] = []
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     private let forbiddenCert: Certificate
 

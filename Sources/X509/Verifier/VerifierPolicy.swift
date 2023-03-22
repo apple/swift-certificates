@@ -34,13 +34,13 @@ public protocol VerifierPolicy {
     /// X.509 certificates can have extensions marked as `critical`. These extensions _must_ be understood and enforced by the
     /// verifier. If they aren't understood or processed, then verifying the chain must fail.
     ///
-    /// ``Verifier`` uses the ``VerifierPolicy/processedExtensions`` field to determine what extensions are understood by a given
+    /// ``Verifier`` uses the ``VerifierPolicy/verifyingCriticalExtensions`` field to determine what extensions are understood by a given
     /// ``PolicySet``. A ``PolicySet`` understands the union of all the understood extensions of its contained ``VerifierPolicy``
     /// objects.
     ///
     /// This may be an empty array, if the policy does not concern itself with any particular extensions. Users must only put
     /// an extension value in this space if they are actually enforcing the rules of that particular extension value.
-    var processedExtensions: [ASN1ObjectIdentifier] { get }
+    var verifyingCriticalExtensions: [ASN1ObjectIdentifier] { get }
 
     /// Called to determine whether a given ``UnverifiedCertificateChain`` meets the requirements of this policy.
     ///
@@ -64,7 +64,7 @@ public enum PolicyEvaluationResult: Sendable {
 // Additionally, we should add conditional Sendable, Equatable, and Hashable conformances as needed.
 // This will also allow equivalent conditional conformances on `Verifier`.
 public struct PolicySet: VerifierPolicy {
-    public let processedExtensions: [ASN1ObjectIdentifier]
+    public let verifyingCriticalExtensions: [ASN1ObjectIdentifier]
 
     @usableFromInline var policies: [any VerifierPolicy]
 
@@ -73,13 +73,13 @@ public struct PolicySet: VerifierPolicy {
         self.policies = policies
 
         var extensions: [ASN1ObjectIdentifier] = []
-        extensions.reserveCapacity(policies.reduce(into: 0, { $0 += $1.processedExtensions.count }))
+        extensions.reserveCapacity(policies.reduce(into: 0, { $0 += $1.verifyingCriticalExtensions.count }))
 
         for policy in policies {
-            extensions.append(contentsOf: policy.processedExtensions)
+            extensions.append(contentsOf: policy.verifyingCriticalExtensions)
         }
 
-        self.processedExtensions = extensions
+        self.verifyingCriticalExtensions = extensions
     }
 
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
