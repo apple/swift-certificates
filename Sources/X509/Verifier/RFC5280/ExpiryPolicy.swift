@@ -13,10 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import SwiftASN1
 
 /// A sub-policy of the ``RFC5280Policy`` that polices expiry.
 @usableFromInline
 struct ExpiryPolicy: VerifierPolicy {
+    @usableFromInline
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
+
     @usableFromInline
     let validationTime: Date
 

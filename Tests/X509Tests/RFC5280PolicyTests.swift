@@ -30,11 +30,33 @@ final class RFC5280PolicyTests: XCTestCase {
             case .rfc5280:
                 return RFC5280Policy(validationTime: validationTime)
             case .expiry:
-                return ExpiryPolicy(validationTime: validationTime)
+                return PolicySet(policies: [
+                    ExpiryPolicy(validationTime: validationTime),
+                    CatchAllPolicy()
+                ])
             case .basicConstraints:
-                return BasicConstraintsPolicy()
+                return PolicySet(policies: [
+                    BasicConstraintsPolicy(),
+                    CatchAllPolicy()
+                ])
             case .nameConstraints:
-                return NameConstraintsPolicy()
+                return PolicySet(policies: [
+                    NameConstraintsPolicy(),
+                    CatchAllPolicy()
+                ])
+            }
+        }
+
+        // This do-nothing policy
+        struct CatchAllPolicy: VerifierPolicy {
+            let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
+                .X509ExtensionID.basicConstraints,
+                .X509ExtensionID.nameConstraints,
+                .X509ExtensionID.keyUsage
+            ]
+
+            func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+                return .meetsPolicy
             }
         }
     }
@@ -1202,6 +1224,67 @@ final class RFC5280PolicyTests: XCTestCase {
 
     func testExcludedSubtreesBeatPermittedSubtreesBasePolicy() async throws {
         try await self.excludedSubtreesBeatPermittedSubtrees(.nameConstraints)
+    }
+
+    func testIgnoresKeyUsage() async throws {
+        // This test doesn't have a base policy version, only the combined policy does this.
+        let alternativeIntermediate = TestPKI.issueIntermediate(
+            name: TestPKI.unconstrainedIntermediateName,
+            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+
+                // This key usage is forbidden by RFC 5280 in the context of an intermediate:
+                //
+                //   If the keyUsage extension is present, then the subject public key
+                //   MUST NOT be used to verify signatures on certificates or CRLs unless
+                //   the corresponding keyCertSign or cRLSign bit is set.
+                //
+                // We don't care here.
+                Critical(
+                    KeyUsage(digitalSignature: true)
+                )
+            },
+            issuer: .unconstrainedRoot
+        )
+
+        let roots = CertificateStore([TestPKI.unconstrainedCA])
+        let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: Date())]))
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [leaf, alternativeIntermediate, TestPKI.unconstrainedCA])
+    }
+
+    func testFailsOnWeirdCriticalExtensionInLeaf() async throws {
+        // This test doesn't have a base policy version, only the combined policy does this.
+        let leaf = TestPKI.issueLeaf(
+            issuer: .unconstrainedIntermediate,
+            customExtensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.notCertificateAuthority
+                )
+                Certificate.Extension(oid: [1, 2, 3, 4, 5], critical: true, value: [1, 2, 3, 4, 5])
+            }
+        )
+
+        let roots = CertificateStore([TestPKI.unconstrainedCA])
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: Date())]))
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        guard case .couldNotValidate = result else {
+            XCTFail("Incorrectly validated: \(result)")
+            return
+        }
     }
 }
 

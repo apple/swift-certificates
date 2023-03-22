@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
+import SwiftASN1
 
 /// A ``VerifierPolicy`` that implements the core chain verifying policies from RFC 5280.
 ///
@@ -20,6 +21,20 @@ import Foundation
 ///
 /// 1. Expiry. Expired certificates are rejected.
 public struct RFC5280Policy: VerifierPolicy {
+    public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
+        .X509ExtensionID.basicConstraints,
+        .X509ExtensionID.nameConstraints,
+
+        // The presence of keyUsage here requires some explanation, becuase this policy doesn't _actually_ compute
+        // on it in any way.
+        //
+        // The unfortunate reality of keyUsage is that, while RFC 5280 requires us to validate it, CAs have historically
+        // done a very poor job of actually implementing it. The result is that policing KeyUsage produces minimal value
+        // in terms of increased security, but produces a substantial uptick in the number of unbuildable chains. So
+        // we _pretend_ to police the key usage, and just...don't.
+        .X509ExtensionID.keyUsage
+    ]
+
     @usableFromInline
     let expiryPolicy: ExpiryPolicy
 
