@@ -1262,7 +1262,29 @@ final class RFC5280PolicyTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [leaf, alternativeIntermediate, TestPKI.unconstrainedCA])
+    }
 
+    func testFailsOnWeirdCriticalExtensionInLeaf() async throws {
+        // This test doesn't have a base policy version, only the combined policy does this.
+        let leaf = TestPKI.issueLeaf(
+            issuer: .unconstrainedIntermediate,
+            customExtensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.notCertificateAuthority
+                )
+                Certificate.Extension(oid: [1, 2, 3, 4, 5], critical: true, value: [1, 2, 3, 4, 5])
+            }
+        )
+
+        let roots = CertificateStore([TestPKI.unconstrainedCA])
+
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: Date())]))
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        guard case .couldNotValidate = result else {
+            XCTFail("Incorrectly validated: \(result)")
+            return
+        }
     }
 }
 

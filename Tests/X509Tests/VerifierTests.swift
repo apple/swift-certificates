@@ -261,6 +261,35 @@ final class VerifierTests: XCTestCase {
         )
     }()
 
+    private static let isolatedSelfSignedCertWithWeirdCriticalExtension: Certificate = {
+        let isolatedSelfSignedCertName = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("Isolated Self-Signed Cert")
+        }
+
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(isolatedSelfSignedCertKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(365),
+            issuer: isolatedSelfSignedCertName,
+            subject: isolatedSelfSignedCertName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+
+                // An opaque extension that just so happens to be critical
+                Certificate.Extension(oid: [1, 2, 3, 4, 5], critical: true, value: [1, 2, 3, 4, 5])
+            },
+            issuerPrivateKey: .init(isolatedSelfSignedCertKey)
+        )
+    }()
+
     // MARK: Deeply insane PKI
     //
     // This section defines a deeply insane PKI. The PKI has one root CA and two intermediate CAs, and looks roughly like this:
@@ -693,6 +722,18 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1])
+    }
+
+    func testWePoliceCriticalExtensionsOnLeafCerts() async throws {
+        let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCertWithWeirdCriticalExtension])
+
+        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension, intermediates: CertificateStore([Self.intermediate1]))
+
+        guard case .couldNotValidate = result else {
+            XCTFail("Incorrectly validated: \(result)")
+            return
+        }
     }
 }
 

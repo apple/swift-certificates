@@ -29,7 +29,13 @@ public struct Verifier {
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
 
-        // First check: is this leaf _already in_ the certificate store? If it is, we can just trust it directly.
+        // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
+        // If so, reject the chain.
+        if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.processedExtensions) {
+            return .couldNotValidate([])
+        }
+
+        // Second check: is this leaf _already in_ the certificate store? If it is, we can just trust it directly.
         //
         // Note that this requires an _exact match_: if there isn't an exact match, we'll fall back to chain building,
         // which may let us chain through another variant of this certificate and build a valid chain. This is a very
