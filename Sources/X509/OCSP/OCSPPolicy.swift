@@ -38,6 +38,8 @@ extension ASN1ObjectIdentifier {
 }
 
 struct OCSPResponderSigningPolicy: VerifierPolicy {
+    let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
+    
     /// direct issuer of the certificate for which we check the OCSP status for
     var issuer: Certificate
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
@@ -111,6 +113,7 @@ enum OCSPRequestHashAlgorithm {
 }
 
 public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
+    public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
     
     private var requester: Requester
     private var requestHashAlgorithm: OCSPRequestHashAlgorithm
@@ -436,7 +439,7 @@ extension OCSPSingleResponse {
         }
         
         guard nextUpdate >= validationTime.advanced(by: -trustTimeLeeway) else {
-            return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` (\(nextUpdateGeneralizedTime) is in the past but should be in the future")
+            return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` (\(nextUpdateGeneralizedTime) is in the past (-\(trustTimeLeeway) seconds leeway) but should be in the future")
         }
         
         return .meetsPolicy
