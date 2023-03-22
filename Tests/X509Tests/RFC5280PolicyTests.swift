@@ -18,13 +18,13 @@ import SwiftASN1
 @testable import X509
 import Crypto
 
-final class RFC5280PolicyTests: XCTestCase {
+class RFC5280PolicyBase: XCTestCase {
     enum PolicyFactory {
         case rfc5280
         case expiry
         case basicConstraints
         case nameConstraints
-
+        
         func create(_ validationTime: Date) -> VerifierPolicy {
             switch self {
             case .rfc5280:
@@ -46,7 +46,7 @@ final class RFC5280PolicyTests: XCTestCase {
                 ])
             }
         }
-
+        
         // This do-nothing policy
         struct CatchAllPolicy: VerifierPolicy {
             let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
@@ -54,13 +54,199 @@ final class RFC5280PolicyTests: XCTestCase {
                 .X509ExtensionID.nameConstraints,
                 .X509ExtensionID.keyUsage
             ]
-
+            
             func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
                 return .meetsPolicy
             }
         }
     }
+    
+    func nameconstraintsExcludedSubtrees(excludedSubtrees: [GeneralName], subjectAlternativeNames: [GeneralName], match: Bool, policyFactory: PolicyFactory) async throws {
+        let alternativeRoot = TestPKI.issueCA(
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                Critical(
+                    NameConstraints(excludedSubtrees: excludedSubtrees)
+                )
+            }
+        )
 
+        let alternativeIntermediate = TestPKI.issueIntermediate(
+            name: TestPKI.unconstrainedIntermediateName,
+            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+                Critical(
+                    NameConstraints(excludedSubtrees: excludedSubtrees)
+                )
+            },
+            issuer: .unconstrainedRoot
+        )
+
+        let intermediateWithAConstrainedNameForSomeReason = TestPKI.issueIntermediate(
+            name: TestPKI.unconstrainedIntermediateName,
+            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+                SubjectAlternativeNames(subjectAlternativeNames)
+            },
+            issuer: .unconstrainedRoot
+        )
+
+        let leaf = TestPKI.issueLeaf(
+            issuer: .unconstrainedIntermediate,
+            subjectAlternativeNames: subjectAlternativeNames
+        )
+        let leafWithoutNames = TestPKI.issueLeaf(
+            issuer: .unconstrainedIntermediate
+        )
+
+        // Test a constraint on the root affecting the leaf
+        var roots = CertificateStore([alternativeRoot])
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        switch (match, result) {
+        case (true, .couldNotValidate), (false, .validCertificate):
+            // Expected outcomes
+            ()
+        default:
+            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)")
+        }
+
+        // Test a constraint on the intermediate affecting the leaf.
+        roots = CertificateStore([TestPKI.unconstrainedCA])
+        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+
+        switch (match, result) {
+        case (true, .couldNotValidate), (false, .validCertificate):
+            // Expected outcomes
+            ()
+        default:
+            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+        }
+
+        // Test a constraint on the root affecting the intermediate
+        roots = CertificateStore([alternativeRoot])
+        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
+
+        switch (match, result) {
+        case (true, .couldNotValidate), (false, .validCertificate):
+            // Expected outcomes
+            ()
+        default:
+            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+        }
+
+        // Unconstrained everything.
+        roots = CertificateStore([TestPKI.unconstrainedCA])
+        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Unable to validate with unconstrained root: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [leaf, intermediateWithAConstrainedNameForSomeReason, TestPKI.unconstrainedCA])
+    }
+
+    func nameconstraintsPermittedSubtrees(permittedSubtrees: [GeneralName], subjectAlternativeNames: [GeneralName], match: Bool, policyFactory: PolicyFactory) async throws {
+        let alternativeRoot = TestPKI.issueCA(
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                Critical(
+                    NameConstraints(permittedSubtrees: permittedSubtrees)
+                )
+            }
+        )
+
+        let alternativeIntermediate = TestPKI.issueIntermediate(
+            name: TestPKI.unconstrainedIntermediateName,
+            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+                Critical(
+                    NameConstraints(permittedSubtrees: permittedSubtrees)
+                )
+            },
+            issuer: .unconstrainedRoot
+        )
+
+        let intermediateWithAConstrainedNameForSomeReason = TestPKI.issueIntermediate(
+            name: TestPKI.unconstrainedIntermediateName,
+            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+            extensions: try! Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+                SubjectAlternativeNames(subjectAlternativeNames)
+            },
+            issuer: .unconstrainedRoot
+        )
+
+        let leaf = TestPKI.issueLeaf(
+            issuer: .unconstrainedIntermediate,
+            subjectAlternativeNames: subjectAlternativeNames
+        )
+        let leafWithoutNames = TestPKI.issueLeaf(
+            issuer: .unconstrainedIntermediate
+        )
+
+        // Test a constraint on the root affecting the leaf
+        var roots = CertificateStore([alternativeRoot])
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        switch (match, result) {
+        case (true, .validCertificate), (false, .couldNotValidate):
+            // Expected outcomes
+            ()
+        default:
+            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)")
+        }
+
+        // Test a constraint on the intermediate affecting the leaf.
+        roots = CertificateStore([TestPKI.unconstrainedCA])
+        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+
+        switch (match, result) {
+        case (true, .validCertificate), (false, .couldNotValidate):
+            // Expected outcomes
+            ()
+        default:
+            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+        }
+
+        // Test a constraint on the root affecting the intermediate
+        roots = CertificateStore([alternativeRoot])
+        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
+
+        switch (match, result) {
+        case (true, .validCertificate), (false, .couldNotValidate):
+            // Expected outcomes
+            ()
+        default:
+            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+        }
+    }
+}
+
+final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testValidCertsAreAccepted() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
@@ -556,190 +742,6 @@ final class RFC5280PolicyTests: XCTestCase {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.basicConstraints)
     }
 
-    func nameconstraintsExcludedSubtrees(excludedSubtrees: [GeneralName], subjectAlternativeNames: [GeneralName], match: Bool, policyFactory: PolicyFactory) async throws {
-        let alternativeRoot = TestPKI.issueCA(
-            extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
-                )
-                Critical(
-                    NameConstraints(excludedSubtrees: excludedSubtrees)
-                )
-            }
-        )
-
-        let alternativeIntermediate = TestPKI.issueIntermediate(
-            name: TestPKI.unconstrainedIntermediateName,
-            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-            extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
-                )
-                Critical(
-                    NameConstraints(excludedSubtrees: excludedSubtrees)
-                )
-            },
-            issuer: .unconstrainedRoot
-        )
-
-        let intermediateWithAConstrainedNameForSomeReason = TestPKI.issueIntermediate(
-            name: TestPKI.unconstrainedIntermediateName,
-            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-            extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
-                )
-                SubjectAlternativeNames(subjectAlternativeNames)
-            },
-            issuer: .unconstrainedRoot
-        )
-
-        let leaf = TestPKI.issueLeaf(
-            issuer: .unconstrainedIntermediate,
-            subjectAlternativeNames: subjectAlternativeNames
-        )
-        let leafWithoutNames = TestPKI.issueLeaf(
-            issuer: .unconstrainedIntermediate
-        )
-
-        // Test a constraint on the root affecting the leaf
-        var roots = CertificateStore([alternativeRoot])
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
-
-        switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
-            // Expected outcomes
-            ()
-        default:
-            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)")
-        }
-
-        // Test a constraint on the intermediate affecting the leaf.
-        roots = CertificateStore([TestPKI.unconstrainedCA])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
-
-        switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
-            // Expected outcomes
-            ()
-        default:
-            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
-        }
-
-        // Test a constraint on the root affecting the intermediate
-        roots = CertificateStore([alternativeRoot])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
-
-        switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
-            // Expected outcomes
-            ()
-        default:
-            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
-        }
-
-        // Unconstrained everything.
-        roots = CertificateStore([TestPKI.unconstrainedCA])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
-
-        guard case .validCertificate(let chain) = result else {
-            XCTFail("Unable to validate with unconstrained root: \(result)")
-            return
-        }
-
-        XCTAssertEqual(chain, [leaf, intermediateWithAConstrainedNameForSomeReason, TestPKI.unconstrainedCA])
-    }
-
-    func nameconstraintsPermittedSubtrees(permittedSubtrees: [GeneralName], subjectAlternativeNames: [GeneralName], match: Bool, policyFactory: PolicyFactory) async throws {
-        let alternativeRoot = TestPKI.issueCA(
-            extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
-                )
-                Critical(
-                    NameConstraints(permittedSubtrees: permittedSubtrees)
-                )
-            }
-        )
-
-        let alternativeIntermediate = TestPKI.issueIntermediate(
-            name: TestPKI.unconstrainedIntermediateName,
-            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-            extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
-                )
-                Critical(
-                    NameConstraints(permittedSubtrees: permittedSubtrees)
-                )
-            },
-            issuer: .unconstrainedRoot
-        )
-
-        let intermediateWithAConstrainedNameForSomeReason = TestPKI.issueIntermediate(
-            name: TestPKI.unconstrainedIntermediateName,
-            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-            extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
-                )
-                SubjectAlternativeNames(subjectAlternativeNames)
-            },
-            issuer: .unconstrainedRoot
-        )
-
-        let leaf = TestPKI.issueLeaf(
-            issuer: .unconstrainedIntermediate,
-            subjectAlternativeNames: subjectAlternativeNames
-        )
-        let leafWithoutNames = TestPKI.issueLeaf(
-            issuer: .unconstrainedIntermediate
-        )
-
-        // Test a constraint on the root affecting the leaf
-        var roots = CertificateStore([alternativeRoot])
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
-
-        switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
-            // Expected outcomes
-            ()
-        default:
-            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)")
-        }
-
-        // Test a constraint on the intermediate affecting the leaf.
-        roots = CertificateStore([TestPKI.unconstrainedCA])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
-
-        switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
-            // Expected outcomes
-            ()
-        default:
-            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
-        }
-
-        // Test a constraint on the root affecting the intermediate
-        roots = CertificateStore([alternativeRoot])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
-        result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
-
-        switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
-            // Expected outcomes
-            ()
-        default:
-            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
-        }
-    }
-
     func testDNSNameConstraintsExcludedSubtrees() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
@@ -769,62 +771,6 @@ final class RFC5280PolicyTests: XCTestCase {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .nameConstraints
             )
-        }
-    }
-
-    func testURINameConstraintsExcludedSubtrees() async throws {
-        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
-        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
-        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
-            for uri in DNSNamesTests.urisThatMatch(dnsName) {
-                try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .rfc5280
-                )
-
-                // Never works inverted
-                try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .rfc5280
-                )
-            }
-
-            if constraint == "" {
-                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
-                continue
-            }
-
-            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
-                try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .rfc5280
-                )
-            }
-        }
-    }
-
-    func testURINameConstraintsExcludedSubtreesBasePolicy() async throws {
-        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
-        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
-        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
-            for uri in DNSNamesTests.urisThatMatch(dnsName) {
-                try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .nameConstraints
-                )
-
-                // Never works inverted
-                try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .nameConstraints
-                )
-            }
-
-            if constraint == "" {
-                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
-                continue
-            }
-
-            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
-                try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .nameConstraints
-                )
-            }
         }
     }
 
@@ -877,62 +823,6 @@ final class RFC5280PolicyTests: XCTestCase {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .nameConstraints
             )
-        }
-    }
-
-    func testURINameConstraintsPermittedSubtrees() async throws {
-        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
-        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
-        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
-            for uri in DNSNamesTests.urisThatMatch(dnsName) {
-                try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .rfc5280
-                )
-
-                // Never works inverted
-                try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .rfc5280
-                )
-            }
-
-            if constraint == "" {
-                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
-                continue
-            }
-
-            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
-                try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .rfc5280
-                )
-            }
-        }
-    }
-
-    func testURINameConstraintsPermittedSubtreesBasePolicy() async throws {
-        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
-        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
-        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
-            for uri in DNSNamesTests.urisThatMatch(dnsName) {
-                try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .nameConstraints
-                )
-
-                // Never works inverted
-                try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .nameConstraints
-                )
-            }
-
-            if constraint == "" {
-                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
-                continue
-            }
-
-            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
-                try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .nameConstraints
-                )
-            }
         }
     }
 
@@ -1284,6 +1174,123 @@ final class RFC5280PolicyTests: XCTestCase {
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated: \(result)")
             return
+        }
+    }
+}
+
+final class RFC5280PolicyURINameTests1: RFC5280PolicyBase {
+    func testURINameConstraintsExcludedSubtrees() async throws {
+        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
+        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
+            for uri in DNSNamesTests.urisThatMatch(dnsName) {
+                try await self.nameconstraintsExcludedSubtrees(
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .rfc5280
+                )
+
+                // Never works inverted
+                try await self.nameconstraintsExcludedSubtrees(
+                    excludedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .rfc5280
+                )
+            }
+
+            if constraint == "" {
+                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
+                continue
+            }
+
+            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
+                try await self.nameconstraintsExcludedSubtrees(
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .rfc5280
+                )
+            }
+        }
+    }
+}
+final class RFC5280PolicyURINameTests2: RFC5280PolicyBase {
+    func testURINameConstraintsExcludedSubtreesBasePolicy() async throws {
+        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
+        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
+            for uri in DNSNamesTests.urisThatMatch(dnsName) {
+                try await self.nameconstraintsExcludedSubtrees(
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .nameConstraints
+                )
+
+                // Never works inverted
+                try await self.nameconstraintsExcludedSubtrees(
+                    excludedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .nameConstraints
+                )
+            }
+
+            if constraint == "" {
+                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
+                continue
+            }
+
+            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
+                try await self.nameconstraintsExcludedSubtrees(
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .nameConstraints
+                )
+            }
+        }
+    }
+}
+final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
+    func testURINameConstraintsPermittedSubtrees() async throws {
+        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
+        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
+            for uri in DNSNamesTests.urisThatMatch(dnsName) {
+                try await self.nameconstraintsPermittedSubtrees(
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .rfc5280
+                )
+
+                // Never works inverted
+                try await self.nameconstraintsPermittedSubtrees(
+                    permittedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .rfc5280
+                )
+            }
+
+            if constraint == "" {
+                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
+                continue
+            }
+
+            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
+                try await self.nameconstraintsPermittedSubtrees(
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .rfc5280
+                )
+            }
+        }
+    }
+}
+final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
+    func testURINameConstraintsPermittedSubtreesBasePolicy() async throws {
+        // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
+        // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
+        for (dnsName, constraint, match) in DNSNamesTests.fixtures {
+            for uri in DNSNamesTests.urisThatMatch(dnsName) {
+                try await self.nameconstraintsPermittedSubtrees(
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .nameConstraints
+                )
+
+                // Never works inverted
+                try await self.nameconstraintsPermittedSubtrees(
+                    permittedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .nameConstraints
+                )
+            }
+
+            if constraint == "" {
+                // We don't test the "don't match" case on the empty constraint, because everything matches the empty constraint
+                continue
+            }
+
+            for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
+                try await self.nameconstraintsPermittedSubtrees(
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .nameConstraints
+                )
+            }
         }
     }
 }
