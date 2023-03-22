@@ -112,7 +112,7 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
     
     private var requester: Requester
