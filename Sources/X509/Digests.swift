@@ -45,7 +45,9 @@ enum Digest {
 extension P256.Signing.PublicKey {
     @inlinable
     func isValidSignature(_ signature: Certificate.Signature, for digest: Digest) -> Bool {
-        guard case .p256(let innerSignature) = signature.backing else {
+        guard case .ecdsa(let rawInnerSignature) = signature.backing,
+              let innerSignature = P256.Signing.ECDSASignature(rawInnerSignature)
+        else {
             // Signature mismatch
             return false
         }
@@ -66,7 +68,9 @@ extension P256.Signing.PublicKey {
 extension P384.Signing.PublicKey {
     @inlinable
     func isValidSignature(_ signature: Certificate.Signature, for digest: Digest) -> Bool {
-        guard case .p384(let innerSignature) = signature.backing else {
+        guard case .ecdsa(let rawInnerSignature) = signature.backing,
+              let innerSignature = P384.Signing.ECDSASignature(rawInnerSignature)
+        else {
             // Signature mismatch
             return false
         }
@@ -87,7 +91,9 @@ extension P384.Signing.PublicKey {
 extension P521.Signing.PublicKey {
     @inlinable
     func isValidSignature(_ signature: Certificate.Signature, for digest: Digest) -> Bool {
-        guard case .p521(let innerSignature) = signature.backing else {
+        guard case .ecdsa(let rawInnerSignature) = signature.backing,
+              let innerSignature = P521.Signing.ECDSASignature(rawInnerSignature)
+        else {
             // Signature mismatch
             return false
         }
@@ -144,7 +150,7 @@ extension P256.Signing.PrivateKey {
             signature = try self.signature(for: sha512)
         }
 
-        return Certificate.Signature(backing: .p256(signature))
+        return Certificate.Signature(backing: .ecdsa(.init(signature)))
     }
 }
 
@@ -164,7 +170,7 @@ extension P384.Signing.PrivateKey {
             signature = try self.signature(for: sha512)
         }
 
-        return Certificate.Signature(backing: .p384(signature))
+        return Certificate.Signature(backing: .ecdsa(.init(signature)))
     }
 }
 
@@ -184,7 +190,7 @@ extension P521.Signing.PrivateKey {
             signature = try self.signature(for: sha512)
         }
 
-        return Certificate.Signature(backing: .p521(signature))
+        return Certificate.Signature(backing: .ecdsa(.init(signature)))
     }
 }
 

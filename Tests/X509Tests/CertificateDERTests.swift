@@ -369,4 +369,111 @@ final class CertificateDERTests: XCTestCase {
         let newKey = try Certificate.PublicKey(spki: decodedSPKI)
         XCTAssertEqual(publicKey, newKey)
     }
+
+    func testIncorrectParameterSize() throws {
+        // This certificate tripped us up and revealed a bug in our ECDSA
+        // parsing, so let's use it as a regression test.
+        let cert = Array(Data(base64Encoded: """
+            MIIGATCCBYegAwIBAgIRAJt9HrGyczJOAAAAAFaglHwwCgYIKoZIzj0EAwIwgbox
+            CzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMSgwJgYDVQQLEx9T
+            ZWUgd3d3LmVudHJ1c3QubmV0L2xlZ2FsLXRlcm1zMTkwNwYDVQQLEzAoYykgMjAx
+            NiBFbnRydXN0LCBJbmMuIC0gZm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxLjAsBgNV
+            BAMTJUVudHJ1c3QgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBMMUowHhcNMTkx
+            MTEzMDc0MTIwWhcNMjIwMjExMDgxMTE4WjCBpTELMAkGA1UEBhMCU0cxEjAQBgNV
+            BAcTCVNpbmdhcG9yZTETMBEGCysGAQQBgjc8AgEDEwJTRzEcMBoGA1UEChMTVGVt
+            YXNlayBQb2x5dGVjaG5pYzEaMBgGA1UEDxMRR292ZXJubWVudCBFbnRpdHkxEzAR
+            BgNVBAUTClQwOEdCMDA2MkwxHjAcBgNVBAMTFWlzaXMzb3NzY2V0LnRwLmVkdS5z
+            ZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABM2mA20fTxL81TOzHToOMpROOoUO
+            FVwGtdjQlCsN5TQ05Oazts57Cam4TRV437nibW2pHbv4Z6gX5cOj5vtGJFijggN/
+            MIIDezAgBgNVHREEGTAXghVpc2lzM29zc2NldC50cC5lZHUuc2cwggH1BgorBgEE
+            AdZ5AgQCBIIB5QSCAeEB3wB1AId1v+dZfPiMQ5lfvfNu/1aNR1Y2/0q1YMG06v9e
+            oIMPAAABbmPRJr0AAAQDAEYwRAIgDQlMMVr0sZ/vQ6TJayUKr/0uli6JsMdXra7+
+            AXtTAuACIHCqklPVac2HyjMHIcmB9Z9Ff/qdm80cTnJv2D2DF4f1AHYAVYHUwhaQ
+            NgFK6gubVzxT8MDkOHhwJQgXL6OqHQcT0wwAAAFuY9Em+QAABAMARzBFAiBlwOv7
+            uk+wVGWXmZur2HNFHUpY3EL72A6qp0+i+UlNKgIhAPUM6StlYsDeHFBcbwk8Mhsy
+            qvJ/cONzlQoi7aXSKen4AHYAVhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ
+            0N0AAAFuY9Em+wAABAMARzBFAiAYjMoE9baPZ9jtoL5cLi2hEQFcHmp2V/UkF5gS
+            MCkHbwIhAN0mbQvKboODaXXfPf3K9F5mRks2NYdrpV7I+uTsxxcwAHYAu9nfvB+K
+            cbWTlCOXqpJ7RzhXlQqrUugakJZkNo4e0YUAAAFuY9EmtwAABAMARzBFAiEAocip
+            srDjKmlOd8Zo+mhFFVRmZYlgZMoLV/IvrMTEAFMCIFfzmKsxybQnMGX6iPbTU7nk
+            kAtsnNa6QaTEpRMVmsSEMA4GA1UdDwEB/wQEAwIHgDAdBgNVHSUEFjAUBggrBgEF
+            BQcDAQYIKwYBBQUHAwIwYwYIKwYBBQUHAQEEVzBVMCMGCCsGAQUFBzABhhdodHRw
+            Oi8vb2NzcC5lbnRydXN0Lm5ldDAuBggrBgEFBQcwAoYiaHR0cDovL2FpYS5lbnRy
+            dXN0Lm5ldC9sMWotZWMxLmNlcjAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vY3Js
+            LmVudHJ1c3QubmV0L2xldmVsMWouY3JsMEoGA1UdIARDMEEwNgYKYIZIAYb6bAoB
+            AjAoMCYGCCsGAQUFBwIBFhpodHRwOi8vd3d3LmVudHJ1c3QubmV0L3JwYTAHBgVn
+            gQwBATAfBgNVHSMEGDAWgBTD+UUDvsj5CzxFNfPrcuzn6OuUmzAdBgNVHQ4EFgQU
+            7vNz5mM0I6JgWqm+556364tWmW8wCQYDVR0TBAIwADAKBggqhkjOPQQDAgNoADBl
+            AjBwybhS35Z4KFf1pt20LC9/CyxsDya3W/NbMn+bZ0RNNnOPABMv/Z3Xj7w086v4
+            PFcCMQDJVzG8VALwsAvO3JmKPy2LguNq0+pylaihUYGEg6rxxg5WyCXfnpZu0c+i
+            N5YHEvI=
+            """,
+            options: .ignoreUnknownCharacters)!
+        )
+
+        XCTAssertNoThrow(try Certificate(derEncoded: cert))
+    }
+
+    func testUsingWeirdHashFunctions() async throws {
+        let now = Date()
+        let issuerKey = P384.Signing.PrivateKey()
+        let issuerName = try DistinguishedName {
+            CommonName("Issuer")
+        }
+        let issuer = try Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(issuerKey.publicKey),
+            notValidBefore: now,
+            notValidAfter: now + 100,
+            issuer: issuerName,
+            subject: issuerName,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: try Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+            },
+            issuerPrivateKey: .init(issuerKey)
+        )
+
+        let leafKey = P384.Signing.PrivateKey()
+        let leafName = try DistinguishedName {
+            CommonName("Leaf")
+        }
+        let leaf = try Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(leafKey.publicKey),
+            notValidBefore: now,
+            notValidAfter: now + 50,
+            issuer: issuerName,
+            subject: leafName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: try Certificate.Extensions {
+                Critical(
+                    BasicConstraints.notCertificateAuthority
+                )
+            },
+            issuerPrivateKey: .init(issuerKey)
+        )
+
+        // We should be able to serialize and deserialize this, and have it remain equal.
+        var serializer = DER.Serializer()
+        try serializer.serialize(leaf)
+        let parsed = try Certificate(derEncoded: serializer.serializedBytes)
+        XCTAssertEqual(parsed, leaf)
+
+        // And we should be able to validate it.
+        let roots = CertificateStore([issuer])
+        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: now + 1)]))
+        let result = await verifier.validate(leafCertificate: parsed, intermediates: CertificateStore())
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate cert")
+            return
+        }
+
+        XCTAssertEqual(chain, [parsed, issuer])
+    }
 }

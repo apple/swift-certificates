@@ -43,15 +43,9 @@ extension Certificate {
         @inlinable
         internal init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1BitString) throws {
             switch signatureAlgorithm {
-            case .ecdsaWithSHA256:
-                let signature = try P256.Signing.ECDSASignature(derRepresentation: signatureBytes.bytes)
-                self.backing = .p256(signature)
-            case .ecdsaWithSHA384:
-                let signature = try P384.Signing.ECDSASignature(derRepresentation: signatureBytes.bytes)
-                self.backing = .p384(signature)
-            case .ecdsaWithSHA512:
-                let signature = try P521.Signing.ECDSASignature(derRepresentation: signatureBytes.bytes)
-                self.backing = .p521(signature)
+            case .ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512:
+                let signature = try ECDSASignature(derEncoded: signatureBytes.bytes)
+                self.backing = .ecdsa(signature)
             case .sha1WithRSAEncryption:
                 // TODO: We need to validate the signature is actually reasonable here.
                 let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
@@ -88,20 +82,14 @@ extension Certificate.Signature: CustomStringConvertible {
 extension Certificate.Signature {
     @usableFromInline
     enum BackingSignature: Hashable, Sendable {
-        case p256(Crypto.P256.Signing.ECDSASignature)
-        case p384(Crypto.P384.Signing.ECDSASignature)
-        case p521(Crypto.P521.Signing.ECDSASignature)
+        case ecdsa(ECDSASignature)
         case rsa(_CryptoExtras._RSA.Signing.RSASignature)
 
         @inlinable
         static func ==(lhs: BackingSignature, rhs: BackingSignature) -> Bool {
             switch (lhs, rhs) {
-            case (.p256(let l), .p256(let r)):
-                return l.rawRepresentation == r.rawRepresentation
-            case (.p384(let l), .p384(let r)):
-                return l.rawRepresentation == r.rawRepresentation
-            case (.p521(let l), .p521(let r)):
-                return l.rawRepresentation == r.rawRepresentation
+            case (.ecdsa(let l), .ecdsa(let r)):
+                return l == r
             case (.rsa(let l), .rsa(let r)):
                 return l.rawRepresentation == r.rawRepresentation
             default:
@@ -112,17 +100,11 @@ extension Certificate.Signature {
         @inlinable
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .p256(let digest):
+            case .ecdsa(let sig):
                 hasher.combine(0)
-                hasher.combine(digest.rawRepresentation)
-            case .p384(let digest):
-                hasher.combine(1)
-                hasher.combine(digest.rawRepresentation)
-            case .p521(let digest):
-                hasher.combine(2)
-                hasher.combine(digest.rawRepresentation)
+                hasher.combine(sig)
             case .rsa(let digest):
-                hasher.combine(3)
+                hasher.combine(1)
                 hasher.combine(digest.rawRepresentation)
             }
         }
@@ -133,12 +115,10 @@ extension ASN1BitString {
     @inlinable
     init(_ signature: Certificate.Signature) {
         switch signature.backing {
-        case .p256(let sig):
-            self = ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
-        case .p384(let sig):
-            self = ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
-        case .p521(let sig):
-            self = ASN1BitString(bytes: ArraySlice(sig.derRepresentation))
+        case .ecdsa(let sig):
+            var serializer = DER.Serializer()
+            try! serializer.serialize(sig)
+            self = ASN1BitString(bytes: serializer.serializedBytes[...])
         case .rsa(let sig):
             self = ASN1BitString(bytes: ArraySlice(sig.rawRepresentation))
         }
@@ -149,12 +129,10 @@ extension ASN1OctetString {
     @inlinable
     init(_ signature: Certificate.Signature) {
         switch signature.backing {
-        case .p256(let sig):
-            self = ASN1OctetString(contentBytes: ArraySlice(sig.derRepresentation))
-        case .p384(let sig):
-            self = ASN1OctetString(contentBytes: ArraySlice(sig.derRepresentation))
-        case .p521(let sig):
-            self = ASN1OctetString(contentBytes: ArraySlice(sig.derRepresentation))
+        case .ecdsa(let sig):
+            var serializer = DER.Serializer()
+            try! serializer.serialize(sig)
+            self = ASN1OctetString(contentBytes: serializer.serializedBytes[...])
         case .rsa(let sig):
             self = ASN1OctetString(contentBytes: ArraySlice(sig.rawRepresentation))
         }

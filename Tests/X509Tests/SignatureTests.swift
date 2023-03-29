@@ -48,7 +48,7 @@ final class SignatureTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA384,
             signatureBytes: ASN1BitString(bytes: signatureBytes[...])
         )
-        guard case .p384 = signature.backing else {
+        guard case .ecdsa(let sig) = signature.backing, P384.Signing.ECDSASignature(sig) != nil else {
             XCTFail("Invalid signature decode")
             return
         }
