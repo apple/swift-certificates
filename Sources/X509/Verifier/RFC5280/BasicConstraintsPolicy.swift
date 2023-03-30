@@ -30,6 +30,7 @@ struct BasicConstraintsPolicy: VerifierPolicy {
         // The rules for BasicConstraints come from https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.9,
         // but roughly can be summarised as:
         //
+        // 0. If the cert is a v1 cert then shrug our shoulders, it can do whatever.
         // 1. If basicConstraints is absent, the cert must not be used as an issuing certificate.
         // 2. If basicConstraints is present and does not assert that this is a CA, this must not be used
         //        as an issuing certificate.
@@ -46,7 +47,7 @@ struct BasicConstraintsPolicy: VerifierPolicy {
 
         // We check for the special-case of a trust root being presented as the end entity cert. If that's what's
         // happening, we require that this cert be marked as a CA.
-        if chain.count == 0 {
+        if chain.count == 0 && leaf.version != .v1 {
             do {
                 switch try leaf.extensions.basicConstraints {
                 case .some(.isCertificateAuthority):
@@ -64,17 +65,22 @@ struct BasicConstraintsPolicy: VerifierPolicy {
 
         for cert in chain {
             do {
-                switch try cert.extensions.basicConstraints {
-                case .some(.isCertificateAuthority(.some(let maxPathLength))) where maxPathLength < subCACount:
+                switch try (cert.extensions.basicConstraints, cert.version) {
+                case (_, .v1):
+                    // Is a v1 cert. Basic constraints don't apply here. Continue to the next cert.
+                    // Note that we _do_ include this in the path length, in case there are basic constraints further along
+                    // the path.
+                    ()
+                case (.some(.isCertificateAuthority(.some(let maxPathLength))), _) where maxPathLength < subCACount:
                     // Is a CA, but the max path length is smaller than the number of sub CAs we have.
                     return .failsToMeetPolicy(reason: "RFC5280Policy: CA \(cert) has maximum path length \(maxPathLength), but chain has \(subCACount) subCAs")
 
-                case .some(.isCertificateAuthority):
+                case (.some(.isCertificateAuthority), _):
                     // Is a CA, but either the max path length is at least as large as our current set of sub CAs, or there isn't one.
                     // Continue to the next cert.
                     ()
 
-                case .some(.notCertificateAuthority), .none:
+                case (.some(.notCertificateAuthority), _), (.none, _):
                     return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) is not marked as a CA")
                 }
             } catch {
