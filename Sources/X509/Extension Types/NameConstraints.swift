@@ -381,6 +381,30 @@ struct NameConstraintsValue: DERImplicitlyTaggable {
     }
 }
 
+// This type does a weird cheat.
+//
+// Technically, NameConstraints is defined like this:
+//
+//       NameConstraints ::= SEQUENCE {
+//            permittedSubtrees       [0]     GeneralSubtrees OPTIONAL,
+//            excludedSubtrees        [1]     GeneralSubtrees OPTIONAL }
+//
+//       GeneralSubtrees ::= SEQUENCE SIZE (1..MAX) OF GeneralSubtree
+//
+//       GeneralSubtree ::= SEQUENCE {
+//            base                    GeneralName,
+//            minimum         [0]     BaseDistance DEFAULT 0,
+//            maximum         [1]     BaseDistance OPTIONAL }
+//
+//       BaseDistance ::= INTEGER (0..MAX)
+//
+// We can disregard `BaseDistance`, because as a practical matter it is never used, and so it's as though those
+// two fields were never there.
+//
+// The result is that each of the subtrees encodes as a sequence of sequence of single general name. We could
+// literally mirror that in Swift land, but at the top level we want to hold [GeneralName], so producing
+// [GeneralSubtree] will force a heap allocation. Instead, we inline the definition of GeneralSubtree into
+// GeneralSubtrees, to avoid the extra allocation.
 @usableFromInline
 struct GeneralSubtrees: DERImplicitlyTaggable {
     @inlinable
@@ -398,41 +422,26 @@ struct GeneralSubtrees: DERImplicitlyTaggable {
 
     @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
-        self.base = try DER.sequence(identifier: identifier, rootNode: rootNode)
-    }
-
-    @inlinable
-    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        try coder.serializeSequenceOf(self.base, identifier: identifier)
-    }
-}
-
-@usableFromInline
-struct GeneralSubtree: DERImplicitlyTaggable {
-    @inlinable
-    static var defaultIdentifier: ASN1Identifier {
-        .sequence
-    }
-
-    @usableFromInline
-    var base: GeneralName
-
-    @inlinable
-    init(_ base: GeneralName) {
-        self.base = base
-    }
-
-    @inlinable
-    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self.base = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            try GeneralName(derEncoded: &nodes)
+            var names: [GeneralName] = []
+            while let node = nodes.next() {
+                let name = try DER.sequence(node, identifier: .sequence) { nodes in
+                    try GeneralName(derEncoded: &nodes)
+                }
+                names.append(name)
+            }
+            return names
         }
     }
 
     @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
-            try coder.serialize(self.base)
+            for name in self.base {
+                try coder.appendConstructedNode(identifier: .sequence) { coder in
+                    try coder.serialize(name)
+                }
+            }
         }
     }
 }
