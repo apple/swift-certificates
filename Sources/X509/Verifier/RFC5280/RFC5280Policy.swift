@@ -36,7 +36,7 @@ public struct RFC5280Policy: VerifierPolicy {
     ]
 
     @usableFromInline
-    let expiryPolicy: ExpiryPolicy
+    let expiryPolicy: ExpiryPolicy?
 
     @usableFromInline
     let basicConstraintsPolicy: BasicConstraintsPolicy
@@ -51,9 +51,20 @@ public struct RFC5280Policy: VerifierPolicy {
         self.nameConstraintsPolicy = NameConstraintsPolicy()
     }
 
+    private init() {
+        self.expiryPolicy = nil
+        self.basicConstraintsPolicy = BasicConstraintsPolicy()
+        self.nameConstraintsPolicy = NameConstraintsPolicy()
+    }
+
+    @_spi(DisableValidityCheck)
+    public static func withValidityCheckDisabled() -> RFC5280Policy {
+        return RFC5280Policy()
+    }
+
     @inlinable
     public func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
-        if case .failsToMeetPolicy(let reason) = self.expiryPolicy.chainMeetsPolicyRequirements(chain: chain) {
+        if let expiryPolicy = self.expiryPolicy, case .failsToMeetPolicy(let reason) = expiryPolicy.chainMeetsPolicyRequirements(chain: chain) {
             return .failsToMeetPolicy(reason: reason)
         }
 
