@@ -616,7 +616,8 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: nil)), true),
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: 0)), true),
             (TestPKI.issueSelfSignedCert(basicConstraints: .notCertificateAuthority), false),
-            (TestPKI.issueSelfSignedCert(customExtensions: Certificate.Extensions([Self.brokenBasicConstraints])), false)
+            (TestPKI.issueSelfSignedCert(customExtensions: Certificate.Extensions([Self.brokenBasicConstraints])), false),
+            (TestPKI.issueSelfSignedCert(version: .v1), true),
         ]
 
         for (cert, isValid) in certsAndValidity {
@@ -704,6 +705,28 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             }
 
             XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
+
+            // And having a v1 intermediate is fine too.
+            let v1Intermediate = TestPKI.issueIntermediate(
+                name: TestPKI.unconstrainedIntermediateName,
+                version: .v1,
+                key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+                extensions: Certificate.Extensions([]),
+                issuer: .unconstrainedRoot
+            )
+
+            verifier = Verifier(
+                rootCertificates: CertificateStore([TestPKI.unconstrainedCA]),
+                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
+            )
+            result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([v1Intermediate]))
+
+            guard case .validCertificate(let chain) = result else {
+                XCTFail("Unable to validate with v1 intermediate in chain")
+                return
+            }
+
+            XCTAssertEqual(chain, [leaf, v1Intermediate, TestPKI.unconstrainedCA])
         }
     }
 
@@ -758,6 +781,22 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             }
 
             XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
+
+            // And a v1 root works too.
+            let v1Root = TestPKI.issueCA(version: .v1, extensions: .init())
+
+            verifier = Verifier(
+                rootCertificates: CertificateStore([v1Root]),
+                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
+            )
+            result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+            guard case .validCertificate(let chain) = result else {
+                XCTFail("Unable to validate with v1 root in chain")
+                return
+            }
+
+            XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, v1Root])
         }
     }
 
@@ -1459,9 +1498,9 @@ fileprivate enum TestPKI {
             issuerPrivateKey: .init(unconstrainedCAPrivateKey)
         )
     }()
-    static func issueCA(extensions: Certificate.Extensions) -> Certificate {
+    static func issueCA(version: Certificate.Version = .v3, extensions: Certificate.Extensions) -> Certificate {
         return try! Certificate(
-            version: .v3,
+            version: version,
             serialNumber: .init(),
             publicKey: .init(unconstrainedCAPrivateKey.publicKey),
             notValidBefore: startDate - .days(3650),
@@ -1492,9 +1531,9 @@ fileprivate enum TestPKI {
             issuer: .unconstrainedRoot
         )
     }()
-    static func issueIntermediate(name: DistinguishedName, key: Certificate.PublicKey, extensions: Certificate.Extensions, issuer: Issuer) -> Certificate {
+    static func issueIntermediate(name: DistinguishedName, version: Certificate.Version = .v3, key: Certificate.PublicKey, extensions: Certificate.Extensions, issuer: Issuer) -> Certificate {
         return try! Certificate(
-            version: .v3,
+            version: version,
             serialNumber: .init(),
             publicKey: key,
             notValidBefore: startDate - .days(365),
@@ -1587,6 +1626,7 @@ fileprivate enum TestPKI {
 
     static func issueSelfSignedCert(
         commonName: String = "Leaf",
+        version: Certificate.Version = .v3,
         basicConstraints: BasicConstraints = .notCertificateAuthority,
         customExtensions: Certificate.Extensions? = nil
     ) -> Certificate {
@@ -1601,16 +1641,18 @@ fileprivate enum TestPKI {
 
         if let customExtensions {
             extensions = customExtensions
-        } else {
+        } else if version == .v3 {
             extensions = try! Certificate.Extensions {
                 Critical(
                     basicConstraints
                 )
             }
+        } else {
+            extensions = .init()
         }
 
         return try! Certificate(
-            version: .v3,
+            version: version,
             serialNumber: .init(),
             publicKey: .init(selfSignedKey.publicKey),
             notValidBefore: Self.startDate,
