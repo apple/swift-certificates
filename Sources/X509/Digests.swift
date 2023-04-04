@@ -154,6 +154,28 @@ extension P256.Signing.PrivateKey {
     }
 }
 
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+extension SecureEnclave.P256.Signing.PrivateKey {
+    @inlinable
+    func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
+        let signature: P256.Signing.ECDSASignature
+
+        switch try Digest.computeDigest(for: bytes, using: digestAlgorithm) {
+        case .insecureSHA1(let sha1):
+            signature = try self.signature(for: sha1)
+        case .sha256(let sha256):
+            signature = try self.signature(for: sha256)
+        case .sha384(let sha384):
+            signature = try self.signature(for: sha384)
+        case .sha512(let sha512):
+            signature = try self.signature(for: sha512)
+        }
+
+        return Certificate.Signature(backing: .ecdsa(.init(signature)))
+    }
+}
+#endif
+
 extension P384.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
