@@ -102,7 +102,7 @@ public enum CMS {
             }
 
             // We have a bunch of very specific requirements here: in particular, we need to have only one signature. We also only want
-            // to tolerate v1 signatures and detacted signatures.
+            // to tolerate v1 signatures and detached signatures.
             guard signedData.version == .v1, signedData.signerInfos.count == 1, signedData.encapContentInfo.eContentType == .cmsData,
                   signedData.encapContentInfo.eContent == nil else {
                 return .failure(.init(invalidCMSBlockReason: "Invalid signed data: \(signedData)"))

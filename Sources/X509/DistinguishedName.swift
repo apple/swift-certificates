@@ -24,7 +24,7 @@ import SwiftASN1
 /// both the subject of and issuer of a given X.509 certificate. In this context, the distinguished
 /// name is a largely opaque identifier that just happens to have a human-readable string representation.
 ///
-/// The struture of a distinguished name reflects its X.500 roots. A distinguished name is conceptually
+/// The structure of a distinguished name reflects its X.500 roots. A distinguished name is conceptually
 /// an ordered sequence of ``RelativeDistinguishedName``s. This sequence is conceptually ordered by hierarchy, from least
 /// to most specific. Each ``RelativeDistinguishedName`` contains a collection of ``RelativeDistinguishedName/Attribute``s
 /// that are intended to be equivalent representations of the same idea. In common usage, each ``RelativeDistinguishedName``

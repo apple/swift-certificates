@@ -25,7 +25,7 @@ extension ASN1ObjectIdentifier {
         /// ``SubjectKeyIdentifier``.
         public static let subjectKeyIdentifier: ASN1ObjectIdentifier = [2, 5, 29, 14]
 
-        /// Identifies the key usgae extension, corresponding to
+        /// Identifies the key usage extension, corresponding to
         /// ``KeyUsage``.
         public static let keyUsage: ASN1ObjectIdentifier = [2, 5, 29, 15]
 

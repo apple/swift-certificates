@@ -152,7 +152,7 @@ fileprivate struct CandidatePartialChain {
     func contains(certificate: Certificate) -> Bool {
         // We don't do direct equality, as RFC 4158 § 2.4.1 notes that even certs that aren't
         // bytewise equal can cause arbitrarily long trust paths and weird loops. In particular, we're
-        // worried about mutual cross-signtaures, where CA X and CA Y have cross-signed one another. In such
+        // worried about mutual cross-signatures, where CA X and CA Y have cross-signed one another. In such
         // a case, we can end up producing inefficient chains that pass through either or both CAs multiple times,
         // when they only needed to do so once.
         //
