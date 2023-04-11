@@ -156,7 +156,7 @@ public struct NameConstraints {
 
     /// The URI domains permitted in certificates issued by this CA.
     ///
-    /// This contraint applies only to the host part of the URI. The constraint
+    /// This constraint applies only to the host part of the URI. The constraint
     /// must be specified as a fully-qualified domain name and may specify either
     /// a host or a domain. When it specifies a domain the string will begin with a
     /// period, and matches any name that can be expanded with one or more labels to
@@ -179,7 +179,7 @@ public struct NameConstraints {
 
     /// The URI domains forbidden in certificates issued by this CA.
     ///
-    /// This contraint applies only to the host part of the URI. The constraint
+    /// This constraint applies only to the host part of the URI. The constraint
     /// must be specified as a fully-qualified domain name and may specify either
     /// a host or a domain. When it specifies a domain the string will begin with a
     /// period, and matches any name that can be expanded with one or more labels to

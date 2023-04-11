@@ -25,7 +25,7 @@ public struct RFC5280Policy: VerifierPolicy {
         .X509ExtensionID.basicConstraints,
         .X509ExtensionID.nameConstraints,
 
-        // The presence of keyUsage here requires some explanation, becuase this policy doesn't _actually_ compute
+        // The presence of keyUsage here requires some explanation, because this policy doesn't _actually_ compute
         // on it in any way.
         //
         // The unfortunate reality of keyUsage is that, while RFC 5280 requires us to validate it, CAs have historically
