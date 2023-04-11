@@ -13,6 +13,12 @@
 ##===----------------------------------------------------------------------===##
 
 add_library(X509
+  "CSR/CSRAttribute.swift"
+  "CSR/CSRAttributes.swift"
+  "CSR/CSRVersion.swift"
+  "CSR/CertificateSigningRequest.swift"
+  "CSR/CertificationRequestInfo.swift"
+  "CSR/ExtensionRequest.swift"
   "Certificate.swift"
   "CertificatePrivateKey.swift"
   "CertificatePublicKey.swift"

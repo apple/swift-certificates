@@ -53,6 +53,7 @@ let package = Package(
                 .copy("OCSP Test Resources/www.apple.com.ocsp-response.der"),
                 .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
                 .copy("PEMTestRSACertificate.pem"),
+                .copy("CSR Vectors/"),
             ]),
     ]
 )
