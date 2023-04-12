@@ -14,7 +14,11 @@
 
 import SwiftASN1
 import Crypto
+#if canImport(Darwin)
 import Foundation
+#else
+@preconcurrency import Foundation
+#endif
 
 // Swift CI has implicit concurrency disabled
 import _Concurrency
