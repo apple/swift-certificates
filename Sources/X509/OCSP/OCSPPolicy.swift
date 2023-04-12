@@ -112,6 +112,9 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
+
+/// Defines the behaviour of ``OCSPVerifierPolicy`` in the event of a failure.
+/// ``soft`` should be used most of the time and will only fail verification if a verified OCSP response reports a status of revoked.
 public struct OCSPFailureMode: Hashable, Sendable {
     /// ``soft`` failure mode will only fail verification if a verified and valid OCSP response reports a status of revoked.
     /// If the request, decoding or validation fails, the certificates will still meet the policy.
@@ -151,8 +154,8 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     private var failureMode: OCSPFailureMode
     
     
-    public init(mode: OCSPFailureMode, requester: Requester, validationTime: Date) {
-        self.failureMode = mode
+    public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
+        self.failureMode = failureMode
         self.requester = requester
         self.requestHashAlgorithm = .insecureSha1
         self.maxDuration = 10

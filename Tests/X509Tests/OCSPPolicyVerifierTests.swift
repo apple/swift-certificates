@@ -271,7 +271,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
-            mode: mode,
+            failureMode: mode,
             requester: requester,
             validationTime: validationTime ?? self.validationTime
         )
@@ -310,7 +310,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
-            mode: mode,
+            failureMode: mode,
             requester: requester,
             validationTime: validationTime ?? self.validationTime
         )
