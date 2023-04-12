@@ -223,3 +223,67 @@ extension _RSA.Signing.Padding {
         }
     }
 }
+
+extension P256.Signing.PublicKey {
+    /// Create a P256 Public Key from a given ``Certificate/PublicKey-swift.struct``.
+    ///
+    /// Fails if the key is not a P256 key.
+    ///
+    /// - parameters:
+    ///     - key: The key to unwrap.
+    public init?(_ key: Certificate.PublicKey) {
+        if case .p256(let inner) = key.backing {
+            self = inner
+        } else {
+            return nil
+        }
+    }
+}
+
+extension P384.Signing.PublicKey {
+    /// Create a P384 Public Key from a given ``Certificate/PublicKey-swift.struct``.
+    ///
+    /// Fails if the key is not a P384 key.
+    ///
+    /// - parameters:
+    ///     - key: The key to unwrap.
+    public init?(_ key: Certificate.PublicKey) {
+        if case .p384(let inner) = key.backing {
+            self = inner
+        } else {
+            return nil
+        }
+    }
+}
+
+extension P521.Signing.PublicKey {
+    /// Create a P521 Public Key from a given ``Certificate/PublicKey-swift.struct``.
+    ///
+    /// Fails if the key is not a P521 key.
+    ///
+    /// - parameters:
+    ///     - key: The key to unwrap.
+    public init?(_ key: Certificate.PublicKey) {
+        if case .p521(let inner) = key.backing {
+            self = inner
+        } else {
+            return nil
+        }
+    }
+}
+
+extension _RSA.Signing.PublicKey {
+    /// Create an RSA Public Key from a given ``Certificate/PublicKey-swift.struct``.
+    ///
+    /// Fails if the key is not an RSA key.
+    ///
+    /// - parameters:
+    ///     - key: The key to unwrap.
+    public init?(_ key: Certificate.PublicKey) {
+        if case .rsa(let inner) = key.backing {
+            self = inner
+        } else {
+            return nil
+        }
+    }
+}

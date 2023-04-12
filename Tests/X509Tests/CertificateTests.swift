@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import XCTest
+import Crypto
+import _CryptoExtras
 import SwiftASN1
 @testable import X509
 
@@ -294,5 +296,67 @@ final class CertificateTests: XCTestCase {
         
         var rngWithTrailingZero = StaticNumberGenerator(numbers: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0])
         XCTAssertEqual(Certificate.SerialNumber(generator: &rngWithTrailingZero).bytes, [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0])
+    }
+
+    func testRoundTrippingKeys() throws {
+        let p256 = P256.Signing.PrivateKey()
+        let p384 = P384.Signing.PrivateKey()
+        let p521 = P521.Signing.PrivateKey()
+        let rsa = try _RSA.Signing.PrivateKey(keySize: .bits2048)
+
+        XCTAssertEqual(
+            p256.publicKey.rawRepresentation,
+            P256.Signing.PublicKey(Certificate.PublicKey(p256.publicKey))?.rawRepresentation
+        )
+        XCTAssertEqual(
+            p384.publicKey.rawRepresentation,
+            P384.Signing.PublicKey(Certificate.PublicKey(p384.publicKey))?.rawRepresentation
+        )
+        XCTAssertEqual(
+            p521.publicKey.rawRepresentation,
+            P521.Signing.PublicKey(Certificate.PublicKey(p521.publicKey))?.rawRepresentation
+        )
+        XCTAssertEqual(
+            rsa.publicKey.derRepresentation,
+            _RSA.Signing.PublicKey(Certificate.PublicKey(rsa.publicKey))?.derRepresentation
+        )
+
+        // Don't project to other things
+        XCTAssertNil(
+            P256.Signing.PublicKey(Certificate.PublicKey(p384.publicKey))
+        )
+        XCTAssertNil(
+            P256.Signing.PublicKey(Certificate.PublicKey(p521.publicKey))
+        )
+        XCTAssertNil(
+            P256.Signing.PublicKey(Certificate.PublicKey(rsa.publicKey))
+        )
+        XCTAssertNil(
+            P384.Signing.PublicKey(Certificate.PublicKey(p256.publicKey))
+        )
+        XCTAssertNil(
+            P384.Signing.PublicKey(Certificate.PublicKey(p521.publicKey))
+        )
+        XCTAssertNil(
+            P384.Signing.PublicKey(Certificate.PublicKey(rsa.publicKey))
+        )
+        XCTAssertNil(
+            P521.Signing.PublicKey(Certificate.PublicKey(p256.publicKey))
+        )
+        XCTAssertNil(
+            P521.Signing.PublicKey(Certificate.PublicKey(p384.publicKey))
+        )
+        XCTAssertNil(
+            P521.Signing.PublicKey(Certificate.PublicKey(rsa.publicKey))
+        )
+        XCTAssertNil(
+            _RSA.Signing.PublicKey(Certificate.PublicKey(p256.publicKey))
+        )
+        XCTAssertNil(
+            _RSA.Signing.PublicKey(Certificate.PublicKey(p384.publicKey))
+        )
+        XCTAssertNil(
+            _RSA.Signing.PublicKey(Certificate.PublicKey(p521.publicKey))
+        )
     }
 }
