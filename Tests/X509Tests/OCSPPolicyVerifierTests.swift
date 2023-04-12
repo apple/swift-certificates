@@ -231,7 +231,38 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     private let validationTime = Date()
     
-    func assertChainMeetsPolicy(
+    private enum ExpectedVerificationResult {
+        case failsToMeetPolicy
+        case meetsPolicy
+    }
+    
+    private func assertChain(
+        soft: ExpectedVerificationResult,
+        hard: ExpectedVerificationResult,
+        chain: [Certificate],
+        requester: @autoclosure () -> some OCSPRequester,
+        validationTime: Date? = nil,
+        expectedQueryCount: Int = 1,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) async {
+        switch soft {
+        case .failsToMeetPolicy:
+            await self.assertChainFailsToMeetPolicy(mode: .soft, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, file: file, line: line)
+        case .meetsPolicy:
+            await self.assertChainMeetsPolicy(mode: .soft, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, validationTime: validationTime, file: file, line: line)
+        }
+        
+        switch hard {
+        case .failsToMeetPolicy:
+            await self.assertChainFailsToMeetPolicy(mode: .hard, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, file: file, line: line)
+        case .meetsPolicy:
+            await self.assertChainMeetsPolicy(mode: .hard, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, validationTime: validationTime, file: file, line: line)
+        }
+    }
+    
+    private func assertChainMeetsPolicy(
+        mode: OCSPFailureMode = .hard,
         chain: [Certificate],
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
@@ -240,6 +271,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
+            failureMode: mode,
             requester: requester,
             validationTime: validationTime ?? self.validationTime
         )
@@ -255,7 +287,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         }
     }
     
-    func printChainForDebugging(_ chain: [Certificate]) {
+    private func printChainForDebugging(_ chain: [Certificate]) {
         dump(chain) // TODO: replace with Certificate.description once implemented
         do {
             var serializer = DER.Serializer()
@@ -267,26 +299,26 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         }
     }
     
-    func assertChainFailsToMeetPolicy(
+    private func assertChainFailsToMeetPolicy(
+        mode: OCSPFailureMode = .hard,
         chain: [Certificate],
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
-        expectedReason: String? = nil,
+        validationTime: Date? = nil,
+        
         file: StaticString = #file,
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
+            failureMode: mode,
             requester: requester,
-            validationTime: self.validationTime
+            validationTime: validationTime ?? self.validationTime
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
-        guard case .failsToMeetPolicy(let actualReason) = result else {
+        guard case .failsToMeetPolicy = result else {
             XCTFail("chain did not fail validation", file: file, line: line)
             printChainForDebugging(chain)
             return
-        }
-        if let expectedReason {
-            XCTAssertEqual(actualReason, expectedReason, "unexpected policy failure reason", file: file, line: line)
         }
         if let testRequest = requester as? TestRequester {
             let actualQueryCount = await testRequest.queryCount
@@ -296,16 +328,18 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testSingleCertWithOCSP() async {
         let now = self.validationTime
-        await self.assertChainMeetsPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(self.validationTime),
+                    producedAt: try .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
@@ -321,16 +355,18 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testWrongNonce() async {
         let now = self.validationTime
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 XCTAssertNotNil(try request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(self.validationTime),
+                    producedAt: try .init(validationTime),
                     responses: [OCSPSingleResponse(
                     certID: singleRequest.certID,
                     certStatus: .good,
@@ -346,16 +382,18 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testRevokedCert() async {
         let now = self.validationTime
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .failsToMeetPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(self.validationTime),
+                    producedAt: try .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .revoked(.init(
@@ -374,9 +412,11 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testInvalidResponderCertChain() async {
         let now = self.validationTime
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
@@ -384,7 +424,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
                     responderID: .byName(Self.invalidResponderIntermediate1.subject),
-                    producedAt: try .init(self.validationTime),
+                    producedAt: try .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
@@ -402,7 +442,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testResponderSignatureAlgorithmIdentifierMismatch() async {
         let now = self.validationTime
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester.noThrow { request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
@@ -447,15 +489,17 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     
     func testResponseDoesNotIncludeResponseForRequestedCert() async {
         let now = self.validationTime
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
                 XCTAssertEqual(uri, Self.responderURI)
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 return .successful(try .signed(
-                    producedAt: try .init(self.validationTime),
+                    producedAt: try .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: .init(
                             hashAlgorithm: .init(algorithm: .sha1NoSign, parameters: nil),
@@ -475,29 +519,43 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     func testShouldNotQueryResponderIfNoOCSPServerIsDefined() async {
-        await self.assertChainMeetsPolicy(chain: [
-            Self.leaf(),
-            Self.intermediate(),
-            Self.ca1,
-        ], requester: TestRequester.noThrow { request, uri -> OCSPResponse in
-            struct ShouldNotQueryResponderError: Error {}
-            throw ShouldNotQueryResponderError()
-        }, expectedQueryCount: 0)
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
+            chain: [
+                Self.leaf(),
+                Self.intermediate(),
+                Self.ca1,
+            ],
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+                struct ShouldNotQueryResponderError: Error {}
+                throw ShouldNotQueryResponderError()
+            },
+            expectedQueryCount: 0
+        )
     }
     
     func testLastCertificateIsNotAllowedToHaveOCSP() async {
-        await self.assertChainFailsToMeetPolicy(chain: [
-            Self.leaf(),
-            Self.intermediate(),
-            Self.ca(ocspServer: Self.responderURI),
-        ], requester: TestRequester.noThrow { request, uri -> OCSPResponse in
-            struct ShouldNotQueryResponderError: Error {}
-            throw ShouldNotQueryResponderError()
-        }, expectedQueryCount: 0)
+        await self.assertChain(
+            soft: .failsToMeetPolicy,
+            hard: .failsToMeetPolicy,
+            chain: [
+                Self.leaf(),
+                Self.intermediate(),
+                Self.ca(ocspServer: Self.responderURI),
+            ],
+            requester: TestRequester.noThrow { request, uri -> OCSPResponse in
+                struct ShouldNotQueryResponderError: Error {}
+                throw ShouldNotQueryResponderError()
+            },
+            expectedQueryCount: 0
+        )
     }
     
     func testQueryIsAllowedToFail() async {
-        await self.assertChainMeetsPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester { request, uri -> OCSPResponse in
                 struct QueryErrorsAreAcceptable: Error {}
@@ -533,7 +591,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         }
         
         /// produced at is in the future
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 producedAt: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 2,
@@ -543,7 +603,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         
         /// is almost exactly in the current time window
-        await self.assertChainMeetsPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 thisUpdate: self.validationTime,
@@ -552,7 +614,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         
         /// is almost exactly in the current time window with leeway
-        await self.assertChainMeetsPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 producedAt: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
@@ -562,7 +626,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         
         /// no next update
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 thisUpdate: self.validationTime,
@@ -570,7 +636,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             )
         )
         /// time window is in the future
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 producedAt: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 1,
@@ -580,7 +648,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
         
         /// next update is in the past
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
@@ -588,7 +658,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             )
         )
         /// this update and next update is in the past
-        await self.assertChainFailsToMeetPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: responseWithCertStatusGood(
                 thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway - 2,
@@ -641,7 +713,9 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let ocspResponseIntermediate = try loadOCSPResponse("www.apple.com.intermediate.ocsp-response", extension: "der")
         let timeOfOCSPRequest = try Date(GeneralizedTime(year: 2023, month: 3, day: 15, hours: 15, minutes: 36, seconds: 0, fractionalSeconds: 0.0))!
         
-        await self.assertChainMeetsPolicy(
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
             chain: [leaf, intermediate, root],
             requester: StaticOCSPRequester(responses: [
                 ocspResponseLeaf,
