@@ -14,7 +14,11 @@
 
 import SwiftASN1
 import Crypto
+#if canImport(Darwin)
 import Foundation
+#else
+@preconcurrency import Foundation
+#endif
 
 // Swift CI has implicit concurrency disabled
 import _Concurrency
@@ -135,40 +139,62 @@ public struct OCSPFailureMode: Hashable, Sendable {
 public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
     public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
     
-    private var requester: Requester
-    private var requestHashAlgorithm: OCSPRequestHashAlgorithm
+    struct Storage: Sendable {
+        private var failureMode: OCSPFailureMode
+        private var requester: Requester
+        private var requestHashAlgorithm: OCSPRequestHashAlgorithm
+        
+        /// max duration the policy verification is allowed in total
+        ///
+        /// This is not the duration for a single OCSP request but the total duration of all OCSP requests.
+        private var maxDuration: TimeInterval
+        
+        /// the time used to decide if the request is relatively recent
+        private var validationTime: Date
+        
+        /// If true, a nonce is generated per OCSP request and attached to the request.
+        /// If the response contains a nonce, it must match with the initially send nonce.
+        /// currently only set to false for testing
+        fileprivate var nonceExtensionEnabled: Bool = true
+        
+        fileprivate init(failureMode: OCSPFailureMode, requester: Requester, requestHashAlgorithm: OCSPRequestHashAlgorithm, maxDuration: TimeInterval, validationTime: Date) {
+            self.requester = requester
+            self.requestHashAlgorithm = requestHashAlgorithm
+            self.maxDuration = maxDuration
+            self.validationTime = validationTime
+            self.failureMode = failureMode
+        }
+    }
     
-    /// max duration the policy verification is allowed in total
-    ///
-    /// This is not the duration for a single OCSP request but the total duration of all OCSP requests.
-    private var maxDuration: TimeInterval
+    var nonceExtensionEnabled: Bool {
+        get {
+            self.storage.nonceExtensionEnabled
+        }
+        set {
+            self.storage.nonceExtensionEnabled = newValue
+        }
+    }
     
-    /// the time used to decide if the request is relatively recent
-    private var validationTime: Date
-    
-    /// If true, a nonce is generated per OCSP request and attached to the request.
-    /// If the response contains a nonce, it must match with the initially send nonce.
-    /// currently only set to false for testing
-    var nonceExtensionEnabled: Bool = true
-    
-    private var failureMode: OCSPFailureMode
-    
+    private var storage: Storage
     
     public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
-        self.failureMode = failureMode
-        self.requester = requester
-        self.requestHashAlgorithm = .insecureSha1
-        self.maxDuration = 10
-        self.validationTime = validationTime
+        self.storage = .init(
+            failureMode: failureMode,
+            requester: requester,
+            requestHashAlgorithm: .insecureSha1,
+            maxDuration: 10,
+            validationTime: validationTime
+        )
     }
     
     // this method currently doesn't need to be mutating. However, we want to reserve the right to change our mind
     // in the future and therefore still declare this method as mutating in the public API.
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        await withTimeout(maxDuration) { [self] in
-            await self.chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
-        }
+        await self.storage.chainMeetsPolicyWithDeadline(chain: chain)
     }
+}
+
+extension OCSPVerifierPolicy.Storage {
     
     /// Returns `.meetsPolicy` if the `failureMode` is set to `.soft`.
     /// If it is set to `.hard` it will return `.failsToMeetPolicy` with the given `reason`.
@@ -178,6 +204,12 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             return .meetsPolicy
         case .hard:
             return .failsToMeetPolicy(reason: reason)
+        }
+    }
+    
+    fileprivate func chainMeetsPolicyWithDeadline(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+        await withTimeout(maxDuration) {
+            await self.chainMeetsPolicyRequirementsWithoutDeadline(chain: chain)
         }
     }
     
