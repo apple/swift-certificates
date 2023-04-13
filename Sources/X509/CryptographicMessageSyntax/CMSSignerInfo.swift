@@ -34,7 +34,7 @@ import SwiftASN1
 /// then the `version` MUST be 3.
 /// - Note: At the moment we neither support `signedAttrs` (`SignedAttributes`) nor `unsignedAttrs` (`UnsignedAttributes`)
 @usableFromInline
-struct CMSSignerInfo: DERImplicitlyTaggable, Hashable {
+struct CMSSignerInfo: DERImplicitlyTaggable, Hashable, Sendable {
     @usableFromInline
     enum Error: Swift.Error {
         case versionAndSignerIdentifierMismatch(String)

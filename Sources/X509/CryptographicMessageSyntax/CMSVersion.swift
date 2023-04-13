@@ -20,7 +20,7 @@ import SwiftASN1
 ///                 { v0(0), v1(1), v2(2), v3(3), v4(4), v5(5) }
 /// ```
 @usableFromInline
-struct CMSVersion: RawRepresentable, Hashable {
+struct CMSVersion: RawRepresentable, Hashable, Sendable {
     @usableFromInline
     var rawValue: Int
 
