@@ -317,6 +317,64 @@ final class CMSTests: XCTestCase {
         XCTAssertValidSignature(isValidSignature)
     }
 
+    func testParsingSimpleSignature() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signatureBytes = try CMS.sign(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf1Cert, privateKey: Self.leaf1Key)
+        let signature = try CMSSignature(derEncoded: signatureBytes)
+
+        XCTAssertEqual(try signature.signers, [CMSSignature.Signer(certificate: Self.leaf1Cert)])
+        XCTAssertEqual(signature.certificates, [Self.leaf1Cert])
+
+        XCTAssertEqual(signatureBytes, try signature.encodedBytes)
+    }
+
+    func testParsingSignatureWithIntermediates() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signatureBytes = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            additionalIntermediateCertificates: [Self.intermediateCert],
+            certificate: Self.leaf2Cert,
+            privateKey: Self.leaf2Key
+        )
+        let signature = try CMSSignature(derEncoded: signatureBytes)
+
+        XCTAssertEqual(try signature.signers, [CMSSignature.Signer(certificate: Self.leaf2Cert)])
+        XCTAssertEqual(signature.certificates, [Self.intermediateCert, Self.leaf2Cert])
+
+        XCTAssertEqual(signatureBytes, try signature.encodedBytes)
+    }
+
+    func testToleratesAdditionalSignerInfos() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf1Cert, privateKey: Self.leaf1Key)
+
+        // Add a second, identical, signer info.
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.signerInfos.append(signedData.signerInfos[0])
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let signature = try CMSSignature(derEncoded: cmsData.encodedBytes)
+        XCTAssertEqual(try signature.signers, [CMSSignature.Signer(certificate: Self.leaf1Cert), CMSSignature.Signer(certificate: Self.leaf1Cert)])
+        XCTAssertEqual(signature.certificates, [Self.leaf1Cert])
+
+        XCTAssertEqual(try cmsData.encodedBytes, try signature.encodedBytes)
+    }
+
+    func testRequireCMSV1SignatureOnCMSSignatureType() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf1Cert, privateKey: Self.leaf1Key)
+
+        // Change the version number to v3 in both places.
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.version = .v3
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        XCTAssertThrowsError(try CMSSignature(derEncoded: cmsData.encodedBytes))
+    }
+
     func testRejectsSignatureWithoutRoot() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 

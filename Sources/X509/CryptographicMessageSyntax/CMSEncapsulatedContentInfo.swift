@@ -22,7 +22,7 @@ import SwiftASN1
 /// ContentType ::= OBJECT IDENTIFIER
 /// ```
 @usableFromInline
-struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable {
+struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

@@ -21,7 +21,7 @@ import SwiftASN1
 ///   subjectKeyIdentifier [0] SubjectKeyIdentifier }
 ///  ```
 @usableFromInline
-enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable {
+enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
 
     @usableFromInline
     static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)

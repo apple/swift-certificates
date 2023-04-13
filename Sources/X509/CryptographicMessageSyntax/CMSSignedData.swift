@@ -42,7 +42,7 @@ import SwiftASN1
 /// ```
 /// - Note: At the moment we don't support `crls` (`RevocationInfoChoices`)
 @usableFromInline
-struct CMSSignedData: DERImplicitlyTaggable, Hashable {
+struct CMSSignedData: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

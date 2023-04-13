@@ -168,6 +168,7 @@ public enum CMS {
     @_spi(CMS)
     public enum Error: Swift.Error {
         case incorrectCMSVersionUsed
+        case unexpectedCMSType
     }
 
     @_spi(CMS)
