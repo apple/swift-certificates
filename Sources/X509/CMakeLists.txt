@@ -22,6 +22,7 @@ add_library(X509
   "CryptographicMessageSyntax/CMSEncapsulatedContentInfo.swift"
   "CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift"
   "CryptographicMessageSyntax/CMSOperations.swift"
+  "CryptographicMessageSyntax/CMSSignature.swift"
   "CryptographicMessageSyntax/CMSSignedData.swift"
   "CryptographicMessageSyntax/CMSSignerIdentifier.swift"
   "CryptographicMessageSyntax/CMSSignerInfo.swift"
