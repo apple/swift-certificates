@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
+import Crypto
+import struct Foundation.Data
 
 /// Provides a means of identifying a certificate that contains a particular public key.
 ///
@@ -76,5 +78,19 @@ extension Certificate.Extension {
 extension SubjectKeyIdentifier: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
+    }
+}
+
+extension SubjectKeyIdentifier {
+    /// Construct a ``SubjectKeyIdentifier`` by hashing the given `publicKey` with SHA-1 according to RFC 5280 Section 4.2.1.2.
+    /// - Parameter publicKey: the public key which will be hashed
+    @inlinable
+    public init(hash publicKey: Certificate.PublicKey) {
+        // RFC 5280 Section 4.2.1.2. Subject Key Identifier (https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.2)
+        // The keyIdentifier is composed of the 160-bit SHA-1 hash of the
+        // value of the BIT STRING subjectPublicKey (excluding the tag,
+        // length, and number of unused bits).
+        let hash = Insecure.SHA1.hash(data: SubjectPublicKeyInfo(publicKey).key.bytes)
+        self.init(keyIdentifier: .init(hash))
     }
 }

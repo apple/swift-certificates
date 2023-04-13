@@ -288,6 +288,13 @@ final class CertificateDERTests: XCTestCase {
 
         XCTAssertEqual(cert.extensions, expectedExtensions)
     }
+    
+    func testSubjectKeyIdentifierHash() throws {
+        let binary = Array(Data(base64Encoded: Self.base64EncodedSampleCert, options: .ignoreUnknownCharacters)!)
+        let cert = try Certificate(derEncoded: binary)
+        
+        XCTAssertEqual(try cert.extensions.subjectKeyIdentifier, SubjectKeyIdentifier(hash: cert.publicKey))
+    }
 
     func testRSARootCert() throws {
         let binary = Array(Data(base64Encoded: Self.base64EncodedRSARootCert, options: .ignoreUnknownCharacters)!)
