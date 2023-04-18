@@ -154,7 +154,7 @@ extension P256.Signing.PrivateKey {
     }
 }
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if INCLUDE_SECURE_ENCLAVE_SUPPORT
 extension SecureEnclave.P256.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
