@@ -16,6 +16,11 @@
 import PackageDescription
 import class Foundation.ProcessInfo
 
+var swiftSettings: [SwiftSetting] = []
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+swiftSettings.append(.define("INCLUDE_SECURE_ENCLAVE_SUPPORT"))
+#endif
+
 let package = Package(
     name: "swift-certificates",
     platforms: [
@@ -39,7 +44,8 @@ let package = Package(
             ],
             exclude: [
                 "CMakeLists.txt",
-            ]),
+            ],
+            swiftSettings: swiftSettings),
         .testTarget(
             name: "X509Tests",
             dependencies: [
