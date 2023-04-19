@@ -16,11 +16,6 @@
 import PackageDescription
 import class Foundation.ProcessInfo
 
-var swiftSettings: [SwiftSetting] = []
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-swiftSettings.append(.define("INCLUDE_SECURE_ENCLAVE_SUPPORT"))
-#endif
-
 let package = Package(
     name: "swift-certificates",
     platforms: [
@@ -44,8 +39,7 @@ let package = Package(
             ],
             exclude: [
                 "CMakeLists.txt",
-            ],
-            swiftSettings: swiftSettings),
+            ]),
         .testTarget(
             name: "X509Tests",
             dependencies: [
@@ -67,7 +61,7 @@ let package = Package(
 // we can depend on local versions of our dependencies instead of fetching them remotely.
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
     package.dependencies += [
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.4.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.7.0")),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ]

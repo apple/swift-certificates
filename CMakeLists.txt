@@ -37,9 +37,6 @@ if(BUILD_SHARED_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE YES)
 endif()
 
-## Uncomment line below to include code that provides Secure Enclave support
-##add_compile_definitions(INCLUDE_SECURE_ENCLAVE_SUPPORT)
-
 if(NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
   find_package(dispatch CONFIG)
   find_package(Foundation CONFIG)
