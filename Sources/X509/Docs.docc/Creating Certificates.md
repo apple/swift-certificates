@@ -166,8 +166,8 @@ let certificate = try Certificate(
     publicKey: key.publicKey,
     notValidBefore: now,
     notValidAfter: now.addingTimeInterval(60 * 60 * 24 * 365),
-    issuer: name,
-    subject: name,
+    issuer: issuerName,
+    subject: subjectName,
     signatureAlgorithm: .ecdsaWithSHA256,
     extensions: extensions,
     issuerPrivateKey: key)
