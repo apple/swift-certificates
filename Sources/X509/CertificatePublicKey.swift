@@ -287,3 +287,28 @@ extension _RSA.Signing.PublicKey {
         }
     }
 }
+
+extension Certificate.PublicKey {
+    @usableFromInline
+    static let pemDiscriminatorForPublicKey = "PUBLIC KEY"
+    
+    @inlinable
+    public init(pemEncoded: String) throws {
+        try self.init(pemDocument: PEMDocument(pemString: pemEncoded))
+    }
+    
+    @inlinable
+    public init(pemDocument: PEMDocument) throws {
+        guard pemDocument.discriminator == Self.pemDiscriminatorForPublicKey else {
+            throw ASN1Error.invalidPEMDocument(reason: "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPublicKey) instead")
+        }
+        
+        try self.init(spki: try SubjectPublicKeyInfo(derEncoded: pemDocument.derBytes))
+    }
+    
+    func serializeAsPEM() throws -> PEMDocument {
+        let spki = SubjectPublicKeyInfo(self)
+        let derBytes = try DER.Serializer.serialized(element: spki)
+        return PEMDocument(type: "PUBLIC KEY", derBytes: derBytes)
+    }
+}

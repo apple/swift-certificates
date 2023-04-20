@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+import SwiftASN1
 import Foundation
 @preconcurrency import Crypto
 @preconcurrency import _CryptoExtras
-import Foundation
 
 extension Certificate {
     /// A private key that can be used with a certificate.
@@ -199,6 +199,70 @@ extension Certificate.PrivateKey {
                 hasher.combine(digest.dataRepresentation)
             #endif
             }
+        }
+    }
+}
+
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 10, *)
+extension Certificate.PrivateKey {
+    @usableFromInline
+    static let pemDiscriminatorForRSAPrivateKey = "RSA PRIVATE KEY"
+    
+    @usableFromInline
+    static let pemDiscriminatorForSEC1PrivateKey = "EC PRIVATE KEY"
+    
+    @usableFromInline
+    static let pemDiscriminatorForPKCS8PrivateKey = "PRIVATE KEY"
+    
+    @inlinable
+    public init(pemEncoded: String) throws {
+        try self.init(pemDocument: PEMDocument(pemString: pemEncoded))
+    }
+    
+    @inlinable
+    public init(pemDocument: PEMDocument) throws {
+        switch pemDocument.discriminator {
+        case Self.pemDiscriminatorForRSAPrivateKey:
+            self = try .init(_CryptoExtras._RSA.Signing.PrivateKey.init(derRepresentation: pemDocument.derBytes))
+            
+        case Self.pemDiscriminatorForSEC1PrivateKey:
+            let parsed = try SEC1PrivateKey(derEncoded: pemDocument.derBytes)
+            self = try .init(algorithm: parsed.algorithm, rawEncodedPrivateKey: parsed.privateKey.bytes)
+            
+        case Self.pemDiscriminatorForPKCS8PrivateKey:
+            let parsed = try PKCS8PrivateKey(derEncoded: pemDocument.derBytes)
+            self = try .init(algorithm: parsed.algorithm, rawEncodedPrivateKey: parsed.privateKey.privateKey.bytes)
+            
+        default:
+            throw ASN1Error.invalidPEMDocument(
+                reason: "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPKCS8PrivateKey), \(Self.pemDiscriminatorForSEC1PrivateKey) or \(Self.pemDiscriminatorForRSAPrivateKey) instead"
+            )
+        }
+    }
+    
+    @inlinable
+    init(algorithm: AlgorithmIdentifier?, rawEncodedPrivateKey: ArraySlice<UInt8>) throws {
+        switch algorithm {
+        case .some(.ecdsaP256):
+            self = try .init(P256.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
+        case .some(.ecdsaP384):
+            self = try .init(P384.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
+        case .some(.ecdsaP521):
+            self = try .init(P521.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
+        default:
+            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(algorithm as Any)")
+        }
+    }
+    
+    @inlinable
+    public func serializeAsPEM() throws -> PEMDocument {
+        switch backing {
+        case .p256(let key): return try PEMDocument(pemString: key.pemRepresentation)
+        case .p384(let key): return try PEMDocument(pemString: key.pemRepresentation)
+        case .p521(let key): return try PEMDocument(pemString: key.pemRepresentation)
+        case .rsa(let key): return try PEMDocument(pemString: key.pemRepresentation)
+        case .secureEnclaveP256:
+            throw CertificateError.unsupportedPrivateKey(reason: "secure enclave private keys can not be serialised as PEM")
         }
     }
 }
