@@ -261,8 +261,10 @@ extension Certificate.PrivateKey {
         case .p384(let key): return try PEMDocument(pemString: key.pemRepresentation)
         case .p521(let key): return try PEMDocument(pemString: key.pemRepresentation)
         case .rsa(let key): return try PEMDocument(pemString: key.pemRepresentation)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         case .secureEnclaveP256:
             throw CertificateError.unsupportedPrivateKey(reason: "secure enclave private keys can not be serialised as PEM")
+        #endif
         }
     }
 }
