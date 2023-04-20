@@ -78,12 +78,13 @@ extension Certificate.PrivateKey: WrappedKey {}
 
 final class PEMTests: XCTestCase {
     fileprivate func assertPEMRoundtrip(key: some Key, file: StaticString = #filePath, line: UInt = #line) throws {
-        let expectedPEMString = key.pemRepresentation
-        let wrapped = try type(of: key).Wrapped(pemEncoded: expectedPEMString)
-        XCTAssertEqual(key.wrapped, wrapped, file: file, line: line)
+        let initialPEMString = key.pemRepresentation
+        let wrapped = try type(of: key).Wrapped(pemEncoded: initialPEMString)
+        XCTAssertEqual(key.wrapped, wrapped, "Wrapper mismatch after one roundtrip for \(key)", file: file, line: line)
         let pemDocument = try key.wrapped.serializeAsPEM()
-        XCTAssertEqual(pemDocument.discriminator, try key.pemDiscriminator, file: file, line: line)
-        XCTAssertEqual(pemDocument.pemString, expectedPEMString, file: file, line: line)
+        let initialPEMDocument = try PEMDocument(pemString: initialPEMString)
+        XCTAssertEqual(pemDocument.discriminator, initialPEMDocument.discriminator, "PEM discriminator mismatch after one roundtrip for \(key)", file: file, line: line)
+        XCTAssertEqual(pemDocument.pemString, initialPEMDocument.pemString, "PEM string mismatch after one roundtrip for \(key)", file: file, line: line)
     }
     
     func testPublicKeys() throws {

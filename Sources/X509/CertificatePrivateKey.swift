@@ -203,7 +203,7 @@ extension Certificate.PrivateKey {
     }
 }
 
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 10, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 extension Certificate.PrivateKey {
     @usableFromInline
     static let pemDiscriminatorForRSAPrivateKey = "RSA PRIVATE KEY"
