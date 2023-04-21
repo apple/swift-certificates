@@ -67,10 +67,10 @@ extension String {
 #if os(Windows)
         var v4: IN_ADDR = IN_ADDR()
         var v6: IN6_ADDR = IN6_ADDR()
-            return self.withCString(encodedAs: UTF16.self) {
-                return InetPtonW(AF_INET, $0, &v4) == 1 ||
-                       InetPtonW(AF_INET6, $0, &v6) == 1
-            }
+        return self.withCString(encodedAs: UTF16.self) {
+            return InetPtonW(AF_INET, $0, &v4) == 1 ||
+                   InetPtonW(AF_INET6, $0, &v6) == 1
+        }
 #else
         // We need some scratch space to let inet_pton write into.
         var ipv4Addr = in_addr()
