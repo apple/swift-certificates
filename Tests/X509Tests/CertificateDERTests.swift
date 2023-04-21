@@ -473,7 +473,9 @@ final class CertificateDERTests: XCTestCase {
 
         // And we should be able to validate it.
         let roots = CertificateStore([issuer])
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: now + 1)]))
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy(validationTime: now + 1)
+        }
         let result = await verifier.validate(leafCertificate: parsed, intermediates: CertificateStore())
 
         guard case .validCertificate(let chain) = result else {

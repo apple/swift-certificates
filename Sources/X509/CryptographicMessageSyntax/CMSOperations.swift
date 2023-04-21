@@ -93,8 +93,9 @@ public enum CMS {
         signatureBytes: SignatureBytes,
         additionalIntermediateCertificates: [Certificate] = [],
         trustRoots: CertificateStore,
-        policy: PolicySet
-    ) async -> SignatureVerificationResult {
+        @PolicyBuilder policy: () throws -> some VerifierPolicy
+    ) async rethrows -> SignatureVerificationResult {
+        let policy = try policy()
         do {
             let parsedSignature = try CMSContentInfo(derEncoded: ArraySlice(signatureBytes))
             guard let signedData = try parsedSignature.signedData else {
@@ -151,7 +152,7 @@ public enum CMS {
             var untrustedIntermediates = CertificateStore(signedData.certificates!)
             untrustedIntermediates.insert(contentsOf: additionalIntermediateCertificates)
             
-            var verifier = Verifier(rootCertificates: trustRoots, policy: policy)
+            var verifier = Verifier(rootCertificates: trustRoots) { policy }
             let result = await verifier.validate(leafCertificate: signingCert, intermediates: untrustedIntermediates)
 
             switch result {

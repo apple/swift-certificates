@@ -13,15 +13,15 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-public struct Verifier {
+public struct Verifier<Policy: VerifierPolicy> {
     public var rootCertificates: CertificateStore
 
-    public var policy: PolicySet
+    public var policy: Policy
 
     @inlinable
-    public init(rootCertificates: CertificateStore, policy: PolicySet) {
+    public init(rootCertificates: CertificateStore, @PolicyBuilder policy: () throws -> Policy) rethrows {
         self.rootCertificates = rootCertificates
-        self.policy = policy
+        self.policy = try policy()
     }
 
     public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((String) -> Void)? = nil) async -> VerificationResult {
