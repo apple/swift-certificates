@@ -60,7 +60,7 @@ struct SEC1PrivateKey: DERImplicitlyTaggable, PEMRepresentable {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let version = try Int(derEncoded: &nodes)
             guard 1 == version else {
-                throw ASN1Error.invalidASN1Object(reason: "Invalid version")
+                throw ASN1Error.invalidASN1Object(reason: "Invalid version \(version)")
             }
 
             let privateKey = try ASN1OctetString(derEncoded: &nodes)

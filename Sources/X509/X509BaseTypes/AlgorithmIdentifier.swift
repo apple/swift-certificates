@@ -130,7 +130,7 @@ extension AlgorithmIdentifier {
     )
 
     @usableFromInline
-    static let rsaPublicKey = AlgorithmIdentifier(
+    static let rsaKey = AlgorithmIdentifier(
         algorithm: .AlgorithmIdentifier.rsaEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 

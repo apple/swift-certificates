@@ -226,12 +226,24 @@ extension Certificate.PrivateKey {
             self = try .init(_CryptoExtras._RSA.Signing.PrivateKey.init(derRepresentation: pemDocument.derBytes))
             
         case Self.pemDiscriminatorForSEC1PrivateKey:
-            let parsed = try SEC1PrivateKey(derEncoded: pemDocument.derBytes)
-            self = try .init(algorithm: parsed.algorithm, rawEncodedPrivateKey: parsed.privateKey.bytes)
+            let sec1 = try SEC1PrivateKey(derEncoded: pemDocument.derBytes)
+            self = try .init(ecdsaAlgorithm: sec1.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
             
         case Self.pemDiscriminatorForPKCS8PrivateKey:
-            let parsed = try PKCS8PrivateKey(derEncoded: pemDocument.derBytes)
-            self = try .init(algorithm: parsed.algorithm, rawEncodedPrivateKey: parsed.privateKey.privateKey.bytes)
+            let pkcs8 = try PKCS8PrivateKey(derEncoded: pemDocument.derBytes)
+            switch pkcs8.algorithm {
+            case .ecdsaP256, .ecdsaP384, .ecdsaP521:
+                let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
+                if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
+                    throw ASN1Error.invalidASN1Object(reason: "algorithm miss match. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)")
+                }
+                self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
+                
+            case .rsaKey:
+                self = try .init(_CryptoExtras._RSA.Signing.PrivateKey(derRepresentation: pkcs8.privateKey.bytes))
+            default:
+                throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm as Any)")
+            }
             
         default:
             throw ASN1Error.invalidPEMDocument(
@@ -241,8 +253,8 @@ extension Certificate.PrivateKey {
     }
     
     @inlinable
-    init(algorithm: AlgorithmIdentifier?, rawEncodedPrivateKey: ArraySlice<UInt8>) throws {
-        switch algorithm {
+    init(ecdsaAlgorithm: AlgorithmIdentifier?, rawEncodedPrivateKey: ArraySlice<UInt8>) throws {
+        switch ecdsaAlgorithm {
         case .some(.ecdsaP256):
             self = try .init(P256.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
         case .some(.ecdsaP384):
@@ -250,7 +262,7 @@ extension Certificate.PrivateKey {
         case .some(.ecdsaP521):
             self = try .init(P521.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
         default:
-            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(algorithm as Any)")
+            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(ecdsaAlgorithm as Any)")
         }
     }
     

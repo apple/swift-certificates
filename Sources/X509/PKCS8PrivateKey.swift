@@ -57,7 +57,7 @@ struct PKCS8PrivateKey: DERImplicitlyTaggable {
     var algorithm: AlgorithmIdentifier
 
     @usableFromInline
-    var privateKey: SEC1PrivateKey
+    var privateKey: ASN1OctetString
 
     @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
@@ -73,29 +73,14 @@ struct PKCS8PrivateKey: DERImplicitlyTaggable {
             // We ignore the attributes
             _ = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { _ in }
 
-            let sec1PrivateKeyNode = try DER.parse(privateKeyBytes.bytes)
-            let sec1PrivateKey = try SEC1PrivateKey(derEncoded: sec1PrivateKeyNode)
-            if let innerAlgorithm = sec1PrivateKey.algorithm, innerAlgorithm != algorithm {
-                throw ASN1Error.invalidASN1Object(reason: "Mismatched algorithms")
-            }
-
-            return try .init(algorithm: algorithm, privateKey: sec1PrivateKey)
+            return try .init(algorithm: algorithm, privateKey: privateKeyBytes)
         }
     }
 
     @inlinable
-    init(algorithm: AlgorithmIdentifier, privateKey: SEC1PrivateKey) throws {
+    init(algorithm: AlgorithmIdentifier, privateKey: ASN1OctetString) throws {
         self.privateKey = privateKey
         self.algorithm = algorithm
-    }
-
-    @inlinable
-    init(algorithm: AlgorithmIdentifier, privateKey: [UInt8], publicKey: [UInt8]) {
-        self.algorithm = algorithm
-
-        // We nil out the private key here. I don't really know why we do this, but OpenSSL does, and it seems
-        // safe enough to do: it certainly avoids the possibility of disagreeing on what it is!
-        self.privateKey = SEC1PrivateKey(privateKey: privateKey, algorithm: nil, publicKey: publicKey)
     }
 
     @inlinable

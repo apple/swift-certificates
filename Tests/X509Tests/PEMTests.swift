@@ -100,4 +100,16 @@ final class PEMTests: XCTestCase {
         try assertPEMRoundtrip(key: P521.Signing.PrivateKey())
         try assertPEMRoundtrip(key: _RSA.Signing.PrivateKey(keySize: .bits2048))
     }
+    
+    func testRSAPrivateKey() throws {
+        // generated with "openssl genpkey -algorithm rsa"
+        let rsaKey = try String(contentsOf: XCTUnwrap(Bundle.module.url(forResource: "PEMTestRSACertificate", withExtension: "pem")))
+        let privateKey = try Certificate.PrivateKey(pemEncoded: rsaKey)
+        guard case .rsa = privateKey.backing else {
+            XCTFail("parsed as wrong key type \(privateKey)")
+            return
+        }
+        let privateKeyAfterRoundtrip = try Certificate.PrivateKey(pemDocument: privateKey.serializeAsPEM())
+        XCTAssertEqual(privateKey, privateKeyAfterRoundtrip)
+    }
 }

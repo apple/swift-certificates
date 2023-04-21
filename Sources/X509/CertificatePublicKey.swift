@@ -39,7 +39,7 @@ extension Certificate {
             case .p521PublicKey:
                 let key = try P521.Signing.PublicKey(x963Representation: spki.key.bytes)
                 self.backing = .p521(key)
-            case .rsaPublicKey:
+            case .rsaKey:
                 // To confirm that only the PKCS#1 format is allowed here, we actually attempt to decode the inner key
                 // format. Sadly, Swift Crypto doesn't have a way to accept the raw numbers directly, so we then ask it
                 // to decode as well.
@@ -202,7 +202,7 @@ extension SubjectPublicKeyInfo {
             algorithmIdentifier = .p521PublicKey
             key = .init(bytes: ArraySlice(p521.x963Representation))
         case .rsa(let rsa):
-            algorithmIdentifier = .rsaPublicKey
+            algorithmIdentifier = .rsaKey
             key = .init(bytes: ArraySlice(rsa.pkcs1DERRepresentation))
         }
 
