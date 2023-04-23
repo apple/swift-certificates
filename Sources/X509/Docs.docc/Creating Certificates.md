@@ -76,7 +76,7 @@ Just as the subject name identifies the entity to whom the subject is being issu
 issued the certificate. In particular, the issuer name should be exactly equivalent to the subject name in the issuing entity's
 certificate.
 
-If we were creating a non-self-signed certificate, we'd set `issuerName` equal to ``Certificate/issuer`` from the parent
+If we were creating a non-self-signed certificate, we'd set `issuerName` equal to ``Certificate/subject`` from the parent
 certificate. For self-signed certificates, the issuer and the subject are identical, so we can set `issuerName = subjectName`.
 
 ### Extensions
