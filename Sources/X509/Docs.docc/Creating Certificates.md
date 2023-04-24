@@ -59,7 +59,7 @@ certificate to be valid for a year, making the "not valid after" date `now.addin
 
 ### Subject Name
 
-The subject name identifies the the entity to whom the certificate is being issued. This is a hierarchical name type called a
+The subject name identifies the entity to whom the certificate is being issued. This is a hierarchical name type called a
 ``DistinguishedName``. The full complexity of distinguished names is tackled in the ``DistinguishedName`` API documentation,
 but for our use-case it's sufficient to know that we don't need to set anything other than the common name. Additionally, in
 all modern use-cases the common name is nothing more than an identifier, so we can set it to whatever we like.
