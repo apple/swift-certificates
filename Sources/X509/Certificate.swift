@@ -326,5 +326,6 @@ extension DER.Serializer {
 }
 
 extension Certificate: PEMRepresentable {
-    public static let defaultPEMDiscriminator: String = "CERTIFICATE"
+    @inlinable
+    public static var defaultPEMDiscriminator: String { "CERTIFICATE" }
 }

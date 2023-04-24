@@ -205,14 +205,14 @@ extension Certificate.PrivateKey {
 
 @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 extension Certificate.PrivateKey {
-    @usableFromInline
-    static let pemDiscriminatorForRSAPrivateKey = "RSA PRIVATE KEY"
+    @inlinable
+    static var pemDiscriminatorForRSAPrivateKey: String { "RSA PRIVATE KEY" }
     
-    @usableFromInline
-    static let pemDiscriminatorForSEC1PrivateKey = "EC PRIVATE KEY"
+    @inlinable
+    static var pemDiscriminatorForSEC1PrivateKey: String { "EC PRIVATE KEY" }
     
-    @usableFromInline
-    static let pemDiscriminatorForPKCS8PrivateKey = "PRIVATE KEY"
+    @inlinable
+    static var pemDiscriminatorForPKCS8PrivateKey: String { "PRIVATE KEY" }
     
     @inlinable
     public init(pemEncoded: String) throws {
@@ -235,14 +235,14 @@ extension Certificate.PrivateKey {
             case .ecdsaP256, .ecdsaP384, .ecdsaP521:
                 let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
                 if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
-                    throw ASN1Error.invalidASN1Object(reason: "algorithm miss match. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)")
+                    throw ASN1Error.invalidASN1Object(reason: "algorithm missmatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)")
                 }
                 self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
                 
             case .rsaKey:
                 self = try .init(_CryptoExtras._RSA.Signing.PrivateKey(derRepresentation: pkcs8.privateKey.bytes))
             default:
-                throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm as Any)")
+                throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm)")
             }
             
         default:

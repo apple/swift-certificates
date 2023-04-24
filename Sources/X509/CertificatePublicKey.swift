@@ -289,8 +289,8 @@ extension _RSA.Signing.PublicKey {
 }
 
 extension Certificate.PublicKey {
-    @usableFromInline
-    static let pemDiscriminatorForPublicKey = "PUBLIC KEY"
+    @inlinable
+    static var pemDiscriminatorForPublicKey: String { "PUBLIC KEY" }
     
     @inlinable
     public init(pemEncoded: String) throws {
