@@ -11,7 +11,7 @@ X.509 certificate.
 ## Parsing
 
 Certificates are commonly provided in two formats: PEM and DER. The two formats are closely
-related. PEM stands for "Private Enhanced Mail", and a PEM certificate commonly looks like
+related. PEM stands for "Privacy Enhanced Mail", and a PEM certificate commonly looks like
 this:
 
 ```
