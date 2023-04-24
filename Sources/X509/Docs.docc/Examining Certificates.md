@@ -112,7 +112,7 @@ To decode an extension usually requires examining its ``Certificate/Extension/oi
 for the ``SubjectAlternativeNames``, the typical code would be:
 
 ```swift
-let opaqueSANExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
+let opaqueSanExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
 if let opaqueSanExtension {
     let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
 }
