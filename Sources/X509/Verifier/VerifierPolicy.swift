@@ -118,6 +118,26 @@ extension Optional: VerifierPolicy where Wrapped: VerifierPolicy {
     }
 }
 
+public struct AnyPolicy: VerifierPolicy {
+    @usableFromInline
+    var policy: any VerifierPolicy
+    
+    @inlinable
+    public init(_ policy: some VerifierPolicy) {
+        self.policy = policy
+    }
+    
+    @inlinable
+    public var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] {
+        policy.verifyingCriticalExtensions
+    }
+    
+    @inlinable
+    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+        await policy.chainMeetsPolicyRequirements(chain: chain)
+    }
+}
+
 @resultBuilder
 public struct PolicyBuilder {
     @usableFromInline
@@ -132,6 +152,11 @@ public struct PolicyBuilder {
         mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
             .meetsPolicy
         }
+    }
+    
+    @inlinable
+    public static func buildBlock() -> some VerifierPolicy {
+        Empty()
     }
     
     @usableFromInline
@@ -166,7 +191,39 @@ public struct PolicyBuilder {
         }
     }
     
+    @inlinable
+    public static func buildPartialBlock(first: some VerifierPolicy) -> some VerifierPolicy {
+        first
+    }
     
+    @inlinable
+    public static func buildPartialBlock(accumulated: some VerifierPolicy, next: some VerifierPolicy) -> some VerifierPolicy {
+        Tuple2(first: accumulated, second: next)
+    }
+    
+    @inlinable
+    public static func buildOptional<Policy: VerifierPolicy>(_ component: Optional<Policy>) -> some VerifierPolicy {
+        component
+    }
+    
+    @inlinable
+    public static func buildBlock(_ components: some VerifierPolicy) -> some VerifierPolicy {
+        components
+    }
+    
+    @inlinable
+    public static func buildExpression(_ expression: some VerifierPolicy) -> some VerifierPolicy {
+        expression
+    }
+}
+
+
+
+
+
+
+// MARK: support dynamic policies
+extension PolicyBuilder {
     @usableFromInline
     internal enum Either<First: VerifierPolicy, Second: VerifierPolicy>: VerifierPolicy {
         case first(First)
@@ -194,21 +251,6 @@ public struct PolicyBuilder {
     }
     
     @inlinable
-    public static func buildBlock() -> some VerifierPolicy {
-        Empty()
-    }
-    
-    @inlinable
-    public static func buildPartialBlock(first: some VerifierPolicy) -> some VerifierPolicy {
-        first
-    }
-    
-    @inlinable
-    public static func buildPartialBlock(accumulated: some VerifierPolicy, next: some VerifierPolicy) -> some VerifierPolicy {
-        Tuple2(first: accumulated, second: next)
-    }
-    
-    @inlinable
     internal static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(first component: First) -> Either<First, Second> {
         Either<First, Second>.first(component)
     }
@@ -216,20 +258,5 @@ public struct PolicyBuilder {
     @inlinable
     internal static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(second component: Second) -> Either<First, Second> {
         Either<First, Second>.second(component)
-    }
-    
-    @inlinable
-    public static func buildOptional<Policy: VerifierPolicy>(_ component: Optional<Policy>) -> some VerifierPolicy {
-        component
-    }
-    
-    @inlinable
-    public static func buildBlock(_ components: some VerifierPolicy) -> some VerifierPolicy {
-        components
-    }
-    
-    @inlinable
-    public static func buildExpression(_ expression: some VerifierPolicy) -> some VerifierPolicy {
-        expression
     }
 }
