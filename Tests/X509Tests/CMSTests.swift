@@ -128,8 +128,9 @@ final class CMSTests: XCTestCase {
         issuerPrivateKey: intermediateKey
     )
 
-    static var defaultPolicies: PolicySet {
-        PolicySet(policies: [RFC5280Policy(validationTime: Date())])
+    
+    @PolicyBuilder static var defaultPolicies: some VerifierPolicy {
+        RFC5280Policy(validationTime: Date())
     }
 
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
