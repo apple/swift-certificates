@@ -130,7 +130,7 @@ extension AlgorithmIdentifier {
     )
 
     @usableFromInline
-    static let rsaPublicKey = AlgorithmIdentifier(
+    static let rsaKey = AlgorithmIdentifier(
         algorithm: .AlgorithmIdentifier.rsaEncryption, parameters: try! ASN1Any(erasing: ASN1Null())
     )
 
@@ -231,4 +231,22 @@ extension ASN1ObjectIdentifier.AlgorithmIdentifier {
     static let sha384: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 2]
 
     static let sha512: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 3]
+}
+
+extension AlgorithmIdentifier {
+    @usableFromInline
+    static let ecdsaP256 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.idEcPublicKey,
+        parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp256r1)
+    )
+    @usableFromInline
+    static let ecdsaP384 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.idEcPublicKey,
+        parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp384r1)
+    )
+    @usableFromInline
+    static let ecdsaP521 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.idEcPublicKey,
+        parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp521r1)
+    )
 }
