@@ -65,8 +65,8 @@ struct ECDSASignature: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     init(rawSignatureBytes raw: Data) {
         let half = raw.count / 2
-        let r = Array(raw.prefix(upTo: half))[...]
-        let s = Array(raw.suffix(from: half))[...]
+        let r = ArraySlice(normalisingToASN1IntegerForm: raw.prefix(upTo: half))
+        let s = ArraySlice(normalisingToASN1IntegerForm: raw.suffix(from: half))
 
         self = ECDSASignature(r: r, s: s)
     }
@@ -165,5 +165,17 @@ extension P521.Signing.ECDSASignature {
         } catch {
             return nil
         }
+    }
+}
+
+extension ArraySlice where Element == UInt8 {
+    /// Normalizes a sequence of bytes that represent an unsigned big endian raw integer into the
+    /// form we'd get from decoding an ASN1 integer.
+    ///
+    /// This means we strip leading zero bytes.
+    @inlinable
+    init<Bytes: RandomAccessCollection>(normalisingToASN1IntegerForm bigEndianRawInteger: Bytes) where Bytes.Element == UInt8 {
+        let realBytes = bigEndianRawInteger.drop(while: { $0 == 0 })
+        self = ArraySlice(realBytes)
     }
 }

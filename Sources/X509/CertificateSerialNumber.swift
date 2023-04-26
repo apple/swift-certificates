@@ -70,7 +70,7 @@ extension Certificate {
         @inlinable
         internal init(generator: inout some RandomNumberGenerator) {
             // drop leading zeros as required by the ASN.1 spec for INTEGERs
-            self.bytes = generator.bytes(count: 20).drop(while: { $0 == 0 })
+            self.bytes = ArraySlice(normalisingToASN1IntegerForm: generator.bytes(count: 20))
         }
     }
 }
