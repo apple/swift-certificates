@@ -233,5 +233,32 @@ final class SignatureTests: XCTestCase {
     func testHashFunctionMismatch_secureEnclaveP256_sha512WithRSAEncryption() throws {
         try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: false)
     }
+
+    func testECDSASignatureCorrectlyStripsLeadingZerosFromRawByteRepresentation() throws {
+        // We're testing a round-trip logic here, ensuring that the ECDSA signature correctly round-trips.
+        func testECDSASignatureRoundTrip(rawSignatureBytes: [UInt8]) throws {
+            let sig = ECDSASignature(rawSignatureBytes: Data(rawSignatureBytes))
+
+            var serializer = DER.Serializer()
+            try serializer.serialize(sig)
+            let serializedBytes = serializer.serializedBytes
+
+            let parsed = try ECDSASignature(derEncoded: serializedBytes)
+            XCTAssertEqual(sig, parsed)
+        }
+
+        try testECDSASignatureRoundTrip(rawSignatureBytes: [
+            0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
+            0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        ])
+        try testECDSASignatureRoundTrip(rawSignatureBytes: [
+            0xFF, 0xFF, 0x01, 0x02, 0x03, 0x04,
+            0x05, 0x06, 0x07, 0x08, 0x09, 0x0a
+        ])
+        try testECDSASignatureRoundTrip(rawSignatureBytes: [
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x05, 0x06, 0x07, 0x08, 0x09, 0x0a
+        ])
+    }
     #endif
 }
