@@ -324,3 +324,8 @@ extension DER.Serializer {
     }
 
 }
+
+extension Certificate: PEMRepresentable {
+    @inlinable
+    public static var defaultPEMDiscriminator: String { "CERTIFICATE" }
+}

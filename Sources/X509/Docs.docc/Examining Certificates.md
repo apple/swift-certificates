@@ -11,7 +11,7 @@ X.509 certificate.
 ## Parsing
 
 Certificates are commonly provided in two formats: PEM and DER. The two formats are closely
-related. PEM stands for "Private Enhanced Mail", and a PEM certificate commonly looks like
+related. PEM stands for "Privacy Enhanced Mail", and a PEM certificate commonly looks like
 this:
 
 ```
@@ -112,7 +112,7 @@ To decode an extension usually requires examining its ``Certificate/Extension/oi
 for the ``SubjectAlternativeNames``, the typical code would be:
 
 ```swift
-let opaqueSANExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
+let opaqueSanExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
 if let opaqueSanExtension {
     let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
 }
