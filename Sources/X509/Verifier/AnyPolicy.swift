@@ -23,8 +23,8 @@ public struct AnyPolicy: VerifierPolicy {
     }
     
     @inlinable
-    public init(@PolicyBuilder makePolicy: () -> some VerifierPolicy) {
-        self.init(makePolicy())
+    public init(@PolicyBuilder makePolicy: () throws -> some VerifierPolicy) rethrows {
+        self.init(try makePolicy())
     }
     
     @inlinable

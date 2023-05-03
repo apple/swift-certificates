@@ -97,35 +97,54 @@ extension PolicyBuilder {
 
 
 // MARK: if
-extension Optional: VerifierPolicy where Wrapped: VerifierPolicy {
-    @inlinable
-    public var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] {
-        self?.verifyingCriticalExtensions ?? []
+extension PolicyBuilder {
+    @usableFromInline
+    struct WrappedOptional<Wrapped>: VerifierPolicy where Wrapped: VerifierPolicy {
+        @usableFromInline
+        var wrapped: Wrapped?
+        
+        @inlinable
+        init(_ wrapped: Wrapped?) {
+            self.wrapped = wrapped
+        }
+        
+        @inlinable
+        var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] {
+            self.wrapped?.verifyingCriticalExtensions ?? []
+        }
+        
+        @inlinable
+        mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+            await self.wrapped?.chainMeetsPolicyRequirements(chain: chain) ?? .meetsPolicy
+        }
     }
     
     @inlinable
-    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        await self?.chainMeetsPolicyRequirements(chain: chain) ?? .meetsPolicy
-    }
-}
- 
-extension PolicyBuilder {
-    @inlinable
     public static func buildOptional<Policy: VerifierPolicy>(_ component: Optional<Policy>) -> some VerifierPolicy {
-        component
+        WrappedOptional(component)
     }
 }
 
 // MARK: if/else and switch
 extension PolicyBuilder {
-    @usableFromInline
-    internal enum Either<First: VerifierPolicy, Second: VerifierPolicy>: VerifierPolicy {
-        case first(First)
-        case second(Second)
+    public struct Either<First: VerifierPolicy, Second: VerifierPolicy>: VerifierPolicy {
+        @usableFromInline
+        enum Storage {
+            case first(First)
+            case second(Second)
+        }
+        
+        @usableFromInline
+        var storage: Storage
+        
+        @inlinable
+        init(storage: Storage) {
+            self.storage = storage
+        }
         
         @inlinable
         public var verifyingCriticalExtensions: [ASN1ObjectIdentifier] {
-            switch self {
+            switch self.storage {
             case .first(let first): return first.verifyingCriticalExtensions
             case .second(let second): return second.verifyingCriticalExtensions
             }
@@ -133,24 +152,51 @@ extension PolicyBuilder {
         
         @inlinable
         public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-            switch self {
+            switch self.storage {
             case .first(var first):
-                defer { self = .first(first) }
+                defer { self.storage = .first(first) }
                 return await first.chainMeetsPolicyRequirements(chain: chain)
             case .second(var second):
-                defer { self = .second(second) }
+                defer { self.storage = .second(second) }
                 return await second.chainMeetsPolicyRequirements(chain: chain)
             }
         }
     }
     
     @inlinable
-    internal static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(first component: First) -> Either<First, Second> {
-        Either<First, Second>.first(component)
+    public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(first component: First) -> Either<First, Second> {
+        Either<First, Second>(storage: .first(component))
     }
     
     @inlinable
-    internal static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(second component: Second) -> Either<First, Second> {
-        Either<First, Second>.second(component)
+    public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(second component: Second) -> Either<First, Second> {
+        Either<First, Second>(storage: .second(component))
+    }
+}
+
+extension PolicyBuilder {
+    @usableFromInline
+    struct CachedVerifyingCriticalExtensions<Wrapped: VerifierPolicy>: VerifierPolicy {
+        @usableFromInline
+        let verifyingCriticalExtensions: [ASN1ObjectIdentifier]
+        
+        @usableFromInline
+        var wrapped: Wrapped
+        
+        @inlinable
+        init(wrapped: Wrapped) {
+            self.verifyingCriticalExtensions = wrapped.verifyingCriticalExtensions
+            self.wrapped = wrapped
+        }
+        
+        @inlinable
+        mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+            await wrapped.chainMeetsPolicyRequirements(chain: chain)
+        }
+    }
+    
+    @inlinable
+    public static func buildFinalResult(_ component: some VerifierPolicy) -> some VerifierPolicy {
+        CachedVerifyingCriticalExtensions(wrapped: component)
     }
 }
