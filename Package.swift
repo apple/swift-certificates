@@ -52,6 +52,7 @@ let package = Package(
                 .copy("OCSP Test Resources/www.apple.com.der"),
                 .copy("OCSP Test Resources/www.apple.com.ocsp-response.der"),
                 .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
+                .copy("PEMTestRSACertificate.pem"),
             ]),
     ]
 )
@@ -62,7 +63,7 @@ let package = Package(
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
     package.dependencies += [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
-        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.7.0")),
+        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.8.0")),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ]
 } else {

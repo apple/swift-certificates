@@ -41,4 +41,13 @@ This product contains test data derived from Webpki.
     * https://github.com/briansmith/webpki/blob/main/LICENSE
   * HOMEPAGE:
     * https://github.com/briansmith/webpki/
+    
+---
+
+This product contains derivations of various ASN1 types from SwiftASN1.
+
+  * LICENSE (Apache License 2.0):
+    * https://www.apache.org/licenses/LICENSE-2.0
+  * HOMEPAGE:
+    * https://github.com/apple/swift-asn1
 

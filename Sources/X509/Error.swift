@@ -127,6 +127,20 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
             )
         )
     }
+    
+    /// A digest private key isn't supported
+    /// - Parameter reason: A detailed reason indicating the unsupported private key.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedPrivateKey``.
+    @inline(never)
+    public static func unsupportedPrivateKey(
+        reason: String, file: String = #fileID, line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .unsupportedPrivateKey, reason: reason, file: file, line: line
+            )
+        )
+    }
 }
 
 extension CertificateError {
@@ -142,6 +156,7 @@ extension CertificateError {
             case invalidSignatureForCertificate
             case incorrectOIDForExtension
             case unsupportedDigestAlgorithm
+            case unsupportedPrivateKey
         }
 
         fileprivate var backingCode: BackingCode
@@ -164,6 +179,9 @@ extension CertificateError {
 
         /// The digest algorithm isn't supported.
         public static let unsupportedDigestAlgorithm = ErrorCode(.unsupportedDigestAlgorithm)
+        
+        /// The private key isn't supported.
+        public static let unsupportedPrivateKey = ErrorCode(.unsupportedPrivateKey)
 
         public var description: String {
             return String(describing: self.backingCode)
