@@ -29,7 +29,7 @@ final class CSRTests: XCTestCase {
             SubjectAlternativeNames([.dnsName("example.com")])
         }
         let extensionRequest = ExtensionRequest(extensions: extensions)
-        let attributes = CertificateSigningRequest.Attributes(
+        let attributes = try CertificateSigningRequest.Attributes(
             [.init(extensionRequest)]
         )
         let csr = try CertificateSigningRequest(

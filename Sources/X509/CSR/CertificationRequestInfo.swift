@@ -45,6 +45,12 @@ extension CertificationRequestInfo: Hashable { }
 
 extension CertificationRequestInfo: Sendable { }
 
+// CertificationRequestInfo ::= SEQUENCE {
+//      version       INTEGER { v1(0) } (v1,...),
+//      subject       Name,
+//      subjectPKInfo SubjectPublicKeyInfo{{ PKInfoAlgorithms }},
+//      attributes    [0] Attributes{{ CRIAttributes }}
+// }
 extension CertificationRequestInfo: DERImplicitlyTaggable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {

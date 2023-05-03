@@ -57,8 +57,8 @@ extension CertificateSigningRequest.Attribute {
     /// - parameters:
     ///     - extensionRequest: The ``ExtensionRequest`` to wrap.
     @inlinable
-    public init(_ extensionRequest: ExtensionRequest) {
-        self.init(oid: .CSRAttributes.extensionRequest, values: [try! ASN1Any(erasing: ExtensionRequestAttribute(extensionRequest))])
+    public init(_ extensionRequest: ExtensionRequest) throws {
+        self.init(oid: .CSRAttributes.extensionRequest, values: [try ASN1Any(erasing: ExtensionRequestAttribute(extensionRequest))])
     }
 }
 

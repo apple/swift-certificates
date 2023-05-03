@@ -57,6 +57,10 @@ extension CertificateSigningRequest.Attribute: CustomStringConvertible {
     }
 }
 
+// Attribute { ATTRIBUTE:IOSet } ::= SEQUENCE {
+//      type   ATTRIBUTE.&id({IOSet}),
+//      values SET SIZE(1..MAX) OF ATTRIBUTE.&Type({IOSet}{@type})
+// }
 extension CertificateSigningRequest.Attribute: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {

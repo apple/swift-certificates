@@ -18,11 +18,10 @@ extension CertificateSigningRequest {
     /// CSRs are conceptually capable of being evolved using version numbers. In practice,
     /// ``v1`` is the only version in common use.
     public struct Version {
-        @usableFromInline
-        var rawValue: Int
+        public var rawValue: Int
 
         @inlinable
-        init(rawValue: Int) {
+        public init(rawValue: Int) {
             self.rawValue = rawValue
         }
 
