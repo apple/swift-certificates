@@ -112,8 +112,8 @@ final class PolicyBuilderTests: XCTestCase {
         version: .v3,
         serialNumber: .init(),
         publicKey: .init(privateKey.publicKey),
-        notValidBefore: .now - .days(356),
-        notValidAfter: .now + .days(356),
+        notValidBefore: Date() - .days(356),
+        notValidAfter: Date() + .days(356),
         issuer: try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
