@@ -102,6 +102,21 @@ extension Certificate.PublicKey {
         return self.isValidSignature(signature, for: certificate.tbsCertificateBytes, signatureAlgorithm: certificate.signatureAlgorithm)
     }
 
+    /// Confirms that `signature` is a valid signature for `csr`, created by the
+    /// private key associated with this public key.
+    ///
+    /// This function abstracts over the need to unwrap both the signature and public key to
+    /// confirm they're of matching type before we validate the signature.
+    ///
+    /// - Parameters:
+    ///   - signature: The signature to validate against `csr`.
+    ///   - csr: The ``CertificateSigningRequest`` to validate against `signature`.
+    /// - Returns: Whether the signature was produced by signing `csr` with the private key corresponding to this public key.
+    @inlinable
+    public func isValidSignature(_ signature: Certificate.Signature, for csr: CertificateSigningRequest) -> Bool {
+        return self.isValidSignature(signature, for: csr.infoBytes, signatureAlgorithm: csr.signatureAlgorithm)
+    }
+
     @inlinable
     internal func isValidSignature<Bytes: DataProtocol>(_ signature: Certificate.Signature, for bytes: Bytes, signatureAlgorithm: Certificate.SignatureAlgorithm) -> Bool {
         let digest: Digest
