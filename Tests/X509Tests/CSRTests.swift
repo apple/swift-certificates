@@ -426,6 +426,11 @@ final class CSRTests: XCTestCase {
 
         let setified = Set(options)
         XCTAssertEqual(setified.count, 1)
+
+        XCTAssertNotEqual(
+            CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 5)]),
+            CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 5), try ASN1Any(erasing: 10)])
+        )
     }
 
     func testCSRAttributesAreOrderIndependentForEqualityAndHashing() throws {
@@ -444,6 +449,11 @@ final class CSRTests: XCTestCase {
 
         let setified = Set(options)
         XCTAssertEqual(setified.count, 1)
+
+        XCTAssertNotEqual(
+            CertificateSigningRequest.Attributes(attributes.prefix(1)),
+            CertificateSigningRequest.Attributes(attributes.prefix(2))
+        )
     }
 }
 

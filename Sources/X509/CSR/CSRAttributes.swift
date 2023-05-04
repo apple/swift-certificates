@@ -60,6 +60,8 @@ extension CertificateSigningRequest {
 extension CertificateSigningRequest.Attributes: Hashable {
     @inlinable
     public static func ==(lhs: CertificateSigningRequest.Attributes, rhs: CertificateSigningRequest.Attributes) -> Bool {
+        if lhs.count != rhs.count { return false }
+        
         for element in lhs {
             if !rhs.contains(element) { return false }
         }
