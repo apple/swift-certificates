@@ -141,6 +141,34 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
             )
         )
     }
+
+    /// A CSR attribute has the wrong OID.
+    /// - Parameter reason: A detailed reason detailing the attribute and OID that didn't match.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/incorrectOIDForAttribute``.
+    @inline(never)
+    public static func incorrectOIDForAttribute(
+        reason: String, file: String = #fileID, line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .incorrectOIDForAttribute, reason: reason, file: file, line: line
+            )
+        )
+    }
+
+    /// A CSR attribute is invalid.
+    /// - Parameter reason: A detailed reason detailing the attribute that is invalid.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/invalidCSRAttribute``.
+    @inline(never)
+    public static func invalidCSRAttribute(
+        reason: String, file: String = #fileID, line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .invalidCSRAttribute, reason: reason, file: file, line: line
+            )
+        )
+    }
 }
 
 extension CertificateError {
@@ -157,6 +185,8 @@ extension CertificateError {
             case incorrectOIDForExtension
             case unsupportedDigestAlgorithm
             case unsupportedPrivateKey
+            case incorrectOIDForAttribute
+            case invalidCSRAttribute
         }
 
         fileprivate var backingCode: BackingCode
@@ -182,6 +212,12 @@ extension CertificateError {
         
         /// The private key isn't supported.
         public static let unsupportedPrivateKey = ErrorCode(.unsupportedPrivateKey)
+
+        /// An attribute has the wrong OID.
+        public static let incorrectOIDForAttribute = ErrorCode(.incorrectOIDForAttribute)
+
+        /// A CSR attribute is invalid.
+        public static let invalidCSRAttribute = ErrorCode(.invalidCSRAttribute)
 
         public var description: String {
             return String(describing: self.backingCode)

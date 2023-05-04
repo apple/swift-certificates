@@ -51,3 +51,11 @@ This product contains derivations of various ASN1 types from SwiftASN1.
   * HOMEPAGE:
     * https://github.com/apple/swift-asn1
 
+---
+
+This product contains test vectors from pyca/cryptography.
+
+  * LICENSE (Apache License 2.0):
+    * https://github.com/pyca/cryptography/blob/main/LICENSE.APACHE
+  * HOMEPAGE:
+    * https://github.com/pyca/cryptography
