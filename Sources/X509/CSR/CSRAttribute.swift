@@ -65,7 +65,8 @@ extension CertificateSigningRequest.Attribute: Hashable {
         hasher.combine(self.oid)
 
         // This achieves order-independent hashing without
-        // having to sort anything.
+        // having to sort anything. That relies on the use of XOR,
+        // but any associative operation would do.
         var hash = 0
         for element in self.values {
             var newHasher = Hasher()
