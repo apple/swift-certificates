@@ -57,7 +57,30 @@ extension CertificateSigningRequest {
     }
 }
 
-extension CertificateSigningRequest.Attributes: Hashable { }
+extension CertificateSigningRequest.Attributes: Hashable {
+    @inlinable
+    public static func ==(lhs: CertificateSigningRequest.Attributes, rhs: CertificateSigningRequest.Attributes) -> Bool {
+        for element in lhs {
+            if !rhs.contains(element) { return false }
+        }
+
+        return true
+    }
+
+    @inlinable
+    public func hash(into hasher: inout Hasher) {
+        // This achieves order-independent hashing without
+        // having to sort anything.
+        var hash = 0
+        for element in self {
+            var newHasher = Hasher()
+            element.hash(into: &newHasher)
+            hash ^= newHasher.finalize()
+        }
+
+        hasher.combine(hash)
+    }
+}
 
 extension CertificateSigningRequest.Attributes: Sendable { }
 

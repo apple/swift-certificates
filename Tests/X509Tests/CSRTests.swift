@@ -409,4 +409,81 @@ final class CSRTests: XCTestCase {
             CertificateSigningRequest.Attribute(oid: [4, 3, 2, 1], values: [try ASN1Any(erasing: 6)])
         )
     }
+
+    func testCSRAttributeValuesAreOrderIndependentForEqualityAndHashing() throws {
+        let values: [ASN1Any] = [
+            try ASN1Any(erasing: 5),
+            try ASN1Any(erasing: 10),
+            try ASN1Any(erasing: 15),
+        ]
+
+        let options = values.permutations.map { CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: $0) }
+
+        for option in options {
+            // Everything is equal.
+            XCTAssertTrue(options.allSatisfy({ $0 == option }))
+        }
+
+        let setified = Set(options)
+        XCTAssertEqual(setified.count, 1)
+    }
+
+    func testCSRAttributesAreOrderIndependentForEqualityAndHashing() throws {
+        let attributes: [CertificateSigningRequest.Attribute] = [
+            CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 5)]),
+            CertificateSigningRequest.Attribute(oid: [4, 3, 2, 1], values: [try ASN1Any(erasing: 10)]),
+            CertificateSigningRequest.Attribute(oid: [1, 1, 1, 1], values: [try ASN1Any(erasing: 5)]),
+        ]
+
+        let options = attributes.permutations.map { CertificateSigningRequest.Attributes($0) }
+
+        for option in options {
+            // Everything is equal.
+            XCTAssertTrue(options.allSatisfy({ $0 == option }))
+        }
+
+        let setified = Set(options)
+        XCTAssertEqual(setified.count, 1)
+    }
+}
+
+extension RandomAccessCollection {
+    var permutations: [[Element]] {
+        // A more efficient implementation would be implemented as a Sequence, but for tests this isn't important
+        // enough.
+        //
+        // For the curious, this is an implementation of QuickPerm in Swift.
+        var permutations: [[Element]] = []
+        var working = Array(self)
+
+        // Trivial first permutation is the current one.
+        permutations.append(working)
+
+        let n = working.count
+        var p = Array(0...n)
+        var i = 1
+
+        while i < n {
+            p[i] -= 1
+
+            let j: Int
+            if i % 2 == 1 {
+                j = p[i]
+            } else {
+                j = 0
+            }
+
+            working.swapAt(i, j)
+            permutations.append(working)
+
+            i = 1
+
+            while p[i] == 0 {
+                p[i] = i
+                i += 1
+            }
+        }
+
+        return permutations
+    }
 }
