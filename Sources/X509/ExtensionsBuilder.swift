@@ -97,13 +97,6 @@ public struct ExtensionsBuilder {
     }
 }
 
-
-func foo() -> Certificate.Extensions {
-    try! .init {
-        
-    }
-}
-
 /// Conforming types are capable of being erased into ``Certificate/Extension`` values.
 ///
 /// Note that for most extension types, the returned ``Certificate/Extension`` should have its
