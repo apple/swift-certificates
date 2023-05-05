@@ -283,4 +283,13 @@ final class PolicyBuilderTests: XCTestCase {
             }
         }
     }
+    
+    func testAnyPolicyTypeIsPreserved() {
+        // tested at compile time
+        let _: Verifier<AnyPolicy> = Verifier(rootCertificates: CertificateStore()) {
+            AnyPolicy {
+                RFC5280Policy(validationTime: Date())
+            }
+        }
+    }
 }

@@ -13,15 +13,33 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
+
+/// ``AnyPolicy`` can be used to erase the concrete type of some ``VerifierPolicy``.
+///  Only use ``AnyPolicy`` if type erasure is necessary.
+///  Instead try to use conditional inclusion of different policies using ``PolicyBuilder``.
+///
+/// Use ``AnyPolicy`` at the top level during construction of a ``Verifier`` to get a ``Verifier`` of type `Verifier<AnyPolicy>` e.g.:
+/// ```swift
+/// let verifier = Verifier(rootCertificates: CertificateStore()) {
+///     AnyPolicy {
+///         RFC5280Policy(validationTime: Date())
+///     }
+/// }
+/// ```
 public struct AnyPolicy: VerifierPolicy {
     @usableFromInline
     var policy: any VerifierPolicy
     
+    
     @inlinable
+    /// Erases the type of some ``VerifierPolicy`` to ``AnyPolicy``.
+    /// - Parameter policy: the concrete ``VerifierPolicy``
     public init(_ policy: some VerifierPolicy) {
         self.policy = policy
     }
     
+    /// Erases the type of some ``VerifierPolicy`` to ``AnyPolicy``.
+    /// - Parameter policy: the ``VerifierPolicy`` constructed using the ``PolicyBuilder`` DSL.
     @inlinable
     public init(@PolicyBuilder makePolicy: () throws -> some VerifierPolicy) rethrows {
         self.init(try makePolicy())

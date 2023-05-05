@@ -14,19 +14,29 @@
 
 import SwiftASN1
 
+
+
+/// Provides a result-builder style DSL for constructing a ``VerifierPolicy``.
+///
+/// This DSL allows us to construct dynamic ``VerifierPolicy`` at runtime without using type erasure.
+/// The resulting ``VerifierPolicy`` will use the listed policy in the order of declaration to check if a chain meets all policies.
+/// For Example, a simple ``Verifier`` with a simple policy can be constructed like this:
+/// ```swift
+/// let verifier = Verifier(rootCertificates: roots) {
+///     RFC5280Policy(validationTime: now)
+///     OCSPVerifierPolicy(failureMode: .soft, requester: requester, validationTime: now)
+/// }
+/// ```
 @resultBuilder
-public struct PolicyBuilder {
+public struct PolicyBuilder {}
+
+
+extension PolicyBuilder {
     @inlinable
-    public static func buildBlock(_ components: some VerifierPolicy) -> some VerifierPolicy {
-        components
-    }
-    
-    @inlinable
-    public static func buildExpression(_ expression: some VerifierPolicy) -> some VerifierPolicy {
-        expression
+    public static func buildLimitedAvailability<Policy: VerifierPolicy>(_ component: Policy) -> Policy {
+        component
     }
 }
-
 
 // MARK: empty policy
 extension PolicyBuilder {
@@ -85,7 +95,7 @@ extension PolicyBuilder {
     }
     
     @inlinable
-    public static func buildPartialBlock(first: some VerifierPolicy) -> some VerifierPolicy {
+    public static func buildPartialBlock<Policy: VerifierPolicy>(first: Policy) -> Policy {
         first
     }
     
@@ -120,14 +130,15 @@ extension PolicyBuilder {
     }
     
     @inlinable
-    public static func buildOptional<Policy: VerifierPolicy>(_ component: Optional<Policy>) -> some VerifierPolicy {
+    public static func buildOptional(_ component: Optional<some VerifierPolicy>) -> some VerifierPolicy {
         WrappedOptional(component)
     }
 }
 
 // MARK: if/else and switch
 extension PolicyBuilder {
-    public struct Either<First: VerifierPolicy, Second: VerifierPolicy>: VerifierPolicy {
+    /// implementation detail of ``PolicyBuilder`` which should not be used outside the implementation of ``PolicyBuilder``.
+    public struct _Either<First: VerifierPolicy, Second: VerifierPolicy>: VerifierPolicy {
         @usableFromInline
         enum Storage {
             case first(First)
@@ -164,13 +175,13 @@ extension PolicyBuilder {
     }
     
     @inlinable
-    public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(first component: First) -> Either<First, Second> {
-        Either<First, Second>(storage: .first(component))
+    public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(first component: First) -> _Either<First, Second> {
+        _Either<First, Second>(storage: .first(component))
     }
     
     @inlinable
-    public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(second component: Second) -> Either<First, Second> {
-        Either<First, Second>(storage: .second(component))
+    public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(second component: Second) -> _Either<First, Second> {
+        _Either<First, Second>(storage: .second(component))
     }
 }
 
@@ -198,5 +209,14 @@ extension PolicyBuilder {
     @inlinable
     public static func buildFinalResult(_ component: some VerifierPolicy) -> some VerifierPolicy {
         CachedVerifyingCriticalExtensions(wrapped: component)
+    }
+    
+    @inlinable
+    public static func buildFinalResult(_ component: AnyPolicy) -> AnyPolicy {
+        func unwrapExistentialAndCache(policy: some VerifierPolicy) -> some VerifierPolicy {
+            CachedVerifyingCriticalExtensions(wrapped: policy)
+        }
+        let cachedPolicy = unwrapExistentialAndCache(policy: component.policy)
+        return AnyPolicy(cachedPolicy)
     }
 }
