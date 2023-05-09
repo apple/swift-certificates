@@ -63,23 +63,18 @@ final class OCSPTests: XCTestCase {
         try assertRoundTrips(ocspRequest)
     }
     
-    // TODO: Make these work.
-    #if false
     func testResponderIDByNameRoundTrips() throws {
-        let id = ASN1.ResponderID.byName(
-            ASN1.DistinguishedName(elements: [
-                RelativeDistinguishedName(elements: [
-                    RFC5280AttributeTypeAndValue(type: .NameAttributes.name,
-                                                      value: .utf8String(.init(contentBytes: [1, 2, 3, 4]))),
-                ])
-            ])
+        let id = ResponderID.byName(
+            try DistinguishedName {
+                CommonName("Responder")
+            }
         )
 
         try self.assertRoundTrips(id)
     }
 
     func testResponderIDByKeyIDRoundTrips() throws {
-        let id = ASN1.ResponderID.byKey(
+        let id = ResponderID.byKey(
             ASN1OctetString(contentBytes: [1, 2, 3, 4])
         )
 
@@ -87,16 +82,13 @@ final class OCSPTests: XCTestCase {
     }
 
     func testResponderIDByNameSerialization() throws {
-        let id = ASN1.ResponderID.byName(
-            ASN1.DistinguishedName(elements: [
-                RelativeDistinguishedName(elements: [
-                    RFC5280AttributeTypeAndValue(type: .NameAttributes.name,
-                                                      value: .utf8String(.init(contentBytes: [1, 2, 3, 4]))),
-                ])
-            ])
+        let id = ResponderID.byName(
+            try DistinguishedName {
+                CommonName("Responder")
+            }
         )
 
-        let expected: [UInt8] = [161, 17, 48, 15, 49, 13, 48, 11, 6, 3, 85, 4, 41, 12, 4, 1, 2, 3, 4]
+        let expected: [UInt8] = [161, 22, 48, 20, 49, 18, 48, 16, 6, 3, 85, 4, 3, 12, 9, 82, 101, 115, 112, 111, 110, 100, 101, 114]
 
         var serializer = DER.Serializer()
         try serializer.serialize(id)
@@ -104,7 +96,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testResponderIDByKeySerialization() throws {
-        let id = ASN1.ResponderID.byKey(
+        let id = ResponderID.byKey(
             ASN1OctetString(contentBytes: [1, 2, 3, 4])
         )
 
@@ -116,22 +108,22 @@ final class OCSPTests: XCTestCase {
     }
 
     func testCertIDRoundTrips() throws {
-        let certID = ASN1.OCSPCertID(
+        let certID = OCSPCertID(
             hashAlgorithm: .p256PublicKey,
             issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
             issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-            serialNumber: [9, 10, 11, 12]
+            serialNumber: .init()
         )
 
         try self.assertRoundTrips(certID)
     }
 
     func testOCSPCertIDSerialization() throws {
-        let certID = ASN1.OCSPCertID(
+        let certID = OCSPCertID(
             hashAlgorithm: .p256PublicKey,
             issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
             issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-            serialNumber: [9, 10, 11, 12]
+            serialNumber: .init(bytes: [9, 10, 11, 12])
         )
 
         let expected: [UInt8] = [
@@ -146,7 +138,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testCRLReasonRoundTrips() throws {
-        let fixtures: [ASN1.CRLReason] = [
+        let fixtures: [CRLReason] = [
             .unspecified,
             .keyCompromise,
             .caCompromise,
@@ -165,7 +157,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testCRLReasionSerialization() throws {
-        let fixtures: [(ASN1.CRLReason, Int)] = [
+        let fixtures: [(CRLReason, Int)] = [
             (.unspecified, 0),
             (.keyCompromise, 1),
             (.caCompromise, 2),
@@ -183,7 +175,7 @@ final class OCSPTests: XCTestCase {
             try serializer.serialize(fixture)
 
             var expected = Array<UInt8>()
-            expected.writeIdentifier(ASN1Identifier.enumerated)
+            expected.writeIdentifier(ASN1Identifier.enumerated, constructed: false)
             expected.append(1)
             expected.append(UInt8(expectedPayload))
             XCTAssertEqual(serializer.serializedBytes, expected)
@@ -191,7 +183,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPRevokedInfoRoundTrips() throws {
-        var revokedInfo = ASN1.OCSPRevokedInfo(
+        var revokedInfo = OCSPRevokedInfo(
             revocationTime: try .init(year: 2021, month: 01, day: 02, hours: 03, minutes: 04, seconds: 05, fractionalSeconds: 0.06),
             revocationReason: nil
         )
@@ -202,7 +194,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPRevokedInfoSerializesWithoutReason() throws {
-        let revokedInfo = ASN1.OCSPRevokedInfo(
+        let revokedInfo = OCSPRevokedInfo(
             revocationTime: try .init(year: 2021, month: 01, day: 02, hours: 03, minutes: 04, seconds: 05, fractionalSeconds: 0.06),
             revocationReason: nil
         )
@@ -214,7 +206,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPRevokedInfoSerializesWithReason() throws {
-        let revokedInfo = ASN1.OCSPRevokedInfo(
+        let revokedInfo = OCSPRevokedInfo(
             revocationTime: try .init(year: 2021, month: 01, day: 02, hours: 03, minutes: 04, seconds: 05, fractionalSeconds: 0.06),
             revocationReason: .cessationOfOperation
         )
@@ -226,10 +218,10 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPCertStatusRoundTrips() throws {
-        let fixtures: [ASN1.OCSPCertStatus] = [
+        let fixtures: [OCSPCertStatus] = [
             .good,
             .revoked(
-                ASN1.OCSPRevokedInfo(
+                OCSPRevokedInfo(
                 revocationTime: try .init(year: 2021, month: 01, day: 02, hours: 03, minutes: 04, seconds: 05, fractionalSeconds: 0.06),
                 revocationReason: .cessationOfOperation)
             ),
@@ -242,7 +234,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPCertStatusGoodSerializes() throws {
-        let value = ASN1.OCSPCertStatus.good
+        let value = OCSPCertStatus.good
         let expected: [UInt8] = [128, 0]
 
         var serializer = DER.Serializer()
@@ -251,8 +243,8 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPCertStatusRevokedSerializes() throws {
-        let value = ASN1.OCSPCertStatus.revoked(
-            ASN1.OCSPRevokedInfo(
+        let value = OCSPCertStatus.revoked(
+            OCSPRevokedInfo(
             revocationTime: try .init(year: 2021, month: 01, day: 02, hours: 03, minutes: 04, seconds: 05, fractionalSeconds: 0.06),
             revocationReason: .cessationOfOperation)
         )
@@ -264,7 +256,7 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPCertStatusUnknownSerializes() throws {
-        let value = ASN1.OCSPCertStatus.unknown
+        let value = OCSPCertStatus.unknown
         let expected: [UInt8] = [130, 0]
 
         var serializer = DER.Serializer()
@@ -272,49 +264,14 @@ final class OCSPTests: XCTestCase {
         XCTAssertEqual(serializer.serializedBytes, expected)
     }
 
-    func testRFC5280ExtensionRoundTrip() throws {
-        let fixtures: [ASN1.RFC5280Extension] = [
-            .init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8])),
-            .init(extensionID: [2, 10, 11, 12], critical: false, extensionValue: .init(contentBytes: [13, 14, 15, 16])),
-        ]
-
-        for fixture in fixtures {
-            try self.assertRoundTrips(fixture)
-        }
-    }
-
-    func testRFC5280ExtensionEncodesCorrectly() throws {
-        let fixtures: [(ASN1.RFC5280Extension, [UInt8])] = [
-            (
-                .init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8])),
-                [48, 14, 6, 3, 42, 3, 4, 1, 1, 255, 4, 4, 5, 6, 7, 8]
-            ),
-            (
-                .init(extensionID: [2, 10, 11, 12], critical: false, extensionValue: .init(contentBytes: [13, 14, 15, 16])),
-                [48, 11, 6, 3, 90, 11, 12, 4, 4, 13, 14, 15, 16]
-            ),
-        ]
-
-        for (value, expected) in fixtures {
-            var serializer = DER.Serializer()
-            try serializer.serialize(value)
-            XCTAssertEqual(serializer.serializedBytes, expected)
-        }
-    }
-
-    func testRFC5280ExtensionRejectsParsingFalse() throws {
-        let bytes: [UInt8] = [48, 14, 6, 3, 42, 3, 4, 1, 1, 0, 4, 4, 5, 6, 7, 8]
-        XCTAssertThrowsError(try ASN1.RFC5280Extension(derEncoded: bytes))
-    }
-
     func testOCSPSingleResponseRoundTrips() throws {
-        let fixtures: [ASN1.OCSPSingleResponse] = [
+        let fixtures: [OCSPSingleResponse] = [
             .init(
-                certID: ASN1.OCSPCertID(
+                certID: OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
                     issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                     issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                    serialNumber: [9, 10, 11, 12]
+                    serialNumber: .init(bytes: [9, 10, 11, 12])
                 ),
                 certStatus: .good,
                 thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
@@ -322,11 +279,11 @@ final class OCSPTests: XCTestCase {
                 extensions: nil
             ),
             .init(
-                certID: ASN1.OCSPCertID(
+                certID: OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
                     issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                     issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                    serialNumber: [9, 10, 11, 12]
+                    serialNumber: .init(bytes: [9, 10, 11, 12])
                 ),
                 certStatus: .good,
                 thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
@@ -334,28 +291,32 @@ final class OCSPTests: XCTestCase {
                 extensions: nil
             ),
             .init(
-                certID: ASN1.OCSPCertID(
+                certID: OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
                     issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                     issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                    serialNumber: [9, 10, 11, 12]
+                    serialNumber: .init(bytes: [9, 10, 11, 12])
                 ),
                 certStatus: .good,
                 thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
                 nextUpdate: nil,
-                extensions: [.init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8]))]
+                extensions: try .init {
+                    OCSPNonce()
+                }
             ),
             .init(
-                certID: ASN1.OCSPCertID(
+                certID: OCSPCertID(
                     hashAlgorithm: .p256PublicKey,
                     issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                     issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                    serialNumber: [9, 10, 11, 12]
+                    serialNumber: .init(bytes: [9, 10, 11, 12])
                 ),
                 certStatus: .good,
                 thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
                 nextUpdate: try .init(year: 8, month: 9, day: 10, hours: 11, minutes: 12, seconds: 13, fractionalSeconds: 0.14),
-                extensions: [.init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8]))]
+                extensions: try .init {
+                    OCSPNonce()
+                }
             ),
         ]
 
@@ -365,34 +326,33 @@ final class OCSPTests: XCTestCase {
     }
 
     func testOCSPResponseDataRoundTrips() throws {
-        let responderID = ASN1.ResponderID.byName(
-            ASN1.DistinguishedName(elements: [
-                RelativeDistinguishedName(elements: [
-                    RFC5280AttributeTypeAndValue(type: .NameAttributes.name,
-                                                      value: .utf8String(.init(contentBytes: [1, 2, 3, 4]))),
-                ])
-            ])
+        let responderID = ResponderID.byName(
+            try DistinguishedName {
+                CommonName("Responder")
+            }
         )
 
-        let response = ASN1.OCSPSingleResponse(
-            certID: ASN1.OCSPCertID(
+        let response = OCSPSingleResponse(
+            certID: OCSPCertID(
                 hashAlgorithm: .p256PublicKey,
                 issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                 issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                serialNumber: [9, 10, 11, 12]
+                serialNumber: .init(bytes: [9, 10, 11, 12])
             ),
             certStatus: .good,
             thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
             nextUpdate: try .init(year: 8, month: 9, day: 10, hours: 11, minutes: 12, seconds: 13, fractionalSeconds: 0.14),
-            extensions: [.init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8]))]
+            extensions: try .init {
+                OCSPNonce()
+            }
         )
 
-        let extensions: [ASN1.RFC5280Extension] = [
-            .init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8])),
-            .init(extensionID: [2, 10, 11, 12], critical: false, extensionValue: .init(contentBytes: [13, 14, 15, 16])),
-        ]
+        let extensions = try Certificate.Extensions {
+            Certificate.Extension(oid: [1, 2, 3, 4], critical: true, value: [5, 6, 7, 8])
+            Certificate.Extension(oid: [2, 10, 11, 12], critical: false, value: [13, 14, 15, 16])
+        }
 
-        let fixtures: [ASN1.OCSPResponseData] = [
+        let fixtures: [OCSPResponseData] = [
             .init(
                 responderID: responderID,
                 producedAt: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
@@ -400,7 +360,7 @@ final class OCSPTests: XCTestCase {
                 responseExtensions: nil
             ),
             .init(
-                version: 3,
+                version: .v1,
                 responderID: responderID,
                 producedAt: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
                 responses: [response, response, response],
@@ -413,7 +373,7 @@ final class OCSPTests: XCTestCase {
                 responseExtensions: extensions
             ),
             .init(
-                version: 3,
+                version: .v1,
                 responderID: responderID,
                 producedAt: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
                 responses: [response, response, response],
@@ -427,34 +387,33 @@ final class OCSPTests: XCTestCase {
     }
 
     func testBasicOCSPResponseRoundTrips() throws {
-        let responderID = ASN1.ResponderID.byName(
-            ASN1.DistinguishedName(elements: [
-                RelativeDistinguishedName(elements: [
-                    RFC5280AttributeTypeAndValue(type: .NameAttributes.name,
-                                                      value: .utf8String(.init(contentBytes: [1, 2, 3, 4]))),
-                ])
-            ])
+        let responderID = ResponderID.byName(
+            try DistinguishedName {
+                CommonName("Responder")
+            }
         )
 
-        let response = ASN1.OCSPSingleResponse(
-            certID: ASN1.OCSPCertID(
+        let response = OCSPSingleResponse(
+            certID: OCSPCertID(
                 hashAlgorithm: .p256PublicKey,
                 issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                 issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                serialNumber: [9, 10, 11, 12]
+                serialNumber: .init(bytes: [9, 10, 11, 12])
             ),
             certStatus: .good,
             thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
             nextUpdate: try .init(year: 8, month: 9, day: 10, hours: 11, minutes: 12, seconds: 13, fractionalSeconds: 0.14),
-            extensions: [.init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8]))]
+            extensions: try .init {
+                Certificate.Extension(oid: [1, 2, 3, 4], critical: true, value: [5, 6, 7, 8])
+            }
         )
 
-        let extensions: [ASN1.RFC5280Extension] = [
-            .init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8])),
-            .init(extensionID: [2, 10, 11, 12], critical: false, extensionValue: .init(contentBytes: [13, 14, 15, 16])),
-        ]
+        let extensions = try Certificate.Extensions {
+            Certificate.Extension(oid: [1, 2, 3, 4], critical: true, value: [5, 6, 7, 8])
+            Certificate.Extension(oid: [2, 10, 11, 12], critical: false, value: [13, 14, 15, 16])
+        }
 
-        let responseData = ASN1.OCSPResponseData(
+        let responseData = OCSPResponseData(
             responderID: responderID,
             producedAt: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
             responses: [response, response, response],
@@ -462,47 +421,48 @@ final class OCSPTests: XCTestCase {
         )
 
         // This is massive, so we don't have more than one fixture. Takes a lot of space to even write it down!
-        let basicResponse = ASN1.BasicOCSPResponse(
+        let basicResponse = try BasicOCSPResponse(
             responseData: responseData,
             signatureAlgorithm: .p256PublicKey,
-            signature: ASN1BitString(bytes: [1, 2, 3, 4]))
+            signature: ASN1BitString(bytes: [1, 2, 3, 4]),
+            certs: nil
+        )
         try self.assertRoundTrips(basicResponse)
     }
 
     func testOCSPResponseBytesRoundTrips() throws {
-        let bytes = ASN1.OCSPResponseBytes(responseType: .OCSP.basicResponse, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))
+        let bytes = OCSPResponseBytes(responseType: .OCSP.basicResponse, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))
         try self.assertRoundTrips(bytes)
     }
 
     func testOCSPResponseBytesFromBasicResponse() throws {
-        let responderID = ASN1.ResponderID.byName(
-            ASN1.DistinguishedName(elements: [
-                RelativeDistinguishedName(elements: [
-                    RFC5280AttributeTypeAndValue(type: .NameAttributes.name,
-                                                      value: .utf8String(.init(contentBytes: [1, 2, 3, 4]))),
-                ])
-            ])
+        let responderID = ResponderID.byName(
+            try DistinguishedName {
+                CommonName("Responder")
+            }
         )
 
-        let response = ASN1.OCSPSingleResponse(
-            certID: ASN1.OCSPCertID(
+        let response = OCSPSingleResponse(
+            certID: OCSPCertID(
                 hashAlgorithm: .p256PublicKey,
                 issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
                 issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
-                serialNumber: [9, 10, 11, 12]
+                serialNumber: .init(bytes: [9, 10, 11, 12])
             ),
             certStatus: .good,
             thisUpdate: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
             nextUpdate: try .init(year: 8, month: 9, day: 10, hours: 11, minutes: 12, seconds: 13, fractionalSeconds: 0.14),
-            extensions: [.init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8]))]
+            extensions: try .init {
+                Certificate.Extension(oid: [1, 2, 3, 4], critical: true, value: [5, 6, 7, 8])
+            }
         )
 
-        let extensions: [ASN1.RFC5280Extension] = [
-            .init(extensionID: [1, 2, 3, 4], critical: true, extensionValue: .init(contentBytes: [5, 6, 7, 8])),
-            .init(extensionID: [2, 10, 11, 12], critical: false, extensionValue: .init(contentBytes: [13, 14, 15, 16])),
-        ]
+        let extensions = try Certificate.Extensions {
+            Certificate.Extension(oid: [1, 2, 3, 4], critical: true, value: [5, 6, 7, 8])
+            Certificate.Extension(oid: [2, 10, 11, 12], critical: false, value: [13, 14, 15, 16])
+        }
 
-        let responseData = ASN1.OCSPResponseData(
+        let responseData = OCSPResponseData(
             responderID: responderID,
             producedAt: try .init(year: 1, month: 2, day: 3, hours: 4, minutes: 5, seconds: 6, fractionalSeconds: 0.7),
             responses: [response, response, response],
@@ -510,25 +470,26 @@ final class OCSPTests: XCTestCase {
         )
 
         // This is massive, so we don't have more than one fixture. Takes a lot of space to even write it down!
-        let basicResponse = ASN1.BasicOCSPResponse(
+        let basicResponse = try BasicOCSPResponse(
             responseData: responseData,
             signatureAlgorithm: .p256PublicKey,
-            signature: ASN1BitString(bytes: [1, 2, 3, 4]))
-
-        let bytes = try ASN1.OCSPResponseBytes(encoding: basicResponse)
+            signature: ASN1BitString(bytes: [1, 2, 3, 4]),
+            certs: nil
+        )
+        let bytes = try OCSPResponseBytes(encoding: basicResponse)
         XCTAssertEqual(bytes.responseType, .OCSP.basicResponse)
-        XCTAssertEqual(try ASN1.BasicOCSPResponse(derEncoded: bytes.response.bytes), basicResponse)
-        XCTAssertEqual(try ASN1.BasicOCSPResponse(decoding: bytes), basicResponse)
+        XCTAssertEqual(try BasicOCSPResponse(derEncoded: bytes.response.bytes), basicResponse)
+        XCTAssertEqual(try BasicOCSPResponse(decoding: bytes), basicResponse)
         try assertRoundTrips(bytes)
     }
 
     func testCannotDecodeBasicOCSPResponseWithWrongOID() throws {
-        let bytes = ASN1.OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))
-        XCTAssertThrowsError(try ASN1.BasicOCSPResponse(decoding: bytes))
+        let bytes = OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))
+        XCTAssertThrowsError(try BasicOCSPResponse(decoding: bytes))
     }
 
     func testOCSPResponseStatusRoundTrips() throws {
-        let fixtures: [ASN1.OCSPResponseStatus] = [
+        let fixtures: [OCSPResponseStatus] = [
             .successful,
             .malformedRequest,
             .internalError,
@@ -546,19 +507,31 @@ final class OCSPTests: XCTestCase {
         var serializer = DER.Serializer()
         try serializer.serialize(Int(4))
 
-        XCTAssertThrowsError(try ASN1.OCSPResponseStatus(derEncoded: serializer.serializedBytes))
+        XCTAssertThrowsError(try OCSPResponseStatus(derEncoded: serializer.serializedBytes))
     }
 
     func testOCSPResponse() throws {
-        let fixtures: [ASN1.OCSPResponse] = [
-            .init(responseStatus: .successful, responseBytes: nil),
-            .init(responseStatus: .malformedRequest, responseBytes: nil),
-            .init(responseStatus: .successful, responseBytes: ASN1.OCSPResponseBytes(responseType: .AlgorithmIdentifier.idEcPublicKey, response: ASN1OctetString(contentBytes: [1, 2, 3, 4]))),
+        let fixtures: [OCSPResponse] = [
+            .malformedRequest,
+            .sigRequired,
+            .tryLater,
+            .internalError,
+            .unauthorized,
+            .successful(try .init(
+                responseData: .init(
+                    responderID: .byName(try DistinguishedName {
+                        CommonName("Responder")
+                    }),
+                    producedAt: try .init(Date()),
+                    responses: []),
+                signatureAlgorithm: .p384PublicKey,
+                signature: ASN1BitString(bytes: [1, 2, 3, 4]), certs: nil
+            )),
         ]
 
         for fixture in fixtures {
             try self.assertRoundTrips(fixture)
         }
     }
-    #endif
+    
 }

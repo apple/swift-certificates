@@ -38,13 +38,13 @@ struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
 
     var nextUpdate: GeneralizedTime?
 
-    var extensions: [Certificate.Extension]?
+    var extensions: Certificate.Extensions?
 
     init(certID: OCSPCertID,
          certStatus: OCSPCertStatus,
          thisUpdate: GeneralizedTime,
          nextUpdate: GeneralizedTime?,
-         extensions: [Certificate.Extension]? = nil) {
+         extensions: Certificate.Extensions? = nil) {
         self.certID = certID
         self.certStatus = certStatus
         self.thisUpdate = thisUpdate
@@ -68,7 +68,7 @@ struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
                          certStatus: certStatus,
                          thisUpdate: thisUpdate,
                          nextUpdate: nextUpdate,
-                         extensions: extensions)
+                         extensions: extensions.map { .init($0) })
         }
     }
 
