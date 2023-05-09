@@ -68,4 +68,85 @@ final class ExtensionBuilderTests: XCTestCase {
 
         XCTAssertEqual(extensions, expectedExtensions)
     }
+    
+    func testThrowingExtension() throws {
+        struct MyError: Error {}
+        struct MyThrowingExtension: CertificateExtensionConvertible {
+            func makeCertificateExtension() throws -> Certificate.Extension {
+                throw MyError()
+            }
+        }
+        
+        let `true` = true
+        let `false` = false
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            MyThrowingExtension()
+        })
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            MyThrowingExtension()
+            MyThrowingExtension()
+        })
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            for _ in 0..<3 {
+                MyThrowingExtension()
+            }
+        })
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            Certificate.Extension(oid: [1], critical: false, value: [1])
+            MyThrowingExtension()
+        })
+        XCTAssertThrowsError(try Certificate.Extensions {
+            MyThrowingExtension()
+            Certificate.Extension(oid: [1], critical: false, value: [1])
+        })
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            if `true` {
+                MyThrowingExtension()
+            }
+        })
+        
+        XCTAssertNoThrow(try Certificate.Extensions {
+            if `false` {
+                MyThrowingExtension()
+            }
+        })
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            if `true` {
+                MyThrowingExtension()
+            } else {
+                Certificate.Extension(oid: [1], critical: false, value: [1])
+            }
+        })
+        
+        XCTAssertNoThrow(try Certificate.Extensions {
+            if `false` {
+                MyThrowingExtension()
+            } else {
+                Certificate.Extension(oid: [1], critical: false, value: [1])
+            }
+        })
+        
+        XCTAssertNoThrow(try Certificate.Extensions {
+            if `true` {
+                Certificate.Extension(oid: [1], critical: false, value: [1])
+            } else {
+                MyThrowingExtension()
+            }
+        })
+        
+        XCTAssertThrowsError(try Certificate.Extensions {
+            if `false` {
+                Certificate.Extension(oid: [1], critical: false, value: [1])
+            } else {
+                MyThrowingExtension()
+            }
+        })
+
+    }
 }

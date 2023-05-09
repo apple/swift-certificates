@@ -123,8 +123,8 @@ extension Certificate {
         ///
         /// - Parameter builder: The ``ExtensionsBuilder`` DSL.
         @inlinable
-        public init(@ExtensionsBuilder builder: () throws -> Certificate.Extensions) throws {
-            self = try builder()
+        public init(@ExtensionsBuilder builder: () throws -> Result<Certificate.Extensions, any Error>) throws {
+            self = try builder().get()
         }
     }
 }
