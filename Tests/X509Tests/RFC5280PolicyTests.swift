@@ -25,25 +25,24 @@ class RFC5280PolicyBase: XCTestCase {
         case basicConstraints
         case nameConstraints
         
-        func create(_ validationTime: Date) -> VerifierPolicy {
+        @PolicyBuilder
+        func create(_ validationTime: Date) -> some VerifierPolicy {
             switch self {
             case .rfc5280:
-                return RFC5280Policy(validationTime: validationTime)
+                RFC5280Policy(validationTime: validationTime)
+                
             case .expiry:
-                return PolicySet(policies: [
-                    ExpiryPolicy(validationTime: validationTime),
-                    CatchAllPolicy()
-                ])
+                ExpiryPolicy(validationTime: validationTime)
+                CatchAllPolicy()
+                
             case .basicConstraints:
-                return PolicySet(policies: [
-                    BasicConstraintsPolicy(),
-                    CatchAllPolicy()
-                ])
+                BasicConstraintsPolicy()
+                CatchAllPolicy()
+                
             case .nameConstraints:
-                return PolicySet(policies: [
-                    NameConstraintsPolicy(),
-                    CatchAllPolicy()
-                ])
+                NameConstraintsPolicy()
+                CatchAllPolicy()
+                
             }
         }
         
@@ -109,7 +108,7 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Test a constraint on the root affecting the leaf
         var roots = CertificateStore([alternativeRoot])
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         switch (match, result) {
@@ -122,7 +121,7 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Test a constraint on the intermediate affecting the leaf.
         roots = CertificateStore([TestPKI.unconstrainedCA])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
 
         switch (match, result) {
@@ -135,7 +134,9 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Test a constraint on the root affecting the intermediate
         roots = CertificateStore([alternativeRoot])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
         result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
 
         switch (match, result) {
@@ -148,7 +149,7 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Unconstrained everything.
         roots = CertificateStore([TestPKI.unconstrainedCA])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
 
         guard case .validCertificate(let chain) = result else {
@@ -207,7 +208,7 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Test a constraint on the root affecting the leaf
         var roots = CertificateStore([alternativeRoot])
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         switch (match, result) {
@@ -220,7 +221,7 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Test a constraint on the intermediate affecting the leaf.
         roots = CertificateStore([TestPKI.unconstrainedCA])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
 
         switch (match, result) {
@@ -233,7 +234,7 @@ class RFC5280PolicyBase: XCTestCase {
 
         // Test a constraint on the root affecting the intermediate
         roots = CertificateStore([alternativeRoot])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
 
         switch (match, result) {
@@ -251,7 +252,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: Date())]))
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate(let chain) = result else {
@@ -269,10 +270,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate + 2.0,  // One second validity window
             issuer: .unconstrainedIntermediate
         )
-
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 3.0)])
-        )
+        
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.startDate + 3.0)
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -299,9 +300,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+                RFC5280Policy.withValidityCheckDisabled()
+            }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -318,10 +319,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedIntermediate.notValidAfter + 1.0)])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.unconstrainedIntermediate.notValidAfter + 1.0)
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -347,11 +347,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.unconstrainedIntermediate.notValidAfter + 2.0,  // Later than the intermediate.
             issuer: .unconstrainedIntermediate
         )
-
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy.withValidityCheckDisabled()
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -367,11 +366,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.unconstrainedCA.notValidAfter + 2.0,  // Later than the root.
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
-
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedCA.notValidAfter + 1.0)])
-        )
+        
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.unconstrainedCA.notValidAfter + 1.0)
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -398,10 +396,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy.withValidityCheckDisabled()
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -418,9 +415,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 1.0)])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.startDate + 1.0)
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -446,10 +443,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate + 3.0,  // One second validity window
             issuer: .unconstrainedIntermediate
         )
-
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy.withValidityCheckDisabled()
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -466,10 +463,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedIntermediate.notValidBefore - 1.0)])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.unconstrainedIntermediate.notValidBefore - 1.0)
+        }
+        
+        
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -496,10 +494,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy.withValidityCheckDisabled()
+        }
+        
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -515,11 +513,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate,
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
-
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.unconstrainedCA.notValidBefore - 1.0)])
-        )
+        
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.unconstrainedCA.notValidBefore - 1.0)
+        }
+        
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -545,11 +543,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate,
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
-
-        var verifier = Verifier(
-            rootCertificates: roots,
-            policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy.withValidityCheckDisabled()
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -566,9 +563,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate(let policyFailures) = result else {
@@ -595,9 +592,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedIntermediate
         )
 
-        var verifier = Verifier(
-            rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy.withValidityCheckDisabled()])
-        )
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy.withValidityCheckDisabled()
+        }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate = result else {
@@ -621,10 +618,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         ]
 
         for (cert, isValid) in certsAndValidity {
-            var verifier = Verifier(
-                rootCertificates: CertificateStore([cert]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+            var verifier = Verifier(rootCertificates: CertificateStore([cert])) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
             let result = await verifier.validate(leafCertificate: cert, intermediates: CertificateStore([]))
 
             switch (result, isValid) {
@@ -681,22 +677,20 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
         for badIntermediate in invalidIntermediateCAs {
-            var verifier = Verifier(
-                rootCertificates: CertificateStore([TestPKI.unconstrainedCA]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+            var verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
             var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([badIntermediate]))
 
             guard case .couldNotValidate = result else {
                 XCTFail("Incorrectly validated with \(badIntermediate) in chain")
                 return
             }
-
+            
             // Adding the better CA in works better, _and_ we don't use the bad intermediate!
-            verifier = Verifier(
-                rootCertificates: CertificateStore([TestPKI.unconstrainedCA]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+            verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
             result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([badIntermediate, TestPKI.unconstrainedIntermediate]))
 
             guard case .validCertificate(let chain) = result else {
@@ -715,10 +709,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 issuer: .unconstrainedRoot
             )
 
-            verifier = Verifier(
-                rootCertificates: CertificateStore([TestPKI.unconstrainedCA]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+            verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
             result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([v1Intermediate]))
 
             guard case .validCertificate(let chain) = result else {
@@ -758,9 +751,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         for badRoot in invalidRootCAs {
             var verifier = Verifier(
-                rootCertificates: CertificateStore([badRoot]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+                rootCertificates: CertificateStore([badRoot])) {
+                    policyFactory.create(TestPKI.startDate + 2.5)
+                }
             var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
             guard case .couldNotValidate = result else {
@@ -769,10 +762,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             }
 
             // Adding the better CA in works better, _and_ we don't use the bad root!
-            verifier = Verifier(
-                rootCertificates: CertificateStore([badRoot, TestPKI.unconstrainedCA]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+            verifier = Verifier(rootCertificates: CertificateStore([badRoot, TestPKI.unconstrainedCA])) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
             result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
             guard case .validCertificate(let chain) = result else {
@@ -785,10 +777,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             // And a v1 root works too.
             let v1Root = TestPKI.issueCA(version: .v1, extensions: .init())
 
-            verifier = Verifier(
-                rootCertificates: CertificateStore([v1Root]),
-                policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-            )
+            verifier = Verifier(rootCertificates: CertificateStore([v1Root])) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
             result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
             guard case .validCertificate(let chain) = result else {
@@ -824,11 +815,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         )
 
         let leaf = TestPKI.issueLeaf(issuer: .secondLevelIntermediate)
-
-        var verifier = Verifier(
-            rootCertificates: CertificateStore([TestPKI.unconstrainedCA]),
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-        )
+        
+        var verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
+        
         var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([secondLevelIntermediate, TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate = result else {
@@ -847,11 +838,12 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             },
             issuer: .unconstrainedRoot
         )
-
-        verifier = Verifier(
-            rootCertificates: CertificateStore([TestPKI.unconstrainedCA]),
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-        )
+        
+        verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
+            
+        
         result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([secondLevelIntermediate, newFirstLevelIntermediate, TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate(let chain) = result else {
@@ -884,10 +876,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
-        var verifier = Verifier(
-            rootCertificates: CertificateStore([alternativeRoot]),
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-        )
+        var verifier = Verifier(rootCertificates: CertificateStore([alternativeRoot])) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
         var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate = result else {
@@ -896,10 +887,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         }
 
         // Adding back the good root works!
-        verifier = Verifier(
-            rootCertificates: CertificateStore([alternativeRoot, TestPKI.unconstrainedCA]),
-            policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)])
-        )
+        verifier = Verifier(rootCertificates: CertificateStore([alternativeRoot, TestPKI.unconstrainedCA])) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
         result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .validCertificate(let chain) = result else {
@@ -1078,7 +1068,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 subjectAlternativeNames: [name]
             )
 
-            var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+            var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
             let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
             guard case .couldNotValidate = result else {
@@ -1122,7 +1112,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             )
 
             var roots = CertificateStore([alternativeRoot])
-            var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+            var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
             var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
             guard case .couldNotValidate = result else {
@@ -1147,7 +1137,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             )
 
             roots = CertificateStore([alternativeRoot])
-            verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+            verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
             result = await verifier.validate(leafCertificate: constrainedLeaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
             guard case .couldNotValidate = result else {
@@ -1213,7 +1203,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         // First test the bad root.
         var roots = CertificateStore([alternativeRoot])
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         var result = await verifier.validate(leafCertificate: goodLeaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate = result else {
@@ -1223,7 +1213,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         // Then the bad leaf.
         roots = CertificateStore([goodRootWithConstraint])
-        verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+        verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
         result = await verifier.validate(leafCertificate: bustedSAN, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate = result else {
@@ -1274,7 +1264,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 subjectAlternativeNames: [name]
             )
 
-            var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [policyFactory.create(TestPKI.startDate + 2.5)]))
+            var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
             let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
 
             guard case .couldNotValidate = result else {
@@ -1319,7 +1309,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: Date())]))
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
 
         guard case .validCertificate(let chain) = result else {
@@ -1344,7 +1334,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         let roots = CertificateStore([TestPKI.unconstrainedCA])
 
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [RFC5280Policy(validationTime: Date())]))
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
         let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
 
         guard case .couldNotValidate = result else {

@@ -93,13 +93,16 @@ public enum CMS {
         signatureBytes: SignatureBytes,
         additionalIntermediateCertificates: [Certificate] = [],
         trustRoots: CertificateStore,
-        policy: PolicySet
-    ) async -> SignatureVerificationResult {
+        @PolicyBuilder policy: () throws -> some VerifierPolicy
+    ) async rethrows -> SignatureVerificationResult {
+        let signedData: CMSSignedData
+        let signingCert: Certificate
         do {
             let parsedSignature = try CMSContentInfo(derEncoded: ArraySlice(signatureBytes))
-            guard let signedData = try parsedSignature.signedData else {
+            guard let _signedData = try parsedSignature.signedData else {
                 return .failure(.init(invalidCMSBlockReason: "Unable to parse signed data"))
             }
+            signedData = _signedData
 
             // We have a bunch of very specific requirements here: in particular, we need to have only one signature. We also only want
             // to tolerate v1 signatures and detached signatures.
@@ -134,9 +137,10 @@ public enum CMS {
 
             // Ok, now we need to find the signer. We expect to find them in the list of certificates provided
             // in the signature.
-            guard let signingCert = try signedData.certificates?.certificate(signerInfo: signer) else {
+            guard let _signingCert = try signedData.certificates?.certificate(signerInfo: signer) else {
                 return .failure(.init(invalidCMSBlockReason: "Unable to locate signing certificate"))
             }
+            signingCert = _signingCert
 
             // Ok at this point we've done the cheap stuff and we're fairly confident we have the entity who should have
             // done the signing. Our next step is to confirm that they did in fact sign the data. For that we have to compute
@@ -145,23 +149,23 @@ public enum CMS {
             guard signingCert.publicKey.isValidSignature(signature, for: dataBytes, signatureAlgorithm: signatureAlgorithm) else {
                 return .failure(.init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)"))
             }
-
-            // Ok, the signature was signed by the private key associated with this cert. Now we need to validate the certificate.
-            // This force-unwrap is safe: we know there are certificates because we've located at least one certificate from this set!
-            var untrustedIntermediates = CertificateStore(signedData.certificates!)
-            untrustedIntermediates.insert(contentsOf: additionalIntermediateCertificates)
-            
-            var verifier = Verifier(rootCertificates: trustRoots, policy: policy)
-            let result = await verifier.validate(leafCertificate: signingCert, intermediates: untrustedIntermediates)
-
-            switch result {
-            case .validCertificate:
-                return .success(.init(signer: signingCert))
-            case .couldNotValidate(let validationFailures):
-                return .failure(.unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert)))
-            }
         } catch {
             return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
+        }
+
+        // Ok, the signature was signed by the private key associated with this cert. Now we need to validate the certificate.
+        // This force-unwrap is safe: we know there are certificates because we've located at least one certificate from this set!
+        var untrustedIntermediates = CertificateStore(signedData.certificates!)
+        untrustedIntermediates.insert(contentsOf: additionalIntermediateCertificates)
+        
+        var verifier = try Verifier(rootCertificates: trustRoots, policy: policy)
+        let result = await verifier.validate(leafCertificate: signingCert, intermediates: untrustedIntermediates)
+
+        switch result {
+        case .validCertificate:
+            return .success(.init(signer: signingCert))
+        case .couldNotValidate(let validationFailures):
+            return .failure(.unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert)))
         }
     }
 

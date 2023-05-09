@@ -401,12 +401,11 @@ extension OCSPVerifierPolicy.Storage {
         }
         
         var verifier = Verifier(
-            rootCertificates: CertificateStore([issuer]),
-            policy: PolicySet(policies: [
-                OCSPResponderSigningPolicy(issuer: issuer),
-                RFC5280Policy(validationTime: validationTime),
-            ])
-        )
+            rootCertificates: CertificateStore([issuer])
+        ) {
+            OCSPResponderSigningPolicy(issuer: issuer)
+            RFC5280Policy(validationTime: validationTime)
+        }
 
         let validationResult = await verifier.validate(leafCertificate: leafCertificate, intermediates: CertificateStore())
         

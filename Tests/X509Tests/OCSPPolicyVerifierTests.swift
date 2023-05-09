@@ -769,7 +769,7 @@ extension BasicOCSPResponse {
         responses: [OCSPSingleResponse],
         privateKey: P384.Signing.PrivateKey = OCSPVerifierPolicyTests.intermediatePrivateKey,
         certs: [Certificate]? = [],
-        @ExtensionsBuilder responseExtensions: () -> Certificate.Extensions = { .init() }
+        @ExtensionsBuilder responseExtensions: () throws -> Result<Certificate.Extensions, any Error> = { .success(Certificate.Extensions()) }
     ) throws -> Self {
         try .signed(
             responseData: .init(
@@ -777,7 +777,7 @@ extension BasicOCSPResponse {
                 responderID: responderID,
                 producedAt: producedAt,
                 responses: responses,
-                responseExtensions: responseExtensions()
+                responseExtensions: try responseExtensions().get()
             ),
             privateKey: privateKey,
             certs: certs
