@@ -488,14 +488,14 @@ final class VerifierTests: XCTestCase {
         )
     }()
 
-    private static var defaultPolicy: PolicySet {
-        PolicySet(policies: [RFC5280Policy(validationTime: referenceTime)])
+    @PolicyBuilder private static var defaultPolicy: some VerifierPolicy {
+        RFC5280Policy(validationTime: referenceTime)
     }
 
     func testTrivialChainBuilding() async throws {
         let roots = CertificateStore([Self.ca1])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .validCertificate(let chain) = result else {
@@ -509,7 +509,7 @@ final class VerifierTests: XCTestCase {
     func testMissingIntermediateFailsToBuild() async throws {
         let roots = CertificateStore([Self.ca1])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([]))
 
         guard case .couldNotValidate(let policyResults) = result else {
@@ -523,7 +523,7 @@ final class VerifierTests: XCTestCase {
     func testMissingRootFailsToBuild() async throws {
         let roots = CertificateStore([])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .couldNotValidate(let policyResults) = result else {
@@ -537,7 +537,7 @@ final class VerifierTests: XCTestCase {
     func testExtraRootsAreIgnored() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .validCertificate(let chain) = result else {
@@ -551,7 +551,7 @@ final class VerifierTests: XCTestCase {
     func testPuttingRootsInTheIntermediariesIsntAProblem() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1, Self.ca2]))
 
         guard case .validCertificate(let chain) = result else {
@@ -565,7 +565,7 @@ final class VerifierTests: XCTestCase {
     func testSupportsCrossSignedRootWithoutTrouble() async throws {
         let roots = CertificateStore([Self.ca2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1CrossSignedByCA2]))
 
         guard case .validCertificate(let chain) = result else {
@@ -579,7 +579,7 @@ final class VerifierTests: XCTestCase {
     func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]))
 
         guard case .validCertificate(let chain) = result else {
@@ -593,7 +593,7 @@ final class VerifierTests: XCTestCase {
     func testPrefersToUseIntermediatesWithSKIThatMatches() async throws {
         let roots = CertificateStore([Self.ca1])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.intermediate1WithoutSKIAKI]))
 
         guard case .validCertificate(let chain) = result else {
@@ -607,7 +607,7 @@ final class VerifierTests: XCTestCase {
     func testPrefersNoSKIToNonMatchingSKI() async throws {
         let roots = CertificateStore([Self.ca1])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]))
 
         guard case .validCertificate(let chain) = result else {
@@ -621,7 +621,7 @@ final class VerifierTests: XCTestCase {
     func testRejectsRootsThatDidNotSignTheCertBeforeThem() async throws {
         let roots = CertificateStore([Self.ca1WithAlternativePrivateKey, Self.ca2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.ca1CrossSignedByCA2, Self.ca2CrossSignedByCA1, Self.intermediate1]))
 
         guard case .validCertificate(let chain) = result else {
@@ -635,7 +635,10 @@ final class VerifierTests: XCTestCase {
     func testPolicyFailuresCanFindLongerPaths() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [FailIfCertInChainPolicy(forbiddenCert: Self.ca1), Self.defaultPolicy]))
+        var verifier = Verifier(rootCertificates: roots) {
+            FailIfCertInChainPolicy(forbiddenCert: Self.ca1)
+            Self.defaultPolicy
+        }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]))
 
         guard case .validCertificate(let chain) = result else {
@@ -650,7 +653,7 @@ final class VerifierTests: XCTestCase {
         let roots = CertificateStore([Self.ca1])
         let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x1, Self.x2])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.insaneLeaf, intermediates: intermediates)
 
         guard case .validCertificate(let chain) = result else {
@@ -664,7 +667,7 @@ final class VerifierTests: XCTestCase {
     func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async throws {
         let roots = CertificateStore([Self.ca1])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .couldNotValidate = result else {
@@ -676,7 +679,7 @@ final class VerifierTests: XCTestCase {
     func testSelfSignedCertsAreTrustedWhenInTrustStore() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCert])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .validCertificate(let chain) = result else {
@@ -699,7 +702,7 @@ final class VerifierTests: XCTestCase {
 
         let roots = CertificateStore([Self.localhostLeaf])
 
-        var verifier = Verifier(rootCertificates: roots, policy: PolicySet(policies: [IgnoreBasicConstraintsPolicy()]))
+        var verifier = Verifier(rootCertificates: roots) { IgnoreBasicConstraintsPolicy() }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .validCertificate(let chain) = result else {
@@ -713,7 +716,7 @@ final class VerifierTests: XCTestCase {
     func testTrustRootsCanBeNonSelfSignedIntermediates() async throws {
         let roots = CertificateStore([Self.intermediate1])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .validCertificate(let chain) = result else {
@@ -727,7 +730,7 @@ final class VerifierTests: XCTestCase {
     func testWePoliceCriticalExtensionsOnLeafCerts() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCertWithWeirdCriticalExtension])
 
-        var verifier = Verifier(rootCertificates: roots, policy: Self.defaultPolicy)
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension, intermediates: CertificateStore([Self.intermediate1]))
 
         guard case .couldNotValidate = result else {

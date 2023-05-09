@@ -128,8 +128,9 @@ final class CMSTests: XCTestCase {
         issuerPrivateKey: intermediateKey
     )
 
-    static var defaultPolicies: PolicySet {
-        PolicySet(policies: [RFC5280Policy(validationTime: Date())])
+    
+    @PolicyBuilder static var defaultPolicies: some VerifierPolicy {
+        RFC5280Policy(validationTime: Date())
     }
 
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
@@ -313,7 +314,7 @@ final class CMSTests: XCTestCase {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         let signature = try CMS.sign(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf1Cert, privateKey: Self.leaf1Key)
-        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.rootCert]), policy: Self.defaultPolicies)
+        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.rootCert])) { Self.defaultPolicies }
         XCTAssertValidSignature(isValidSignature)
     }
 
@@ -379,7 +380,7 @@ final class CMSTests: XCTestCase {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         let signature = try CMS.sign(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf1Cert, privateKey: Self.leaf1Key)
-        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.secondRootCert]), policy: PolicySet(policies: []))
+        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.secondRootCert])) { }
         XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
@@ -398,9 +399,10 @@ final class CMSTests: XCTestCase {
         let isValidSignature = await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: signature,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [RejectAllPolicy()])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            RejectAllPolicy()
+        }
         XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
@@ -413,9 +415,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -432,9 +433,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -450,9 +450,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -469,9 +468,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -487,9 +485,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -505,9 +502,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -523,9 +519,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -541,9 +536,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -561,9 +555,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -580,9 +573,8 @@ final class CMSTests: XCTestCase {
         let isValidSignature = try await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: PolicySet(policies: [])
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
@@ -590,7 +582,7 @@ final class CMSTests: XCTestCase {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         let signature = try CMS.sign(data, signatureAlgorithm: .ecdsaWithSHA256, certificate: Self.leaf2Cert, privateKey: Self.leaf2Key)
-        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.rootCert]), policy: PolicySet(policies: []))
+        let isValidSignature = await CMS.isValidSignature(dataBytes: data, signatureBytes: signature, trustRoots: CertificateStore([Self.rootCert])) { }
         XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
@@ -602,9 +594,10 @@ final class CMSTests: XCTestCase {
             dataBytes: data,
             signatureBytes: signature,
             additionalIntermediateCertificates: [Self.intermediateCert],
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: Self.defaultPolicies
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
         XCTAssertValidSignature(isValidSignature)
     }
 
@@ -621,9 +614,10 @@ final class CMSTests: XCTestCase {
         let isValidSignature = await CMS.isValidSignature(
             dataBytes: data,
             signatureBytes: signature,
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: Self.defaultPolicies
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
         XCTAssertValidSignature(isValidSignature)
     }
 
@@ -641,9 +635,10 @@ final class CMSTests: XCTestCase {
             dataBytes: data,
             signatureBytes: signature,
             additionalIntermediateCertificates: [Self.intermediateCert],
-            trustRoots: CertificateStore([Self.rootCert]),
-            policy: Self.defaultPolicies
-        )
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
         XCTAssertValidSignature(isValidSignature)
     }
 }
