@@ -108,7 +108,8 @@ target_link_libraries(X509 PUBLIC
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>
   Crypto
   _CryptoExtras
-  SwiftASN1)
+  SwiftASN1
+  OrderedCollections)
 set_target_properties(X509 PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 

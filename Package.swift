@@ -36,6 +36,7 @@ let package = Package(
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
+                .product(name: "OrderedCollections", package: "swift-collections"),
             ],
             exclude: [
                 "CMakeLists.txt",
@@ -66,10 +67,12 @@ if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.9.1")),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-collections", from: "1.0.1"),
     ]
 } else {
     package.dependencies += [
         .package(path: "../swift-crypto"),
         .package(path: "../swift-asn1"),
+        .package(path: "../swift-collections"),
     ]
 }

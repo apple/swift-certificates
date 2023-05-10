@@ -39,8 +39,8 @@ struct OCSPSingleRequest: DERImplicitlyTaggable, Hashable {
         self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
             let certID = try OCSPCertID(derEncoded: &nodes)
             let singleRequestExtensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
-                Certificate.Extensions(
-                    extensions: try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
+                try Certificate.Extensions(
+                    try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
                 )
             }
             return .init(certID: certID, singleRequestExtensions: singleRequestExtensions)

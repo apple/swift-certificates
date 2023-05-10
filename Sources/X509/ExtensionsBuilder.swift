@@ -65,13 +65,13 @@ public struct ExtensionsBuilder {
     @inlinable
     public static func buildBlock(_ components: Result<Certificate.Extensions, any Error>...) -> Result<Certificate.Extensions, any Error> {
         Result {
-            Certificate.Extensions(try components.lazy.flatMap { try $0.get() })
+            try Certificate.Extensions(try components.lazy.flatMap { try $0.get() })
         }
     }
 
     @inlinable
     public static func buildOptional(_ component: Result<Certificate.Extensions, any Error>?) -> Result<Certificate.Extensions, any Error> {
-        component ?? .success(Certificate.Extensions([]))
+        component ?? .success(Certificate.Extensions())
     }
 
     @inlinable
@@ -87,7 +87,7 @@ public struct ExtensionsBuilder {
     @inlinable
     public static func buildArray(_ components: [Result<Certificate.Extensions, any Error>]) -> Result<Certificate.Extensions, any Error> {
         Result {
-            Certificate.Extensions(try components.lazy.flatMap { try $0.get() })
+            try Certificate.Extensions(try components.lazy.flatMap { try $0.get() })
         }
     }
 

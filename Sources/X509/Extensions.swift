@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
+// TODO: remove @preconcrency once we can depend on swift-collections 1.1 with proper Sendable annotations
+@preconcurrency import OrderedCollections
 
 extension Certificate {
     /// A representation of a collection of X.509 extensions.
@@ -79,23 +81,17 @@ extension Certificate {
     /// This interface also makes it easy to mark specific extensions as critical.
     public struct Extensions {
         @usableFromInline
-        var _extensions: [Extension]
-
-        /// Produce a new Extensions container from an array of ``Certificate/Extension``.
-        ///
-        /// - Parameter extensions: The base extensions.
-        @inlinable
-        public init(extensions: [Extension]) {
-            // TODO(cory): Police uniqueness
-            self._extensions = extensions
-        }
-
+        var _extensions: OrderedDictionary<ASN1ObjectIdentifier, Certificate.Extension>
+        
         /// Produce a new Extensions container from a collection of ``Certificate/Extension``.
         ///
         /// - Parameter extensions: The base extensions.
+        /// - Throws: if multiple extensions have the same OID
         @inlinable
-        public init<Elements>(_ extensions: Elements) where Elements: Sequence, Elements.Element == Extension {
-            self._extensions = Array(extensions)
+        public init<Elements>(_ extensions: Elements) throws where Elements: Sequence, Elements.Element == Extension {
+            self._extensions = try OrderedDictionary(extensions.lazy.map { ($0.oid, $0) }, uniquingKeysWith: { first, second in
+                throw CertificateError.duplicateOID(reason: "duplicate OID \(first.oid). First extension: \(first) Second extension: \(second)")
+            })
         }
 
         /// Construct a collection of extensions using the ``ExtensionsBuilder`` syntax.
@@ -133,48 +129,90 @@ extension Certificate.Extensions: Hashable { }
 
 extension Certificate.Extensions: Sendable { }
 
-// TODO: Tweak API surface here, this is more like a dictionary than an Array, and we
-// need to forbid duplicate extensions. Consider backing this with OrderedDictionary.
 extension Certificate.Extensions: RandomAccessCollection {
+    /// Produce a new empty Extensions container.
     @inlinable
     public init() {
-        self._extensions = []
+        self._extensions = [:]
     }
-
+    
     @inlinable
     public var startIndex: Int {
-        self._extensions.startIndex
+        self._extensions.values.startIndex
     }
-
+    
     @inlinable
     public var endIndex: Int {
-        self._extensions.endIndex
+        self._extensions.values.endIndex
     }
-
+    
     @inlinable
     public subscript(position: Int) -> Certificate.Extension {
-        // TODO(cory): enforce uniqueness
         get {
-            self._extensions[position]
+            self._extensions.values[position]
         }
     }
+}
+
+
+// MARK: Modifying methods
+extension Certificate.Extensions {
 
     /// Append a new ``Certificate/Extension`` into this set of ``Certificate/Extensions-swift.struct``.
     ///
     /// - Parameter ext: The ``Certificate/Extension`` to insert.
+    /// - Throws: If an ``Certificate/Extension`` with the same ``Certificate/Extension/oid`` is already present
     @inlinable
-    public mutating func append(_ ext: Certificate.Extension) {
-        // TODO(cory): enforce uniqueness
-        self._extensions.append(ext)
+    public mutating func append(_ extension: Certificate.Extension) throws {
+        if let oldExtension = self._extensions.updateValue(`extension`, forKey: `extension`.oid) {
+            // revert change. We don't expect this to happen on the happy path and therefore
+            // optimise for the case where the value is not already present.
+            
+            // unwrap is save because we have just update the same key
+            let newExtension = self._extensions.updateValue(oldExtension, forKey: oldExtension.oid)!
+            throw CertificateError.duplicateOID(reason: "tried to append an extension for OID \(newExtension.oid) which is already present. Old extension: \(oldExtension) New extension: \(newExtension)")
+        }
     }
-
-    /// Append a sequence of new ``Certificate/Extension``s into this set of ``Certificate/Extensions-swift.struct``.
+    
+    /// Updates the ``Certificate/Extension`` stored in the dictionary for the ``Certificate/Extension/oid`` of the `extension`,
+    /// or appends `extension` if an ``Certificate/Extension`` with same  ``Certificate/Extension/oid`` does not exist.
     ///
-    /// - Parameter extensions: The sequence of new ``Certificate/Extension``s to insert.
+    /// - Parameter extension: The ``Certificate/Extension`` to update or append.
+    /// - Returns: The old ``Certificate/Extension`` that was replaced or `nil` if no ``Certificate/Extension`` with same ``Certificate/Extension/oid`` was present
     @inlinable
-    public mutating func append<Extensions: Sequence>(contentsOf extensions: Extensions) where Extensions.Element == Certificate.Extension {
-        // TODO(cory): enforce uniqueness
-        self._extensions.append(contentsOf: extensions)
+    @discardableResult
+    public mutating func update(_ extension: Certificate.Extension) -> Certificate.Extension? {
+        self._extensions.updateValue(`extension`, forKey: `extension`.oid)
+    }
+    
+    /// Updates the ``Certificate/Extension`` stored in the dictionary for the ``Certificate/Extension/oid`` of the `extension`,
+    /// or appends `extension` if an ``Certificate/Extension`` with same  ``Certificate/Extension/oid`` does not exist.
+    ///
+    /// - Parameters:
+    ///   - extension: The ``Certificate/Extension`` to update or append.
+    ///   - index: The index at which to insert the ``Certificate/Extension``, if it doesn't already exist.
+    ///
+    /// - Returns: A pair `(old, index)`, where `old` is the ``Certificate/Extension`` that was
+    ///    replaced, or `nil`no ``Certificate/Extension`` with same ``Certificate/Extension/oid`` was present, and `index`
+    ///    is the index corresponding to the updated (or inserted) ``Certificate/Extension``.
+    @inlinable
+    @discardableResult
+    public mutating func update(
+        _ extension: Certificate.Extension,
+        insertingAt index: Int
+    ) -> (originalMember: Certificate.Extension?, index: Int) {
+        self._extensions.updateValue(`extension`, forKey: `extension`.oid, insertingAt: index)
+    }
+    
+    
+    /// Removes the ``Certificate/Extension`` with the given `oid`.
+    /// - Parameter oid: The  ``Certificate/Extension/oid`` of the``Certificate/Extension`` to remove.
+    /// - Returns: The ``Certificate/Extension`` that was removed,
+    ///     or `nil` if an ``Certificate/Extension`` was not present in with the given `oid`.
+    @inlinable
+    @discardableResult
+    public mutating func remove(for oid: ASN1ObjectIdentifier) -> Certificate.Extension? {
+        self._extensions.removeValue(forKey: oid)
     }
 }
 
@@ -193,18 +231,14 @@ extension Certificate.Extensions {
     @inlinable
     public subscript(oid oid: ASN1ObjectIdentifier) -> Certificate.Extension? {
         get {
-            return self.first(where: { $0.oid == oid })
+            return self._extensions[oid]
         }
         set {
             if let newValue = newValue {
                 precondition(oid == newValue.oid)
-                if let currentExtensionIndex = self.firstIndex(where: { $0.oid == oid }) {
-                    self._extensions[currentExtensionIndex] = newValue
-                } else {
-                    self._extensions.append(newValue)
-                }
-            } else if let currentExtensionIndex = self.firstIndex(where: { $0.oid == oid }) {
-                self._extensions.remove(at: currentExtensionIndex)
+                self.update(newValue)
+            } else {
+                self.remove(for: oid)
             }
         }
     }
