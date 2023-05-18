@@ -339,12 +339,12 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(validationTime),
+                    producedAt: .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
-                        thisUpdate: try .init(now - .days(1)),
-                        nextUpdate: try .init(now + .days(1))
+                        thisUpdate: .init(now - .days(1)),
+                        nextUpdate: .init(now + .days(1))
                     )]) {
                         nonce
                     }
@@ -366,12 +366,12 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(validationTime),
+                    producedAt: .init(validationTime),
                     responses: [OCSPSingleResponse(
                     certID: singleRequest.certID,
                     certStatus: .good,
-                    thisUpdate: try .init(now - .days(1)),
-                    nextUpdate: try .init(now + .days(1))
+                    thisUpdate: .init(now - .days(1)),
+                    nextUpdate: .init(now + .days(1))
                     )]) {
                         OCSPNonce()
                     }
@@ -393,15 +393,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(validationTime),
+                    producedAt: .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .revoked(.init(
-                            revocationTime: try .init(now),
+                            revocationTime: .init(now),
                             revocationReason: .unspecified
                         )),
-                        thisUpdate: try .init(now - .days(1)),
-                        nextUpdate: try .init(now + .days(1))
+                        thisUpdate: .init(now - .days(1)),
+                        nextUpdate: .init(now + .days(1))
                     )]) {
                         nonce
                     }
@@ -424,12 +424,12 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
                     responderID: .byName(Self.invalidResponderIntermediate1.subject),
-                    producedAt: try .init(validationTime),
+                    producedAt: .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
-                        thisUpdate: try .init(now - .days(1)),
-                        nextUpdate: try .init(now + .days(1))
+                        thisUpdate: .init(now - .days(1)),
+                        nextUpdate: .init(now + .days(1))
                     )],
                     privateKey: Self.responderIntermediate1PrivateKey,
                     certs: [Self.invalidResponderIntermediate1]) {
@@ -456,12 +456,12 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let responseData = OCSPResponseData(
                     version: .v1,
                     responderID: Self.responderId,
-                    producedAt: try .init(Date()),
+                    producedAt: .init(Date()),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
-                        thisUpdate: try .init(now - .days(1)),
-                        nextUpdate: try .init(now + .days(1))
+                        thisUpdate: .init(now - .days(1)),
+                        nextUpdate: .init(now + .days(1))
                     )],
                     responseExtensions: try .init {
                         nonce
@@ -499,7 +499,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 return .successful(try .signed(
-                    producedAt: try .init(validationTime),
+                    producedAt: .init(validationTime),
                     responses: [OCSPSingleResponse(
                         certID: .init(
                             hashAlgorithm: .init(algorithm: .sha1NoSign, parameters: nil),
@@ -508,8 +508,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                             serialNumber: .init()
                         ),
                         certStatus: .good,
-                        thisUpdate: try .init(now - .days(1)),
-                        nextUpdate: try .init(now + .days(1))
+                        thisUpdate: .init(now - .days(1)),
+                        nextUpdate: .init(now + .days(1))
                     )]) {
                         nonce
                     }
@@ -577,12 +577,12 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
                 return .successful(try .signed(
-                    producedAt: try .init(producedAt),
+                    producedAt: .init(producedAt),
                     responses: [OCSPSingleResponse(
                         certID: singleRequest.certID,
                         certStatus: .good,
-                        thisUpdate: try .init(thisUpdate),
-                        nextUpdate: try nextUpdate.map { try .init($0) }
+                        thisUpdate: .init(thisUpdate),
+                        nextUpdate: nextUpdate.map { .init($0) }
                     )]) {
                         nonce
                     }
