@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2022-2023 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -47,33 +47,15 @@ enum Time: DERParseable, DERSerializable, Hashable, Sendable {
 
     @inlinable
     static func makeTime(from date: Date) throws -> Time {
-        let components = gregorianCalendar.dateComponents(in: utcTimeZone, from: date)
+        let components = date.utcDate
 
         // The rule is if the year is outside the range 1950-2049 inclusive, we should encode
         // it as a generalized time. Otherwise, use a UTCTime.
-        // These force-unwraps are safe: all the components are returned by the above call.
-        if (1950..<2050).contains(components.year!) {
-            let utcTime = try UTCTime(
-                year: components.year!,
-                month: components.month!,
-                day: components.day!,
-                hours: components.hour!,
-                minutes: components.minute!,
-                seconds: components.second!
-            )
-
+        if ((1950)..<(2050)).contains(components.year) {
+            let utcTime = try UTCTime(components)
             return .utcTime(utcTime)
         } else {
-            let generalizedTime = try GeneralizedTime(
-                year: components.year!,
-                month: components.month!,
-                day: components.day!,
-                hours: components.hour!,
-                minutes: components.minute!,
-                seconds: components.second!,
-                fractionalSeconds: 0.0
-            )
-
+            let generalizedTime = try GeneralizedTime(components)
             return .generalTime(generalizedTime)
         }
     }
@@ -81,77 +63,39 @@ enum Time: DERParseable, DERSerializable, Hashable, Sendable {
 
 extension Date {
     @inlinable
-    init?(_ time: Time) {
-        let maybeDate: Date?
+    init(fromUTCDate date: (year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int)) {
+        let timestamp = Int64(timestampFromUTCDate: date)
+        self = .init(timeIntervalSince1970: TimeInterval(timestamp))
+    }
 
+    @inlinable
+    var utcDate: (year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int) {
+        let timestamp = Int64(self.timeIntervalSince1970.rounded())
+        return timestamp.utcDateFromTimestamp
+    }
+
+    @inlinable
+    init(_ time: Time) {
         switch time {
-        case .utcTime(let utcTime):
-            maybeDate = Date(utcTime)
         case .generalTime(let generalizedTime):
-            maybeDate = Date(generalizedTime)
+            self = .init(generalizedTime)
+        case .utcTime(let utcTime):
+            self = .init(utcTime)
         }
-
-        guard let date = maybeDate else {
-            return nil
-        }
-
-        self = date
     }
 
     @inlinable
-    init?(_ utcTime: UTCTime) {
-        let components = DateComponents(
-            calendar: gregorianCalendar,
-            timeZone: utcTimeZone,
-            year: utcTime.year,
-            month: utcTime.month,
-            day: utcTime.day,
-            hour: utcTime.hours,
-            minute: utcTime.minutes,
-            second: utcTime.seconds
-        )
-        guard let date = components.date else {
-            return nil
-        }
-        self = date
+    init(_ time: GeneralizedTime) {
+        self = Date(fromUTCDate: (year: time.year, month: time.month, day: time.day, hours: time.hours, minutes: time.minutes, seconds: time.seconds))
     }
 
     @inlinable
-    init?(_ generalizedTime: GeneralizedTime) {
-        let components = DateComponents(
-            calendar: gregorianCalendar,
-            timeZone: utcTimeZone,
-            year: generalizedTime.year,
-            month: generalizedTime.month,
-            day: generalizedTime.day,
-            hour: generalizedTime.hours,
-            minute: generalizedTime.minutes,
-            second: generalizedTime.seconds
-        )
-        guard let date = components.date else {
-            return nil
-        }
-        self = date
+    init(_ time: UTCTime) {
+        self = Date(fromUTCDate: (year: time.year, month: time.month, day: time.day, hours: time.hours, minutes: time.minutes, seconds: time.seconds))
     }
 }
 
 extension GeneralizedTime {
-    @inlinable
-    init(_ date: Date) {
-        let components = gregorianCalendar.dateComponents(in: utcTimeZone, from: date)
-
-        // This cannot throw: Date always meets the requirements.
-        self = try! GeneralizedTime(
-            year: components.year!,
-            month: components.month!,
-            day: components.day!,
-            hours: components.hour!,
-            minutes: components.minute!,
-            seconds: components.second!,
-            fractionalSeconds: 0.0
-        )
-    }
-
     @inlinable
     init(_ time: Time) {
         switch time {
@@ -162,10 +106,37 @@ extension GeneralizedTime {
             self = try! GeneralizedTime(year: t.year, month: t.month, day: t.day, hours: t.hours, minutes: t.minutes, seconds: t.seconds, fractionalSeconds: 0)
         }
     }
+
+    @inlinable
+    init(_ components: (year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int)) throws {
+        try self.init(
+            year: components.year,
+            month: components.month,
+            day: components.day,
+            hours: components.hours,
+            minutes: components.minutes,
+            seconds: components.seconds,
+            fractionalSeconds: 0.0
+        )
+    }
+
+    @inlinable
+    init(_ date: Date) {
+        // This cannot throw: any valid Date can be represented.
+        try! self.init(date.utcDate)
+    }
 }
 
-@usableFromInline
-let gregorianCalendar = Calendar(identifier: .gregorian)
-
-@usableFromInline
-let utcTimeZone = TimeZone(identifier: "UTC")!
+extension UTCTime {
+    @inlinable
+    init(_ components: (year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int)) throws {
+        try self.init(
+            year: components.year,
+            month: components.month,
+            day: components.day,
+            hours: components.hours,
+            minutes: components.minutes,
+            seconds: components.seconds
+        )
+    }
+}
