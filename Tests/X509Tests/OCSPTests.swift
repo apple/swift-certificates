@@ -522,7 +522,7 @@ final class OCSPTests: XCTestCase {
                     responderID: .byName(try DistinguishedName {
                         CommonName("Responder")
                     }),
-                    producedAt: try .init(Date()),
+                    producedAt: .init(Date()),
                     responses: []),
                 signatureAlgorithm: .p384PublicKey,
                 signature: ASN1BitString(bytes: [1, 2, 3, 4]), certs: nil

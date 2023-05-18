@@ -135,6 +135,35 @@ extension Date {
     }
 }
 
+extension GeneralizedTime {
+    @inlinable
+    init(_ date: Date) {
+        let components = gregorianCalendar.dateComponents(in: utcTimeZone, from: date)
+
+        // This cannot throw: Date always meets the requirements.
+        self = try! GeneralizedTime(
+            year: components.year!,
+            month: components.month!,
+            day: components.day!,
+            hours: components.hour!,
+            minutes: components.minute!,
+            seconds: components.second!,
+            fractionalSeconds: 0.0
+        )
+    }
+
+    @inlinable
+    init(_ time: Time) {
+        switch time {
+        case .generalTime(let t):
+            self = t
+        case .utcTime(let t):
+            // This can never throw, all valid UTCTimes are valid GeneralizedTimes
+            self = try! GeneralizedTime(year: t.year, month: t.month, day: t.day, hours: t.hours, minutes: t.minutes, seconds: t.seconds, fractionalSeconds: 0)
+        }
+    }
+}
+
 @usableFromInline
 let gregorianCalendar = Calendar(identifier: .gregorian)
 
