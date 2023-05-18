@@ -726,22 +726,6 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
 }
 
-extension GeneralizedTime {
-    init(_ date: Date) throws {
-        let components = gregorianCalendar.dateComponents(in: utcTimeZone, from: date)
-        try self.init(
-            year: components.year!,
-            month: components.month!,
-            day: components.day!,
-            hours: components.hour!,
-            minutes: components.minute!,
-            seconds: components.second!,
-            fractionalSeconds: 0.0
-        )
-    }
-}
-
-
 extension BasicOCSPResponse {
     static func signed(
         responseData: OCSPResponseData,

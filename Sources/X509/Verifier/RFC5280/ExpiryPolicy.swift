@@ -22,26 +22,32 @@ struct ExpiryPolicy: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     @usableFromInline
-    let validationTime: Date
+    let validationTime: GeneralizedTime
 
     @inlinable
     init(validationTime: Date) {
-        self.validationTime = validationTime
+        self.validationTime = GeneralizedTime(validationTime)
     }
 
     @inlinable
     func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
         // This is an easy check: confirm all the certs are valid.
+        //
+        // Note that we do this computation on the TBSCertificate Validity struct, not the public Date fields. This is
+        // to avoid expensive repeated transformations into Date fields.
         for cert in chain {
-            if cert.notValidBefore > cert.notValidAfter {
+            let notValidBefore = GeneralizedTime(cert.tbsCertificate.validity.notBefore)
+            let notValidAfter = GeneralizedTime(cert.tbsCertificate.validity.notAfter)
+
+            if notValidBefore > notValidAfter {
                 return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) has invalid expiry, notValidAfter is earlier than notValidBefore")
             }
 
-            if self.validationTime < cert.notValidBefore {
+            if self.validationTime < notValidBefore {
                 return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) is not yet valid")
             }
 
-            if self.validationTime > cert.notValidAfter {
+            if self.validationTime > notValidAfter {
                 return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) has expired")
             }
         }
