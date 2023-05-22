@@ -73,7 +73,6 @@ extension AuthorityInformationAccess: RandomAccessCollection {
 
     @inlinable
     public subscript(position: Int) -> AccessDescription {
-        // TODO(cory): Maintain uniqueness
         get {
             self.descriptions[position]
         }
