@@ -89,10 +89,14 @@ extension Certificate {
         public init<Elements>(_ extensions: Elements) throws where Elements: Sequence, Elements.Element == Extension {
             self._extensions = Array(extensions)
             
-            var extensionOIDs = Set<ASN1ObjectIdentifier>()
-            for ext in _extensions {
-                if extensionOIDs.insert(ext.oid).inserted == false {
-                    throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(ext.oid) in extensions: \(self)")
+            // check for duplicates using a linear scan
+            // this is more performant compared to hashing if we have less than ~64 extensions
+            for (ext, index) in zip(self._extensions, self._extensions.indices) {
+                for (currentExtension, currentIndex) in zip(self._extensions, self._extensions.indices) {
+                    guard currentIndex != index else { continue }
+                    if ext.oid == currentExtension.oid {
+                        throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(ext.oid). First extension \(ext) at \(index) and second extension \(currentExtension) at \(currentIndex)")
+                    }
                 }
             }
         }
