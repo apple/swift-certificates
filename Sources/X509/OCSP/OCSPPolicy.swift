@@ -471,10 +471,8 @@ extension OCSPResponseData {
     static let defaultTrustTimeLeeway: TimeInterval = 4500.0
     
     func verifyTime(validationTime: Date, trustTimeLeeway: TimeInterval = Self.defaultTrustTimeLeeway) -> PolicyEvaluationResult {
-        guard let producedAt = Date(self.producedAt) else {
-            return .failsToMeetPolicy(reason: "could not convert time specified in OCSP response to a `Date`")
-        }
-        
+        let producedAt = Date(self.producedAt)
+
         guard producedAt <= validationTime.advanced(by: trustTimeLeeway) else {
             return .failsToMeetPolicy(reason: "OCSP response `producedAt` (\(self.producedAt) is in the future (+\(trustTimeLeeway) seconds leeway) but should be in the past")
         }
@@ -494,13 +492,10 @@ extension OCSPSingleResponse {
         guard let nextUpdateGeneralizedTime = self.nextUpdate else {
             return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` is nil")
         }
-        
-        guard
-            let thisUpdate = Date(self.thisUpdate),
-            let nextUpdate = Date(nextUpdateGeneralizedTime)
-        else {
-            return .failsToMeetPolicy(reason: "could not convert time specified in OCSP response to a `Date`")
-        }
+
+        let thisUpdate = Date(self.thisUpdate)
+        let nextUpdate = Date(nextUpdateGeneralizedTime)
+
         guard thisUpdate <= validationTime.advanced(by: trustTimeLeeway) else {
             return .failsToMeetPolicy(reason: "OCSP response `thisUpdate` (\(self.thisUpdate) is in the future (+\(trustTimeLeeway) seconds leeway) but should be in the past")
         }

@@ -88,15 +88,13 @@ public struct Certificate {
     /// The date before which this certificate is not valid.
     @inlinable
     public var notValidBefore: Date {
-        // TODO: Do we need to do this conversion every time? Hard to be sure.
-        // Need to work out how costly it is.
-        Date(self.tbsCertificate.validity.notBefore)!
+        Date(self.tbsCertificate.validity.notBefore)
     }
 
     /// The date after which this certificate is not valid.
     @inlinable
     public var notValidAfter: Date {
-        Date(self.tbsCertificate.validity.notAfter)!
+        Date(self.tbsCertificate.validity.notAfter)
     }
 
     /// The ``DistinguishedName`` of the issuer of this certificate.
