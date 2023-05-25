@@ -242,7 +242,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func testPrintingEKU() throws {
-        let eku = ExtendedKeyUsage([
+        let eku = try ExtendedKeyUsage([
             .any,
             .certificateTransparency,
             .timeStamping,

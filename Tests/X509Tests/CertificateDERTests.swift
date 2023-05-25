@@ -216,7 +216,7 @@ final class CertificateDERTests: XCTestCase {
         )
         XCTAssertEqual(
             try cert.extensions.extendedKeyUsage,
-            .init([.serverAuth, .clientAuth])
+            try .init([.serverAuth, .clientAuth])
         )
         XCTAssertEqual(
             try cert.extensions.basicConstraints,
@@ -243,7 +243,7 @@ final class CertificateDERTests: XCTestCase {
                 KeyUsage(digitalSignature: true, keyCertSign: true, cRLSign: true)
             )
 
-            ExtendedKeyUsage([.serverAuth, .clientAuth])
+            try ExtendedKeyUsage([.serverAuth, .clientAuth])
 
             Critical(
                 BasicConstraints.isCertificateAuthority(maxPathLength: 0)

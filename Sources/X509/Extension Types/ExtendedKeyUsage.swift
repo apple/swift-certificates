@@ -26,8 +26,22 @@ public struct ExtendedKeyUsage {
     ///
     /// - Parameter usages: The purposes for which the certificate may be used.
     @inlinable
-    public init<Usages: Sequence>(_ usages: Usages) where Usages.Element == Usage {
+    public init<Usages: Sequence>(_ usages: Usages) throws where Usages.Element == Usage {
         self.usages = Array(usages)
+        
+        // check for duplicates using a linear scan
+        // this is more performant compared to hashing if we have less than ~64 usages
+        for index in self.usages.indices {
+            let usage = self.usages[index]
+            for currentIndex in self.usages.indices.dropFirst(index + 1) {
+                let currentUsage = self.usages[currentIndex]
+                if usage == currentUsage {
+                    fatalError("duplicate")
+                    #warning("throw error once new error case lands")
+                    //throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(index) and second at \(currentIndex)")
+                }
+            }
+        }
     }
 
     /// Create a new ``ExtendedKeyUsage`` object
@@ -43,7 +57,14 @@ public struct ExtendedKeyUsage {
         }
 
         let asn1EKU = try ASN1ExtendedKeyUsage(derEncoded: ext.value)
-        self.usages = asn1EKU.usages.map { Usage(oid: $0) }
+        try self.init(asn1EKU.usages.map { Usage(oid: $0) })
+    }
+    
+    
+    /// Create a new empty ``ExtendedKeyUsage`` object with no usages.
+    @inlinable
+    public init() {
+        self.usages = []
     }
 }
 
@@ -70,13 +91,66 @@ extension ExtendedKeyUsage: RandomAccessCollection {
     }
 
     public subscript(position: Int) -> Usage {
-        // TODO(cory): Maintain uniqueness
         get {
             self.usages[position]
         }
-        set {
-            self.usages[position] = newValue
+    }
+}
+
+extension ExtendedKeyUsage {
+    /// Append a new `usage` to the end of the ``ExtendedKeyUsage``, if it doesn't
+    /// already contain it.
+    ///
+    /// - Parameter usage: The ``Usage`` to add to the set.
+    ///
+    /// - Returns: A pair `(inserted, index)`, where `inserted` is a Boolean value
+    ///    indicating whether the operation added a new element, and `index` is
+    ///    the index of `usage` in the resulting ``ExtendedKeyUsage``.
+    @inlinable
+    @discardableResult
+    public mutating func append(_ usage: Element) -> (inserted: Bool, index: Int) {
+        guard let index = self.firstIndex(of: usage) else {
+            let index = self.endIndex
+            self.usages.append(usage)
+            return (inserted: true, index: index)
         }
+        return (inserted: false, index: index)
+    }
+    
+    /// Insert a new `usage` to this set at the specified index, if `self` doesn't
+    /// already contain it.
+    ///
+    /// - Parameters:
+    ///     - usage: The ``Usage`` to insert if not already present.
+    ///     - index: The index to insert `usage` if not already present.
+    ///
+    /// - Returns: A pair `(inserted, index)`, where `inserted` is a Boolean value
+    ///    indicating whether the operation added a new element, and `index` is
+    ///    the index of `item` in the resulting set. If `inserted` is false, then
+    ///    the returned `index` may be different from the index requested.
+    @inlinable
+    @discardableResult
+    public mutating func insert(
+        _ usage: Element,
+        at index: Int
+    ) -> (inserted: Bool, index: Int) {
+        guard let index = self.usages.firstIndex(of: usage) else {
+            self.usages.insert(usage, at: index)
+            return (true, index)
+        }
+        return (false, index)
+    }
+    
+    /// Removes the given `usage` from `self`, if present.
+    /// - Parameter usage: The  ``Usage`` to remove.
+    /// - Returns: The ``Usage`` that was removed or `nil` if `usage` was not present.
+    @inlinable
+    @discardableResult
+    public mutating func remove(_ usage: Element) -> Element? {
+        guard let index = self.usages.firstIndex(where: { $0 == usage }) else {
+            return nil
+        }
+        return self.usages.remove(at: index)
     }
 }
 
