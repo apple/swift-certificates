@@ -711,7 +711,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         let leaf = try loadCertificate("www.apple.com", extension: "der")
         let ocspResponseLeaf = try loadOCSPResponse("www.apple.com.ocsp-response", extension: "der")
         let ocspResponseIntermediate = try loadOCSPResponse("www.apple.com.intermediate.ocsp-response", extension: "der")
-        let timeOfOCSPRequest = try Date(GeneralizedTime(year: 2023, month: 3, day: 15, hours: 15, minutes: 36, seconds: 0, fractionalSeconds: 0.0))!
+        let timeOfOCSPRequest = try Date(GeneralizedTime(year: 2023, month: 3, day: 15, hours: 15, minutes: 36, seconds: 0, fractionalSeconds: 0.0))
         
         await self.assertChain(
             soft: .meetsPolicy,

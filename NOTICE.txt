@@ -59,3 +59,12 @@ This product contains test vectors from pyca/cryptography.
     * https://github.com/pyca/cryptography/blob/main/LICENSE.APACHE
   * HOMEPAGE:
     * https://github.com/pyca/cryptography
+
+---
+
+This product contains code to calculate and decompose UNIX timestamps derived from musl libc.
+
+  * LICENSE (MIT):
+    * https://git.musl-libc.org/cgit/musl/tree/COPYRIGHT
+  * HOMEPAGE:
+    * https://musl.libc.org
