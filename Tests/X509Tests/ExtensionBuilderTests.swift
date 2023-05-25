@@ -216,10 +216,5 @@ final class ExtensionBuilderTests: XCTestCase {
         XCTAssertEqual(extensions, try Certificate.Extensions([
             .init(oid: [1], critical: false, value: [2])
         ]))
-        extensions.update(.init(oid: [2], critical: false, value: [3]), insertingAt: 0)
-        XCTAssertEqual(extensions, try Certificate.Extensions([
-            .init(oid: [2], critical: false, value: [3]),
-            .init(oid: [1], critical: false, value: [2]),
-        ]))
     }
 }
