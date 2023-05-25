@@ -91,11 +91,12 @@ extension Certificate {
             
             // check for duplicates using a linear scan
             // this is more performant compared to hashing if we have less than ~64 extensions
-            for (ext, index) in zip(self._extensions, self._extensions.indices) {
-                for (currentExtension, currentIndex) in zip(self._extensions, self._extensions.indices) {
-                    guard currentIndex != index else { continue }
-                    if ext.oid == currentExtension.oid {
-                        throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(ext.oid). First extension \(ext) at \(index) and second extension \(currentExtension) at \(currentIndex)")
+            for index in self._extensions.indices {
+                let ext = self._extensions[index]
+                for currentIndex in self._extensions.indices.dropFirst(index + 1) {
+                    let currentExt = self._extensions[currentIndex]
+                    if ext.oid == currentExt.oid {
+                        throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(ext.oid). First extension \(ext) at \(index) and second extension \(currentExt) at \(currentIndex)")
                     }
                 }
             }
@@ -195,33 +196,6 @@ extension Certificate.Extensions {
             return nil
         }
     }
-    
-    /// Updates the ``Certificate/Extension`` stored in the dictionary for the ``Certificate/Extension/oid`` of the `extension`,
-    /// or appends `extension` if an ``Certificate/Extension`` with same  ``Certificate/Extension/oid`` does not exist.
-    ///
-    /// - Parameters:
-    ///   - extension: The ``Certificate/Extension`` to update or append.
-    ///   - index: The index at which to insert the ``Certificate/Extension``, if it doesn't already exist.
-    ///
-    /// - Returns: A pair `(old, index)`, where `old` is the ``Certificate/Extension`` that was
-    ///    replaced, or `nil`no ``Certificate/Extension`` with same ``Certificate/Extension/oid`` was present, and `index`
-    ///    is the index corresponding to the updated (or inserted) ``Certificate/Extension``.
-    @inlinable
-    @discardableResult
-    public mutating func update(
-        _ extension: Certificate.Extension,
-        insertingAt index: Int
-    ) -> (originalMember: Certificate.Extension?, index: Int) {
-        if let index = self._extensions.firstIndex(where: { $0.oid == `extension`.oid }) {
-            let oldExtension = self._extensions[index]
-            self._extensions[index] = `extension`
-            return (oldExtension, index)
-        } else {
-            self._extensions.insert(`extension`, at: index)
-            return (nil, index)
-        }
-    }
-    
     
     /// Removes the ``Certificate/Extension`` with the given `oid`.
     /// - Parameter oid: The  ``Certificate/Extension/oid`` of the``Certificate/Extension`` to remove.
