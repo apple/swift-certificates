@@ -28,7 +28,7 @@ final class SignatureTests: XCTestCase {
     static let p521Key = P521.Signing.PrivateKey()
     static let rsaKey = try! _RSA.Signing.PrivateKey(keySize: .bits2048)
     #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    static let secureEnclaveP256 = try! SecureEnclave.P256.Signing.PrivateKey()
+    static let secureEnclaveP256 = try? SecureEnclave.P256.Signing.PrivateKey()
     #endif
 
     func testP384Signature() throws {
@@ -261,32 +261,61 @@ final class SignatureTests: XCTestCase {
     
     #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testHashFunctionMismatch_secureEnclaveP256_ecdsaWithSHA256() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA256, validCombination: true)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA256, validCombination: true)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
     
     func testHashFunctionMismatch_secureEnclaveP256_ecdsaWithSHA384() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA384, validCombination: true)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA384, validCombination: true)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
 
     func testHashFunctionMismatch_secureEnclaveP256_ecdsaWithSHA512() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA512, validCombination: true)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA512, validCombination: true)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
 
     func testHashFunctionMismatch_secureEnclaveP256_sha1WithRSAEncryption() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .sha1WithRSAEncryption, validCombination: false)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .sha1WithRSAEncryption, validCombination: false)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
 
     func testHashFunctionMismatch_secureEnclaveP256_sha256WithRSAEncryption() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .sha256WithRSAEncryption, validCombination: false)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .sha256WithRSAEncryption, validCombination: false)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
 
     func testHashFunctionMismatch_secureEnclaveP256_sha384WithRSAEncryption() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .sha384WithRSAEncryption, validCombination: false)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .sha384WithRSAEncryption, validCombination: false)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
 
     func testHashFunctionMismatch_secureEnclaveP256_sha512WithRSAEncryption() throws {
-        try self.hashFunctionMismatchTest(privateKey: .init(Self.secureEnclaveP256), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: false)
+        if let secureEnclaveP256 = Self.secureEnclaveP256 {
+            try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: false)
+        } else {
+            throw XCTSkip("No SEP")
+        }
     }
+#endif
 
     func testECDSASignatureCorrectlyStripsLeadingZerosFromRawByteRepresentation() throws {
         // We're testing a round-trip logic here, ensuring that the ECDSA signature correctly round-trips.
@@ -314,5 +343,4 @@ final class SignatureTests: XCTestCase {
             0x05, 0x06, 0x07, 0x08, 0x09, 0x0a
         ])
     }
-    #endif
 }
