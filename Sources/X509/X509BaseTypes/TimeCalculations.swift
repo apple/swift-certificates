@@ -48,7 +48,12 @@ extension Int64 {
     // 2000-03-01 (mod 400 year, immediately after feb29
     @inlinable
     static var leapoch: Int64 {
-        946684800 + 86400 * (31 + 29)
+        .secondsFromEpochToYear2000 + .secondsPerDay * (31 + 29)
+    }
+
+    @inlinable
+    static var secondsFromEpochToYear2000: Int64 {
+        946684800
     }
 
     @inlinable
@@ -64,6 +69,21 @@ extension Int64 {
     @inlinable
     static var daysPer4Years: Int64 {
         365 * 4 + 1
+    }
+
+    @inlinable
+    static var secondsPerDay: Int64 {
+        24 * 60 * 60
+    }
+
+    @inlinable
+    static var secondsPerYear: Int64 {
+        .secondsPerDay * .daysPerYear
+    }
+
+    @inlinable
+    static var daysPerYear: Int64 {
+        365
     }
 
     @inlinable
@@ -91,7 +111,7 @@ extension Int64 {
         if remsecs < 0 {
             // Unchecked is safe here: we know remsecs is negative, and we know
             // days cannot be Int64.min
-            remsecs &+= 86400
+            remsecs &+= .secondsPerDay
             days &-= 1
         }
 
@@ -116,9 +136,9 @@ extension Int64 {
 
         // Unchecked arithmetic here is safe: the subtraction is all known values (4 - 1),
         // and the multiplication cannot exceed the original value of remdays.
-        var remyears = remdays / 365
+        var remyears = remdays / .daysPerYear
         if remyears == 4 { remyears &-= 1 }
-        remdays &-= remyears &* 365
+        remdays &-= remyears &* .daysPerYear
 
         // Unchecked multiplication here is safe: each of these has earlier been multiplied by
         // a much larger number and we didn't need checked math then, so we don't need it now.
@@ -127,7 +147,10 @@ extension Int64 {
         var months = 0
         while Int64.daysInMonth(months) <= remdays {
             remdays -= Int64.daysInMonth(months)
-            months += 1
+
+            // Unchecked because daysInMonth will crash if given a value greater than 12, so this
+            // cannot exceed 12.
+            months &+= 1
         }
 
         // Now we normalise the months count back to starting in January.
@@ -157,6 +180,12 @@ extension Int64 {
 
     @inlinable
     init(timestampFromUTCDate date: (year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int)) {
+        assert((1...12).contains(date.month))
+        assert((0...31).contains(date.day))
+        assert((0..<24).contains(date.hours))
+        assert((0..<60).contains(date.minutes))
+        assert((0..<61).contains(date.seconds))
+
         // The algorithm as written expects a tm year, which is years away from 1900, and a tm_month, which is 0-11 instead of 1-12.
         // We don't want that nonsense. Undo it here.
         var (seconds, isLeap) = Self.yearToSeconds(Int64(date.year) - 1900)
@@ -164,7 +193,7 @@ extension Int64 {
 
         // Note that we tolerate invalid day/hour/minute/seconds. That's ok in this context,
         // we validate elsewhere. However, we don't do unchecked math for that reason.
-        seconds += 86400 * (Int64(date.day) - 1)
+        seconds += .secondsPerDay * (Int64(date.day) - 1)
         seconds += 3600 * Int64(date.hours)
         seconds += 60 * Int64(date.minutes)
         seconds += Int64(date.seconds)
@@ -216,7 +245,7 @@ extension Int64 {
         }
 
         leaps += (97 * cycles) + (24 * centuries) - (isLeap ? 1 : 0)
-        return (seconds: ((year - 100) * 31536000) + (leaps * 86400) + 946684800 + 86400, isLeap: isLeap)
+        return (seconds: ((year - 100) * .secondsPerYear) + (leaps * .secondsPerDay) + .secondsFromEpochToYear2000 + .secondsPerDay, isLeap: isLeap)
     }
 
     @inlinable
@@ -228,34 +257,34 @@ extension Int64 {
         case 0:
             secondsThroughMonth = 0
         case 1:
-            secondsThroughMonth = 31*86400
+            secondsThroughMonth = 31 * .secondsPerDay
         case 2:
-            secondsThroughMonth = 59*86400
+            secondsThroughMonth = 59 * .secondsPerDay
         case 3:
-            secondsThroughMonth = 90*86400
+            secondsThroughMonth = 90 * .secondsPerDay
         case 4:
-            secondsThroughMonth = 120*86400
+            secondsThroughMonth = 120 * .secondsPerDay
         case 5:
-            secondsThroughMonth = 151*86400
+            secondsThroughMonth = 151 * .secondsPerDay
         case 6:
-            secondsThroughMonth = 181*86400
+            secondsThroughMonth = 181 * .secondsPerDay
         case 7:
-            secondsThroughMonth = 212*86400
+            secondsThroughMonth = 212 * .secondsPerDay
         case 8:
-            secondsThroughMonth = 243*86400
+            secondsThroughMonth = 243 * .secondsPerDay
         case 9:
-            secondsThroughMonth = 273*86400
+            secondsThroughMonth = 273 * .secondsPerDay
         case 10:
-            secondsThroughMonth = 304*86400
+            secondsThroughMonth = 304 * .secondsPerDay
         case 11:
-            secondsThroughMonth = 334*86400
+            secondsThroughMonth = 334 * .secondsPerDay
         default:
             fatalError("Invalid month: \(month)")
         }
 
         if isLeap && month >= 2 {
             // Unchecked is safe here, none of the above values will overflow when this is added to them.
-            secondsThroughMonth &+= 86400
+            secondsThroughMonth &+= .secondsPerDay
         }
 
         return secondsThroughMonth
