@@ -145,54 +145,6 @@ public struct Certificate {
     @usableFromInline
     internal let signatureAlgorithmBytes: ArraySlice<UInt8>
 
-    /// Construct a certificate from constituent parts.
-    ///
-    /// This API is generally not recommended for use, as it makes it very easy to construct a ``Certificate``
-    /// whose ``signature-swift.property`` is not valid. However, for testing and validation purposes it is useful to be
-    /// able to do this.
-    ///
-    /// - Parameters:
-    ///   - version: The X.509 specification version for this certificate.
-    ///   - serialNumber: The serial number of this certificate.
-    ///   - publicKey: The public key associated with this certificate.
-    ///   - notValidBefore: The date before which this certificate is not valid.
-    ///   - notValidAfter: The date after which this certificate is not valid.
-    ///   - issuer: The ``DistinguishedName`` of the issuer of this certificate.
-    ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
-    ///   - signatureAlgorithm: The signature algorithm used to produce `signature`
-    ///   - extensions: The extensions on this certificate.
-    ///   - signature: The signature attached to this certificate.
-    @inlinable
-    public init(
-        version: Version,
-        serialNumber: SerialNumber,
-        publicKey: PublicKey,
-        notValidBefore: Date,
-        notValidAfter: Date,
-        issuer: DistinguishedName,
-        subject: DistinguishedName,
-        signatureAlgorithm: SignatureAlgorithm,
-        extensions: Extensions,
-        signature: Signature
-    ) throws {
-        self.tbsCertificate = TBSCertificate(
-            version: version,
-            serialNumber: serialNumber,
-            signature: signatureAlgorithm,
-            issuer: issuer,
-            validity: try Validity(notBefore: .makeTime(from: notValidBefore), notAfter: .makeTime(from: notValidAfter)),
-            subject: subject,
-            publicKey: publicKey,
-            extensions: extensions
-        )
-        // TODO: enforce that signature algorithm and signature have the same algorithm.
-        self.signatureAlgorithm = signatureAlgorithm
-        self.signature = signature
-        self.tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
-        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
-    }
-
     /// Construct a certificate from constituent parts, signed by an issuer key.
     ///
     /// This API can be used to construct a ``Certificate`` directly, without an intermediary
@@ -236,7 +188,6 @@ public struct Certificate {
             publicKey: publicKey,
             extensions: extensions
         )
-        // TODO: validate that signature algorithm is comoatible with the signature.
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
