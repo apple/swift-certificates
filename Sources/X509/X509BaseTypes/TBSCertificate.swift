@@ -135,7 +135,7 @@ struct TBSCertificate: DERImplicitlyTaggable, Hashable, Sendable {
                 publicKey: try Certificate.PublicKey(spki: subjectPublicKeyInfo),
                 issuerUniqueID: issuerUniqueID,
                 subjectUniqueID: subjectUniqueID,
-                extensions: Certificate.Extensions(extensions ?? [])
+                extensions: try Certificate.Extensions(extensions ?? [])
             )
         }
     }

@@ -68,7 +68,7 @@ struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
                          certStatus: certStatus,
                          thisUpdate: thisUpdate,
                          nextUpdate: nextUpdate,
-                         extensions: extensions.map { .init($0) })
+                         extensions: try extensions.map { try .init($0) })
         }
     }
 
