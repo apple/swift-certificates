@@ -107,12 +107,7 @@ extension ExtendedKeyUsage {
     @inlinable
     @discardableResult
     public mutating func append(_ usage: Element) -> (inserted: Bool, index: Int) {
-        guard let index = self.firstIndex(of: usage) else {
-            let index = self.endIndex
-            self.usages.append(usage)
-            return (inserted: true, index: index)
-        }
-        return (inserted: false, index: index)
+        self.insert(usage, at: self.endIndex)
     }
     
     /// Insert a new `usage` to this set at the specified index, if `self` doesn't
