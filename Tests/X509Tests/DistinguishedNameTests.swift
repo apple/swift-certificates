@@ -23,6 +23,86 @@ final class DistinguishedNameTests: XCTestCase {
         let parsed = try ASN1Object(derEncoded: serializer.serializedBytes)
         XCTAssertEqual(parsed, value)
     }
+    
+    func testRelativeDistinguishedNameiInit() {
+        XCTAssertEqual(RelativeDistinguishedName(), try RelativeDistinguishedName([]))
+        
+        XCTAssertEqual(Array(try RelativeDistinguishedName([
+            .init(type: [1, 2], utf8String: "A"),
+        ])), [
+            try .init(type: [1, 2], utf8String: "A"),
+        ])
+        
+        XCTAssertEqual(Array(try RelativeDistinguishedName([
+            .init(type: [1, 2], utf8String: "A"),
+            .init(type: [1, 2], utf8String: "B"),
+        ])), [
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 2], utf8String: "B"),
+        ])
+        
+        XCTAssertEqual(Array(try RelativeDistinguishedName([
+            .init(type: [1, 2], utf8String: "B"),
+            .init(type: [1, 2], utf8String: "A"),
+        ])), [
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 2], utf8String: "B"),
+        ])
+        
+        XCTAssertEqual(Array(try RelativeDistinguishedName([
+            .init(type: [1, 2], utf8String: "A"),
+            .init(type: [1, 3], utf8String: "A"),
+        ])), [
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 3], utf8String: "A"),
+        ])
+        
+        XCTAssertThrowsError(Array(try RelativeDistinguishedName([
+            .init(type: [1, 2], utf8String: "A"),
+            .init(type: [1, 2], utf8String: "A"),
+        ]))) { error in
+            XCTAssertEqual((error as? CertificateError)?.code, .duplicateElement, "wrong error \(error)")
+        }
+    }
+    
+    func testRelativeDistinguishedNameInsert() {
+        var rdn = RelativeDistinguishedName()
+        XCTAssertTrue(rdn.insert(try .init(type: [1, 2], utf8String: "A")))
+        XCTAssertEqual(Array(rdn), [
+            try .init(type: [1, 2], utf8String: "A"),
+        ])
+        
+        XCTAssertFalse(rdn.insert(try .init(type: [1, 2], utf8String: "A")))
+        XCTAssertEqual(Array(rdn), [
+            try .init(type: [1, 2], utf8String: "A"),
+        ])
+        
+        XCTAssertTrue(rdn.insert(try .init(type: [1, 2], utf8String: "B")))
+        XCTAssertEqual(Array(rdn), [
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 2], utf8String: "B"),
+        ])
+        
+        XCTAssertFalse(rdn.insert(try .init(type: [1, 2], utf8String: "B")))
+        XCTAssertEqual(Array(rdn), [
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 2], utf8String: "B"),
+        ])
+        
+        XCTAssertTrue(rdn.insert(try .init(type: [1, 1], utf8String: "B")))
+        XCTAssertEqual(Array(rdn), [
+            try .init(type: [1, 1], utf8String: "B"),
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 2], utf8String: "B"),
+        ])
+        
+        XCTAssertFalse(rdn.insert(try .init(type: [1, 1], utf8String: "B")))
+        XCTAssertEqual(Array(rdn), [
+            try .init(type: [1, 1], utf8String: "B"),
+            try .init(type: [1, 2], utf8String: "A"),
+            try .init(type: [1, 2], utf8String: "B"),
+        ])
+    }
 
     func testSimpleRelativeDistinguishedNameSortsItsElements() throws {
         let expected = [

@@ -183,6 +183,20 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
             )
         )
     }
+    
+    /// An element is present twice.
+    /// - Parameter reason: A detailed reason detailing which Element is duplicate.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/duplicateElement``.
+    @inline(never)
+    public static func duplicateElement(
+        reason: String, file: String = #fileID, line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .duplicateElement, reason: reason, file: file, line: line
+            )
+        )
+    }
 }
 
 extension CertificateError {
@@ -202,6 +216,7 @@ extension CertificateError {
             case incorrectOIDForAttribute
             case invalidCSRAttribute
             case duplicateOID
+            case duplicateElement
         }
 
         fileprivate var backingCode: BackingCode
@@ -236,6 +251,9 @@ extension CertificateError {
         
         /// An OID is present twice.
         public static let duplicateOID = ErrorCode(.duplicateOID)
+        
+        /// An element is present twice.
+        public static let duplicateElement = ErrorCode(.duplicateElement)
 
         public var description: String {
             return String(describing: self.backingCode)

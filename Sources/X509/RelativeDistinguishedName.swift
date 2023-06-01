@@ -35,20 +35,26 @@ import SwiftASN1
 public struct RelativeDistinguishedName {
     // TODO: Should we special-case this to the circumstance where we have only one attribute?
     @usableFromInline
-    var attributes: [Attribute] {
-        didSet {
-            Self._sortElements(&self.attributes)
-        }
-    }
+    var attributes: [Attribute]
 
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
     public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
-        // TODO(cory:) We need to validate this, an attribute cannot be repeated.
         self.attributes = Array(attributes)
         Self._sortElements(&self.attributes)
+        
+        // police uniqueness. `attributes` are sorted so we just need to
+        // check that adjacent elements are not equal
+        let adjacentPairs = zip(self.attributes.dropLast(), self.attributes.dropFirst())
+        for (lhs, rhs) in adjacentPairs {
+            if lhs == rhs {
+                throw CertificateError.duplicateElement(
+                    reason: "RelativeDistinguishedName contains \(lhs) at least twice but duplicates are not allowed."
+                )
+            }
+        }
     }
 
     /// Create an empty ``RelativeDistinguishedName``.
@@ -83,19 +89,48 @@ extension RelativeDistinguishedName: RandomAccessCollection {
     /// Insert a new ``Attribute`` into this ``RelativeDistinguishedName``.
     ///
     /// - Parameter attribute: The ``Attribute`` to insert.
+    /// - Returns: `true` if the `attribute` was inserted or `false` if it was already present.
     @inlinable
-    public mutating func insert(_ attribute: RelativeDistinguishedName.Attribute) {
+    @discardableResult
+    public mutating func insert(_ attribute: RelativeDistinguishedName.Attribute) -> Bool {
+        if self.attributes.contains(attribute) {
+            return false
+        }
         self.attributes.append(attribute)
+        Self._sortElements(&self.attributes)
+        return true
     }
 
     /// Insert a `Collection` of ``Attribute``s into this ``RelativeDistinguishedName``.
     ///
-    /// Note that the order of `attributes` will not be preserved.
+    /// Note that the order of `attributes` will not be preserved and duplicates will be deduplicated .
     ///
     /// - Parameter attributes: The ``Attribute``s to be inserted.
     @inlinable
     public mutating func insert<Attributes: Collection>(contentsOf attributes: Attributes) where Attributes.Element == RelativeDistinguishedName.Attribute {
-        self.attributes.append(contentsOf: attributes)
+        
+        for attribute in attributes {
+            if self.attributes.contains(attribute) {
+                continue
+            }
+            self.attributes.append(attribute)
+        }
+        
+        Self._sortElements(&self.attributes)
+    }
+    
+    /// Removes the given `attribute` from `self` if present.
+    /// - Parameter attribute: The ``Attribute`` to remove.
+    /// - Returns: `true` if `attribute` was present in `self` or `false` if it was not present.
+    @inlinable
+    @discardableResult
+    public mutating func remove(_ attribute: Attribute) -> Bool {
+        guard let index = self.attributes.firstIndex(of: attribute) else {
+            return false
+        }
+        self.attributes.remove(at: index)
+        // removing an element preserves the order and therefore we don't need to sort it afterwards
+        return true
     }
 }
 
@@ -121,6 +156,8 @@ extension RelativeDistinguishedName: DERImplicitlyTaggable {
 
     @inlinable
     public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+        // TODO: performance improvement: `attributes` is already guaranteed to be sorted but `serializeSetOf` will still sort it again.
+        // we need special support in ASN.1 for that operation which should still assert the order in debug builds
         try coder.serializeSetOf(self.attributes, identifier: identifier)
     }
 
