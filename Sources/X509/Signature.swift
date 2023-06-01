@@ -46,20 +46,7 @@ extension Certificate {
             case .ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512:
                 let signature = try ECDSASignature(derEncoded: signatureBytes.bytes)
                 self.backing = .ecdsa(signature)
-            case .sha1WithRSAEncryption:
-                // TODO: We need to validate the signature is actually reasonable here.
-                let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
-                self.backing = .rsa(signature)
-            case .sha256WithRSAEncryption:
-                // TODO: We need to validate the signature is actually reasonable here.
-                let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
-                self.backing = .rsa(signature)
-            case .sha384WithRSAEncryption:
-                // TODO: We need to validate the signature is actually reasonable here.
-                let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
-                self.backing = .rsa(signature)
-            case .sha512WithRSAEncryption:
-                // TODO: We need to validate the signature is actually reasonable here.
+            case .sha1WithRSAEncryption, .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption:
                 let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
                 self.backing = .rsa(signature)
             default:
