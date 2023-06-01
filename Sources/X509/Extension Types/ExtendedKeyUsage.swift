@@ -36,9 +36,7 @@ public struct ExtendedKeyUsage {
             for currentIndex in self.usages.indices.dropFirst(index + 1) {
                 let currentUsage = self.usages[currentIndex]
                 if usage == currentUsage {
-                    fatalError("duplicate")
-                    #warning("throw error once new error case lands")
-                    //throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(index) and second at \(currentIndex)")
+                    throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(index) and second at \(currentIndex)")
                 }
             }
         }

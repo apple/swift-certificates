@@ -17,20 +17,20 @@ import X509
 
 final class ExtendedKeyUsageTests: XCTestCase {
     func testInit() {
-        //        XCTAssertThrowsError(try ExtendedKeyUsage([
-        //            .serverAuth,
-        //            .serverAuth,
-        //        ])) { error in
-        //            XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
-        //        }
-        //
-        //        XCTAssertThrowsError(try ExtendedKeyUsage([
-        //            .clientAuth,
-        //            .serverAuth,
-        //            .clientAuth,
-        //        ])) { error in
-        //            XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
-        //        }
+        XCTAssertThrowsError(try ExtendedKeyUsage([
+            .serverAuth,
+            .serverAuth,
+        ])) { error in
+            XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
+        }
+        
+        XCTAssertThrowsError(try ExtendedKeyUsage([
+            .clientAuth,
+            .serverAuth,
+            .clientAuth,
+        ])) { error in
+            XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
+        }
     }
     
     func testInsert() throws {
