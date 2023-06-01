@@ -203,7 +203,7 @@ extension Certificate.Extensions {
     ///     or `nil` if an ``Certificate/Extension`` was not present in with the given `oid`.
     @inlinable
     @discardableResult
-    public mutating func remove(for oid: ASN1ObjectIdentifier) -> Certificate.Extension? {
+    public mutating func remove(_ oid: ASN1ObjectIdentifier) -> Certificate.Extension? {
         guard let index = self._extensions.firstIndex(where: { $0.oid == oid }) else {
             return nil
         }
@@ -233,7 +233,7 @@ extension Certificate.Extensions {
                 precondition(oid == newValue.oid)
                 self.update(newValue)
             } else {
-                self.remove(for: oid)
+                self.remove(oid)
             }
         }
     }

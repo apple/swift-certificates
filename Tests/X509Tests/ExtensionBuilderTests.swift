@@ -217,4 +217,22 @@ final class ExtensionBuilderTests: XCTestCase {
             .init(oid: [1], critical: false, value: [2])
         ]))
     }
+    
+    func testRemove() {
+        var extensions = Certificate.Extensions()
+        extensions.remove([1])
+        XCTAssertEqual(extensions, Certificate.Extensions())
+        XCTAssertNoThrow(try extensions.append(.init(oid: [1], critical: false, value: [1])))
+        XCTAssertNoThrow(try extensions.append(.init(oid: [2], critical: true, value: [1])))
+        extensions.remove([2])
+        XCTAssertEqual(extensions, try Certificate.Extensions {
+            Certificate.Extension(oid: [1], critical: false, value: [1])
+        })
+        extensions.remove([2])
+        XCTAssertEqual(extensions, try Certificate.Extensions {
+            Certificate.Extension(oid: [1], critical: false, value: [1])
+        })
+        extensions.remove([1])
+        XCTAssertEqual(extensions, Certificate.Extensions())
+    }
 }
