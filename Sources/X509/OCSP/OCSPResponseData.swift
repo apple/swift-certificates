@@ -67,7 +67,7 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
                 try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
             }
 
-            return .init(version: .init(rawValue: version), responderID: responderID, producedAt: producedAt, responses: responses, responseExtensions: responseExtensions.map { .init($0) })
+            return .init(version: .init(rawValue: version), responderID: responderID, producedAt: producedAt, responses: responses, responseExtensions: try responseExtensions.map { try .init($0) })
         }
     }
 

@@ -613,7 +613,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: nil)), true),
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: 0)), true),
             (TestPKI.issueSelfSignedCert(basicConstraints: .notCertificateAuthority), false),
-            (TestPKI.issueSelfSignedCert(customExtensions: Certificate.Extensions([Self.brokenBasicConstraints])), false),
+            (TestPKI.issueSelfSignedCert(customExtensions: try Certificate.Extensions([Self.brokenBasicConstraints])), false),
             (TestPKI.issueSelfSignedCert(version: .v1), true),
         ]
 
@@ -661,7 +661,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             TestPKI.issueIntermediate(
                 name: TestPKI.unconstrainedIntermediateName,
                 key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-                extensions: Certificate.Extensions([]),
+                extensions: Certificate.Extensions(),
                 issuer: .unconstrainedRoot
             ),
 
@@ -669,7 +669,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             TestPKI.issueIntermediate(
                 name: TestPKI.unconstrainedIntermediateName,
                 key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-                extensions: Certificate.Extensions([Self.brokenBasicConstraints]),
+                extensions: try Certificate.Extensions([Self.brokenBasicConstraints]),
                 issuer: .unconstrainedRoot
             )
         ]
@@ -705,7 +705,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 name: TestPKI.unconstrainedIntermediateName,
                 version: .v1,
                 key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
-                extensions: Certificate.Extensions([]),
+                extensions: Certificate.Extensions(),
                 issuer: .unconstrainedRoot
             )
 
@@ -741,10 +741,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             }),
 
             // Not having BasicConstraints at all is also bad.
-            TestPKI.issueCA(extensions: Certificate.Extensions([])),
+            TestPKI.issueCA(extensions: Certificate.Extensions()),
 
             // As is having broken BasicConstraints
-            TestPKI.issueCA(extensions: Certificate.Extensions([Self.brokenBasicConstraints]))
+            TestPKI.issueCA(extensions: try Certificate.Extensions([Self.brokenBasicConstraints]))
         ]
 
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)

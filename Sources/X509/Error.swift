@@ -169,6 +169,20 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
             )
         )
     }
+    
+    /// An OID is present twice.
+    /// - Parameter reason: A detailed reason detailing which OID is duplicate.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/duplicateOID``.
+    @inline(never)
+    public static func duplicateOID(
+        reason: String, file: String = #fileID, line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .duplicateOID, reason: reason, file: file, line: line
+            )
+        )
+    }
 }
 
 extension CertificateError {
@@ -187,6 +201,7 @@ extension CertificateError {
             case unsupportedPrivateKey
             case incorrectOIDForAttribute
             case invalidCSRAttribute
+            case duplicateOID
         }
 
         fileprivate var backingCode: BackingCode
@@ -218,6 +233,9 @@ extension CertificateError {
 
         /// A CSR attribute is invalid.
         public static let invalidCSRAttribute = ErrorCode(.invalidCSRAttribute)
+        
+        /// An OID is present twice.
+        public static let duplicateOID = ErrorCode(.duplicateOID)
 
         public var description: String {
             return String(describing: self.backingCode)

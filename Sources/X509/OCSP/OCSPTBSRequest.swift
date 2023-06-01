@@ -59,7 +59,7 @@ struct OCSPTBSRequest: DERImplicitlyTaggable, Hashable {
                 version: .init(rawValue: version),
                 requestorName: requestorName,
                 requestList: requestList,
-                requestExtensions: extensions.map { .init(extensions: $0) }
+                requestExtensions: try extensions.map { try .init($0) }
             )
         }
     }
@@ -75,7 +75,7 @@ struct OCSPTBSRequest: DERImplicitlyTaggable, Hashable {
             try coder.serializeSequenceOf(requestList)
             if let requestExtensions = self.requestExtensions {
                 try coder.serialize(explicitlyTaggedWithTagNumber: 2, tagClass: .contextSpecific) { coder in
-                    try coder.serializeSequenceOf(requestExtensions._extensions)
+                    try coder.serializeSequenceOf(requestExtensions)
                 }
             }
         }
