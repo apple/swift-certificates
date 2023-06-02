@@ -66,7 +66,7 @@ struct OCSPResponderSigningPolicy: VerifierPolicy {
             return .failsToMeetPolicy(reason: "OCSP response certificate has no extended key usages")
         }
 
-        guard extendedKeyUsage.usages.contains(.init(oid: .ExtendedKeyUsage.ocspSigning)) else {
+        guard extendedKeyUsage.usages.contains(.ocspSigning) else {
             return .failsToMeetPolicy(reason: "OCSP response certificate does not have OCSP signing extended key usage set")
         }
         

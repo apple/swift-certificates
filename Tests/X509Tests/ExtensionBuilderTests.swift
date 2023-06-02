@@ -183,12 +183,13 @@ final class ExtensionBuilderTests: XCTestCase {
         }
         
         XCTAssertThrowsError(try Certificate.Extensions {
-            ExtendedKeyUsage([.serverAuth])
-            ExtendedKeyUsage([.clientAuth])
+            try ExtendedKeyUsage([.serverAuth])
+            try ExtendedKeyUsage([.clientAuth])
         }) { error in
             XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
         }
     }
+    
     func testAppend() {
         var extensions = Certificate.Extensions()
         XCTAssertNoThrow(try extensions.append(.init(oid: [1], critical: false, value: [1])))
