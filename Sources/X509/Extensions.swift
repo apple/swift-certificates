@@ -89,16 +89,10 @@ extension Certificate {
         public init<Elements>(_ extensions: Elements) throws where Elements: Sequence, Elements.Element == Extension {
             self._extensions = Array(extensions)
             
-            // check for duplicates using a linear scan
-            // this is more performant compared to hashing if we have less than ~64 extensions
-            for index in self._extensions.indices {
-                let ext = self._extensions[index]
-                for currentIndex in self._extensions.indices.dropFirst(index + 1) {
-                    let currentExt = self._extensions[currentIndex]
-                    if ext.oid == currentExt.oid {
-                        throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(ext.oid). First extension \(ext) at \(index) and second extension \(currentExt) at \(currentIndex)")
-                    }
-                }
+            if let (firstIndex, secondIndex) = self._extensions.findDuplicates(by: { $0.oid == $1.oid }) {
+                let firstExt = self._extensions[firstIndex]
+                let secondExt = self._extensions[secondIndex]
+                throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(firstExt.oid). First extension \(firstExt) at \(firstIndex) and second extension \(secondExt) at \(secondIndex)")
             }
         }
 

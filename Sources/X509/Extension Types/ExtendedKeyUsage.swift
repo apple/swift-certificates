@@ -29,16 +29,9 @@ public struct ExtendedKeyUsage {
     public init<Usages: Sequence>(_ usages: Usages) throws where Usages.Element == Usage {
         self.usages = Array(usages)
         
-        // check for duplicates using a linear scan
-        // this is more performant compared to hashing if we have less than ~64 usages
-        for index in self.usages.indices {
-            let usage = self.usages[index]
-            for currentIndex in self.usages.indices.dropFirst(index + 1) {
-                let currentUsage = self.usages[currentIndex]
-                if usage == currentUsage {
-                    throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(index) and second at \(currentIndex)")
-                }
-            }
+        if let (firstIndex, secondIndex) = self.usages.findDuplicates(by: ==) {
+            let usage = self.usages[firstIndex]
+            throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(firstIndex) and second at \(secondIndex)")
         }
     }
 
@@ -63,6 +56,28 @@ public struct ExtendedKeyUsage {
     @inlinable
     public init() {
         self.usages = []
+    }
+}
+
+extension Array {
+    @inlinable
+    /// Searches for duplicates using a linear scan.
+    /// This is more performant compared to hashing if we have less than ~64 usages
+    /// - Parameter areEqual: a predicate that returns true if the first and second arguments are considered equal
+    /// - Returns: a tuple of the first two indices duplicates found in `self`. `nil` is returned if no duplicates are found.
+    func findDuplicates(
+        by areEqual: (Element, Element) -> Bool
+    ) -> (first: Index, second: Index)? {
+        for index in self.indices {
+            let usage = self[index]
+            for currentIndex in self.indices[index...].dropFirst() {
+                let currentUsage = self[currentIndex]
+                if areEqual(usage, currentUsage) {
+                    return (index, currentIndex)
+                }
+            }
+        }
+        return nil
     }
 }
 
