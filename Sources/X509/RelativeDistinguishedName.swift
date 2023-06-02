@@ -35,11 +35,7 @@ import SwiftASN1
 public struct RelativeDistinguishedName {
     // TODO: Should we special-case this to the circumstance where we have only one attribute?
     @usableFromInline
-    var attributes: [Attribute] {
-        didSet {
-            Self._sortElements(&self.attributes)
-        }
-    }
+    var attributes: [Attribute]
 
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
@@ -85,6 +81,7 @@ extension RelativeDistinguishedName: RandomAccessCollection {
     @inlinable
     public mutating func insert(_ attribute: RelativeDistinguishedName.Attribute) {
         self.attributes.append(attribute)
+        Self._sortElements(&self.attributes)
     }
 
     /// Insert a `Collection` of ``Attribute``s into this ``RelativeDistinguishedName``.
@@ -95,6 +92,28 @@ extension RelativeDistinguishedName: RandomAccessCollection {
     @inlinable
     public mutating func insert<Attributes: Collection>(contentsOf attributes: Attributes) where Attributes.Element == RelativeDistinguishedName.Attribute {
         self.attributes.append(contentsOf: attributes)
+        Self._sortElements(&self.attributes)
+    }
+    
+    /// Removes and returns the ``Attribute`` at the specified position.
+    ///
+    /// - Parameter index: The position of the ``Attribute`` to remove.
+    /// - Returns: The ``Attribute`` at the specified index.
+    @inlinable
+    @discardableResult
+    public mutating func remove(at index: Int) -> Element {
+        self.attributes.remove(at: index)
+        // removing an element doesn't change the order and therefore sorting is not required
+    }
+    
+    /// Removes all the ``Attribute``s that satisfy the given predicate.
+    /// - Parameter shouldBeRemoved: A closure that takes an ``Attribute`` of the
+    ///   ``RelativeDistinguishedName`` as its argument and returns a Boolean value indicating
+    ///   whether the ``Attribute`` should be removed from the ``RelativeDistinguishedName``.
+    @inlinable
+    public mutating func removeAll(where shouldBeRemoved: (Attribute) throws -> Bool) rethrows {
+        try self.attributes.removeAll(where: shouldBeRemoved)
+        // removing elements doesn't change the order and therefore sorting is not required
     }
 }
 
