@@ -46,7 +46,6 @@ public struct RelativeDistinguishedName {
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
     public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
-        // TODO(cory:) We need to validate this, an attribute cannot be repeated.
         self.attributes = Array(attributes)
         Self._sortElements(&self.attributes)
     }
