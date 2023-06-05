@@ -48,4 +48,90 @@ final class NameConstraintsTests: XCTestCase {
             }
         }
     }
+    
+    
+    func testLazyProperties() {
+        struct NameConstraintsPropertyValue {
+            var property: PartialKeyPath<NameConstraints>
+            var setValue: (inout NameConstraints) -> Void
+            var assertValueIsSet: (NameConstraints) -> Void
+            init<Property: Hashable>(
+                _ keyPath: WritableKeyPath<NameConstraints, Property>,
+                value: Property,
+                file: StaticString = #filePath,
+                line: UInt = #line
+            ) {
+                self.property = keyPath
+                self.setValue = { constraints in
+                    constraints[keyPath: keyPath] = value
+                }
+                
+                self.assertValueIsSet = { constraints in
+                    // check Equatable conformance
+                    XCTAssertEqual(constraints[keyPath: keyPath], value, file: file, line: line)
+                    
+                    // check Hashable conformance
+                    var lhsHasher = Hasher()
+                    lhsHasher.combine(constraints[keyPath: keyPath])
+                    var rhsHasher = Hasher()
+                    rhsHasher.combine(value)
+                    XCTAssertEqual(lhsHasher.finalize(), rhsHasher.finalize(), "hashes do not match for \(constraints[keyPath: keyPath]) and \(value)", file: file, line: line)
+                }
+            }
+        }
+        
+        let tests: [NameConstraintsPropertyValue] = [
+            NameConstraintsPropertyValue(\.excludedDNSDomains, value: []),
+            NameConstraintsPropertyValue(\.excludedDNSDomains, value: ["apple.com"]),
+            NameConstraintsPropertyValue(\.excludedDNSDomains, value: ["example.com"]),
+            NameConstraintsPropertyValue(\.excludedDNSDomains, value: ["apple.com", "example.com"]),
+            NameConstraintsPropertyValue(\.permittedDNSDomains, value: []),
+            NameConstraintsPropertyValue(\.permittedDNSDomains, value: ["apple.com"]),
+            NameConstraintsPropertyValue(\.permittedDNSDomains, value: ["example.com"]),
+            NameConstraintsPropertyValue(\.permittedDNSDomains, value: ["apple.com", "example.com"]),
+            
+            NameConstraintsPropertyValue(\.excludedEmailAddresses, value: []),
+            NameConstraintsPropertyValue(\.excludedEmailAddresses, value: ["foo@example.com"]),
+            NameConstraintsPropertyValue(\.excludedEmailAddresses, value: ["bar@example.com"]),
+            NameConstraintsPropertyValue(\.excludedEmailAddresses, value: ["foo@example.com", "bar@example.com"]),
+            NameConstraintsPropertyValue(\.permittedEmailAddresses, value: []),
+            NameConstraintsPropertyValue(\.permittedEmailAddresses, value: ["foo@example.com"]),
+            NameConstraintsPropertyValue(\.permittedEmailAddresses, value: ["bar@example.com"]),
+            NameConstraintsPropertyValue(\.permittedEmailAddresses, value: ["foo@example.com", "bar@example.com"]),
+            
+            NameConstraintsPropertyValue(\.excludedIPRanges, value: []),
+            NameConstraintsPropertyValue(\.excludedIPRanges, value: [.v4("127.0.0.1")]),
+            NameConstraintsPropertyValue(\.excludedIPRanges, value: [.v4("192.168.0.1")]),
+            NameConstraintsPropertyValue(\.excludedIPRanges, value: [.v4("127.0.0.1"), .v4("192.168.0.1")]),
+            NameConstraintsPropertyValue(\.permittedIPRanges, value: []),
+            NameConstraintsPropertyValue(\.permittedIPRanges, value: [.v4("127.0.0.1")]),
+            NameConstraintsPropertyValue(\.permittedIPRanges, value: [.v4("192.168.0.1")]),
+            NameConstraintsPropertyValue(\.permittedIPRanges, value: [.v4("127.0.0.1"), .v4("192.168.0.1")]),
+            
+            NameConstraintsPropertyValue(\.forbiddenURIDomains, value: []),
+            NameConstraintsPropertyValue(\.forbiddenURIDomains, value: [".example.com"]),
+            NameConstraintsPropertyValue(\.forbiddenURIDomains, value: [".apple.com"]),
+            NameConstraintsPropertyValue(\.forbiddenURIDomains, value: [".example.com", ".apple.com"]),
+            NameConstraintsPropertyValue(\.permittedURIDomains, value: []),
+            NameConstraintsPropertyValue(\.permittedURIDomains, value: [".example.com"]),
+            NameConstraintsPropertyValue(\.permittedURIDomains, value: [".apple.com"]),
+            NameConstraintsPropertyValue(\.permittedURIDomains, value: [".example.com", ".apple.com"]),
+        ]
+        
+        // This will set the properties to the above values in order (and in reversed order).
+        // After it sets each property it asserts that the previous latest value of other properties are still set
+        // to their previous latest values and are not modified.
+        
+        var nameConstraints = NameConstraints()
+        var latestValueForProperty: [PartialKeyPath<NameConstraints>: NameConstraintsPropertyValue] = [:]
+        
+        for test in tests + tests.reversed() {
+            test.setValue(&nameConstraints)
+            latestValueForProperty[test.property] = test
+            
+            for latestValue in latestValueForProperty.values {
+                latestValue.assertValueIsSet(nameConstraints)
+            }
+        }
+    }
 }

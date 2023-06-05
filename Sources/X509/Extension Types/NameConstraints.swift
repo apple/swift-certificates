@@ -24,24 +24,247 @@ import SwiftASN1
 /// are consulted first, and if a name is matched in a forbidden tree then it does not matter whether
 /// the same name is also matched in a permitted tree.
 public struct NameConstraints {
-    /// The DNS name trees that are permitted in certificates issued by this CA.
-    ///
-    /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
-    /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
-    public var permittedDNSDomains: [String] {
-        // TODO(cory): We probably want a different collection type here that can lazily construct its contents, and
-        // that will let us support people assigning into this collection.
-        get {
-            self.permittedSubtrees.compactMap {
+    public struct DNSNames: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+        @inlinable
+        public static func ==(lhs: Self, rhs: Self) -> Bool {
+            lhs.elementsEqual(rhs)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
+        }
+        
+        @inlinable
+        public var description: String {
+            "[\(self.joined(separator: ", "))]"
+        }
+        
+        @usableFromInline
+        var subtrees: [GeneralName]
+        
+        @inlinable
+        init(subtrees: [GeneralName]) {
+            self.subtrees = subtrees
+        }
+        
+        @inlinable
+        public init(_ elements: some Sequence<String>) {
+            self.subtrees = elements.map { .dnsName($0) }
+        }
+        
+        @inlinable
+        public init(arrayLiteral elements: String...) {
+            self.init(elements)
+        }
+        
+        @inlinable
+        public func makeIterator() -> some IteratorProtocol<String> {
+            self.subtrees.lazy.compactMap {
                 if case .dnsName(let name) = $0 {
                     return name
                 } else {
                     return nil
                 }
+            }.makeIterator()
+        }
+        
+        @inlinable
+        var filtered: some Sequence<GeneralName> {
+            self.subtrees.lazy.filter {
+                guard case .dnsName = $0 else {
+                    return false
+                }
+                return true
             }
         }
+    }
+
+    public struct IPRanges: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+        @inlinable
+        public static func ==(lhs: Self, rhs: Self) -> Bool {
+            lhs.elementsEqual(rhs)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
+        }
+        
+        @inlinable
+        public var description: String {
+            "[\(self.lazy.map { String(describing: $0.bytes) }.joined(separator: ", "))]"
+        }
+        
+        @usableFromInline
+        var subtrees: [GeneralName]
+        
+        @inlinable
+        init(subtrees: [GeneralName]) {
+            self.subtrees = subtrees
+        }
+        
+        @inlinable
+        public init(_ elements: some Sequence<ASN1OctetString>) {
+            self.subtrees = elements.map { .ipAddress($0) }
+        }
+        
+        @inlinable
+        public init(arrayLiteral elements: ASN1OctetString...) {
+            self.init(elements)
+        }
+        
+        @inlinable
+        public func makeIterator() -> some IteratorProtocol<ASN1OctetString> {
+            self.subtrees.lazy.compactMap {
+                if case .ipAddress(let name) = $0 {
+                    return name
+                } else {
+                    return nil
+                }
+            }.makeIterator()
+        }
+        
+        @inlinable
+        var filtered: some Sequence<GeneralName> {
+            self.subtrees.lazy.filter {
+                guard case .ipAddress = $0 else {
+                    return false
+                }
+                return true
+            }
+        }
+    }
+
+    public struct EmailAddresses: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+        @inlinable
+        public static func ==(lhs: Self, rhs: Self) -> Bool {
+            lhs.elementsEqual(rhs)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
+        }
+        
+        @inlinable
+        public var description: String {
+            "[\(self.joined(separator: ", "))]"
+        }
+        
+        @usableFromInline
+        var subtrees: [GeneralName]
+        
+        @inlinable
+        init(subtrees: [GeneralName]) {
+            self.subtrees = subtrees
+        }
+        
+        @inlinable
+        public init(_ elements: some Sequence<String>) {
+            self.subtrees = elements.map { .rfc822Name($0) }
+        }
+        
+        @inlinable
+        public init(arrayLiteral elements: String...) {
+            self.init(elements)
+        }
+        
+        @inlinable
+        public func makeIterator() -> some IteratorProtocol<String> {
+            self.subtrees.lazy.compactMap {
+                if case .rfc822Name(let name) = $0 {
+                    return name
+                } else {
+                    return nil
+                }
+            }.makeIterator()
+        }
+        
+        @inlinable
+        var filtered: some Sequence<GeneralName> {
+            self.subtrees.lazy.filter {
+                guard case .rfc822Name = $0 else {
+                    return false
+                }
+                return true
+            }
+        }
+    }
+
+    public struct URIDomains: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+        @inlinable
+        public static func ==(lhs: Self, rhs: Self) -> Bool {
+            lhs.elementsEqual(rhs)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
+        }
+        
+        @inlinable
+        public var description: String {
+            "[\(self.joined(separator: ", "))]"
+        }
+        
+        @usableFromInline
+        var subtrees: [GeneralName]
+        
+        @inlinable
+        init(subtrees: [GeneralName]) {
+            self.subtrees = subtrees
+        }
+        
+        @inlinable
+        public init(_ elements: some Sequence<String>) {
+            self.subtrees = elements.map { .uniformResourceIdentifier($0) }
+        }
+        
+        @inlinable
+        public init(arrayLiteral elements: String...) {
+            self.init(elements)
+        }
+        
+        @inlinable
+        public func makeIterator() -> some IteratorProtocol<String> {
+            self.subtrees.lazy.compactMap {
+                if case .uniformResourceIdentifier(let name) = $0 {
+                    return name
+                } else {
+                    return nil
+                }
+            }.makeIterator()
+        }
+        
+        @inlinable
+        var filtered: some Sequence<GeneralName> {
+            self.subtrees.lazy.filter {
+                guard case .uniformResourceIdentifier = $0 else {
+                    return false
+                }
+                return true
+            }
+        }
+    }
+    
+    
+    /// The DNS name trees that are permitted in certificates issued by this CA.
+    ///
+    /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
+    /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
+    public var permittedDNSDomains: DNSNames {
+        get {
+            DNSNames(subtrees: permittedSubtrees)
+        }
         set {
-            fatalError("TODO")
+            permittedSubtrees.removeAll {
+                guard case .dnsName = $0 else {
+                    return false
+                }
+                return true
+            }
+            permittedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -49,18 +272,18 @@ public struct NameConstraints {
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
     /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
-    public var excludedDNSDomains: [String] {
+    public var excludedDNSDomains: DNSNames {
         get {
-            self.excludedSubtrees.compactMap {
-                if case .dnsName(let name) = $0 {
-                    return name
-                } else {
-                    return nil
-                }
-            }
+            DNSNames(subtrees: excludedSubtrees)
         }
         set {
-            fatalError("TODO")
+            excludedSubtrees.removeAll {
+                guard case .dnsName = $0 else {
+                    return false
+                }
+                return true
+            }
+            excludedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -74,18 +297,18 @@ public struct NameConstraints {
     /// This represents a subnet root and its mask.
     ///
     /// Any IP address attested that falls within one of these subnets matches the constraint.
-    public var permittedIPRanges: [ASN1OctetString] {
+    public var permittedIPRanges: IPRanges {
         get {
-            self.permittedSubtrees.compactMap {
-                if case .ipAddress(let address) = $0 {
-                    return address
-                } else {
-                    return nil
-                }
-            }
+            IPRanges(subtrees: permittedSubtrees)
         }
         set {
-            fatalError("TODO")
+            permittedSubtrees.removeAll {
+                guard case .ipAddress = $0 else {
+                    return false
+                }
+                return true
+            }
+            permittedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -99,18 +322,18 @@ public struct NameConstraints {
     /// This represents a subnet root and its mask.
     ///
     /// Any IP address attested that falls within one of these subnets matches the constraint.
-    public var excludedIPRanges: [ASN1OctetString] {
+    public var excludedIPRanges: IPRanges {
         get {
-            self.excludedSubtrees.compactMap {
-                if case .ipAddress(let address) = $0 {
-                    return address
-                } else {
-                    return nil
-                }
-            }
+            IPRanges(subtrees: excludedSubtrees)
         }
         set {
-            fatalError("TODO")
+            excludedSubtrees.removeAll {
+                guard case .ipAddress = $0 else {
+                    return false
+                }
+                return true
+            }
+            excludedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -119,18 +342,18 @@ public struct NameConstraints {
     /// This form may contain a specific mailbox (e.g. `user@example.com`), all
     /// addresses on a given host (e.g. `example.com`), or all mailboxes within a
     /// given domain (e.g. `.example.com`).
-    public var permittedEmailAddresses: [String] {
+    public var permittedEmailAddresses: EmailAddresses {
         get {
-            self.permittedSubtrees.compactMap {
-                if case .rfc822Name(let name) = $0 {
-                    return name
-                } else {
-                    return nil
-                }
-            }
+            EmailAddresses(subtrees: permittedSubtrees)
         }
         set {
-            fatalError("TODO")
+            permittedSubtrees.removeAll {
+                guard case .rfc822Name = $0 else {
+                    return false
+                }
+                return true
+            }
+            permittedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -139,18 +362,18 @@ public struct NameConstraints {
     /// This form may contain a specific mailbox (e.g. `user@example.com`), all
     /// addresses on a given host (e.g. `example.com`), or all mailboxes within a
     /// given domain (e.g. `.example.com`).
-    public var excludedEmailAddresses: [String] {
+    public var excludedEmailAddresses: EmailAddresses {
         get {
-            self.excludedSubtrees.compactMap {
-                if case .rfc822Name(let name) = $0 {
-                    return name
-                } else {
-                    return nil
-                }
-            }
+            EmailAddresses(subtrees: excludedSubtrees)
         }
         set {
-            fatalError("TODO")
+            excludedSubtrees.removeAll {
+                guard case .rfc822Name = $0 else {
+                    return false
+                }
+                return true
+            }
+            excludedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -162,18 +385,18 @@ public struct NameConstraints {
     /// period, and matches any name that can be expanded with one or more labels to
     /// the left. Note that expanding with zero labels does not match: that is,
     /// `.example.com` matches `host.example.com`, but not `example.com`.
-    public var permittedURIDomains: [String] {
+    public var permittedURIDomains: URIDomains {
         get {
-            self.permittedSubtrees.compactMap {
-                if case .uniformResourceIdentifier(let name) = $0 {
-                    return name
-                } else {
-                    return nil
-                }
-            }
+            URIDomains(subtrees: permittedSubtrees)
         }
         set {
-            fatalError("TODO")
+            permittedSubtrees.removeAll {
+                guard case .uniformResourceIdentifier = $0 else {
+                    return false
+                }
+                return true
+            }
+            permittedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -185,18 +408,18 @@ public struct NameConstraints {
     /// period, and matches any name that can be expanded with one or more labels to
     /// the left. Note that expanding with zero labels does not match: that is,
     /// `.example.com` matches `host.example.com`, but not `example.com`.
-    public var forbiddenURIDomains: [String] {
+    public var forbiddenURIDomains: URIDomains {
         get {
-            self.excludedSubtrees.compactMap {
-                if case .uniformResourceIdentifier(let name) = $0 {
-                    return name
-                } else {
-                    return nil
-                }
-            }
+            URIDomains(subtrees: excludedSubtrees)
         }
         set {
-            fatalError("TODO")
+            excludedSubtrees.removeAll {
+                guard case .uniformResourceIdentifier = $0 else {
+                    return false
+                }
+                return true
+            }
+            excludedSubtrees.append(contentsOf: newValue.filtered)
         }
     }
 
@@ -227,26 +450,26 @@ public struct NameConstraints {
     ///   - excludedURIDomains: The URI domains that are forbidden in certificates issued by this CA.
     @inlinable
     public init(
-        permittedDNSDomains: [String] = [],
-        excludedDNSDomains: [String] = [],
-        permittedIPRanges: [ASN1OctetString] = [],
-        excludedIPRanges: [ASN1OctetString] = [],
-        permittedEmailAddresses: [String] = [],
-        excludedEmailAddresses: [String] = [],
-        permittedURIDomains: [String] = [],
-        forbiddenURIDomains: [String] = []
+        permittedDNSDomains: DNSNames = [],
+        excludedDNSDomains: DNSNames = [],
+        permittedIPRanges: IPRanges = [],
+        excludedIPRanges: IPRanges = [],
+        permittedEmailAddresses: EmailAddresses = [],
+        excludedEmailAddresses: EmailAddresses = [],
+        permittedURIDomains: URIDomains = [],
+        forbiddenURIDomains: URIDomains = []
     ) {
         self.permittedSubtrees = []
         self.excludedSubtrees = []
 
-        self.permittedDNSDomains = permittedDNSDomains
-        self.excludedDNSDomains = excludedDNSDomains
-        self.permittedIPRanges = permittedIPRanges
-        self.excludedIPRanges = excludedIPRanges
-        self.permittedEmailAddresses = permittedEmailAddresses
-        self.excludedEmailAddresses = excludedEmailAddresses
-        self.permittedURIDomains = permittedURIDomains
-        self.forbiddenURIDomains = forbiddenURIDomains
+        self.permittedSubtrees.append(contentsOf: permittedDNSDomains.filtered)
+        self.permittedSubtrees.append(contentsOf: permittedIPRanges.filtered)
+        self.permittedSubtrees.append(contentsOf: permittedEmailAddresses.filtered)
+        self.permittedSubtrees.append(contentsOf: permittedURIDomains.filtered)
+        self.excludedSubtrees.append(contentsOf: excludedDNSDomains.filtered)
+        self.excludedSubtrees.append(contentsOf: excludedIPRanges.filtered)
+        self.excludedSubtrees.append(contentsOf: excludedEmailAddresses.filtered)
+        self.excludedSubtrees.append(contentsOf: forbiddenURIDomains.filtered)
     }
 
     /// Construct an extension constraining the names a CA may issue.
@@ -282,6 +505,15 @@ public struct NameConstraints {
 
         self.permittedSubtrees = nameConstraintsValue.permittedSubtrees ?? []
         self.excludedSubtrees = nameConstraintsValue.excludedSubtrees ?? []
+    }
+}
+
+extension Hasher {
+    @inlinable
+    mutating func combine(contentsOf elements: some Sequence<some Hashable>) {
+        for element in elements {
+            self.combine(element)
+        }
     }
 }
 
