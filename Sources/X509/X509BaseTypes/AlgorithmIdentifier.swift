@@ -211,7 +211,6 @@ extension AlgorithmIdentifier: CustomStringConvertible {
     }
 }
 
-// TODO(cory): We need representations for RSA-PSS. See RFC 4055 for descriptions of the ASN.1.
 // Relevant note: the PKCS1v1.5 versions need to treat having no parameters and a NULL parameters as identical. This is probably general,
 // so we may need a custom equatable implementation there.
 
