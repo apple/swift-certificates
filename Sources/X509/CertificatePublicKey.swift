@@ -135,7 +135,8 @@ extension Certificate.PublicKey {
         case .p521(let p521):
             return p521.isValidSignature(signature, for: digest)
         case .rsa(let rsa):
-            // TODO: Extend for PSS?
+            // For now we don't support RSA PSS, as it's not deployed in the WebPKI.
+            // We could, if there are sufficient user needs.
             do {
                 let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
                 return rsa.isValidSignature(signature, for: digest, padding: padding)
