@@ -68,3 +68,13 @@ This product contains code to calculate and decompose UNIX timestamps derived fr
     * https://git.musl-libc.org/cgit/musl/tree/COPYRIGHT
   * HOMEPAGE:
     * https://musl.libc.org
+    
+---
+    
+This product contains derivations of various scripts from SwiftNIO SSH.
+
+  * LICENSE (Apache License 2.0):
+    * https://www.apache.org/licenses/LICENSE-2.0
+  * HOMEPAGE:
+    * https://github.com/apple/swift-nio-ssh
+    
