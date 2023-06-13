@@ -13,9 +13,22 @@
 //===----------------------------------------------------------------------===//
 
 import X509
+import Foundation
+import XCTest
+@_spi(IntegrationTests) import _WebPKI
 
-func run(identifier: String) {
-    measure(identifier: identifier) {
-        return 0
+final class TestRoots: XCTestCase {
+    func testLoadRoots() throws {
+        let caPaths = WebPKI.roots
+        let derEncodedCAs = try caPaths.map { Array(try Data(contentsOf: $0)) }
+        
+        for derEncodedCA in derEncodedCAs {
+            XCTAssertNoThrow(try Certificate(derEncoded: derEncodedCA))
+        }
     }
 }
+
+
+    
+        
+    
