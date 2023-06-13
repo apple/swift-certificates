@@ -119,4 +119,21 @@ final class ExtendedKeyUsageTests: XCTestCase {
         XCTAssertNil(usages.remove(.serverAuth))
         XCTAssertEqual(usages, ExtendedKeyUsage())
     }
+    
+    func testLargeNumberOfExtensions() throws {
+        let usages = try ExtendedKeyUsage((0..<16).map {
+            ExtendedKeyUsage.Usage(oid: [$0])
+        })
+        XCTAssertEqual(usages.count, 16)
+    }
+    
+    func testUnreasonableLargeNumberOfExtensionsAreRejected() {
+        XCTAssertThrowsError(try ExtendedKeyUsage((0..<17).map {
+            ExtendedKeyUsage.Usage(oid: [$0])
+        }))
+        
+        XCTAssertThrowsError(try ExtendedKeyUsage((0..<10_000).map {
+            ExtendedKeyUsage.Usage(oid: [$0])
+        }))
+    }
 }

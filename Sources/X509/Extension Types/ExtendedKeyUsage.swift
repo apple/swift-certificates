@@ -29,6 +29,11 @@ public struct ExtendedKeyUsage {
     public init<Usages: Sequence>(_ usages: Usages) throws where Usages.Element == Usage {
         self.usages = Array(usages)
         
+        let maxUsages = 16
+        guard self.usages.count <= maxUsages else {
+            throw ASN1Error.invalidASN1Object(reason: "Too many extended key usages. Found \(self.usages.count) but only \(maxUsages) are allowed.")
+        }
+        
         if let (firstIndex, secondIndex) = self.usages.findDuplicates(by: ==) {
             let usage = self.usages[firstIndex]
             throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(firstIndex) and second at \(secondIndex)")

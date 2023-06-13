@@ -89,6 +89,11 @@ extension Certificate {
         public init<Elements>(_ extensions: Elements) throws where Elements: Sequence, Elements.Element == Extension {
             self._extensions = Array(extensions)
             
+            let maxExtensions = 16
+            guard self._extensions.count <= maxExtensions else {
+                throw ASN1Error.invalidASN1Object(reason: "Too many extensions. Found \(self._extensions.count) but only \(maxExtensions) are allowed.")
+            }
+            
             if let (firstIndex, secondIndex) = self._extensions.findDuplicates(by: { $0.oid == $1.oid }) {
                 let firstExt = self._extensions[firstIndex]
                 let secondExt = self._extensions[secondIndex]
