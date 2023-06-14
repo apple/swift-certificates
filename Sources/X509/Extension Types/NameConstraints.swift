@@ -253,7 +253,7 @@ public struct NameConstraints {
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
     /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
-    public var permittedDNSDomains: DNSNames {
+    public internal(set) var permittedDNSDomains: DNSNames {
         get {
             DNSNames(subtrees: permittedSubtrees)
         }
@@ -272,7 +272,7 @@ public struct NameConstraints {
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
     /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
-    public var excludedDNSDomains: DNSNames {
+    public internal(set) var excludedDNSDomains: DNSNames {
         get {
             DNSNames(subtrees: excludedSubtrees)
         }
@@ -297,7 +297,7 @@ public struct NameConstraints {
     /// This represents a subnet root and its mask.
     ///
     /// Any IP address attested that falls within one of these subnets matches the constraint.
-    public var permittedIPRanges: IPRanges {
+    public internal(set) var permittedIPRanges: IPRanges {
         get {
             IPRanges(subtrees: permittedSubtrees)
         }
@@ -322,7 +322,7 @@ public struct NameConstraints {
     /// This represents a subnet root and its mask.
     ///
     /// Any IP address attested that falls within one of these subnets matches the constraint.
-    public var excludedIPRanges: IPRanges {
+    public internal(set) var excludedIPRanges: IPRanges {
         get {
             IPRanges(subtrees: excludedSubtrees)
         }
@@ -342,7 +342,7 @@ public struct NameConstraints {
     /// This form may contain a specific mailbox (e.g. `user@example.com`), all
     /// addresses on a given host (e.g. `example.com`), or all mailboxes within a
     /// given domain (e.g. `.example.com`).
-    public var permittedEmailAddresses: EmailAddresses {
+    public internal(set) var permittedEmailAddresses: EmailAddresses {
         get {
             EmailAddresses(subtrees: permittedSubtrees)
         }
@@ -362,7 +362,7 @@ public struct NameConstraints {
     /// This form may contain a specific mailbox (e.g. `user@example.com`), all
     /// addresses on a given host (e.g. `example.com`), or all mailboxes within a
     /// given domain (e.g. `.example.com`).
-    public var excludedEmailAddresses: EmailAddresses {
+    public internal(set) var excludedEmailAddresses: EmailAddresses {
         get {
             EmailAddresses(subtrees: excludedSubtrees)
         }
@@ -385,7 +385,7 @@ public struct NameConstraints {
     /// period, and matches any name that can be expanded with one or more labels to
     /// the left. Note that expanding with zero labels does not match: that is,
     /// `.example.com` matches `host.example.com`, but not `example.com`.
-    public var permittedURIDomains: URIDomains {
+    public internal(set) var permittedURIDomains: URIDomains {
         get {
             URIDomains(subtrees: permittedSubtrees)
         }
@@ -408,7 +408,7 @@ public struct NameConstraints {
     /// period, and matches any name that can be expanded with one or more labels to
     /// the left. Note that expanding with zero labels does not match: that is,
     /// `.example.com` matches `host.example.com`, but not `example.com`.
-    public var forbiddenURIDomains: URIDomains {
+    public internal(set) var forbiddenURIDomains: URIDomains {
         get {
             URIDomains(subtrees: excludedSubtrees)
         }
@@ -450,26 +450,38 @@ public struct NameConstraints {
     ///   - excludedURIDomains: The URI domains that are forbidden in certificates issued by this CA.
     @inlinable
     public init(
-        permittedDNSDomains: DNSNames = [],
-        excludedDNSDomains: DNSNames = [],
-        permittedIPRanges: IPRanges = [],
-        excludedIPRanges: IPRanges = [],
-        permittedEmailAddresses: EmailAddresses = [],
-        excludedEmailAddresses: EmailAddresses = [],
-        permittedURIDomains: URIDomains = [],
-        forbiddenURIDomains: URIDomains = []
+        permittedDNSDomains: some Sequence<String> = [],
+        excludedDNSDomains: some Sequence<String> = [],
+        permittedIPRanges: some Sequence<ASN1OctetString> = [],
+        excludedIPRanges: some Sequence<ASN1OctetString> = [],
+        permittedEmailAddresses: some Sequence<String> = [],
+        excludedEmailAddresses: some Sequence<String> = [],
+        permittedURIDomains: some Sequence<String> = [],
+        forbiddenURIDomains: some Sequence<String> = []
     ) {
         self.permittedSubtrees = []
+        self.permittedSubtrees.reserveCapacity(
+            permittedDNSDomains.underestimatedCount +
+            permittedIPRanges.underestimatedCount +
+            permittedEmailAddresses.underestimatedCount +
+            permittedURIDomains.underestimatedCount
+        )
+        self.permittedSubtrees.append(contentsOf: permittedDNSDomains.lazy.map { .dnsName($0) })
+        self.permittedSubtrees.append(contentsOf: permittedIPRanges.lazy.map { .ipAddress($0) })
+        self.permittedSubtrees.append(contentsOf: permittedEmailAddresses.lazy.map { .rfc822Name($0) })
+        self.permittedSubtrees.append(contentsOf: permittedURIDomains.lazy.map { .uniformResourceIdentifier($0) })
+        
         self.excludedSubtrees = []
-
-        self.permittedSubtrees.append(contentsOf: permittedDNSDomains.filtered)
-        self.permittedSubtrees.append(contentsOf: permittedIPRanges.filtered)
-        self.permittedSubtrees.append(contentsOf: permittedEmailAddresses.filtered)
-        self.permittedSubtrees.append(contentsOf: permittedURIDomains.filtered)
-        self.excludedSubtrees.append(contentsOf: excludedDNSDomains.filtered)
-        self.excludedSubtrees.append(contentsOf: excludedIPRanges.filtered)
-        self.excludedSubtrees.append(contentsOf: excludedEmailAddresses.filtered)
-        self.excludedSubtrees.append(contentsOf: forbiddenURIDomains.filtered)
+        self.excludedSubtrees.reserveCapacity(
+            excludedDNSDomains.underestimatedCount +
+            excludedIPRanges.underestimatedCount +
+            excludedEmailAddresses.underestimatedCount +
+            forbiddenURIDomains.underestimatedCount
+        )
+        self.excludedSubtrees.append(contentsOf: excludedDNSDomains.lazy.map { .dnsName($0) })
+        self.excludedSubtrees.append(contentsOf: excludedIPRanges.lazy.map { .ipAddress($0) })
+        self.excludedSubtrees.append(contentsOf: excludedEmailAddresses.lazy.map { .rfc822Name($0) })
+        self.excludedSubtrees.append(contentsOf: forbiddenURIDomains.lazy.map { .uniformResourceIdentifier($0) })
     }
 
     /// Construct an extension constraining the names a CA may issue.

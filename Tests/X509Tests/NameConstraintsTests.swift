@@ -129,8 +129,20 @@ final class NameConstraintsTests: XCTestCase {
             test.setValue(&nameConstraints)
             latestValueForProperty[test.property] = test
             
+            let newNameConstraints = NameConstraints(
+                permittedDNSDomains: nameConstraints.permittedDNSDomains,
+                excludedDNSDomains: nameConstraints.excludedDNSDomains,
+                permittedIPRanges: nameConstraints.permittedIPRanges,
+                excludedIPRanges: nameConstraints.excludedIPRanges,
+                permittedEmailAddresses: nameConstraints.permittedEmailAddresses,
+                excludedEmailAddresses: nameConstraints.excludedEmailAddresses,
+                permittedURIDomains: nameConstraints.permittedURIDomains,
+                forbiddenURIDomains: nameConstraints.forbiddenURIDomains
+            )
+            
             for latestValue in latestValueForProperty.values {
                 latestValue.assertValueIsSet(nameConstraints)
+                latestValue.assertValueIsSet(newNameConstraints)
             }
         }
     }
