@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -33,23 +33,22 @@ import SwiftASN1
 /// at index `i` does not guarantee it will remain at that location. As a result, ``RelativeDistinguishedName`` is
 /// not a `MutableCollection`.
 public struct RelativeDistinguishedName {
-    // TODO: Should we special-case this to the circumstance where we have only one attribute?
     @usableFromInline
-    var attributes: [Attribute]
+    var attributes: TinyArray<Attribute>
 
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
     public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
-        self.attributes = Array(attributes)
+        self.attributes = .init(attributes)
         Self._sortElements(&self.attributes)
     }
 
     /// Create an empty ``RelativeDistinguishedName``.
     @inlinable
     public init() {
-        self.attributes = []
+        self.attributes = .init()
     }
 }
 
@@ -143,7 +142,7 @@ extension RelativeDistinguishedName: DERImplicitlyTaggable {
     }
 
     @inlinable
-    static func _sortElements(_ elements: inout [RelativeDistinguishedName.Attribute]) {
+    static func _sortElements(_ elements: inout TinyArray<RelativeDistinguishedName.Attribute>) {
         // We keep the elements sorted at all times. This is dumb, but we assume that these objects get
         // mutated infrequently.
         // This is weird. We need to individually serialize each element, then lexicographically compare
