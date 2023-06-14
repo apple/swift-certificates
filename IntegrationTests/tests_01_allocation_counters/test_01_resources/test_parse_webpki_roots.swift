@@ -14,12 +14,11 @@
 
 import X509
 import Foundation
-@_spi(IntegrationTests) import _WebPKI
+import SwiftASN1
 
 func run(identifier: String) {
     do {
-        let caPaths = WebPKI.roots
-        let derEncodedCAs = try caPaths.map { Array(try Data(contentsOf: $0)) }
+        let derEncodedCAs = WebPKI.all.map { PEMDocument(pemString: $0).derBytes }
         measure(identifier: identifier) {
             do {
                 var totalExtensionCount = 0
