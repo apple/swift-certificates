@@ -24,7 +24,9 @@ import SwiftASN1
 /// are consulted first, and if a name is matched in a forbidden tree then it does not matter whether
 /// the same name is also matched in a permitted tree.
 public struct NameConstraints {
-    public struct DNSNames: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+    public struct DNSNames: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
+        public typealias Element = String
+        
         @inlinable
         public static func ==(lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
@@ -58,15 +60,51 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
         
+        public struct Index: Comparable {
+            @inlinable
+            public static func <(lhs: Self, rhs: Self) -> Bool {
+                lhs.wrapped < rhs.wrapped
+            }
+            @usableFromInline
+            var wrapped: Int
+            
+            @inlinable
+            init(_ wrapped: Int) {
+                self.wrapped = wrapped
+            }
+        }
+        
         @inlinable
-        public func makeIterator() -> some IteratorProtocol<String> {
-            self.subtrees.lazy.compactMap {
-                if case .dnsName(let name) = $0 {
-                    return name
-                } else {
-                    return nil
+        public var startIndex: Index {
+            Index(self.subtrees.firstIndex(where: {
+                guard case .dnsName = $0 else {
+                    return false
                 }
-            }.makeIterator()
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public var endIndex: Index {
+            Index(self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public func index(after i: Index) -> Index {
+            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                guard case .dnsName = $0 else {
+                    return false
+                }
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public subscript(position: Index) -> String {
+            guard case .dnsName(let name) = self.subtrees[position.wrapped] else {
+                fatalError("index \(position) is not a valid index for \(Self.self)")
+            }
+            return name
         }
         
         @inlinable
@@ -80,7 +118,7 @@ public struct NameConstraints {
         }
     }
 
-    public struct IPRanges: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+    public struct IPRanges: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
         public static func ==(lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
@@ -114,15 +152,51 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
         
+        public struct Index: Comparable {
+            @inlinable
+            public static func <(lhs: Self, rhs: Self) -> Bool {
+                lhs.wrapped < rhs.wrapped
+            }
+            @usableFromInline
+            var wrapped: Int
+            
+            @inlinable
+            init(_ wrapped: Int) {
+                self.wrapped = wrapped
+            }
+        }
+        
         @inlinable
-        public func makeIterator() -> some IteratorProtocol<ASN1OctetString> {
-            self.subtrees.lazy.compactMap {
-                if case .ipAddress(let name) = $0 {
-                    return name
-                } else {
-                    return nil
+        public var startIndex: Index {
+            Index(self.subtrees.firstIndex(where: {
+                guard case .ipAddress = $0 else {
+                    return false
                 }
-            }.makeIterator()
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public var endIndex: Index {
+            Index(self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public func index(after i: Index) -> Index {
+            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                guard case .ipAddress = $0 else {
+                    return false
+                }
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public subscript(position: Index) -> ASN1OctetString {
+            guard case .ipAddress(let ipAddress) = self.subtrees[position.wrapped] else {
+                fatalError("index \(position) is not a valid index for \(Self.self)")
+            }
+            return ipAddress
         }
         
         @inlinable
@@ -136,7 +210,7 @@ public struct NameConstraints {
         }
     }
 
-    public struct EmailAddresses: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+    public struct EmailAddresses: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
         public static func ==(lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
@@ -170,15 +244,51 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
         
+        public struct Index: Comparable {
+            @inlinable
+            public static func <(lhs: Self, rhs: Self) -> Bool {
+                lhs.wrapped < rhs.wrapped
+            }
+            @usableFromInline
+            var wrapped: Int
+            
+            @inlinable
+            init(_ wrapped: Int) {
+                self.wrapped = wrapped
+            }
+        }
+        
         @inlinable
-        public func makeIterator() -> some IteratorProtocol<String> {
-            self.subtrees.lazy.compactMap {
-                if case .rfc822Name(let name) = $0 {
-                    return name
-                } else {
-                    return nil
+        public var startIndex: Index {
+            Index(self.subtrees.firstIndex(where: {
+                guard case .rfc822Name = $0 else {
+                    return false
                 }
-            }.makeIterator()
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public var endIndex: Index {
+            Index(self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public func index(after i: Index) -> Index {
+            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                guard case .rfc822Name = $0 else {
+                    return false
+                }
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public subscript(position: Index) -> String {
+            guard case .rfc822Name(let emailAddress) = self.subtrees[position.wrapped] else {
+                fatalError("index \(position) is not a valid index for \(Self.self)")
+            }
+            return emailAddress
         }
         
         @inlinable
@@ -192,7 +302,7 @@ public struct NameConstraints {
         }
     }
 
-    public struct URIDomains: Hashable, Sendable, Sequence, ExpressibleByArrayLiteral, CustomStringConvertible {
+    public struct URIDomains: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
         public static func ==(lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
@@ -226,15 +336,51 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
         
+        public struct Index: Comparable {
+            @inlinable
+            public static func <(lhs: Self, rhs: Self) -> Bool {
+                lhs.wrapped < rhs.wrapped
+            }
+            @usableFromInline
+            var wrapped: Int
+            
+            @inlinable
+            init(_ wrapped: Int) {
+                self.wrapped = wrapped
+            }
+        }
+        
         @inlinable
-        public func makeIterator() -> some IteratorProtocol<String> {
-            self.subtrees.lazy.compactMap {
-                if case .uniformResourceIdentifier(let name) = $0 {
-                    return name
-                } else {
-                    return nil
+        public var startIndex: Index {
+            Index(self.subtrees.firstIndex(where: {
+                guard case .uniformResourceIdentifier = $0 else {
+                    return false
                 }
-            }.makeIterator()
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public var endIndex: Index {
+            Index(self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public func index(after i: Index) -> Index {
+            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                guard case .uniformResourceIdentifier = $0 else {
+                    return false
+                }
+                return true
+            }) ?? self.subtrees.endIndex)
+        }
+        
+        @inlinable
+        public subscript(position: Index) -> String {
+            guard case .uniformResourceIdentifier(let uri) = self.subtrees[position.wrapped] else {
+                fatalError("index \(position) is not a valid index for \(Self.self)")
+            }
+            return uri
         }
         
         @inlinable
