@@ -29,7 +29,12 @@ public struct ExtendedKeyUsage {
     public init<Usages: Sequence>(_ usages: Usages) throws where Usages.Element == Usage {
         self.usages = Array(usages)
         
-        let maxUsages = 16
+        // This limit is somewhat arbitrary. Linear search for under 32 elements
+        // is faster than hashing and fast enough to not be a significant performance bottleneck.
+        // We have this limit because a bad actor could increase the number of elements to an arbitrary number which
+        // will increase our decoding time exponentially.
+        // This can be used for DoS attacks so we have added this limit.
+        let maxUsages = 32
         guard self.usages.count <= maxUsages else {
             throw ASN1Error.invalidASN1Object(reason: "Too many extended key usages. Found \(self.usages.count) but only \(maxUsages) are allowed.")
         }

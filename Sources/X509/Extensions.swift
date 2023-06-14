@@ -89,7 +89,12 @@ extension Certificate {
         public init<Elements>(_ extensions: Elements) throws where Elements: Sequence, Elements.Element == Extension {
             self._extensions = Array(extensions)
             
-            let maxExtensions = 16
+            // This limit is somewhat arbitrary. Linear search for under 32 elements
+            // is faster than hashing and fast enough to not be a significant performance bottleneck.
+            // We have this limit because a bad actor could increase the number of elements to an arbitrary number which
+            // will increase our decoding time exponentially.
+            // This can be used for DoS attacks so we have added this limit.
+            let maxExtensions = 32
             guard self._extensions.count <= maxExtensions else {
                 throw ASN1Error.invalidASN1Object(reason: "Too many extensions. Found \(self._extensions.count) but only \(maxExtensions) are allowed.")
             }
