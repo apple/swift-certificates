@@ -30,18 +30,13 @@ public struct NameConstraints {
             lhs.elementsEqual(rhs)
         }
         
-        @inlinable
-        public func hash(into hasher: inout Hasher) {
-            hasher.combine(contentsOf: self)
-        }
+        @usableFromInline
+        var subtrees: [GeneralName]
         
         @inlinable
         public var description: String {
             "[\(self.joined(separator: ", "))]"
         }
-        
-        @usableFromInline
-        var subtrees: [GeneralName]
         
         @inlinable
         init(subtrees: [GeneralName]) {
@@ -56,6 +51,11 @@ public struct NameConstraints {
         @inlinable
         public init(arrayLiteral elements: String...) {
             self.init(elements)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
         }
         
         @inlinable
@@ -86,18 +86,13 @@ public struct NameConstraints {
             lhs.elementsEqual(rhs)
         }
         
-        @inlinable
-        public func hash(into hasher: inout Hasher) {
-            hasher.combine(contentsOf: self)
-        }
+        @usableFromInline
+        var subtrees: [GeneralName]
         
         @inlinable
         public var description: String {
             "[\(self.lazy.map { String(describing: $0.bytes) }.joined(separator: ", "))]"
         }
-        
-        @usableFromInline
-        var subtrees: [GeneralName]
         
         @inlinable
         init(subtrees: [GeneralName]) {
@@ -112,6 +107,11 @@ public struct NameConstraints {
         @inlinable
         public init(arrayLiteral elements: ASN1OctetString...) {
             self.init(elements)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
         }
         
         @inlinable
@@ -142,18 +142,13 @@ public struct NameConstraints {
             lhs.elementsEqual(rhs)
         }
         
-        @inlinable
-        public func hash(into hasher: inout Hasher) {
-            hasher.combine(contentsOf: self)
-        }
+        @usableFromInline
+        var subtrees: [GeneralName]
         
         @inlinable
         public var description: String {
             "[\(self.joined(separator: ", "))]"
         }
-        
-        @usableFromInline
-        var subtrees: [GeneralName]
         
         @inlinable
         init(subtrees: [GeneralName]) {
@@ -168,6 +163,11 @@ public struct NameConstraints {
         @inlinable
         public init(arrayLiteral elements: String...) {
             self.init(elements)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
         }
         
         @inlinable
@@ -198,18 +198,13 @@ public struct NameConstraints {
             lhs.elementsEqual(rhs)
         }
         
-        @inlinable
-        public func hash(into hasher: inout Hasher) {
-            hasher.combine(contentsOf: self)
-        }
+        @usableFromInline
+        var subtrees: [GeneralName]
         
         @inlinable
         public var description: String {
             "[\(self.joined(separator: ", "))]"
         }
-        
-        @usableFromInline
-        var subtrees: [GeneralName]
         
         @inlinable
         init(subtrees: [GeneralName]) {
@@ -224,6 +219,11 @@ public struct NameConstraints {
         @inlinable
         public init(arrayLiteral elements: String...) {
             self.init(elements)
+        }
+        
+        @inlinable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(contentsOf: self)
         }
         
         @inlinable
