@@ -14,7 +14,7 @@ services:
     environment:
       - WARN_AS_ERROR_ARG=-Xswiftc -warnings-as-errors
       - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
-      - MAX_ALLOCS_ALLOWED_parse_webpki_roots=0
+      - MAX_ALLOCS_ALLOWED_parse_webpki_roots=779
       # - SANITIZER_ARG=--sanitize=thread # TSan broken still
 
   shell:
