@@ -31,7 +31,7 @@ public struct LocalityName: RelativeDistinguishedNameConvertible {
 
     @inlinable
     public func makeRDN() throws -> RelativeDistinguishedName {
-        return try RelativeDistinguishedName(
+        return RelativeDistinguishedName(
             try .init(type: .RDNAttributeType.localityName, utf8String: name)
         )
     }

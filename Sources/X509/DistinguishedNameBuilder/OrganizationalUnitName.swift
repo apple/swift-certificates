@@ -31,7 +31,7 @@ public struct OrganizationalUnitName: RelativeDistinguishedNameConvertible {
 
     @inlinable
     public func makeRDN() throws -> RelativeDistinguishedName {
-        return try RelativeDistinguishedName(
+        return RelativeDistinguishedName(
             try .init(type: .RDNAttributeType.organizationalUnitName, utf8String: name)
         )
     }
