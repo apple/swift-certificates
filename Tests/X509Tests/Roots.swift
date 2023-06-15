@@ -14,26 +14,21 @@
 
 import X509
 import Foundation
-import SwiftASN1
+import XCTest
 @_spi(IntegrationTests) import _WebPKI
 
-func run(identifier: String) {
-    do {
+final class TestRoots: XCTestCase {
+    func testLoadRoots() throws {
         let caPaths = WebPKI.roots
         let derEncodedCAs = try caPaths.map { Array(try Data(contentsOf: $0)) }
-
-        measure(identifier: identifier) {
-            do {
-                var totalExtensionCount = 0
-                for derEncodedCA in derEncodedCAs {
-                    totalExtensionCount += try Certificate(derEncoded: derEncodedCA).extensions.count
-                }
-                return totalExtensionCount
-            } catch {
-                fatalError("\(error)")
-            }
+        
+        for derEncodedCA in derEncodedCAs {
+            XCTAssertNoThrow(try Certificate(derEncoded: derEncodedCA))
         }
-    } catch {
-        fatalError("\(error)")
     }
 }
+
+
+    
+        
+    

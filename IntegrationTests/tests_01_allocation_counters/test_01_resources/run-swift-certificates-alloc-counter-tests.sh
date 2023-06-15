@@ -47,6 +47,7 @@ fi
     -p "$here/../../.." \
     -m SwiftASN1 \
     -m X509 \
+    -m _WebPKI \
     -s "$here/shared.swift" \
     -t "$tmp_dir" \
     -d <( echo '.package(url: "https://github.com/apple/swift-asn1.git", .branch( "main")),' ) \
