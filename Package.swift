@@ -28,9 +28,6 @@ let package = Package(
         .library(
             name: "X509",
             targets: ["X509"]),
-        .library(
-            name: "_WebPKI",
-            targets: ["_WebPKI"]),
     ],
     targets: [
         .target(
@@ -47,7 +44,6 @@ let package = Package(
             name: "X509Tests",
             dependencies: [
                 "X509",
-                "_WebPKI",
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
             ], resources: [
@@ -66,12 +62,6 @@ let package = Package(
                 .product(name: "SwiftASN1", package: "swift-asn1"),
             ]
         ),
-        .target(
-            name: "_WebPKI",
-            resources: [
-                .copy("roots/"),
-            ]
-        )
     ]
 )
 
