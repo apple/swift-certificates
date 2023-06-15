@@ -55,13 +55,6 @@ let package = Package(
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
             ]),
-        .executableTarget(
-            name: "PerformanceTests",
-            dependencies: [
-                "X509",
-                .product(name: "SwiftASN1", package: "swift-asn1"),
-            ]
-        ),
     ]
 )
 
