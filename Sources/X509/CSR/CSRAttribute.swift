@@ -100,7 +100,7 @@ extension CertificateSigningRequest.Attribute: DERImplicitlyTaggable {
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let type = try ASN1ObjectIdentifier(derEncoded: &nodes)
-            let values = try DER.set(of: ASN1Any.self, identifier: .set, nodes: &nodes)
+            let values = try DER.set(of: ASN1Any.self, identifier: .set, nodes: &nodes).map { try $0.get() }
 
             return CertificateSigningRequest.Attribute(oid: type, values: values)
         }

@@ -63,6 +63,12 @@ enum TinyArray<Element>: RandomAccessCollection {
     }
     
     @inlinable
+    init(_ elements: some Sequence<Result<Element, some Error>>) throws {
+        self = .arbitary([])
+        try self.append(contentsOf: elements)
+    }
+    
+    @inlinable
     init() {
         self = .arbitary([])
     }
@@ -82,35 +88,93 @@ enum TinyArray<Element>: RandomAccessCollection {
                 return
             }
             var elements: [Element] = []
-            elements.reserveCapacity(newElements.underestimatedCount)
+            elements.reserveCapacity(1 + newElements.underestimatedCount)
             elements.append(firstElement)
             elements.append(secondElement)
             elements.appendRemainingElements(from: &iterator)
+            self = .arbitary(elements)
+            
+        case .arbitary(var elements):
+            if elements.isEmpty {
+                if let array = newElements as? Array<Element> {
+                    if array.count == 1 {
+                        self = .one(array[0])
+                    } else {
+                        self = .arbitary(array)
+                    }
+                } else {
+                    // if `self` is currently empty and `newElements` just contains a single
+                    // element, we skip allocating an array and set `self` to `.one(firstElement)`
+                    var iterator = newElements.makeIterator()
+                    guard let firstElement = iterator.next() else {
+                        // newElements is empty, nothing to do
+                        return
+                    }
+                    guard let secondElement = iterator.next() else {
+                        // newElements just contains a single element
+                        // and we hit the fast path
+                        self = .one(firstElement)
+                        return
+                    }
+                    elements.reserveCapacity(elements.count + newElements.underestimatedCount)
+                    elements.append(firstElement)
+                    elements.append(secondElement)
+                    elements.appendRemainingElements(from: &iterator)
+                    self = .arbitary(elements)
+                }
+            } else {
+                elements.append(contentsOf: newElements)
+                self = .arbitary(elements)
+            }
+            
+        }
+    }
+    
+    @inlinable
+    mutating func append<E: Error>(contentsOf newElements: some Sequence<Result<Element, E>>) throws {
+        switch self {
+        case .one(let firstElement):
+            var iterator = newElements.makeIterator()
+            guard let secondElement = try iterator.next()?.get() else {
+                // newElements is empty, nothing to do
+                return
+            }
+            
+            var elements: [Element] = []
+            defer {
+                self = .arbitary(elements)
+            }
+            elements.reserveCapacity(1 + newElements.underestimatedCount)
+            elements.append(firstElement)
+            elements.append(secondElement)
+            try elements.appendRemainingElements(from: &iterator)
+            
             
         case .arbitary(var elements):
             if elements.isEmpty {
                 // if `self` is currently empty and `newElements` just contains a single
                 // element, we skip allocating an array and set `self` to `.one(firstElement)`
                 var iterator = newElements.makeIterator()
-                guard let firstElement = iterator.next() else {
+                guard let firstElement = try iterator.next()?.get() else {
                     // newElements is empty, nothing to do
                     return
                 }
-                guard let secondElement = iterator.next() else {
+                guard let secondElement = try iterator.next()?.get() else {
                     // newElements just contains a single element
                     // and we hit the fast path
                     self = .one(firstElement)
                     return
                 }
+                defer { self = .arbitary(elements) }
                 elements.reserveCapacity(elements.count + newElements.underestimatedCount)
                 elements.append(firstElement)
                 elements.append(secondElement)
-                elements.appendRemainingElements(from: &iterator)
+                try elements.appendRemainingElements(from: &iterator)
             } else {
-                elements.append(contentsOf: newElements)
-                self = .arbitary(elements)
+                defer { self = .arbitary(elements) }
+                elements.append(contentsOf: elements)
+
             }
-            
         }
     }
     
@@ -187,6 +251,21 @@ extension Array {
     mutating func appendRemainingElements(from iterator: inout some IteratorProtocol<Element>) {
         while let nextElement = iterator.next() {
             append(nextElement)
+        }
+    }
+    
+    @inlinable
+    mutating func appendRemainingElements(from iterator: inout some IteratorProtocol<Result<Element, some Error>>) throws {
+        while let nextElement = try iterator.next()?.get() {
+            append(nextElement)
+        }
+    }
+    
+    @inlinable
+    mutating func append(contentsOf newElements: some Sequence<Result<Element, some Error>>) throws {
+        self.reserveCapacity(self.count + newElements.underestimatedCount)
+        for element in newElements {
+            self.append(try element.get())
         }
     }
 }

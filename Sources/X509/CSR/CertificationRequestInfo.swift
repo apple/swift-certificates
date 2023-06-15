@@ -68,7 +68,7 @@ extension CertificationRequestInfo: DERImplicitlyTaggable {
                     of: CertificateSigningRequest.Attribute.self,
                     identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
                     nodes: &nodes
-                )
+                ).map { try $0.get() }
             )
 
             return .init(version: version, subject: subject, publicKey: spki, attributes: attributes)

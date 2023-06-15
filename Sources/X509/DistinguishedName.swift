@@ -101,7 +101,7 @@ public struct DistinguishedName {
     @inlinable
     public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
         // TODO: This is a bit expensive, should we special-case the "one AVA per RDN" pattern?
-        self.rdns = try attributes.map { try RelativeDistinguishedName([$0]) }
+        self.rdns = try attributes.map { try RelativeDistinguishedName($0) }
     }
 
     /// Construct a new empty ``DistinguishedName``.

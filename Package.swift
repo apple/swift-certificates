@@ -28,12 +28,15 @@ let package = Package(
         .library(
             name: "X509",
             targets: ["X509"]),
+        .library(
+            name: "SwiftASN1",
+            targets: ["SwiftASN1"]),
     ],
     targets: [
         .target(
             name: "X509",
             dependencies: [
-                .product(name: "SwiftASN1", package: "swift-asn1"),
+                "SwiftASN1",
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
             ],
@@ -44,7 +47,7 @@ let package = Package(
             name: "X509Tests",
             dependencies: [
                 "X509",
-                .product(name: "SwiftASN1", package: "swift-asn1"),
+                "SwiftASN1",
                 .product(name: "Crypto", package: "swift-crypto"),
             ], resources: [
                 .copy("OCSP Test Resources/www.apple.com.root.der"),
@@ -55,6 +58,19 @@ let package = Package(
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
             ]),
+        .executableTarget(
+            name: "PerformanceTests",
+            dependencies: [
+                "X509",
+                "SwiftASN1",
+            ]
+        ),
+        .target(
+            name: "SwiftASN1",
+            exclude: ["CMakeLists.txt"]
+        ),
+    
+        
     ]
 )
 
@@ -64,7 +80,7 @@ let package = Package(
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
     package.dependencies += [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
-        .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.9.1")),
+        //.package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.9.1")),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ]
 } else {

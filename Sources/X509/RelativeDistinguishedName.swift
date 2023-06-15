@@ -35,13 +35,27 @@ import SwiftASN1
 public struct RelativeDistinguishedName {
     @usableFromInline
     var attributes: TinyArray<Attribute>
-
+    
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
-    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
+    public init(_ attribute: Attribute) {
+        self.init(CollectionOfOne(attribute))
+    }
+    
+    /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
+    ///
+    /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
+    @inlinable
+    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
         self.attributes = .init(attributes)
+        Self._sortElements(&self.attributes)
+    }
+    
+    @inlinable
+    init(_ attributes: some Sequence<Result<RelativeDistinguishedName.Attribute, some Error>>) throws {
+        self.attributes = try .init(attributes)
         Self._sortElements(&self.attributes)
     }
 
