@@ -81,6 +81,7 @@ add_library(X509
   "SEC1PrivateKey.swift"
   "Signature.swift"
   "SignatureAlgorithm.swift"
+  "TinyArray.swift"
   "Verifier/AnyPolicy.swift"
   "Verifier/CertificateStore.swift"
   "Verifier/PolicyBuilder.swift"
