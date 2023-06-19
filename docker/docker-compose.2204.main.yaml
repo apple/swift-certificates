@@ -13,7 +13,7 @@ services:
     environment:
       - WARN_AS_ERROR_ARG=-Xswiftc -warnings-as-errors
       - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
-      - MAX_ALLOCS_ALLOWED_1=0
+      - MAX_ALLOCS_ALLOWED_empty_1=0
       # - SANITIZER_ARG=--sanitize=thread # TSan broken still
 
   shell:
