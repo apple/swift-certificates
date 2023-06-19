@@ -236,4 +236,21 @@ final class ExtensionBuilderTests: XCTestCase {
         extensions.remove([1])
         XCTAssertEqual(extensions, Certificate.Extensions())
     }
+    
+    func testLargeNumberOfExtensions() throws {
+        let ext = try Certificate.Extensions((0..<32).map {
+            Certificate.Extension(oid: [$0], critical: false, value: [1, 2, 3, 4])
+        })
+        XCTAssertEqual(ext.count, 32)
+    }
+    
+    func testUnreasonableLargeNumberOfExtensionsAreRejected() {
+        XCTAssertThrowsError(try Certificate.Extensions((0..<33).map {
+            Certificate.Extension(oid: [$0], critical: false, value: [1, 2, 3, 4])
+        }))
+        
+        XCTAssertThrowsError(try Certificate.Extensions((0..<10_000).map {
+            Certificate.Extension(oid: [$0], critical: false, value: [1, 2, 3, 4])
+        }))
+    }
 }

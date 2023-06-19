@@ -49,5 +49,5 @@ fi
     -m X509 \
     -s "$here/shared.swift" \
     -t "$tmp_dir" \
-    -d <( echo '.package(url: "https://github.com/apple/swift-asn1.git", .branch( "main")),' ) \
+    -d <( echo '.package(url: "https://github.com/apple/swift-asn1.git", from: "0.9.1"),' ) \
     "${tests_to_run[@]}"
