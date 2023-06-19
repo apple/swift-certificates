@@ -17,8 +17,7 @@ import Foundation
 /// ``TinyArray`` is a ``RandomAccessCollection`` optimised to store zero or one ``Element``.
 /// It supports arbitrary many elements but if only up to one ``Element`` is stored it does **not** allocate separate storage on the heap
 /// and instead stores the ``Element`` inline.
-@usableFromInline
-struct TinyArray<Element> {
+@_spi(IntegrationTests) public struct TinyArray<Element> {
     @usableFromInline
     enum Storage {
         case one(Element)
@@ -36,69 +35,67 @@ extension TinyArray: Hashable where Element: Hashable {}
 extension TinyArray: Sendable where Element: Sendable {}
 
 extension TinyArray: RandomAccessCollection {
-    @usableFromInline
-    typealias Element = Element
+    @_spi(IntegrationTests) public typealias Element = Element
     
-    @usableFromInline
-    typealias Index = Int
+    @_spi(IntegrationTests) public typealias Index = Int
     
     @inlinable
-    subscript(position: Int) -> Element {
+    @_spi(IntegrationTests) public subscript(position: Int) -> Element {
         get {
             self.storage[position]
         }
     }
     
     @inlinable
-    var startIndex: Int {
+    @_spi(IntegrationTests) public var startIndex: Int {
         self.storage.startIndex
     }
     
     @inlinable
-    var endIndex: Int {
+    @_spi(IntegrationTests) public var endIndex: Int {
         self.storage.endIndex
     }
 }
 
 extension TinyArray {
     @inlinable
-    init(_ elements: some Sequence<Element>) {
+    @_spi(IntegrationTests) public init(_ elements: some Sequence<Element>) {
         self.storage = .init(elements)
     }
     
     @inlinable
-    init(_ elements: some Sequence<Result<Element, some Error>>) throws {
+    @_spi(IntegrationTests) public init(_ elements: some Sequence<Result<Element, some Error>>) throws {
         self.storage = try .init(elements)
     }
     
     @inlinable
-    init() {
+    @_spi(IntegrationTests) public init() {
         self.storage = .init()
     }
     
     @inlinable
-    mutating func append(_ newElement: Element) {
+    @_spi(IntegrationTests) public mutating func append(_ newElement: Element) {
         self.storage.append(newElement)
     }
     
     @inlinable
-    mutating func append(contentsOf newElements: some Sequence<Element>){
+    @_spi(IntegrationTests) public mutating func append(contentsOf newElements: some Sequence<Element>){
         self.storage.append(contentsOf: newElements)
     }
     
     @discardableResult
     @inlinable
-    mutating func remove(at index: Int) -> Element {
+    @_spi(IntegrationTests) public mutating func remove(at index: Int) -> Element {
         self.storage.remove(at: index)
     }
     
     @inlinable
-    mutating func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
+    @_spi(IntegrationTests) public mutating func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
         try self.storage.removeAll(where: shouldBeRemoved)
     }
     
     @inlinable
-    mutating func sort(by areInIncreasingOrder: (Element, Element) throws -> Bool) rethrows {
+    @_spi(IntegrationTests) public mutating func sort(by areInIncreasingOrder: (Element, Element) throws -> Bool) rethrows {
         try self.storage.sort(by: areInIncreasingOrder)
     }
 }
