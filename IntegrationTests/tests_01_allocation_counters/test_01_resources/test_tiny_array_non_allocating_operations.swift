@@ -15,9 +15,9 @@
 @_spi(IntegrationTests) import X509
 
 func run(identifier: String) {
-    let preallocatedArray1 = [1, 2, 3, 4]
-    let preallocatedArray2 = [1, 2, 3, 4]
-    let preallocatedArray3 = [1, 2, 3, 4]
+    let preallocatedArray1 = [1]
+    let preallocatedArray2 = [1, 2]
+    let preallocatedArray3 = [1, 2, 3]
     let preallocatedArray4 = [1, 2, 3, 4]
 
     measure(identifier: identifier) {
