@@ -224,30 +224,25 @@ extension TinyArray.Storage {
             
         case .arbitrary(var elements):
             if elements.isEmpty {
-                if let array = newElements as? Array<Element> {
-                    // fast path
-                    self = .arbitrary(array)
-                    
-                } else {
-                    // if `self` is currently empty and `newElements` just contains a single
-                    // element, we skip allocating an array and set `self` to `.one(firstElement)`
-                    var iterator = newElements.makeIterator()
-                    guard let firstElement = iterator.next() else {
-                        // newElements is empty, nothing to do
-                        return
-                    }
-                    guard let secondElement = iterator.next() else {
-                        // newElements just contains a single element
-                        // and we hit the fast path
-                        self = .one(firstElement)
-                        return
-                    }
-                    elements.reserveCapacity(elements.count + newElements.underestimatedCount)
-                    elements.append(firstElement)
-                    elements.append(secondElement)
-                    elements.appendRemainingElements(from: &iterator)
-                    self = .arbitrary(elements)
+                // if `self` is currently empty and `newElements` just contains a single
+                // element, we skip allocating an array and set `self` to `.one(firstElement)`
+                var iterator = newElements.makeIterator()
+                guard let firstElement = iterator.next() else {
+                    // newElements is empty, nothing to do
+                    return
                 }
+                guard let secondElement = iterator.next() else {
+                    // newElements just contains a single element
+                    // and we hit the fast path
+                    self = .one(firstElement)
+                    return
+                }
+                elements.reserveCapacity(elements.count + newElements.underestimatedCount)
+                elements.append(firstElement)
+                elements.append(secondElement)
+                elements.appendRemainingElements(from: &iterator)
+                self = .arbitrary(elements)
+            
             } else {
                 elements.append(contentsOf: newElements)
                 self = .arbitrary(elements)

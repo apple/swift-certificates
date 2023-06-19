@@ -16,16 +16,15 @@
 
 func run(identifier: String) {
     measure(identifier: identifier) {
-        var array = Array<Int>()
-        array.reserveCapacity(4)
-        array.append(1)
-        array.append(2)
-        var tinyArray = TinyArray(array)
-        // drop the ref to array so TinyArray is now the single owner
-        array = []
-        
+        var tinyArray = TinyArray<Int>()
+        tinyArray.append(1)
+        tinyArray.append(2)
         tinyArray.append(3)
         tinyArray.append(4)
+        tinyArray.append(5)
+        tinyArray.append(6)
+        tinyArray.append(7)
+        tinyArray.append(8)
         return tinyArray.count
     }
 }
