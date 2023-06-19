@@ -17,14 +17,9 @@
 func run(identifier: String) {
     measure(identifier: identifier) {
         var tinyArray = TinyArray<Int>()
-        tinyArray.append(1)
-        tinyArray.append(2)
-        tinyArray.append(3)
-        tinyArray.append(4)
-        tinyArray.append(5)
-        tinyArray.append(6)
-        tinyArray.append(7)
-        tinyArray.append(8)
+        for i in 0..<1000 {
+            tinyArray.append(i)
+        }
         return tinyArray.count
     }
 }
