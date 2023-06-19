@@ -12,5 +12,12 @@
 ##
 ##===----------------------------------------------------------------------===##
 
-add_subdirectory(X509)
-add_subdirectory(_CertificateInternals)
+add_library(_CertificateInternals
+  "_TinyArray.swift")
+
+target_link_libraries(X509 PUBLIC)
+set_target_properties(_CertificateInternals PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
+
+_install_target(_CertificateInternals)
+set_property(GLOBAL APPEND PROPERTY SWIFT_CERTIFICATES_EXPORTS _TinyArray)

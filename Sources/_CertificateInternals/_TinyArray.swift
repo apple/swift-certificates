@@ -17,7 +17,7 @@ import Foundation
 /// ``TinyArray`` is a ``RandomAccessCollection`` optimised to store zero or one ``Element``.
 /// It supports arbitrary many elements but if only up to one ``Element`` is stored it does **not** allocate separate storage on the heap
 /// and instead stores the ``Element`` inline.
-@_spi(IntegrationTests) public struct TinyArray<Element> {
+public struct _TinyArray<Element> {
     @usableFromInline
     enum Storage {
         case one(Element)
@@ -30,79 +30,79 @@ import Foundation
 
 // MARK: - TinyArray "public" interface
 
-extension TinyArray: Equatable where Element: Equatable {}
-extension TinyArray: Hashable where Element: Hashable {}
-extension TinyArray: Sendable where Element: Sendable {}
+extension _TinyArray: Equatable where Element: Equatable {}
+extension _TinyArray: Hashable where Element: Hashable {}
+extension _TinyArray: Sendable where Element: Sendable {}
 
-extension TinyArray: RandomAccessCollection {
-    @_spi(IntegrationTests) public typealias Element = Element
+extension _TinyArray: RandomAccessCollection {
+    public typealias Element = Element
     
-    @_spi(IntegrationTests) public typealias Index = Int
+    public typealias Index = Int
     
     @inlinable
-    @_spi(IntegrationTests) public subscript(position: Int) -> Element {
+    public subscript(position: Int) -> Element {
         get {
             self.storage[position]
         }
     }
     
     @inlinable
-    @_spi(IntegrationTests) public var startIndex: Int {
+    public var startIndex: Int {
         self.storage.startIndex
     }
     
     @inlinable
-    @_spi(IntegrationTests) public var endIndex: Int {
+    public var endIndex: Int {
         self.storage.endIndex
     }
 }
 
-extension TinyArray {
+extension _TinyArray {
     @inlinable
-    @_spi(IntegrationTests) public init(_ elements: some Sequence<Element>) {
+    public init(_ elements: some Sequence<Element>) {
         self.storage = .init(elements)
     }
     
     @inlinable
-    @_spi(IntegrationTests) public init(_ elements: some Sequence<Result<Element, some Error>>) throws {
+    public init(_ elements: some Sequence<Result<Element, some Error>>) throws {
         self.storage = try .init(elements)
     }
     
     @inlinable
-    @_spi(IntegrationTests) public init() {
+    public init() {
         self.storage = .init()
     }
     
     @inlinable
-    @_spi(IntegrationTests) public mutating func append(_ newElement: Element) {
+    public mutating func append(_ newElement: Element) {
         self.storage.append(newElement)
     }
     
     @inlinable
-    @_spi(IntegrationTests) public mutating func append(contentsOf newElements: some Sequence<Element>){
+    public mutating func append(contentsOf newElements: some Sequence<Element>){
         self.storage.append(contentsOf: newElements)
     }
     
     @discardableResult
     @inlinable
-    @_spi(IntegrationTests) public mutating func remove(at index: Int) -> Element {
+    public mutating func remove(at index: Int) -> Element {
         self.storage.remove(at: index)
     }
     
     @inlinable
-    @_spi(IntegrationTests) public mutating func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
+    public mutating func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
         try self.storage.removeAll(where: shouldBeRemoved)
     }
     
     @inlinable
-    @_spi(IntegrationTests) public mutating func sort(by areInIncreasingOrder: (Element, Element) throws -> Bool) rethrows {
+    public mutating func sort(by areInIncreasingOrder: (Element, Element) throws -> Bool) rethrows {
         try self.storage.sort(by: areInIncreasingOrder)
     }
 }
 
 // MARK: - TinyArray.Storage "private" implementation
 
-extension TinyArray.Storage: Equatable where Element: Equatable {
+extension _TinyArray.Storage: Equatable where Element: Equatable {
     @inlinable
     static func ==(lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
@@ -123,7 +123,7 @@ extension TinyArray.Storage: Equatable where Element: Equatable {
         }
     }
 }
-extension TinyArray.Storage: Hashable where Element: Hashable {
+extension _TinyArray.Storage: Hashable where Element: Hashable {
     @inlinable
     func hash(into hasher: inout Hasher) {
         // same strategy as Array: https://github.com/apple/swift/blob/b42019005988b2d13398025883e285a81d323efa/stdlib/public/core/Array.swift#L1801
@@ -133,9 +133,9 @@ extension TinyArray.Storage: Hashable where Element: Hashable {
         }
     }
 }
-extension TinyArray.Storage: Sendable where Element: Sendable {}
+extension _TinyArray.Storage: Sendable where Element: Sendable {}
 
-extension TinyArray.Storage: RandomAccessCollection {
+extension _TinyArray.Storage: RandomAccessCollection {
     @inlinable
     subscript(position: Int) -> Element {
         get {
@@ -165,7 +165,7 @@ extension TinyArray.Storage: RandomAccessCollection {
     }
 }
  
-extension TinyArray.Storage {
+extension _TinyArray.Storage {
     @inlinable
     init(_ elements: some Sequence<Element>) {
         self = .arbitrary([])

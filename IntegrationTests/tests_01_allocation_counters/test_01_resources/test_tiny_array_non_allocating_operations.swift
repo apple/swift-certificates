@@ -12,17 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-@_spi(IntegrationTests) import X509
+import _CertificateInternals
 
 func run(identifier: String) {
     measure(identifier: identifier) {
         var counts = 0
-        counts += TinyArray(CollectionOfOne(1)).count
-        
-        do {
-            var array = TinyArray<Int>()
-            array.append(contentsOf: CollectionOfOne(1))
-            counts += array.count
+        for _ in 0..<1000 {
+            counts += _TinyArray(CollectionOfOne(1)).count
+            
+            do {
+                var array = _TinyArray<Int>()
+                array.append(contentsOf: CollectionOfOne(1))
+                counts += array.count
+            }
         }
         
         return counts
