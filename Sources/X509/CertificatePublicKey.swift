@@ -227,6 +227,16 @@ extension SubjectPublicKeyInfo {
     }
 }
 
+extension Certificate.PublicKey {
+    /// The byte array of the public key used in the certificate.
+    ///
+    /// The `subjectPublicKeyInfoBytes` property represents the public key in its canonical form that is determined by the key's algorithm and common representation.
+    @inlinable
+    public var subjectPublicKeyInfoBytes: ArraySlice<UInt8> {
+         SubjectPublicKeyInfo(self).key.bytes
+    }
+}
+
 extension _RSA.Signing.Padding {
     @inlinable
     init(forSignatureAlgorithm signatureAlgorithm: Certificate.SignatureAlgorithm) throws {
