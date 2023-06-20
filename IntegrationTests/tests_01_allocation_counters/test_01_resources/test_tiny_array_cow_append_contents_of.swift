@@ -12,10 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-import X509
+import _CertificateInternals
 
 func run(identifier: String) {
     measure(identifier: identifier) {
-        return 0
+        var count = 0
+        for _ in 0..<1000 {
+            var tinyArray = _TinyArray<Int>()
+            for i in 0..<1000 {
+                tinyArray.append(i)
+            }
+            count += tinyArray.count
+        }
+        
+        return count
     }
 }

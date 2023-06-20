@@ -13,7 +13,8 @@ services:
     image: swift-certificates:22.04-5.7
     environment:
       - WARN_AS_ERROR_ARG=-Xswiftc -warnings-as-errors
-      - MAX_ALLOCS_ALLOWED_empty_1=0
+      - MAX_ALLOCS_ALLOWED_tiny_array_cow_append_contents_of=9000
+      - MAX_ALLOCS_ALLOWED_tiny_array_non_allocating_operations=0
       # - SANITIZER_ARG=--sanitize=thread # TSan broken still
 
   shell:

@@ -33,6 +33,7 @@ let package = Package(
         .target(
             name: "X509",
             dependencies: [
+                "_CertificateInternals",
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
@@ -54,6 +55,16 @@ let package = Package(
                 .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
+            ]),
+        .target(
+            name: "_CertificateInternals",
+            exclude: [
+                "CMakeLists.txt",
+            ]),
+        .testTarget(
+            name: "CertificateInternalsTests",
+            dependencies: [
+                "_CertificateInternals",
             ]),
     ]
 )
