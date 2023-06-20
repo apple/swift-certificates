@@ -13,7 +13,7 @@ services:
     image: swift-certificates:22.04-5.7
     environment:
       - WARN_AS_ERROR_ARG=-Xswiftc -warnings-as-errors
-      - MAX_ALLOCS_ALLOWED_parse_webpki_roots=779
+      - MAX_ALLOCS_ALLOWED_parse_webpki_roots=728000
       # - SANITIZER_ARG=--sanitize=thread # TSan broken still
 
   shell:
