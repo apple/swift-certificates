@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import XCTest
-@_spi(IntegrationTests) import X509
+import _CertificateInternals
 
 final class TinyArrayTests: XCTestCase {
     private func _assertEqual(

@@ -81,7 +81,6 @@ add_library(X509
   "SEC1PrivateKey.swift"
   "Signature.swift"
   "SignatureAlgorithm.swift"
-  "TinyArray.swift"
   "Verifier/AnyPolicy.swift"
   "Verifier/CertificateStore.swift"
   "Verifier/PolicyBuilder.swift"
@@ -110,7 +109,8 @@ target_link_libraries(X509 PUBLIC
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>
   Crypto
   _CryptoExtras
-  SwiftASN1)
+  SwiftASN1
+  _CertificateInternals)
 set_target_properties(X509 PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 
