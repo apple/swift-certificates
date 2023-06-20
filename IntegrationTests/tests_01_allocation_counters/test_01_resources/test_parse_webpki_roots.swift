@@ -22,8 +22,10 @@ func run(identifier: String) {
         measure(identifier: identifier) {
             do {
                 var totalExtensionCount = 0
-                for derEncodedCA in derEncodedCAs {
-                    totalExtensionCount += try Certificate(derEncoded: derEncodedCA).extensions.count
+                for _ in 0..<1000 {
+                    for derEncodedCA in derEncodedCAs {
+                        totalExtensionCount += try Certificate(derEncoded: derEncodedCA).extensions.count
+                    }
                 }
                 return totalExtensionCount
             } catch {
