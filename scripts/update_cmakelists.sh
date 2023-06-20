@@ -56,4 +56,5 @@ function update_cmakelists_source() {
 }
 
 update_cmakelists_source "X509" "*.swift"
+update_cmakelists_source "_CertificateInternals" "*.swift"
 
