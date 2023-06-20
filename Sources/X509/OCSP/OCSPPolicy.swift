@@ -112,7 +112,7 @@ enum OCSPRequestHashAlgorithm {
         /// issuerKeyHash is the hash of the issuer's public key.  The hash
         /// shall be calculated over the value (excluding tag and length) of
         /// the subject public key field in the issuer's certificate.
-        self.hashed(SubjectPublicKeyInfo(certificate.publicKey).key.bytes)
+        self.hashed(certificate.publicKey.subjectPublicKeyInfoBytes)
     }
 }
 
@@ -514,7 +514,7 @@ extension Certificate {
         case .byName(let subject):
             return self.subject == subject
         case .byKey(let responderPublicKeyHash):
-            let publicKeyHash = Insecure.SHA1.hash(data: SubjectPublicKeyInfo(self.publicKey).key.bytes)
+            let publicKeyHash = Insecure.SHA1.hash(data: self.publicKey.subjectPublicKeyInfoBytes)
             return publicKeyHash == responderPublicKeyHash.bytes
         }
     }
