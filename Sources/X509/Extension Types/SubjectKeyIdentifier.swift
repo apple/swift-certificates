@@ -90,7 +90,7 @@ extension SubjectKeyIdentifier {
         // The keyIdentifier is composed of the 160-bit SHA-1 hash of the
         // value of the BIT STRING subjectPublicKey (excluding the tag,
         // length, and number of unused bits).
-        let hash = Insecure.SHA1.hash(data: SubjectPublicKeyInfo(publicKey).key.bytes)
+        let hash = Insecure.SHA1.hash(data: publicKey.subjectPublicKeyInfoBytes)
         self.init(keyIdentifier: .init(hash))
     }
 }

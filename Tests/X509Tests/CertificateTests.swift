@@ -359,4 +359,28 @@ final class CertificateTests: XCTestCase {
             _RSA.Signing.PublicKey(Certificate.PublicKey(p521.publicKey))
         )
     }
+
+    func testPublicKeysExposeSubjectPublicKeyInfoBytes() throws {
+        let p256 = P256.Signing.PrivateKey()
+        let p384 = P384.Signing.PrivateKey()
+        let p521 = P521.Signing.PrivateKey()
+        let rsa = try _RSA.Signing.PrivateKey(keySize: .bits2048)
+
+        XCTAssertEqual(
+            p256.publicKey.x963Representation,
+            Data(Certificate.PublicKey(p256.publicKey).subjectPublicKeyInfoBytes)
+        )
+        XCTAssertEqual(
+            p384.publicKey.x963Representation,
+            Data(Certificate.PublicKey(p384.publicKey).subjectPublicKeyInfoBytes)
+        )
+        XCTAssertEqual(
+            p521.publicKey.x963Representation,
+            Data(Certificate.PublicKey(p521.publicKey).subjectPublicKeyInfoBytes)
+        )
+        XCTAssertEqual(
+            rsa.publicKey.pkcs1DERRepresentation,
+            Data(Certificate.PublicKey(rsa.publicKey).subjectPublicKeyInfoBytes)
+        )
+    }
 }
