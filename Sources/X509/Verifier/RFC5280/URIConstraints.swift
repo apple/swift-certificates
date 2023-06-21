@@ -18,7 +18,7 @@ import WinSDK
 #elseif os(Linux) || os(Android)
 import Glibc
 import CoreFoundation
-#elseif os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
+#elseif canImport(Darwin)
 import Darwin
 #endif
 
