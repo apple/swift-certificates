@@ -63,7 +63,7 @@ extension Certificate {
             self.backing = .rsa(rsa)
         }
         
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if canImport(Darwin)
         /// Construct a private key wrapping a SecureEnclave.P256 private key.
         /// - Parameter secureEnclaveP256: The SecureEnclave.P256 private key to wrap.
         @inlinable
@@ -87,7 +87,7 @@ extension Certificate {
             case .rsa(let rsa):
                 let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
                 return try rsa.signature(for: bytes, digestAlgorithm: digestAlgorithm, padding: padding)
-            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            #if canImport(Darwin)
             case .secureEnclaveP256(let secureEnclaveP256):
                 return try secureEnclaveP256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             #endif
@@ -107,7 +107,7 @@ extension Certificate {
                 return PublicKey(p521.publicKey)
             case .rsa(let rsa):
                 return PublicKey(rsa.publicKey)
-            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            #if canImport(Darwin)
             case .secureEnclaveP256(let secureEnclaveP256):
                 return PublicKey(secureEnclaveP256.publicKey)
             #endif
@@ -125,7 +125,7 @@ extension Certificate {
                 if !algorithm.isRSA {
                     throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with RSA key \(self)")
                 }
-            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            #if canImport(Darwin)
             case .secureEnclaveP256:
                 if !algorithm.isECDSA {
                     throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with ECDSA key \(self)")
@@ -154,7 +154,7 @@ extension Certificate.PrivateKey {
         case p384(Crypto.P384.Signing.PrivateKey)
         case p521(Crypto.P521.Signing.PrivateKey)
         case rsa(_CryptoExtras._RSA.Signing.PrivateKey)
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if canImport(Darwin)
         case secureEnclaveP256(SecureEnclave.P256.Signing.PrivateKey)
         #endif
 
@@ -169,7 +169,7 @@ extension Certificate.PrivateKey {
                 return l.rawRepresentation == r.rawRepresentation
             case (.rsa(let l), .rsa(let r)):
                 return l.derRepresentation == r.derRepresentation
-            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            #if canImport(Darwin)
             case (.secureEnclaveP256(let l), .secureEnclaveP256(let r)):
                 return l.dataRepresentation == r.dataRepresentation
             #endif
@@ -193,7 +193,7 @@ extension Certificate.PrivateKey {
             case .rsa(let digest):
                 hasher.combine(3)
                 hasher.combine(digest.derRepresentation)
-            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            #if canImport(Darwin)
             case .secureEnclaveP256(let digest):
                 hasher.combine(4)
                 hasher.combine(digest.dataRepresentation)
@@ -273,7 +273,7 @@ extension Certificate.PrivateKey {
         case .p384(let key): return try PEMDocument(pemString: key.pemRepresentation)
         case .p521(let key): return try PEMDocument(pemString: key.pemRepresentation)
         case .rsa(let key): return try PEMDocument(pemString: key.pemRepresentation)
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if canImport(Darwin)
         case .secureEnclaveP256:
             throw CertificateError.unsupportedPrivateKey(reason: "secure enclave private keys can not be serialised as PEM")
         #endif
