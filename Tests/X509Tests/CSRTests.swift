@@ -122,7 +122,7 @@ final class CSRTests: XCTestCase {
     func testDuplicateExtension() throws {
         let url = Bundle.module.url(forResource: "two_basic_constraints", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if canImport(Darwin)
         XCTExpectFailure("Currently don't police extension uniqueness")
         XCTAssertThrowsError(try CertificateSigningRequest(pemEncoded: bytes))
         #else
