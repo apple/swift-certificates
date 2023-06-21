@@ -27,7 +27,7 @@ final class SignatureTests: XCTestCase {
     static let p384Key = P384.Signing.PrivateKey()
     static let p521Key = P521.Signing.PrivateKey()
     static let rsaKey = try! _RSA.Signing.PrivateKey(keySize: .bits2048)
-    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+    #if canImport(Darwin)
     static let secureEnclaveP256 = try? SecureEnclave.P256.Signing.PrivateKey()
     #endif
 
@@ -259,7 +259,7 @@ final class SignatureTests: XCTestCase {
         try self.hashFunctionMismatchTest(privateKey: .init(Self.rsaKey), signatureAlgorithm: .sha512WithRSAEncryption, validCombination: true)
     }
     
-    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+    #if canImport(Darwin)
     func testHashFunctionMismatch_secureEnclaveP256_ecdsaWithSHA256() throws {
         if let secureEnclaveP256 = Self.secureEnclaveP256 {
             try self.hashFunctionMismatchTest(privateKey: .init(secureEnclaveP256), signatureAlgorithm: .ecdsaWithSHA256, validCombination: true)
