@@ -27,10 +27,10 @@ final class DistinguishedNameTests: XCTestCase {
     func testSimpleRelativeDistinguishedNameSortsItsElements() throws {
         let expected = [
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
         ]
-        let nameA = try RelativeDistinguishedName(expected)
-        let nameB = try RelativeDistinguishedName(expected.reversed())
+        let nameA = RelativeDistinguishedName(expected)
+        let nameB = RelativeDistinguishedName(expected.reversed())
         XCTAssertEqual(Array(nameA), expected)
         XCTAssertEqual(Array(nameB), expected)
     }
@@ -38,7 +38,7 @@ final class DistinguishedNameTests: XCTestCase {
     func testSimpleRelativeDistinguishedNameSortsItsElementsWhenAssignedAfterTheFact() throws {
         let expected = [
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
         ]
         var nameA = RelativeDistinguishedName()
         var nameB = RelativeDistinguishedName()
@@ -50,81 +50,81 @@ final class DistinguishedNameTests: XCTestCase {
 
     func testSimpleRelativeDistinguishedNameSortsItsElementsIncludingByLength() throws {
         let expected = [
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ]
-        let nameA = try RelativeDistinguishedName(expected)
-        let nameB = try RelativeDistinguishedName(expected.reversed())
+        let nameA = RelativeDistinguishedName(expected)
+        let nameB = RelativeDistinguishedName(expected.reversed())
         XCTAssertEqual(Array(nameA), expected)
         XCTAssertEqual(Array(nameB), expected)
     }
     
     func testSimpleRelativeDistinguishedNameRemoveAt() throws {
-        var rdn = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        var rdn = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ])
         
         XCTAssertEqual(
             rdn.remove(at: 1),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde")
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde")
         )
-        XCTAssertEqual(rdn, try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        XCTAssertEqual(rdn, RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ]))
         
         XCTAssertEqual(
             rdn.remove(at: 0),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd")
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd")
         )
-        XCTAssertEqual(rdn, try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        XCTAssertEqual(rdn, RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ]))
         
         XCTAssertEqual(
             rdn.remove(at: 0),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef")
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef")
         )
         XCTAssertEqual(rdn, RelativeDistinguishedName())
     }
     
     func testSimpleRelativeDistinguishedNameRemoveAll() throws {
-        var rdn = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        var rdn = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ])
         
-        try rdn.removeAll(where: {
-            try $0 == RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde")
+        rdn.removeAll(where: {
+            $0 == RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde")
         })
         
-        XCTAssertEqual(rdn, try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        XCTAssertEqual(rdn, RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ]))
         
-        try rdn.removeAll(where: {
-            try $0 == RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd")
+        rdn.removeAll(where: {
+            $0 == RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd")
         })
-        XCTAssertEqual(rdn, try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        XCTAssertEqual(rdn, RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ]))
         
-        try rdn.removeAll(where: {
-            try $0 == RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef")
+        rdn.removeAll(where: {
+            $0 == RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef")
         })
         XCTAssertEqual(rdn, RelativeDistinguishedName())
     }
     
     func testSimpleRelativeDistinguishedNameRemoveAllInOneGo() throws {
-        var rdn = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
+        var rdn = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcde"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcdef"),
         ])
         
         rdn.removeAll(where: { _ in true })
@@ -133,17 +133,17 @@ final class DistinguishedNameTests: XCTestCase {
     }
 
     func testSimpleRelativeDistinguishedNameRoundTrips() throws {
-        let name = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+        let name = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
         ])
         try self.assertRoundTrips(name)
     }
 
     func testSimpleRelativeDistinguishedNameSerializesAsExpected() throws {
-        let name = try RelativeDistinguishedName([
+        let name = RelativeDistinguishedName([
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
         ])
 
         var serializer = DER.Serializer()
@@ -157,12 +157,12 @@ final class DistinguishedNameTests: XCTestCase {
     }
 
     func testSimpleDistinguishedNameRoundTrips() throws {
-        let firstName = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+        let firstName = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
         ])
-        let secondName = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "ijkl"),
+        let secondName = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "ijkl"),
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "mnop"),
         ])
         let name = DistinguishedName([firstName, secondName])
@@ -170,12 +170,12 @@ final class DistinguishedNameTests: XCTestCase {
     }
 
     func testSimpleDistinguishedNameSerializesAsExpected() throws {
-        let firstName = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
+        let firstName = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
         ])
-        let secondName = try RelativeDistinguishedName([
-            try RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "ijkl"),
+        let secondName = RelativeDistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "ijkl"),
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "mnop"),
         ])
         let name = DistinguishedName([firstName, secondName])
