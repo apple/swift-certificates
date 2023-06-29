@@ -29,8 +29,8 @@ final class DistinguishedNameTests: XCTestCase {
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
             RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
         ]
-        let nameA = RelativeDistinguishedName(expected)
-        let nameB = RelativeDistinguishedName(expected.reversed())
+        let nameA = try RelativeDistinguishedName(expected)
+        let nameB = try RelativeDistinguishedName(expected.reversed())
         XCTAssertEqual(Array(nameA), expected)
         XCTAssertEqual(Array(nameB), expected)
     }
@@ -293,5 +293,48 @@ final class DistinguishedNameTests: XCTestCase {
 
         let s = String(describing: name)
         XCTAssertEqual(s, "CN=\\,\\+\\\"\\\\\\<\\>\\;,OU=\\#www.digicert.com,O=\\ DigiCert Inc,C=US\\ ")
+    }
+    
+    func test() {
+        func XCTAssertEqualValueAndHash<Value>(
+            _ expression1: @autoclosure () throws -> Value,
+            _ expression2: @autoclosure () throws -> Value,
+            _ message: @autoclosure () -> String = "",
+            file: StaticString = #filePath,
+            line: UInt = #line
+        ) where Value : Hashable {
+            let lhs: Value
+            do {
+                lhs = try expression1()
+            } catch {
+                XCTFail("\(error)", file: file, line: line)
+                return
+            }
+            let rhs: Value
+            do {
+                rhs = try expression2()
+            } catch {
+                XCTFail("\(error)", file: file, line: line)
+                return
+            }
+            XCTAssertEqual(lhs, rhs, file: file, line: line)
+            
+            var lhsHasher = Hasher()
+            lhsHasher.combine(lhs)
+            var rhsHasher = Hasher()
+            rhsHasher.combine(rhs)
+            
+            XCTAssertEqual(lhsHasher.finalize(), rhsHasher.finalize(), "hashes should be the same for \(lhs) and \(rhs)", file: file, line: line)
+        }
+        
+        XCTAssertEqualValueAndHash(
+            try RelativeDistinguishedName.Attribute.Value(asn1Any: ASN1Any(erasing: ASN1UTF8String("This is a fancy UTF8 String with Emojies 🥳🐥"))),
+            RelativeDistinguishedName.Attribute.Value(utf8String: "This is a fancy UTF8 String with Emojies 🥳🐥")
+        )
+        
+        XCTAssertEqualValueAndHash(
+            try RelativeDistinguishedName.Attribute.Value(asn1Any: ASN1Any(erasing: ASN1PrintableString("This is a simple printable string 123456789 ():="))),
+            try RelativeDistinguishedName.Attribute.Value(printableString: "This is a simple printable string 123456789 ():=")
+        )
     }
 }

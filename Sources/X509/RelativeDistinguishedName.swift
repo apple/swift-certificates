@@ -41,9 +41,14 @@ public struct RelativeDistinguishedName {
     ///
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
-    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
+    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
         self.attributes = Array(attributes)
         Self._sortElements(&self.attributes)
+    }
+    
+    @inlinable
+    public init(_ attribute: Attribute) {
+        self.attributes = [attribute]
     }
 
     /// Create an empty ``RelativeDistinguishedName``.
