@@ -85,6 +85,33 @@ final class CertificateTests: XCTestCase {
             "Issuer: uri: https://example.com/ca, OCSP Server: uri: http://example.com/ocsp, 1.2.3.4: rfc822Name: mail@example.com"
         )
     }
+    
+    func testRangeReplaceableCollectionConformance() throws {
+        var ext = AuthorityInformationAccess([
+            .init(method: .issuingCA, location: .uniformResourceIdentifier("https://example.com/ca")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp")),
+            .init(method: .init(.unknownType([1, 2, 3, 4])), location: .rfc822Name("mail@example.com")),
+        ])
+        
+        ext.replaceSubrange(1..<2, with: [
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/a")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/b")),
+        ])
+        
+        XCTAssertEqual(Array(ext), [
+            .init(method: .issuingCA, location: .uniformResourceIdentifier("https://example.com/ca")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/a")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/b")),
+            .init(method: .init(.unknownType([1, 2, 3, 4])), location: .rfc822Name("mail@example.com")),
+        ])
+        
+        func conformsToRangeReplaceableCollection(_ value: some Any) -> Bool {
+            value is any RangeReplaceableCollection
+        }
+        // writing out `ext is any RangeReplaceableCollection` will produce a warning that this is always true
+        // therefore we go through this indirection to silence this warning
+        XCTAssertTrue(conformsToRangeReplaceableCollection(ext))
+    }
 
     func testPrintingAKIExtension() throws {
         var ext = AuthorityKeyIdentifier(

@@ -22,6 +22,12 @@ import SwiftASN1
 public struct AuthorityInformationAccess {
     @usableFromInline
     var descriptions: [AccessDescription]
+    
+    /// Create a new empty ``AuthorityInformationAccess/`` object
+    /// containing no access descriptions.
+    public init() {
+        self.descriptions = []
+    }
 
     /// Create a new ``AuthorityInformationAccess/`` object
     /// containing specific access descriptions.
@@ -79,6 +85,13 @@ extension AuthorityInformationAccess: RandomAccessCollection {
         set {
             self.descriptions[position] = newValue
         }
+    }
+}
+
+extension AuthorityInformationAccess: RangeReplaceableCollection {
+    @inlinable
+    public mutating func replaceSubrange(_ subrange: Range<Int>, with newElements: some Collection<AccessDescription>) {
+        self.descriptions.replaceSubrange(subrange, with: newElements)
     }
 }
 

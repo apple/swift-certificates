@@ -103,7 +103,6 @@ extension ExtendedKeyUsage: CustomStringConvertible {
     }
 }
 
-// TODO(cory): Probably also RangeReplaceableCollection, even though it's kinda crap.
 extension ExtendedKeyUsage: RandomAccessCollection {
     public var startIndex: Int {
         self.usages.startIndex
