@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import SwiftASN1
+
 extension Certificate {
     /// A number that uniquely identifies a certificate issued by a specific
     /// certificate authority.
@@ -28,21 +30,21 @@ extension Certificate {
         /// - Parameter bytes: The raw big-endian bytes of the serial number.
         @inlinable
         public init(bytes: ArraySlice<UInt8>) {
-            self.bytes = bytes
+            self.bytes = ArraySlice(normalisingToASN1IntegerForm: bytes)
         }
 
         /// Construct a serial number from its raw big-endian bytes.
         /// - Parameter bytes: The raw big-endian bytes of the serial number.
         @inlinable
         public init(bytes: [UInt8]) {
-            self.bytes = bytes[...]
+            self.bytes = ArraySlice(normalisingToASN1IntegerForm: bytes[...])
         }
 
         /// Construct a serial number from its raw big-endian bytes.
         /// - Parameter bytes: The raw big-endian bytes of the serial number.
         @inlinable
         public init<Bytes: Collection>(bytes: Bytes) where Bytes.Element == UInt8 {
-            self.bytes = ArraySlice(bytes)
+            self.bytes = ArraySlice(normalisingToASN1IntegerForm: bytes)
         }
 
         /// Construct a serial number from a fixed width integer.
@@ -50,11 +52,15 @@ extension Certificate {
         /// In general this API should only be used for testing, as fixed width integers
         /// are not sufficiently large for use in certificates. Using this API for production
         /// use-cases may expose users to hash collision attacks on generated certificates.
-        /// 
+        ///
+        /// Prefer using ``Certificate/SerialNumber-swift.struct/init(integerLiteral:)``
+        /// with a `StaticBigInt` which enables arbitrary-precision.
+        ///
         /// - Parameter bytes: The raw big-endian bytes of the serial number.
         @inlinable
         public init<Number: FixedWidthInteger>(_ number: Number) {
-            fatalError("TODO: Need ASN1 to implement")
+            // `IntegerBytesCollection` already trims leading zeros
+            self.bytes = ArraySlice(IntegerBytesCollection(number))
         }
 
         /// Construct a random 20-byte serial number.
@@ -67,6 +73,11 @@ extension Certificate {
             self.init(generator: &rng)
         }
         
+        /// Construct a random 20-byte serial number.
+        ///
+        /// Serial numbers should be generated randomly, and may contain up to 20 bytes. This
+        /// initializer generates a serial number with random numbers from the given `generator`.
+        /// - Parameter generator: the generator used to generate random number for the serial number
         @inlinable
         internal init(generator: inout some RandomNumberGenerator) {
             // drop leading zeros as required by the ASN.1 spec for INTEGERs
@@ -82,5 +93,36 @@ extension Certificate.SerialNumber: Sendable { }
 extension Certificate.SerialNumber: CustomStringConvertible {
     public var description: String {
         return self.bytes.lazy.map { String($0, radix: 16) }.joined(separator: ":")
+    }
+}
+
+@available(macOS 13.3, iOS 16.4, watchOS 9.4, tvOS 16.4, *)
+extension Certificate.SerialNumber: ExpressibleByIntegerLiteral {
+    /// Constructs a serial number from an integer.
+    ///
+    /// - Parameter integerLiteral: The raw big-endian bytes of the serial number.
+    @inlinable
+    public init(integerLiteral number: StaticBigInt) {
+        var bytes = Array<UInt8>()
+        let wordCount = (number.bitWidth - 1) / (MemoryLayout<UInt>.size * 8) + 1
+        bytes.reserveCapacity(wordCount / MemoryLayout<UInt>.size)
+        
+        for wordIndex in (0..<wordCount).reversed() {
+            bytes.appendBigEndianBytes(number[wordIndex])
+        }
+        
+        self.bytes = ArraySlice(normalisingToASN1IntegerForm: bytes)
+    }
+}
+
+extension Array<UInt8> {
+    @inlinable
+    mutating func appendBigEndianBytes(_ number: UInt) {
+        let number = number.bigEndian
+
+        for byte in 0..<(MemoryLayout<UInt>.size) {
+            let shifted = number >> (byte * 8)
+            self.append(UInt8(truncatingIfNeeded: shifted))
+        }
     }
 }
