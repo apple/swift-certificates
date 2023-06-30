@@ -32,7 +32,40 @@ public protocol OCSPRequester: Sendable {
     ///   - request: DER-encoded request bytes
     ///   - uri: uri of the OCSP responder
     /// - Returns: DER-encoded response bytes
-    func query(request: [UInt8], uri: String) async throws -> [UInt8]
+    func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult
+}
+
+public struct OCSPRequesterQueryResult: Sendable {
+    @usableFromInline
+    enum Storage: Sendable {
+        case success([UInt8])
+        case softFailure(Error)
+        case hardFailure(Error)
+    }
+    @usableFromInline
+    var storage: Storage
+    
+    @inlinable
+    init(_ storage: Storage) {
+        self.storage = storage
+    }
+}
+
+extension OCSPRequesterQueryResult {
+    @inlinable
+    public static func response(_ bytes: [UInt8]) -> Self {
+        .init(.success(bytes))
+    }
+    
+    @inlinable
+    public static func softFailure(reason: Error) -> Self {
+        .init(.softFailure(reason))
+    }
+    
+    @inlinable
+    public static func hardFailure(reason: Error) -> Self {
+        .init(.hardFailure(reason))
+    }
 }
 
 
@@ -289,12 +322,16 @@ extension OCSPVerifierPolicy.Storage {
         }
         
         let responseDerEncoded: [UInt8]
-        do {
-            responseDerEncoded = try await self.requester.query(request: requestBytes, uri: responderURI)
-        } catch {
-            // the request can fail for various reasons and we need to tolerate this
+        switch await self.requester.query(request: requestBytes, uri: responderURI).storage {
+        case .success(let responseBytes):
+            responseDerEncoded = responseBytes
+        case .softFailure:
+            // TODO: "log" error
             return .meetsPolicy
+        case .hardFailure(let error):
+            return .failsToMeetPolicy(reason: String(describing: error))
         }
+        
         let response: OCSPResponse
         do {
             response = try OCSPResponse(derEncoded: responseDerEncoded[...])
