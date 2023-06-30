@@ -96,6 +96,7 @@ extension Certificate.SerialNumber: CustomStringConvertible {
     }
 }
 
+#if swift(>=5.8)
 @available(macOS 13.3, iOS 16.4, watchOS 9.4, tvOS 16.4, *)
 extension Certificate.SerialNumber: ExpressibleByIntegerLiteral {
     /// Constructs a serial number from an integer.
@@ -114,6 +115,7 @@ extension Certificate.SerialNumber: ExpressibleByIntegerLiteral {
         self.bytes = ArraySlice(normalisingToASN1IntegerForm: bytes)
     }
 }
+#endif
 
 extension Array<UInt8> {
     @inlinable
