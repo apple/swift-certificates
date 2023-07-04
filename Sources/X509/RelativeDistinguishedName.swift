@@ -36,14 +36,7 @@ import _CertificateInternals
 public struct RelativeDistinguishedName {
     @usableFromInline
     var attributes: _TinyArray<Attribute>
-    
-    /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
-    ///
-    /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
-    @inlinable
-    public init(_ attribute: Attribute) {
-        self.init(CollectionOfOne(attribute))
-    }
+
     
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
@@ -54,8 +47,16 @@ public struct RelativeDistinguishedName {
         Self._sortElements(&self.attributes)
     }
     
+    /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
+    ///
+    /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
-    init(_ attributes: some Sequence<Result<RelativeDistinguishedName.Attribute, some Error>>) throws {
+    public init(_ attribute: Attribute) {
+        self.init(CollectionOfOne(attribute))
+    }
+    
+    @inlinable
+    init(_ attributes: DER.LazySetOfSequence<Attribute>) throws {
         self.attributes = try .init(attributes)
         Self._sortElements(&self.attributes)
     }
