@@ -15,8 +15,11 @@
 import Foundation
 #if os(Windows)
 import WinSDK
-#elseif os(Linux) || os(Android)
+#elseif canImport(Glibc)
 import Glibc
+import CoreFoundation
+#elseif canImport(Musl)
+import Musl
 import CoreFoundation
 #elseif canImport(Darwin)
 import Darwin
