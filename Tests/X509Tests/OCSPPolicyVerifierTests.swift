@@ -50,7 +50,7 @@ actor TestRequester: OCSPRequester {
             request = try OCSPRequest(derEncoded: requestDerEncoded[...])
         } catch {
             XCTFail("failed to deserialise request \(error)", file: file, line: line)
-            return .hardFailure(reason: error)
+            return .terminalError(error)
         }
         switch await queryClosure(request, uri) {
         case .success(let response):
@@ -60,12 +60,12 @@ actor TestRequester: OCSPRequester {
                 return .response(serializer.serializedBytes)
             } catch {
                 XCTFail("failed to serialise response \(error)", file: file, line: line)
-                return .hardFailure(reason: error)
+                return .terminalError(error)
             }
         case .softFailure(let error):
-            return .softFailure(reason: error)
+            return .nonTerminalError(error)
         case .hardFailure(let error):
-            return .hardFailure(reason: error)
+            return .terminalError(error)
         }
     }
 }
@@ -104,12 +104,12 @@ struct AssertNoThrowRequester<Wrapped: OCSPRequester>: OCSPRequester {
         switch await wrapped.query(request: request, uri: uri).storage {
         case .success(let bytes):
             return .response(bytes)
-        case .softFailure(let error):
+        case .nonTerminal(let error):
             XCTFail("test query closure throw soft failure \(error)", file: file, line: line)
-            return .softFailure(reason: error)
-        case .hardFailure(let error):
+            return .nonTerminalError(error)
+        case .terminal(let error):
             XCTFail("test query closure throw hard failure \(error)", file: file, line: line)
-            return .hardFailure(reason: error)
+            return .terminalError(error)
         }
         
             
@@ -717,13 +717,13 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 nextIndex += 1
                 guard responses.indices.contains(responseIndex) else {
                     struct StaticOCSPRequesterRunOutOfResponses: Error {}
-                    return .hardFailure(reason: StaticOCSPRequesterRunOutOfResponses())
+                    return .terminalError(StaticOCSPRequesterRunOutOfResponses())
                 }
                 let response = responses[responseIndex]
                 do {
                     return .response(try DER.Serializer.serialized(element: response))
                 } catch {
-                    return .hardFailure(reason: error)
+                    return .terminalError(error)
                 }
             }
         }

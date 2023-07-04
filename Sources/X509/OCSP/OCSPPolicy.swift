@@ -31,7 +31,7 @@ public protocol OCSPRequester: Sendable {
     /// - Parameters:
     ///   - request: DER-encoded request bytes
     ///   - uri: uri of the OCSP responder
-    /// - Returns: DER-encoded response bytes
+    /// - Returns: DER-encoded response bytes if they request was successful or a terminal or non-terminal error.
     func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult
 }
 
@@ -39,8 +39,8 @@ public struct OCSPRequesterQueryResult: Sendable {
     @usableFromInline
     enum Storage: Sendable {
         case success([UInt8])
-        case softFailure(Error)
-        case hardFailure(Error)
+        case nonTerminal(Error)
+        case terminal(Error)
     }
     @usableFromInline
     var storage: Storage
@@ -52,19 +52,29 @@ public struct OCSPRequesterQueryResult: Sendable {
 }
 
 extension OCSPRequesterQueryResult {
+    /// The OCSP query is considered successful and has returned the given DER-encoded response bytes.
+    /// - Parameter bytes: DER-encoded response bytes
     @inlinable
     public static func response(_ bytes: [UInt8]) -> Self {
         .init(.success(bytes))
     }
     
+    
+    /// The OCSP query is considered unsuccessful but will **not** fail verification, neither in ``OCSPFailureMode/soft`` nor in ``OCSPFailureMode/hard`` failure mode.
+    /// The certificate is then considered to meet the ``OCSPVerifierPolicy``.
+    /// - Parameter reason: the reason why the OCSP query failed which may be used for diagnostics
     @inlinable
-    public static func softFailure(reason: Error) -> Self {
-        .init(.softFailure(reason))
+    public static func nonTerminalError(_ reason: Error) -> Self {
+        .init(.nonTerminal(reason))
     }
     
+    
+    /// The OCSP query is considered unsuccessful and will fail verification in both ``OCSPFailureMode/soft`` and ``OCSPFailureMode/hard`` failure mode.
+    /// The certificate is then considered to not meet the ``OCSPVerifierPolicy`` and ``OCSPVerifierPolicy/chainMeetsPolicyRequirements(chain:)`` will return ``PolicyEvaluationResult/failsToMeetPolicy(reason:)`` with the given ``reason``.
+    /// - Parameter reason: the reason why the OCSP query failed
     @inlinable
-    public static func hardFailure(reason: Error) -> Self {
-        .init(.hardFailure(reason))
+    public static func terminalError(_ reason: Error) -> Self {
+        .init(.terminal(reason))
     }
 }
 
@@ -325,10 +335,10 @@ extension OCSPVerifierPolicy.Storage {
         switch await self.requester.query(request: requestBytes, uri: responderURI).storage {
         case .success(let responseBytes):
             responseDerEncoded = responseBytes
-        case .softFailure:
+        case .nonTerminal:
             // TODO: "log" error
             return .meetsPolicy
-        case .hardFailure(let error):
+        case .terminal(let error):
             return .failsToMeetPolicy(reason: String(describing: error))
         }
         
