@@ -13,6 +13,35 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
+enum VerificationDiagnostic<Policy: VerifierPolicy> {
+    struct LeafCertificateHasUnhandledCriticalExtensions {
+        var leafCertificate: Certificate
+        var policy: Policy
+    }
+    struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy {
+        var leafCertificate: Certificate
+        var failsToMeetPolicyReason: String
+    }
+    struct ChainFailsToMeetPolicy {
+        var chain: UnverifiedCertificateChain
+        var failsToMeetPolicyReason: String
+    }
+    struct IssuerHasUnhandledCriticalExtension {
+        var issuer: Certificate
+        var chain: UnverifiedCertificateChain
+        var policy: Policy
+    }
+    struct IssuerHasNotSignedCertificate {
+        var issuer: Certificate
+        var chain: UnverifiedCertificateChain
+    }
+    case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
+    case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
+    case chainFailsToMeetPolicy(ChainFailsToMeetPolicy)
+    case intermediateHashUnhandledCriticalExtension(IssuerHasUnhandledCriticalExtension)
+    case issuerHasNotSignedCertificate(IssuerHasNotSignedCertificate)
+}
+
 public struct Verifier<Policy: VerifierPolicy> {
     public var rootCertificates: CertificateStore
 
@@ -32,6 +61,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
         // If so, reject the chain.
         if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
+            // diagnose LeafCertificateHasUnhandledCriticalExtensions
             return .couldNotValidate([])
         }
 
@@ -50,6 +80,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                 return .validCertificate(unverifiedChain.certificates)
 
             case .failsToMeetPolicy(reason: let reason):
+                // diagnose LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy
                 policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
             }
         }
@@ -76,6 +107,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                         return .validCertificate(unverifiedChain.certificates)
 
                     case .failsToMeetPolicy(reason: let reason):
+                        // diagnose ChainFailsToMeetPolicy
                         policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
                     }
                 }
@@ -102,6 +134,7 @@ public struct Verifier<Policy: VerifierPolicy> {
     private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
         // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
         if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
+            // diagnose IntermediateHashUnhandledCriticalExtension
             return true
         }
 
@@ -113,6 +146,7 @@ public struct Verifier<Policy: VerifierPolicy> {
 
         // We check the signature here: if the signature isn't valid, don't try to apply policy.
         guard nextCertificate.publicKey.isValidSignature(partialChain.currentTip.signature, for: partialChain.currentTip) else {
+            // diagnose IssuerHasNotSignedCertificate
             return true
         }
 
