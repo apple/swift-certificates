@@ -11,11 +11,11 @@ services:
   test:
     image: swift-certificates:22.04-main
     environment:
+      - MAX_ALLOCS_ALLOWED_parse_webpki_roots=410050
+      - MAX_ALLOCS_ALLOWED_tiny_array_cow_append_contents_of=9050
+      - MAX_ALLOCS_ALLOWED_tiny_array_non_allocating_operations=0
       - WARN_AS_ERROR_ARG=-Xswiftc -warnings-as-errors
       - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
-      - MAX_ALLOCS_ALLOWED_parse_webpki_roots=696000
-      - MAX_ALLOCS_ALLOWED_tiny_array_cow_append_contents_of=9000
-      - MAX_ALLOCS_ALLOWED_tiny_array_non_allocating_operations=0
       # - SANITIZER_ARG=--sanitize=thread # TSan broken still
 
   shell:
