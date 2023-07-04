@@ -59,7 +59,6 @@ extension OCSPRequesterQueryResult {
         .init(.success(bytes))
     }
     
-    
     /// The OCSP query is considered unsuccessful but will **not** fail verification, neither in ``OCSPFailureMode/soft`` nor in ``OCSPFailureMode/hard`` failure mode.
     /// The certificate is then considered to meet the ``OCSPVerifierPolicy``.
     /// - Parameter reason: the reason why the OCSP query failed which may be used for diagnostics
