@@ -25,8 +25,8 @@ import Foundation
 actor TestRequester: OCSPRequester {
     enum QueryResult {
         case success(OCSPResponse)
-        case softFailure(Error)
-        case hardFailure(Error)
+        case nonTerminalError(Error)
+        case terminalError(Error)
     }
     private let queryClosure: @Sendable (OCSPRequest, String) async -> QueryResult
     private let file: StaticString
@@ -62,9 +62,9 @@ actor TestRequester: OCSPRequester {
                 XCTFail("failed to serialise response \(error)", file: file, line: line)
                 return .terminalError(error)
             }
-        case .softFailure(let error):
+        case .nonTerminalError(let error):
             return .nonTerminalError(error)
-        case .hardFailure(let error):
+        case .terminalError(let error):
             return .terminalError(error)
         }
     }
@@ -90,7 +90,7 @@ extension OCSPRequester where Self == TestRequester {
             do {
                 return .success(try await query(request, url))
             } catch {
-                return .hardFailure(error)
+                return .terminalError(error)
             }
         }).assertNoThrow(file: file, line: line)
     }
@@ -583,19 +583,19 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester { request, uri -> TestRequester.QueryResult in
                 struct QueryErrorsAreAcceptable: Error {}
-                return .softFailure(QueryErrorsAreAcceptable())
+                return .nonTerminalError(QueryErrorsAreAcceptable())
             }
         )
     }
     
-    func testFailsOnHardError() async {
+    func testFailsOnTerminalError() async {
         await self.assertChain(
             soft: .failsToMeetPolicy,
             hard: .failsToMeetPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
             requester: TestRequester { request, uri -> TestRequester.QueryResult in
-                struct QueryErrorsAreAcceptable: Error {}
-                return .hardFailure(QueryErrorsAreAcceptable())
+                struct QueryErrorsAreNotAcceptable: Error {}
+                return .terminalError(QueryErrorsAreNotAcceptable())
             }
         )
     }
