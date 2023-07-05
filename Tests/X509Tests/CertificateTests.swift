@@ -24,6 +24,32 @@ final class CertificateTests: XCTestCase {
         let s = String(describing: serial)
         XCTAssertEqual(s, "a:14:1e:28")
     }
+    
+    #if swift(>=5.8)
+    @available(macOS 13.3, iOS 16.4, watchOS 9.4, tvOS 16.4, *)
+    func testSerialNumberStaticBigInt() {
+        XCTAssertEqual(
+            (
+                0b0000_0001__0000_0010__0000_0011__0000_0100__0000_0101__0000_0110__0000_0111__0000_1000__0000_1001__0000_1010__0000_1011__0000_1100__0000_1101__0000_1110 as Certificate.SerialNumber
+            ).bytes,
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        )
+        
+        XCTAssertEqual(
+            (
+                0x00_01_02_03_04_05_06_07_08_09_0A_0B_0C_0D_0E_0F_10_11_12_13_14 as Certificate.SerialNumber
+            ).bytes,
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        )
+        XCTAssertEqual(Certificate.SerialNumber(123456789), 123456789)
+    }
+    #endif
+    
+    func testSerialNumberInits() {
+        XCTAssertEqual(Certificate.SerialNumber(bytes: [0, 1, 2, 3, 4, 5, 6, 7, 8]).bytes, [1, 2, 3, 4, 5, 6, 7, 8])
+        XCTAssertEqual(Certificate.SerialNumber(bytes: [0, 1, 2, 3, 4, 5, 6, 7, 8][...]).bytes, [1, 2, 3, 4, 5, 6, 7, 8])
+        XCTAssertEqual(Certificate.SerialNumber(bytes: AnyCollection([0, 1, 2, 3, 4, 5, 6, 7, 8])).bytes, [1, 2, 3, 4, 5, 6, 7, 8])
+    }
 
     func testPrintingVersions() {
         XCTAssertEqual(String(describing: Certificate.Version.v1), "X509v1")
@@ -84,6 +110,33 @@ final class CertificateTests: XCTestCase {
             s,
             "Issuer: uri: https://example.com/ca, OCSP Server: uri: http://example.com/ocsp, 1.2.3.4: rfc822Name: mail@example.com"
         )
+    }
+    
+    func testRangeReplaceableCollectionConformance() throws {
+        var ext = AuthorityInformationAccess([
+            .init(method: .issuingCA, location: .uniformResourceIdentifier("https://example.com/ca")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp")),
+            .init(method: .init(.unknownType([1, 2, 3, 4])), location: .rfc822Name("mail@example.com")),
+        ])
+        
+        ext.replaceSubrange(1..<2, with: [
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/a")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/b")),
+        ])
+        
+        XCTAssertEqual(Array(ext), [
+            .init(method: .issuingCA, location: .uniformResourceIdentifier("https://example.com/ca")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/a")),
+            .init(method: .ocspServer, location: .uniformResourceIdentifier("http://example.com/ocsp/b")),
+            .init(method: .init(.unknownType([1, 2, 3, 4])), location: .rfc822Name("mail@example.com")),
+        ])
+        
+        func conformsToRangeReplaceableCollection(_ value: some Any) -> Bool {
+            value is any RangeReplaceableCollection
+        }
+        // writing out `ext is any RangeReplaceableCollection` will produce a warning that this is always true
+        // therefore we go through this indirection to silence this warning
+        XCTAssertTrue(conformsToRangeReplaceableCollection(ext))
     }
 
     func testPrintingAKIExtension() throws {
