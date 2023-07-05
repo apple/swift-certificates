@@ -229,7 +229,10 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let type = try ASN1ObjectIdentifier(derEncoded: &nodes)
-            let anyValue = try ASN1Any(derEncoded: &nodes)
+            guard let valueNode = nodes.next() else {
+                throw ASN1Error.invalidASN1Object(reason: "RelativeDistinguishedName.Attribute.Value is missing")
+            }
+            
             let value: Value
             switch type {
             /// ```
@@ -323,14 +326,14 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
                     .RDNAttributeType.stateOrProvinceName,
                     .RDNAttributeType.organizationName,
                     .RDNAttributeType.organizationalUnitName:
-                do {
-                    value = try .init(utf8String: String(ASN1UTF8String(asn1Any: anyValue)))
-                } catch {
-                    do {
-                        value = try .init(printableString: String(ASN1PrintableString(asn1Any: anyValue)))
-                    } catch {
-                        value = .init(asn1Any: anyValue)
-                    }
+                
+                switch valueNode.identifier {
+                case ASN1UTF8String.defaultIdentifier:
+                    value = try .init(utf8String: String(ASN1UTF8String(derEncoded: valueNode)))
+                case ASN1PrintableString.defaultIdentifier:
+                    value = try .init(printableString: String(ASN1PrintableString(derEncoded: valueNode)))
+                default:
+                    value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
                 }
                 
             /// ```
@@ -341,14 +344,15 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
             /// X520countryName ::=     PrintableString (SIZE (2))
             /// ```
             case .RDNAttributeType.countryName:
-                do {
-                    value = try .init(printableString: String(ASN1PrintableString(asn1Any: anyValue)))
-                } catch {
-                    value = .init(asn1Any: anyValue)
+                switch valueNode.identifier {
+                case ASN1PrintableString.defaultIdentifier:
+                    value = try .init(printableString: String(ASN1PrintableString(derEncoded: valueNode)))
+                default:
+                    value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
                 }
                 
             default:
-                value = .init(asn1Any: anyValue)
+                value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
             }
             
             return .init(type: type, value: value)
