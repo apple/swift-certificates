@@ -34,7 +34,7 @@ extension RelativeDistinguishedName {
                 /// ``ASN1UTF8String``
                 case utf8(String)
                 /// `.any` can still contain bytes which are equal to the DER representation of `.printable` or `.utf8`
-                /// the custom `Hashable` conformance takes care of this treats them as equal.
+                /// the custom `Hashable` conformance takes care of this and treats them as equal.
                 case any(ASN1Any)
             }
             
