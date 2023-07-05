@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-enum VerificationDiagnostic<Policy: VerifierPolicy> {
+enum VerificationDiagnostic {
     struct LeafCertificateHasUnhandledCriticalExtensions {
         var leafCertificate: Certificate
-        var policy: Policy
+        var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
     struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy {
         var leafCertificate: Certificate
@@ -29,7 +29,7 @@ enum VerificationDiagnostic<Policy: VerifierPolicy> {
     struct IssuerHasUnhandledCriticalExtension {
         var issuer: Certificate
         var chain: UnverifiedCertificateChain
-        var policy: Policy
+        var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
     struct IssuerHasNotSignedCertificate {
         var issuer: Certificate
