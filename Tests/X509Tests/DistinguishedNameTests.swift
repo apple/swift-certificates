@@ -29,8 +29,8 @@ final class DistinguishedNameTests: XCTestCase {
             try RelativeDistinguishedName.Attribute(type: .NameAttributes.commonName, printableString: "efgh"),
             RelativeDistinguishedName.Attribute(type: .NameAttributes.name, utf8String: "abcd"),
         ]
-        let nameA = try RelativeDistinguishedName(expected)
-        let nameB = try RelativeDistinguishedName(expected.reversed())
+        let nameA = RelativeDistinguishedName(expected)
+        let nameB = RelativeDistinguishedName(expected.reversed())
         XCTAssertEqual(Array(nameA), expected)
         XCTAssertEqual(Array(nameB), expected)
     }
