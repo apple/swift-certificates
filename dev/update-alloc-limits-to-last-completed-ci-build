@@ -22,7 +22,7 @@ url_prefix=${1-"https://ci.swiftserver.group/job/swift-certificates-"}
 target_repo=${2-"$here/.."}
 tmpdir=$(mktemp -d /tmp/.last-build_XXXXXX)
 
-for f in 57 58 59 nightly; do
+for f in 57 58 59 -nightly; do
     echo "swift$f"
     if [[ "$f" == "nightly" ]]; then
         url="$url_prefix$f-prb/lastCompletedBuild/consoleFull"
@@ -37,7 +37,7 @@ for f in 57 58 59 nightly; do
         exit 1
     fi
 
-    docker_file=$(if [[ "$f" == "nightly" ]]; then f=main; fi && ls "$target_repo/docker/docker-compose."*"$f"*".yaml")
+    docker_file=$(if [[ "$f" == "-nightly" ]]; then f=main; fi && ls "$target_repo/docker/docker-compose."*"$f"*".yaml")
 
     echo "$docker_file"
     cat "$tmpdir/limits$f"
