@@ -62,11 +62,11 @@ extension OCSPRequesterQueryResult {
     /// The OCSP query is considered unsuccessful but will **not** fail verification, neither in ``OCSPFailureMode/soft`` nor in ``OCSPFailureMode/hard`` failure mode.
     /// The certificate is then considered to meet the ``OCSPVerifierPolicy``.
     /// - Parameter reason: the reason why the OCSP query failed which may be used for diagnostics
+    /// - warning: The ``OCSPVerifierPolicy`` will assume that verification has succeeded and therefore pass OCSP verification for the given certificate.
     @inlinable
     public static func nonTerminalError(_ reason: Error) -> Self {
         .init(.nonTerminal(reason))
     }
-    
     
     /// The OCSP query is considered unsuccessful and will fail verification in both ``OCSPFailureMode/soft`` and ``OCSPFailureMode/hard`` failure mode.
     /// The certificate is then considered to not meet the ``OCSPVerifierPolicy`` and ``OCSPVerifierPolicy/chainMeetsPolicyRequirements(chain:)`` will return ``PolicyEvaluationResult/failsToMeetPolicy(reason:)`` with the given ``reason``.
