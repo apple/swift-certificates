@@ -23,13 +23,18 @@ import Foundation
 #endif
 
 actor TestRequester: OCSPRequester {
-    private let queryClosure: @Sendable (OCSPRequest, String) async throws -> OCSPResponse
+    enum QueryResult {
+        case success(OCSPResponse)
+        case nonTerminalError(Error)
+        case terminalError(Error)
+    }
+    private let queryClosure: @Sendable (OCSPRequest, String) async -> QueryResult
     private let file: StaticString
     private let line: UInt
     var queryCount: Int = 0
     
     init(
-        query: @escaping @Sendable (OCSPRequest, String) async throws -> OCSPResponse,
+        query: @escaping @Sendable (OCSPRequest, String) async -> QueryResult,
         file: StaticString = #file,
         line: UInt = #line
     ) {
@@ -38,23 +43,29 @@ actor TestRequester: OCSPRequester {
         self.line = line
     }
     
-    func query(request requestDerEncoded: [UInt8], uri: String) async throws -> [UInt8] {
+    func query(request requestDerEncoded: [UInt8], uri: String) async -> OCSPRequesterQueryResult {
         queryCount += 1
         let request: OCSPRequest
         do {
             request = try OCSPRequest(derEncoded: requestDerEncoded[...])
         } catch {
             XCTFail("failed to deserialise request \(error)", file: file, line: line)
-            throw error
+            return .terminalError(error)
         }
-        let response = try await queryClosure(request, uri)
-        do {
-            var serializer = DER.Serializer()
-            try serializer.serialize(response)
-            return serializer.serializedBytes
-        } catch {
-            XCTFail("failed to serialise response \(error)", file: file, line: line)
-            throw error
+        switch await queryClosure(request, uri) {
+        case .success(let response):
+            do {
+                var serializer = DER.Serializer()
+                try serializer.serialize(response)
+                return .response(serializer.serializedBytes)
+            } catch {
+                XCTFail("failed to serialise response \(error)", file: file, line: line)
+                return .terminalError(error)
+            }
+        case .nonTerminalError(let error):
+            return .nonTerminalError(error)
+        case .terminalError(let error):
+            return .terminalError(error)
         }
     }
 }
@@ -75,7 +86,13 @@ extension OCSPRequester where Self == TestRequester {
         file: StaticString = #file,
         line: UInt = #line
     ) -> some OCSPRequester {
-        TestRequester(query: query).assertNoThrow(file: file, line: line)
+        TestRequester(query: { request, url in
+            do {
+                return .success(try await query(request, url))
+            } catch {
+                return .terminalError(error)
+            }
+        }).assertNoThrow(file: file, line: line)
     }
 }
 
@@ -83,13 +100,20 @@ struct AssertNoThrowRequester<Wrapped: OCSPRequester>: OCSPRequester {
     var wrapped: Wrapped
     var file: StaticString
     var line: UInt
-    func query(request: [UInt8], uri: String) async throws -> [UInt8] {
-        do {
-            return try await wrapped.query(request: request, uri: uri)
-        } catch {
-            XCTFail("test query closure throw error \(error)", file: file, line: line)
-            throw error
+    func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult {
+        switch await wrapped.query(request: request, uri: uri).storage {
+        case .success(let bytes):
+            return .response(bytes)
+        case .nonTerminal(let error):
+            XCTFail("test query closure throw soft failure \(error)", file: file, line: line)
+            return .nonTerminalError(error)
+        case .terminal(let error):
+            XCTFail("test query closure throw hard failure \(error)", file: file, line: line)
+            return .terminalError(error)
         }
+        
+            
+        
     }
 }
 
@@ -552,14 +576,26 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
     
-    func testQueryIsAllowedToFail() async {
+    func testDoesNotFailOnSoftFailure() async {
         await self.assertChain(
             soft: .meetsPolicy,
             hard: .meetsPolicy,
             chain: Self.chainWithSingleCertWithOCSP,
-            requester: TestRequester { request, uri -> OCSPResponse in
+            requester: TestRequester { request, uri -> TestRequester.QueryResult in
                 struct QueryErrorsAreAcceptable: Error {}
-                throw QueryErrorsAreAcceptable()
+                return .nonTerminalError(QueryErrorsAreAcceptable())
+            }
+        )
+    }
+    
+    func testFailsOnTerminalError() async {
+        await self.assertChain(
+            soft: .failsToMeetPolicy,
+            hard: .failsToMeetPolicy,
+            chain: Self.chainWithSingleCertWithOCSP,
+            requester: TestRequester { request, uri -> TestRequester.QueryResult in
+                struct QueryErrorsAreNotAcceptable: Error {}
+                return .terminalError(QueryErrorsAreNotAcceptable())
             }
         )
     }
@@ -676,15 +712,19 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 self.responses = responses
             }
             var nextIndex: Int = 0
-            func query(request: [UInt8], uri: String) async throws -> [UInt8] {
+            func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult {
                 let responseIndex = nextIndex
                 nextIndex += 1
                 guard responses.indices.contains(responseIndex) else {
                     struct StaticOCSPRequesterRunOutOfResponses: Error {}
-                    throw StaticOCSPRequesterRunOutOfResponses()
+                    return .terminalError(StaticOCSPRequesterRunOutOfResponses())
                 }
                 let response = responses[responseIndex]
-                return try DER.Serializer.serialized(element: response)
+                do {
+                    return .response(try DER.Serializer.serialized(element: response))
+                } catch {
+                    return .terminalError(error)
+                }
             }
         }
         

@@ -31,8 +31,50 @@ public protocol OCSPRequester: Sendable {
     /// - Parameters:
     ///   - request: DER-encoded request bytes
     ///   - uri: uri of the OCSP responder
-    /// - Returns: DER-encoded response bytes
-    func query(request: [UInt8], uri: String) async throws -> [UInt8]
+    /// - Returns: DER-encoded response bytes if they request was successful or a terminal or non-terminal error.
+    func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult
+}
+
+public struct OCSPRequesterQueryResult: Sendable {
+    @usableFromInline
+    enum Storage: Sendable {
+        case success([UInt8])
+        case nonTerminal(Error)
+        case terminal(Error)
+    }
+    @usableFromInline
+    var storage: Storage
+    
+    @inlinable
+    init(_ storage: Storage) {
+        self.storage = storage
+    }
+}
+
+extension OCSPRequesterQueryResult {
+    /// The OCSP query is considered successful and has returned the given DER-encoded response bytes.
+    /// - Parameter bytes: DER-encoded response bytes
+    @inlinable
+    public static func response(_ bytes: [UInt8]) -> Self {
+        .init(.success(bytes))
+    }
+    
+    /// The OCSP query is considered unsuccessful but will **not** fail verification, neither in ``OCSPFailureMode/soft`` nor in ``OCSPFailureMode/hard`` failure mode.
+    /// The certificate is then considered to meet the ``OCSPVerifierPolicy``.
+    /// - Parameter reason: the reason why the OCSP query failed which may be used for diagnostics
+    /// - warning: The ``OCSPVerifierPolicy`` will assume that verification has succeeded and therefore pass OCSP verification for the given certificate.
+    @inlinable
+    public static func nonTerminalError(_ reason: Error) -> Self {
+        .init(.nonTerminal(reason))
+    }
+    
+    /// The OCSP query is considered unsuccessful and will fail verification in both ``OCSPFailureMode/soft`` and ``OCSPFailureMode/hard`` failure mode.
+    /// The certificate is then considered to not meet the ``OCSPVerifierPolicy`` and ``OCSPVerifierPolicy/chainMeetsPolicyRequirements(chain:)`` will return ``PolicyEvaluationResult/failsToMeetPolicy(reason:)`` with the given ``reason``.
+    /// - Parameter reason: the reason why the OCSP query failed
+    @inlinable
+    public static func terminalError(_ reason: Error) -> Self {
+        .init(.terminal(reason))
+    }
 }
 
 
@@ -289,12 +331,16 @@ extension OCSPVerifierPolicy.Storage {
         }
         
         let responseDerEncoded: [UInt8]
-        do {
-            responseDerEncoded = try await self.requester.query(request: requestBytes, uri: responderURI)
-        } catch {
-            // the request can fail for various reasons and we need to tolerate this
+        switch await self.requester.query(request: requestBytes, uri: responderURI).storage {
+        case .success(let responseBytes):
+            responseDerEncoded = responseBytes
+        case .nonTerminal:
+            // TODO: "log" error
             return .meetsPolicy
+        case .terminal(let error):
+            return .failsToMeetPolicy(reason: String(describing: error))
         }
+        
         let response: OCSPResponse
         do {
             response = try OCSPResponse(derEncoded: responseDerEncoded[...])
