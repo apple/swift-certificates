@@ -13,33 +13,145 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-enum VerificationDiagnostic {
-    struct LeafCertificateHasUnhandledCriticalExtensions {
+public struct VerificationDiagnostic: Sendable {
+    struct LeafCertificateHasUnhandledCriticalExtensions: Hashable {
         var leafCertificate: Certificate
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
-    struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy {
+    struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: Hashable {
         var leafCertificate: Certificate
         var failsToMeetPolicyReason: String
     }
-    struct ChainFailsToMeetPolicy {
+    struct ChainFailsToMeetPolicy: Hashable {
         var chain: UnverifiedCertificateChain
         var failsToMeetPolicyReason: String
     }
-    struct IssuerHasUnhandledCriticalExtension {
+    struct IssuerHasUnhandledCriticalExtension: Hashable {
         var issuer: Certificate
-        var chain: UnverifiedCertificateChain
+        var partialChain: [Certificate]
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
-    struct IssuerHasNotSignedCertificate {
+    struct IssuerHasNotSignedCertificate: Hashable {
         var issuer: Certificate
-        var chain: UnverifiedCertificateChain
+        var partialChain: [Certificate]
     }
-    case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
-    case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
-    case chainFailsToMeetPolicy(ChainFailsToMeetPolicy)
-    case intermediateHashUnhandledCriticalExtension(IssuerHasUnhandledCriticalExtension)
-    case issuerHasNotSignedCertificate(IssuerHasNotSignedCertificate)
+    enum Storage: Hashable {
+        case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
+        case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
+        case chainFailsToMeetPolicy(ChainFailsToMeetPolicy)
+        case intermediateHashUnhandledCriticalExtension(IssuerHasUnhandledCriticalExtension)
+        case issuerHasNotSignedCertificate(IssuerHasNotSignedCertificate)
+    }
+    var storage: Storage
+}
+
+extension VerificationDiagnostic {
+    static func leafCertificateHasUnhandledCriticalExtension(
+        _ leafCertificate: Certificate,
+        handledCriticalExtensions: [ASN1ObjectIdentifier]
+    ) -> Self {
+        self.init(storage: .leafCertificateHasUnhandledCriticalExtension(
+            leafCertificate,
+            handledCriticalExtensions: handledCriticalExtensions
+        ))
+    }
+    static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
+        _ leafCertificate: Certificate,
+        reason failsToMeetPolicyReason: String
+    ) -> Self {
+        self.init(storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
+            leafCertificate,
+            reason: failsToMeetPolicyReason
+        ))
+    }
+    static func chainFailsToMeetPolicy(
+        _ chain: UnverifiedCertificateChain,
+        reason failsToMeetPolicyReason: String
+    ) -> Self {
+        self.init(storage: .chainFailsToMeetPolicy(
+            chain,
+            reason: failsToMeetPolicyReason
+        ))
+    }
+    static func intermediateHashUnhandledCriticalExtension(
+        issuer: Certificate,
+        chain: CandidatePartialChain,
+        handledCriticalExtensions: [ASN1ObjectIdentifier]
+    ) -> Self {
+        self.init(storage: .intermediateHashUnhandledCriticalExtension(
+            issuer: issuer,
+            partialChain: chain.chain + CollectionOfOne(chain.currentTip),
+            handledCriticalExtensions: handledCriticalExtensions
+        ))
+    }
+    static func issuerHasNotSignedCertificate(
+        _ issuer: Certificate,
+        chain: CandidatePartialChain
+    ) -> Self {
+        self.init(storage: .issuerHasNotSignedCertificate(
+            issuer,
+            partialChain: chain.chain + CollectionOfOne(chain.currentTip)
+        ))
+    }
+}
+
+extension VerificationDiagnostic.Storage {
+    static func leafCertificateHasUnhandledCriticalExtension(
+        _ leafCertificate: Certificate,
+        handledCriticalExtensions: [ASN1ObjectIdentifier]
+    ) -> Self {
+        .leafCertificateHasUnhandledCriticalExtension(.init(
+            leafCertificate: leafCertificate,
+            handledCriticalExtensions: handledCriticalExtensions
+        ))
+    }
+    static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
+        _ leafCertificate: Certificate,
+        reason failsToMeetPolicyReason: String
+    ) -> Self {
+        .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(.init(
+            leafCertificate: leafCertificate,
+            failsToMeetPolicyReason: failsToMeetPolicyReason
+        ))
+    }
+    static func chainFailsToMeetPolicy(
+        _ chain: UnverifiedCertificateChain,
+        reason failsToMeetPolicyReason: String
+    ) -> Self {
+        .chainFailsToMeetPolicy(.init(
+            chain: chain,
+            failsToMeetPolicyReason: failsToMeetPolicyReason
+        ))
+    }
+    static func intermediateHashUnhandledCriticalExtension(
+        issuer: Certificate,
+        partialChain: [Certificate],
+        handledCriticalExtensions: [ASN1ObjectIdentifier]
+    ) -> Self {
+        .intermediateHashUnhandledCriticalExtension(.init(
+            issuer: issuer,
+            partialChain: partialChain,
+            handledCriticalExtensions: handledCriticalExtensions
+        ))
+    }
+    static func issuerHasNotSignedCertificate(
+        _ issuer: Certificate,
+        partialChain: [Certificate]
+    ) -> Self {
+        .issuerHasNotSignedCertificate(.init(
+            issuer: issuer,
+            partialChain: partialChain
+        ))
+    }
+}
+
+extension VerificationDiagnostic: CustomStringConvertible {
+    /// Produces a human readable description of this ``VerificationDiagnostic`` that is potential expensive to compute.
+    ///
+    public var description: String {
+        // TODO: improve description for each kind
+        String(describing: storage)
+    }
 }
 
 public struct Verifier<Policy: VerifierPolicy> {
@@ -53,7 +165,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         self.policy = try policy()
     }
 
-    public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((String) -> Void)? = nil) async -> VerificationResult {
+    public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil) async -> VerificationResult {
         var partialChains: [CandidatePartialChain] = [CandidatePartialChain(leaf: leafCertificate)]
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
@@ -61,7 +173,8 @@ public struct Verifier<Policy: VerifierPolicy> {
         // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
         // If so, reject the chain.
         if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
-            // diagnose LeafCertificateHasUnhandledCriticalExtensions
+            
+            diagnosticCallback?(.leafCertificateHasUnhandledCriticalExtension(leafCertificate, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
             return .couldNotValidate([])
         }
 
@@ -80,7 +193,8 @@ public struct Verifier<Policy: VerifierPolicy> {
                 return .validCertificate(unverifiedChain.certificates)
 
             case .failsToMeetPolicy(reason: let reason):
-                // diagnose LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy
+                
+                diagnosticCallback?(.leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(leafCertificate, reason: reason))
                 policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
             }
         }
@@ -95,7 +209,7 @@ public struct Verifier<Policy: VerifierPolicy> {
 
                 // Each of these is now potentially a valid unverified chain.
                 for root in rootParents {
-                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root) {
+                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root, diagnosticCallback: diagnosticCallback) {
                         continue
                     }
 
@@ -107,7 +221,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                         return .validCertificate(unverifiedChain.certificates)
 
                     case .failsToMeetPolicy(reason: let reason):
-                        // diagnose ChainFailsToMeetPolicy
+                        diagnosticCallback?(.chainFailsToMeetPolicy(unverifiedChain, reason: reason))
                         policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
                     }
                 }
@@ -118,7 +232,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                 intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
 
                 for parent in intermediateParents {
-                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent) {
+                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent, diagnosticCallback: diagnosticCallback) {
                         continue
                     }
 
@@ -131,10 +245,10 @@ public struct Verifier<Policy: VerifierPolicy> {
         return .couldNotValidate(policyFailures)
     }
 
-    private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
+    private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate, diagnosticCallback: ((VerificationDiagnostic) -> Void)?) -> Bool {
         // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
         if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
-            // diagnose IntermediateHashUnhandledCriticalExtension
+            diagnosticCallback?(.intermediateHashUnhandledCriticalExtension(issuer: nextCertificate, chain: partialChain, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
             return true
         }
 
@@ -146,7 +260,7 @@ public struct Verifier<Policy: VerifierPolicy> {
 
         // We check the signature here: if the signature isn't valid, don't try to apply policy.
         guard nextCertificate.publicKey.isValidSignature(partialChain.currentTip.signature, for: partialChain.currentTip) else {
-            // diagnose IssuerHasNotSignedCertificate
+            diagnosticCallback?(.issuerHasNotSignedCertificate(nextCertificate, chain: partialChain))
             return true
         }
 
@@ -172,7 +286,7 @@ extension VerificationResult {
     }
 }
 
-fileprivate struct CandidatePartialChain {
+struct CandidatePartialChain: Hashable {
     var chain: [Certificate]
 
     var currentTip: Certificate

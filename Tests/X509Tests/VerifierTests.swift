@@ -15,7 +15,7 @@
 import Foundation
 import XCTest
 import SwiftASN1
-import X509
+@testable import X509
 import Crypto
 
 final class VerifierTests: XCTestCase {
@@ -494,9 +494,10 @@ final class VerifierTests: XCTestCase {
 
     func testTrivialChainBuilding() async throws {
         let roots = CertificateStore([Self.ca1])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -504,13 +505,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testMissingIntermediateFailsToBuild() async throws {
         let roots = CertificateStore([Self.ca1])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([]), diagnosticCallback: log.append(_:))
 
         guard case .couldNotValidate(let policyResults) = result else {
             XCTFail("Accidentally validated: \(result)")
@@ -518,13 +521,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(policyResults, [])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testMissingRootFailsToBuild() async throws {
         let roots = CertificateStore([])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .couldNotValidate(let policyResults) = result else {
             XCTFail("Accidentally validated: \(result)")
@@ -532,13 +537,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(policyResults, [])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testExtraRootsAreIgnored() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -546,13 +553,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testPuttingRootsInTheIntermediariesIsntAProblem() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1, Self.ca2]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1, Self.ca2]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -560,13 +569,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testSupportsCrossSignedRootWithoutTrouble() async throws {
         let roots = CertificateStore([Self.ca2])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1CrossSignedByCA2]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1CrossSignedByCA2]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -574,13 +585,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -588,13 +601,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testPrefersToUseIntermediatesWithSKIThatMatches() async throws {
         let roots = CertificateStore([Self.ca1])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.intermediate1WithoutSKIAKI]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.intermediate1WithoutSKIAKI]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -602,13 +617,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testPrefersNoSKIToNonMatchingSKI() async throws {
         let roots = CertificateStore([Self.ca1])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -616,13 +633,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1WithoutSKIAKI, Self.ca1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testRejectsRootsThatDidNotSignTheCertBeforeThem() async throws {
         let roots = CertificateStore([Self.ca1WithAlternativePrivateKey, Self.ca2])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.ca1CrossSignedByCA2, Self.ca2CrossSignedByCA1, Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.ca1CrossSignedByCA2, Self.ca2CrossSignedByCA1, Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -630,16 +649,23 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
+        XCTAssertEqual(log.diagnostics, [
+            .issuerHasNotSignedCertificate(
+                Self.ca1WithAlternativePrivateKey,
+                partialChain: [Self.localhostLeaf, Self.intermediate1]
+            )
+        ])
     }
 
     func testPolicyFailuresCanFindLongerPaths() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
+        let log = DiagnosticsLog()
 
         var verifier = Verifier(rootCertificates: roots) {
             FailIfCertInChainPolicy(forbiddenCert: Self.ca1)
             Self.defaultPolicy
         }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -647,14 +673,22 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
+        XCTAssertEqual(log.diagnostics.count, 1)
+        let diagnostic = try XCTUnwrap(log.diagnostics.first)
+        guard case .chainFailsToMeetPolicy(let chainFailsToMeetPolicy) = diagnostic else {
+            XCTFail("Unexpected diagnostics \(log.diagnostics)")
+            return
+        }
+        XCTAssertEqual(chainFailsToMeetPolicy.chain.certificates, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
     }
 
     func testInsanePKICanStillBuild() async throws {
         let roots = CertificateStore([Self.ca1])
         let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x1, Self.x2])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.insaneLeaf, intermediates: intermediates)
+        let result = await verifier.validate(leafCertificate: Self.insaneLeaf, intermediates: intermediates, diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -662,25 +696,32 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1])
+        XCTAssertEqual(Set(log.diagnostics), [
+            .issuerHasNotSignedCertificate(Self.t1, partialChain: [Self.insaneLeaf]),
+            .issuerHasNotSignedCertificate(Self.t2, partialChain: [Self.insaneLeaf]),
+        ])
     }
 
     func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async throws {
         let roots = CertificateStore([Self.ca1])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated: \(result)")
             return
         }
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testSelfSignedCertsAreTrustedWhenInTrustStore() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCert])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -688,6 +729,7 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.isolatedSelfSignedCert])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testTrustRootsCanBeNonSelfSignedLeaves() async throws {
@@ -701,9 +743,10 @@ final class VerifierTests: XCTestCase {
         }
 
         let roots = CertificateStore([Self.localhostLeaf])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { IgnoreBasicConstraintsPolicy() }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -711,13 +754,15 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testTrustRootsCanBeNonSelfSignedIntermediates() async throws {
         let roots = CertificateStore([Self.intermediate1])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -725,18 +770,26 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1])
+        XCTAssertEqual(log.diagnostics, [])
     }
 
     func testWePoliceCriticalExtensionsOnLeafCerts() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCertWithWeirdCriticalExtension])
-
+        let log = DiagnosticsLog()
+        
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension, intermediates: CertificateStore([Self.intermediate1]))
+        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated: \(result)")
             return
         }
+        XCTAssertEqual(log.diagnostics, [
+            .leafCertificateHasUnhandledCriticalExtension(
+                Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
+                handledCriticalExtensions: Self.defaultPolicy.verifyingCriticalExtensions
+            )
+        ])
     }
 }
 
@@ -774,3 +827,12 @@ extension TimeInterval {
         return Double(days) * oneDay
     }
 }
+
+final class DiagnosticsLog {
+    var diagnostics: [VerificationDiagnostic.Storage] = []
+    
+    func append(_ diagnostic: VerificationDiagnostic) {
+        diagnostics.append(diagnostic.storage)
+    }
+}
+
