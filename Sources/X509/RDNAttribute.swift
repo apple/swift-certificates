@@ -83,9 +83,136 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
     
     @inlinable
     func hash(into hasher: inout Hasher) {
-        // TODO: implement a ASN1UTF8StringView over a String that conforms to RandomAccessCollection and can lazily bytes that are equal to ASN1Any(ASN1UTF8String(string:))
-        // same for ASN1PrintableString. This would allow us to implement `hash(into:)` without allocating, same for default case in `==` above.
-        ASN1Any(self).hash(into: &hasher)
+        switch self {
+        case .printable:
+            // TODO: implement a ASN1PrintableStringView over a String that conforms to RandomAccessCollection and can lazily get bytes that are equal to ASN1Any(ASN1UTF8String(string:))
+            hasher.combine(ASN1Any(self))
+        case .utf8(let string):
+            hasher.combine(String.ASN1UTF8StringView(string: string))
+            
+        case .any(let asn1Any):
+            hasher.combine(asn1Any)
+        }
+    }
+}
+
+extension String {
+    @usableFromInline
+    struct ASN1UTF8StringView {
+        @usableFromInline
+        var string: String
+        
+        @inlinable
+        init(string: String) {
+            self.string = string
+        }
+    }
+}
+
+extension String.ASN1UTF8StringView: RandomAccessCollection {
+    @inlinable
+    var startIndex: Int {
+        0
+    }
+    
+    @inlinable
+    var endIndex: Int {
+        count
+    }
+    
+    @inlinable
+    var count: Int {
+        let utf8Count = self.string.utf8.count
+        // tag + utf8 bytes length + utf8 bytes
+        return 1 + ASN1Length(length: utf8Count).count + utf8Count
+    }
+    
+    @inlinable
+    subscript(position: Int) -> UInt8 {
+        let length = ASN1Length(length: self.string.utf8.count)
+        switch position {
+        case 0:
+            // This tag represents a UTF8STRING.
+            return 0x0c
+        case 1...length.endIndex:
+            // after the tag comes the length of the string
+            return length[position &- 1]
+        default:
+            // and at the end the utf8 encoded string
+            let index = self.string.utf8.index(self.string.utf8.startIndex, offsetBy: position - 1 - length.endIndex)
+            return self.string.utf8[index]
+        }
+    }
+}
+
+extension String.ASN1UTF8StringView: Hashable {
+    @inlinable
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.count)
+        for byte in self {
+            hasher.combine(byte)
+        }
+    }
+}
+
+
+@usableFromInline
+struct ASN1Length {
+    @usableFromInline
+    var length: Int
+    
+    @inlinable
+    init(length: Int) {
+        self.length = length
+    }
+}
+
+extension ASN1Length: RandomAccessCollection {
+    @inlinable
+    var startIndex: Int {
+        0
+    }
+    
+    @inlinable
+    var endIndex: Int {
+        count
+    }
+    
+    @inlinable
+    var count: Int {
+        // ASN.1 lengths are in two forms. If we can store the length in 7 bits, we should:
+        // that requires only one byte. Otherwise, we need multiple bytes: work out how many,
+        // plus one for the length of the length bytes.
+        if self.length <= 0x7F {
+            return 1
+        } else {
+            // We need to work out how many bytes we need. There are many fancy bit-twiddling
+            // ways of doing this, but honestly we don't do this enough to need them, so we'll
+            // do it the easy way. This math is done on UInt because it makes the shift semantics clean.
+            // We save a branch here because we can never overflow this addition.
+            let neededBits = self.length.bitWidth - self.length.leadingZeroBitCount
+            let neededBytes = (neededBits &+ 7) / 8
+            return neededBytes &+ 1
+        }
+    }
+    
+    @inlinable
+    subscript(position: Int) -> UInt8 {
+        precondition(position >= 0 && position < self.length)
+        if self.length <= 0x7F {
+            return UInt8(truncatingIfNeeded: self.length)
+        } else {
+            if position == 0 {
+                // We first write the number of length bytes
+                // we needed, setting the high bit.
+                return 0b1000_0000 | UInt8(self.count &- 1)
+            } else {
+                //Then we write the bytes of the length.
+                let integerBytesCollection = IntegerBytesCollection(self.length)
+                let index = integerBytesCollection.index(integerBytesCollection.startIndex, offsetBy: position &- 1)
+                return integerBytesCollection[index]
+            }
+        }
     }
 }
 
