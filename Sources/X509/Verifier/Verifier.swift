@@ -107,7 +107,7 @@ public struct Verifier<Policy: VerifierPolicy> {
     private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate, diagnosticCallback: ((VerificationDiagnostic) -> Void)?) -> Bool {
         // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
         if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
-            diagnosticCallback?(.issuerHashUnhandledCriticalExtension(issuer: nextCertificate, chain: partialChain, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
+            diagnosticCallback?(.issuerHasUnhandledCriticalExtension(issuer: nextCertificate, chain: partialChain, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
             return true
         }
 

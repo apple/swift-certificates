@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -18,23 +18,28 @@ public struct VerificationDiagnostic: Sendable {
         var leafCertificate: Certificate
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
+    
     struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: Hashable {
         var leafCertificate: Certificate
         var failsToMeetPolicyReason: String
     }
+    
     struct ChainFailsToMeetPolicy: Hashable {
         var chain: UnverifiedCertificateChain
         var failsToMeetPolicyReason: String
     }
+    
     struct IssuerHasUnhandledCriticalExtension: Hashable {
         var issuer: Certificate
         var partialChain: [Certificate]
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
+    
     struct IssuerHasNotSignedCertificate: Hashable {
         var issuer: Certificate
         var partialChain: [Certificate]
     }
+    
     enum Storage: Hashable {
         case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
         case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
@@ -42,6 +47,7 @@ public struct VerificationDiagnostic: Sendable {
         case intermediateHashUnhandledCriticalExtension(IssuerHasUnhandledCriticalExtension)
         case issuerHasNotSignedCertificate(IssuerHasNotSignedCertificate)
     }
+    
     var storage: Storage
 }
 
@@ -55,6 +61,7 @@ extension VerificationDiagnostic {
             handledCriticalExtensions: handledCriticalExtensions
         ))
     }
+    
     static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
         _ leafCertificate: Certificate,
         reason failsToMeetPolicyReason: String
@@ -64,6 +71,7 @@ extension VerificationDiagnostic {
             reason: failsToMeetPolicyReason
         ))
     }
+    
     static func chainFailsToMeetPolicy(
         _ chain: UnverifiedCertificateChain,
         reason failsToMeetPolicyReason: String
@@ -73,17 +81,19 @@ extension VerificationDiagnostic {
             reason: failsToMeetPolicyReason
         ))
     }
-    static func issuerHashUnhandledCriticalExtension(
+    
+    static func issuerHasUnhandledCriticalExtension(
         issuer: Certificate,
         chain: CandidatePartialChain,
         handledCriticalExtensions: [ASN1ObjectIdentifier]
     ) -> Self {
-        self.init(storage: .issuerHashUnhandledCriticalExtension(
+        self.init(storage: .issuerHasUnhandledCriticalExtension(
             issuer: issuer,
             partialChain: chain.chain + CollectionOfOne(chain.currentTip),
             handledCriticalExtensions: handledCriticalExtensions
         ))
     }
+    
     static func issuerHasNotSignedCertificate(
         _ issuer: Certificate,
         chain: CandidatePartialChain
@@ -105,6 +115,7 @@ extension VerificationDiagnostic.Storage {
             handledCriticalExtensions: handledCriticalExtensions
         ))
     }
+    
     static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
         _ leafCertificate: Certificate,
         reason failsToMeetPolicyReason: String
@@ -114,6 +125,7 @@ extension VerificationDiagnostic.Storage {
             failsToMeetPolicyReason: failsToMeetPolicyReason
         ))
     }
+    
     static func chainFailsToMeetPolicy(
         _ chain: UnverifiedCertificateChain,
         reason failsToMeetPolicyReason: String
@@ -123,7 +135,8 @@ extension VerificationDiagnostic.Storage {
             failsToMeetPolicyReason: failsToMeetPolicyReason
         ))
     }
-    static func issuerHashUnhandledCriticalExtension(
+    
+    static func issuerHasUnhandledCriticalExtension(
         issuer: Certificate,
         partialChain: [Certificate],
         handledCriticalExtensions: [ASN1ObjectIdentifier]
@@ -134,6 +147,7 @@ extension VerificationDiagnostic.Storage {
             handledCriticalExtensions: handledCriticalExtensions
         ))
     }
+    
     static func issuerHasNotSignedCertificate(
         _ issuer: Certificate,
         partialChain: [Certificate]
@@ -146,7 +160,7 @@ extension VerificationDiagnostic.Storage {
 }
 
 extension VerificationDiagnostic: CustomStringConvertible {
-    /// Produces a human readable description of this ``VerificationDiagnostic`` that is potential expensive to compute.
+    /// Produces a human readable description of this ``VerificationDiagnostic`` that is potentially expensive to compute.
     public var description: String {
         storage.description
     }
@@ -168,10 +182,12 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: 
     var description: String {
         """
         The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce.
+        
         Unhandled extensions:
         \(leafCertificate.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
         ).lazy.map { $0.description }.joined(separator: "\n"))
+        
         Leaf certificate:
         \(leafCertificate)
         """
@@ -182,7 +198,9 @@ extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPo
     var description: String {
         """
         Leaf certificate is in the root store of the verifier but it does by itself not meet the policy.
+        
         Reason: \(self.failsToMeetPolicyReason)
+        
         Leaf Certificate:
         \(self.leafCertificate)
         """
@@ -193,7 +211,10 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible
     var description: String {
         """
         A certificate chain to a certificate in the root store was found but it does not meet the policy.
-        Reason: \(self.failsToMeetPolicyReason)
+        
+        Reason:
+        \(self.failsToMeetPolicyReason)
+        
         Chain (from leaf to root):
         \(self.chain.lazy.map { $0.description }.joined(separator: "\n"))
         """
@@ -204,10 +225,12 @@ extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStri
     var description: String {
         """
         An issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce.
+        
         Unhandled extensions:
         \(self.issuer.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
-        ).lazy.map { $0.description }.joined(separator: "\n"))
+        ).lazy.map { "- \($0.description)" }.joined(separator: "\n"))
+        
         Chain (from leaf to issuer that has critical extensions the policy doesn't enforce):
         \(self.partialChain.lazy.map { $0.description }.joined(separator: "\n"))
         \(issuer.description)
@@ -219,6 +242,7 @@ extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConv
     var description: String {
         """
         An issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain.
+        
         Chain (from leaf to issuer that has not signed the certificate before it):
         \(self.partialChain.lazy.map { $0.description }.joined(separator: "\n"))
         \(issuer.description)
