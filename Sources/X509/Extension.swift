@@ -77,6 +77,12 @@ extension Certificate.Extension: CustomStringConvertible {
     }
 }
 
+extension Certificate.Extension: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return "TODO"
+    }
+}
+
 extension Certificate.Extension: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {
