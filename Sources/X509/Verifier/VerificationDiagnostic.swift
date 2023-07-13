@@ -44,7 +44,7 @@ public struct VerificationDiagnostic: Sendable {
         case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
         case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
         case chainFailsToMeetPolicy(ChainFailsToMeetPolicy)
-        case intermediateHashUnhandledCriticalExtension(IssuerHasUnhandledCriticalExtension)
+        case issuerHashUnhandledCriticalExtension(IssuerHasUnhandledCriticalExtension)
         case issuerHasNotSignedCertificate(IssuerHasNotSignedCertificate)
     }
     
@@ -141,7 +141,7 @@ extension VerificationDiagnostic.Storage {
         partialChain: [Certificate],
         handledCriticalExtensions: [ASN1ObjectIdentifier]
     ) -> Self {
-        .intermediateHashUnhandledCriticalExtension(.init(
+        .issuerHashUnhandledCriticalExtension(.init(
             issuer: issuer,
             partialChain: partialChain,
             handledCriticalExtensions: handledCriticalExtensions
@@ -156,6 +156,100 @@ extension VerificationDiagnostic.Storage {
             issuer: issuer,
             partialChain: partialChain
         ))
+    }
+}
+
+extension Certificate.Extensions {
+    @inlinable
+    func unhandledCriticalExtensions(for handledCriticalExtensions: [ASN1ObjectIdentifier]) -> some Sequence<Certificate.Extension> {
+        self.lazy.filter { ext in
+            ext.critical && !handledCriticalExtensions.contains(ext.oid)
+        }
+    }
+}
+
+// MARK: CustomStringConvertible
+
+extension VerificationDiagnostic: CustomStringConvertible {
+    /// Produces a human readable description of this ``VerificationDiagnostic`` that is potentially expensive to compute.
+    public var description: String {
+        storage.description
+    }
+}
+
+extension VerificationDiagnostic.Storage {
+    var description: String {
+        switch self {
+        case .leafCertificateHasUnhandledCriticalExtension(let diagnostic): return diagnostic.description
+        case .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(let diagnostic): return diagnostic.description
+        case .chainFailsToMeetPolicy(let diagnostic): return diagnostic.description
+        case .issuerHashUnhandledCriticalExtension(let diagnostic): return diagnostic.description
+        case .issuerHasNotSignedCertificate(let diagnostic): return diagnostic.description
+        }
+    }
+}
+
+extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: CustomStringConvertible {
+    var description: String {
+        """
+        The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce. \
+        Unhandled extensions: \
+        [\(leafCertificate.extensions.unhandledCriticalExtensions(
+            for: self.handledCriticalExtensions
+        ).lazy.map { $0.description }.joined(separator: ", "))] \
+        Leaf certificate: \
+        \(leafCertificate.description)
+        """
+    }
+}
+
+extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: CustomStringConvertible {
+    var description: String {
+        """
+        Leaf certificate is in the root store of the verifier but it does by itself not meet the policy. \
+        Reason: \
+        \(self.failsToMeetPolicyReason) \
+        Leaf Certificate: \
+        \(self.leafCertificate.description)
+        """
+    }
+}
+
+extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible {
+    var description: String {
+        """
+        A certificate chain to a certificate in the root store was found but it does not meet the policy. \
+        Reason: \
+        \(self.failsToMeetPolicyReason) \
+        Chain (from leaf to root): \
+        [\(self.chain.lazy.map { $0.description }.joined(separator: ","))]
+        """
+    }
+}
+
+extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStringConvertible {
+    var description: String {
+        """
+        An issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce. \
+        Unhandled extensions: \
+        [\(self.issuer.extensions.unhandledCriticalExtensions(
+            for: self.handledCriticalExtensions
+        ).lazy.map { "- \($0.description)" }.joined(separator: ", "))] \
+        Chain (from leaf to issuer that has critical extensions the policy doesn't enforce): \
+        [\(self.partialChain.lazy.map { $0.description }.joined(separator: ", ")), \
+        \(issuer.description)]
+        """
+    }
+}
+
+extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConvertible {
+    var description: String {
+        """
+        An issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain. \
+        Chain (from leaf to issuer that has not signed the certificate before it): \
+        [\(self.partialChain.lazy.map { $0.description }.joined(separator: ", ")), \
+        \(issuer.description)]
+        """
     }
 }
 
@@ -174,7 +268,7 @@ extension VerificationDiagnostic.Storage {
         case .leafCertificateHasUnhandledCriticalExtension(let diagnostic): return diagnostic.debugDescription
         case .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(let diagnostic): return diagnostic.debugDescription
         case .chainFailsToMeetPolicy(let diagnostic): return diagnostic.debugDescription
-        case .intermediateHashUnhandledCriticalExtension(let diagnostic): return diagnostic.debugDescription
+        case .issuerHashUnhandledCriticalExtension(let diagnostic): return diagnostic.debugDescription
         case .issuerHasNotSignedCertificate(let diagnostic): return diagnostic.debugDescription
         }
     }
@@ -191,7 +285,7 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: 
         ).lazy.map { $0.debugDescription }.joined(separator: "\n"))
         
         Leaf certificate:
-        \(leafCertificate)
+        \(leafCertificate.debugDescription)
         """
     }
 }
@@ -201,10 +295,11 @@ extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPo
         """
         Leaf certificate is in the root store of the verifier but it does by itself not meet the policy.
         
-        Reason: \(self.failsToMeetPolicyReason)
+        Reason:
+        \(self.failsToMeetPolicyReason)
         
         Leaf Certificate:
-        \(self.leafCertificate)
+        \(self.leafCertificate.debugDescription)
         """
     }
 }
@@ -252,12 +347,3 @@ extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomDebugStrin
     }
 }
 
-
-extension Certificate.Extensions {
-    @inlinable
-    func unhandledCriticalExtensions(for handledCriticalExtensions: [ASN1ObjectIdentifier]) -> some Sequence<Certificate.Extension> {
-        self.lazy.filter { ext in
-            ext.critical && !handledCriticalExtensions.contains(ext.oid)
-        }
-    }
-}

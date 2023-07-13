@@ -791,6 +791,20 @@ final class VerifierTests: XCTestCase {
             )
         ])
     }
+    
+    func testVerificationDiagnosticDescriptionDoesNotIncludeNewLines() {
+        let diagnostics: [VerificationDiagnostic] = [
+            .init(storage: .leafCertificateHasUnhandledCriticalExtension(Self.localhostLeaf, handledCriticalExtensions: [.cmsData, .cmsSignedData])),
+            .init(storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(Self.localhostLeaf, reason: "policy failure reason")),
+            .init(storage: .chainFailsToMeetPolicy(.init([Self.localhostLeaf, Self.ca1]), reason: "policy failure reason")),
+            .init(storage: .issuerHasNotSignedCertificate(Self.intermediate1, partialChain: [Self.localhostLeaf])),
+            .init(storage: .issuerHasUnhandledCriticalExtension(issuer: Self.intermediate1, partialChain: [Self.localhostLeaf], handledCriticalExtensions: [.cmsData, .cmsSignedData])),
+        ]
+        for diagnostic in diagnostics {
+            let description = diagnostic.description
+            XCTAssertFalse(description.contains { $0 == "\n" }, "Diagnostic description contains new line: \(description)")
+        }
+    }
 }
 
 fileprivate struct FailIfCalledPolicy: VerifierPolicy {
