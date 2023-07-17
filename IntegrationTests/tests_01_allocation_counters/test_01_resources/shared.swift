@@ -13,6 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 
+import X509
+import Foundation
+import Crypto 
+
 enum WebPKI {
     static let all = [br, af, cf, dz, de]
     static let br = """
@@ -143,4 +147,301 @@ enum WebPKI {
     MTd61X8kreS8/f3MboPoDKi3QWwH3b08hpcv0g==
     -----END CERTIFICATE-----
     """
+}
+
+
+@available(macOS 11.0, *)
+enum TestCertificate {
+    static let referenceTime = Date()
+    
+    static let all = [
+        ca1,
+        ca1CrossSignedByCA2,
+        ca1WithAlternativePrivateKey,
+        ca2,
+        ca2CrossSignedByCA1,
+        intermediate1,
+        intermediate1WithoutSKIAKI,
+        intermediate1WithIncorrectSKIAKI,
+        localhostLeaf,
+        isolatedSelfSignedCert,
+        isolatedSelfSignedCertWithWeirdCriticalExtension,
+    ]
+    
+    private static let ca1PrivateKey = P384.Signing.PrivateKey()
+    private static let ca1Name = try! DistinguishedName {
+        CountryName("US")
+        OrganizationName("Apple")
+        CommonName("Swift Certificate Test CA 1")
+    }
+    static let ca1: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(ca1PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(3650),
+            issuer: ca1Name,
+            subject: ca1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
+    static let ca1CrossSignedByCA2: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(ca1PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(365),
+            issuer: ca2Name,
+            subject: ca1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca2PrivateKey)
+        )
+    }()
+    private static let ca1AlternativePrivateKey = P384.Signing.PrivateKey()
+    static let ca1WithAlternativePrivateKey: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(ca1AlternativePrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(3650),
+            issuer: ca1Name,
+            subject: ca1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
+    
+    private static let ca2PrivateKey = P384.Signing.PrivateKey()
+    private static let ca2Name = try! DistinguishedName {
+        CountryName("US")
+        OrganizationName("Apple")
+        CommonName("Swift Certificate Test CA 2")
+    }
+    static let ca2: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(ca2PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(3650),
+            issuer: ca2Name,
+            subject: ca2Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca2PrivateKey)
+        )
+    }()
+    static let ca2CrossSignedByCA1: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(ca2PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(365),
+            issuer: ca1Name,
+            subject: ca2Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
+    
+    static let intermediate1PrivateKey = P256.Signing.PrivateKey()
+    static let intermediate1Name = try! DistinguishedName {
+        CountryName("US")
+        OrganizationName("Apple")
+        CommonName("Swift Certificate Test Intermediate CA 1")
+    }
+    static let intermediate1: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(intermediate1PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(5 * 365),
+            issuer: ca1.subject,
+            subject: intermediate1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                )
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
+    static let intermediate1WithoutSKIAKI: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(intermediate1PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(5 * 365),
+            issuer: ca1.subject,
+            subject: intermediate1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                )
+                KeyUsage(keyCertSign: true)
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
+    static let intermediate1WithIncorrectSKIAKI: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(intermediate1PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(5 * 365),
+            issuer: ca1.subject,
+            subject: intermediate1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                )
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
+    
+    private static let localhostLeafPrivateKey = P256.Signing.PrivateKey()
+    static let localhostLeaf: Certificate = {
+        let localhostLeafName = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("localhost")
+        }
+        
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(localhostLeafPrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(365),
+            issuer: intermediate1.subject,
+            subject: localhostLeafName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.notCertificateAuthority
+                )
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: try! intermediate1.extensions.subjectKeyIdentifier!.keyIdentifier)
+            },
+            issuerPrivateKey: .init(intermediate1PrivateKey)
+        )
+    }()
+    
+    private static let isolatedSelfSignedCertKey = P256.Signing.PrivateKey()
+    static let isolatedSelfSignedCert: Certificate = {
+        let isolatedSelfSignedCertName = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("Isolated Self-Signed Cert")
+        }
+        
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(isolatedSelfSignedCertKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(365),
+            issuer: isolatedSelfSignedCertName,
+            subject: isolatedSelfSignedCertName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+            },
+            issuerPrivateKey: .init(isolatedSelfSignedCertKey)
+        )
+    }()
+    
+    static let isolatedSelfSignedCertWithWeirdCriticalExtension: Certificate = {
+        let isolatedSelfSignedCertName = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("Isolated Self-Signed Cert")
+        }
+        
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(isolatedSelfSignedCertKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(365),
+            issuer: isolatedSelfSignedCertName,
+            subject: isolatedSelfSignedCertName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                
+                // An opaque extension that just so happens to be critical
+                Certificate.Extension(oid: [1, 2, 3, 4, 5], critical: true, value: [1, 2, 3, 4, 5])
+            },
+            issuerPrivateKey: .init(isolatedSelfSignedCertKey)
+        )
+    }()
+}
+
+extension TimeInterval {
+    private static let oneDay: TimeInterval = 60 * 60 * 24
+
+    static func days(_ days: Int) -> TimeInterval {
+        return Double(days) * oneDay
+    }
 }
