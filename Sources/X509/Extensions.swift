@@ -218,7 +218,18 @@ extension Certificate.Extensions {
 extension Certificate.Extensions: CustomStringConvertible {
     @inlinable
     public var description: String {
-        return "TODO"
+        self._extensions.lazy.map { $0.description }.joined(separator: ", ")
+    }
+}
+
+extension Certificate.Extensions: CustomDebugStringConvertible {
+    @inlinable
+    public var debugDescription: String {
+        """
+        Certificate.Extensions {
+        \(self._extensions.lazy.map { $0.debugDescription }.joined(separator: "\n").indented())
+        }
+        """
     }
 }
 

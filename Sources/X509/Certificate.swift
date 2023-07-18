@@ -196,6 +196,44 @@ public struct Certificate {
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
+    
+    @inlinable
+    public init(
+        version: Version,
+        serialNumber: SerialNumber,
+        issuer: DistinguishedName,
+        subject: DistinguishedName,
+        notValidBefore: Date,
+        notValidAfter: Date,
+        publicKey: PublicKey,
+        signatureAlgorithmBytes: ArraySlice<UInt8>,
+        signatureBytes: ArraySlice<UInt8>,
+        @ExtensionsBuilder extensions: () -> Result<Extensions, Error>
+    ) throws {
+        let signatureAlgorithm = try SignatureAlgorithm(algorithmIdentifier: .init(derEncoded: signatureBytes))
+        let tbsCertificate = TBSCertificate(
+            version: version,
+            serialNumber: serialNumber,
+            signature: signatureAlgorithm,
+            issuer: issuer,
+            validity: .init(
+                notBefore: try .makeTime(from: notValidBefore),
+                notAfter: try .makeTime(from: notValidAfter)
+            ),
+            subject: subject,
+            publicKey: publicKey,
+            extensions: try extensions().get()
+        )
+        self.tbsCertificate = tbsCertificate
+        self.signatureAlgorithm = signatureAlgorithm
+        self.signature = try Signature(
+            signatureAlgorithm: self.signatureAlgorithm,
+            signatureBytes: .init(contentBytes: signatureBytes)
+        )
+        self.tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
+        self.signatureAlgorithmBytes = signatureAlgorithmBytes
+        self.signatureBytes = signatureBytes
+    }
 
     @inlinable
     init(
@@ -221,7 +259,50 @@ extension Certificate: Sendable { }
 
 extension Certificate: CustomStringConvertible {
     public var description: String {
-        return "\(self.subject) - TODO"
+        """
+        Certificate(\
+        version: \(self.version), \
+        serialNumber: \(self.serialNumber), \
+        issuer: \(self.issuer), \
+        subject: \(self.subject), \
+        notValidBefore: \(self.notValidBefore), \
+        notValidAfter: \(self.notValidAfter), \
+        publicKey: \(self.publicKey), \
+        signature: \(self.signature)
+        extensions: \(self.extensions)\
+        )
+        """
+    }
+}
+
+extension Certificate: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        """
+        try Certificate(
+            version: \(self.version.swiftExpression),
+            serialNumber: .init(bytes: \(self.serialNumber.swiftExpression)),
+            issuer: try \(self.issuer.swiftInitializer.indentedExceptFirstLine()),
+            subject: try \(self.subject.swiftInitializer.indentedExceptFirstLine()),
+            notValidBefore: try Date(\(self.notValidBefore.iso8601.debugDescription), strategy: .iso8601),
+            notValidAfter: try Date(\(self.notValidAfter.iso8601.debugDescription), strategy: .iso8601),
+            publicKey: \(self.publicKey.debugDescription),
+            signatureAlgorithmBytes: \(Array(self.signatureAlgorithmBytes).debugDescription),
+            signatureBytes: \(Array(self.signatureBytes).debugDescription)
+        ) {
+            \(self.extensions.lazy.map { $0.debugDescription }.joined(separator: "\n").indentedExceptFirstLine())
+        }
+        """
+    }
+}
+
+extension Date {
+    var iso8601: String {
+        if #available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
+            return self.formatted(.iso8601)
+        } else {
+            // TODO: configure DateFormatter to format as iso8601 that is available on older platforms
+            return self.description
+        }
     }
 }
 

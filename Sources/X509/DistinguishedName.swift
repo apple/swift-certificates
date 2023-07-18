@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
+import Foundation
 
 /// A distinguished name is a name that uniquely identifies a specific entity.
 ///
@@ -165,6 +166,29 @@ extension DistinguishedName: CustomStringConvertible {
     @inlinable
     public var description: String {
         self.reversed().lazy.map { String(describing: $0) }.joined(separator: ",")
+    }
+}
+
+extension DistinguishedName {
+    var swiftInitializer: String {
+        """
+        DistinguishedName {
+        \(self.rdns.lazy.map { $0.swiftInitializer }.joined(separator: "\n").indented())
+        }
+        """
+    }
+}
+
+extension String {
+    @inlinable
+    func indented() -> Self {
+        "    " + self.replacingOccurrences(of: "\n", with: "\n    ")
+    }
+}
+extension String {
+    @inlinable
+    func indentedExceptFirstLine() -> Self {
+        self.replacingOccurrences(of: "\n", with: "\n    ")
     }
 }
 

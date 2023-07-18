@@ -73,7 +73,23 @@ extension Certificate.Extension: Sendable { }
 
 extension Certificate.Extension: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        """
+        OID: \(self.oid) \
+        critical: \(self.critical) \
+        value: \(self.value.count) bytes
+        """
+    }
+}
+
+extension Certificate.Extension: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        """
+        Certificate.Extension(
+            oid: \(self.oid.swiftInitializer),
+            critical: \(self.critical),
+            value: [\(self.value.lazy.map { String($0) }.joined(separator: ", "))]
+        )
+        """
     }
 }
 

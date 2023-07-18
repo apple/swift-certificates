@@ -140,6 +140,19 @@ extension RelativeDistinguishedName: CustomStringConvertible {
         }.joined(separator: "+")
     }
 }
+extension RelativeDistinguishedName {
+    var swiftInitializer: String {
+        if self.count == 1 {
+            return self.first!.swiftSingleAttributeInitializer
+        } else {
+            return """
+            RelativeDistinguishedName(
+                \(self.lazy.map { "\t\($0.description)" }.joined(separator: "\n"))
+            )
+            """
+        }
+    }
+}
 
 extension RelativeDistinguishedName: DERImplicitlyTaggable {
     @inlinable

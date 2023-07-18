@@ -23,7 +23,7 @@ extension Certificate {
         var rawValue: Int
 
         @inlinable
-        init(rawValue: Int) {
+        public init(rawValue: Int) {
             self.rawValue = rawValue
         }
 
@@ -55,6 +55,19 @@ extension Certificate.Version: CustomStringConvertible {
             return "X509v3"
         case let unknown:
             return "X509v\(unknown.rawValue + 1)"
+        }
+    }
+}
+
+extension Certificate.Version {
+    var swiftExpression: String {
+        switch self {
+        case .v1:
+            return ".v1"
+        case .v3:
+            return ".v3"
+        case let unknown:
+            return ".init(rawValue: \(unknown.rawValue))"
         }
     }
 }

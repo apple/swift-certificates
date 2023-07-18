@@ -153,7 +153,47 @@ extension Certificate.PublicKey: Sendable { }
 
 extension Certificate.PublicKey: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        switch self.backing {
+        case .p256:
+            return "P256"
+        case .p384:
+            return "P384"
+        case .p521:
+            return "P521"
+        case .rsa(let publicKey):
+            return "RSA\(publicKey.keySizeInBits)"
+        }
+    }
+}
+
+extension Certificate.PublicKey: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        switch self.backing {
+        case .p256(let publicKey):
+            return """
+            Certificate.PublicKey(P256.Signing.PublicKey(rawRepresentation: \
+            \(Array(publicKey.rawRepresentation).debugDescription)\
+            ))
+            """
+        case .p384(let publicKey):
+            return """
+            Certificate.PublicKey(P384.Signing.PublicKey(rawRepresentation: \
+            \(Array(publicKey.rawRepresentation).debugDescription)\
+            ))
+            """
+        case .p521(let publicKey):
+            return """
+            Certificate.PublicKey(P521.Signing.PublicKey(rawRepresentation: \
+            \(Array(publicKey.rawRepresentation).debugDescription)\
+            ))
+            """
+        case .rsa(let publicKey):
+            return """
+            Certificate.PublicKey(_RSA.Signing.PublicKey(derRepresentation: \
+            \(Array(publicKey.derRepresentation).debugDescription)\
+            ))
+            """
+        }
     }
 }
 
