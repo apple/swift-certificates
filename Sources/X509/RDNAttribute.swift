@@ -100,11 +100,22 @@ extension String {
     @usableFromInline
     struct ASN1UTF8StringView {
         @usableFromInline
-        var string: String
+        let string: String
         
+        @usableFromInline
+        let length: ASN1Length
+        
+        @usableFromInline
+        let count: Int
         @inlinable
+        
         init(string: String) {
             self.string = string
+            
+            let utf8Count = self.string.utf8.count
+            self.length = ASN1Length(length: utf8Count)
+            // tag + utf8 bytes length + utf8 bytes
+            self.count = 1 + self.length.count + utf8Count
         }
     }
 }
@@ -121,22 +132,14 @@ extension String.ASN1UTF8StringView: RandomAccessCollection {
     }
     
     @inlinable
-    var count: Int {
-        let utf8Count = self.string.utf8.count
-        // tag + utf8 bytes length + utf8 bytes
-        return 1 + ASN1Length(length: utf8Count).count + utf8Count
-    }
-    
-    @inlinable
     subscript(position: Int) -> UInt8 {
-        let length = ASN1Length(length: self.string.utf8.count)
         switch position {
         case 0:
             // This tag represents a UTF8STRING.
             return 0x0c
-        case 1...length.endIndex:
+        case 1...self.length.endIndex:
             // after the tag comes the length of the string
-            return length[position &- 1]
+            return self.length[position &- 1]
         default:
             // and at the end the utf8 encoded string
             let index = self.string.utf8.index(self.string.utf8.startIndex, offsetBy: position - 1 - length.endIndex)
@@ -157,13 +160,31 @@ extension String.ASN1UTF8StringView: Hashable {
 
 
 @usableFromInline
-struct ASN1Length {
+struct ASN1Length: Hashable {
     @usableFromInline
     var length: Int
+    
+    @usableFromInline
+    var count: Int
     
     @inlinable
     init(length: Int) {
         self.length = length
+        
+        // ASN.1 lengths are in two forms. If we can store the length in 7 bits, we should:
+        // that requires only one byte. Otherwise, we need multiple bytes: work out how many,
+        // plus one for the length of the length bytes.
+        if self.length <= 0x7F {
+            self.count = 1
+        } else {
+            // We need to work out how many bytes we need. There are many fancy bit-twiddling
+            // ways of doing this, but honestly we don't do this enough to need them, so we'll
+            // do it the easy way. This math is done on UInt because it makes the shift semantics clean.
+            // We save a branch here because we can never overflow this addition.
+            let neededBits = self.length.bitWidth - self.length.leadingZeroBitCount
+            let neededBytes = (neededBits &+ 7) / 8
+            self.count = neededBytes &+ 1
+        }
     }
 }
 
@@ -179,26 +200,8 @@ extension ASN1Length: RandomAccessCollection {
     }
     
     @inlinable
-    var count: Int {
-        // ASN.1 lengths are in two forms. If we can store the length in 7 bits, we should:
-        // that requires only one byte. Otherwise, we need multiple bytes: work out how many,
-        // plus one for the length of the length bytes.
-        if self.length <= 0x7F {
-            return 1
-        } else {
-            // We need to work out how many bytes we need. There are many fancy bit-twiddling
-            // ways of doing this, but honestly we don't do this enough to need them, so we'll
-            // do it the easy way. This math is done on UInt because it makes the shift semantics clean.
-            // We save a branch here because we can never overflow this addition.
-            let neededBits = self.length.bitWidth - self.length.leadingZeroBitCount
-            let neededBytes = (neededBits &+ 7) / 8
-            return neededBytes &+ 1
-        }
-    }
-    
-    @inlinable
     subscript(position: Int) -> UInt8 {
-        precondition(position >= 0 && position < self.length)
+        precondition(position >= 0 && position < self.count)
         if self.length <= 0x7F {
             return UInt8(truncatingIfNeeded: self.length)
         } else {
