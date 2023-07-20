@@ -295,7 +295,7 @@ final class DistinguishedNameTests: XCTestCase {
         XCTAssertEqual(s, "CN=\\,\\+\\\"\\\\\\<\\>\\;,OU=\\#www.digicert.com,O=\\ DigiCert Inc,C=US\\ ")
     }
     
-    func test() {
+    func testRDNAttributeValue() {
         func XCTAssertEqualValueAndHash<Value>(
             _ expression1: @autoclosure () throws -> Value,
             _ expression2: @autoclosure () throws -> Value,
@@ -335,6 +335,16 @@ final class DistinguishedNameTests: XCTestCase {
         XCTAssertEqualValueAndHash(
             try RelativeDistinguishedName.Attribute.Value(asn1Any: ASN1Any(erasing: ASN1PrintableString("This is a simple printable string 123456789 ():="))),
             try RelativeDistinguishedName.Attribute.Value(printableString: "This is a simple printable string 123456789 ():=")
+        )
+        
+        XCTAssertEqualValueAndHash(
+            try RelativeDistinguishedName.Attribute.Value(asn1Any: ASN1Any(erasing: ASN1UTF8String(String(repeating: "A", count: 129)))),
+            RelativeDistinguishedName.Attribute.Value(utf8String: String(repeating: "A", count: 129))
+        )
+        
+        XCTAssertEqualValueAndHash(
+            try RelativeDistinguishedName.Attribute.Value(asn1Any: ASN1Any(erasing: ASN1UTF8String(String(repeating: "A", count: Int(UInt16.max) + 1)))),
+            RelativeDistinguishedName.Attribute.Value(utf8String: String(repeating: "A", count: Int(UInt16.max) + 1))
         )
     }
 }
