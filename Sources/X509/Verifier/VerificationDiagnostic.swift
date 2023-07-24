@@ -14,33 +14,33 @@
 import SwiftASN1
 
 public struct VerificationDiagnostic: Sendable {
-    struct LeafCertificateHasUnhandledCriticalExtensions: Hashable {
+    struct LeafCertificateHasUnhandledCriticalExtensions: Hashable, Sendable {
         var leafCertificate: Certificate
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
     
-    struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: Hashable {
+    struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: Hashable, Sendable {
         var leafCertificate: Certificate
         var failsToMeetPolicyReason: String
     }
     
-    struct ChainFailsToMeetPolicy: Hashable {
+    struct ChainFailsToMeetPolicy: Hashable, Sendable {
         var chain: UnverifiedCertificateChain
         var failsToMeetPolicyReason: String
     }
     
-    struct IssuerHasUnhandledCriticalExtension: Hashable {
+    struct IssuerHasUnhandledCriticalExtension: Hashable, Sendable {
         var issuer: Certificate
         var partialChain: [Certificate]
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
     
-    struct IssuerHasNotSignedCertificate: Hashable {
+    struct IssuerHasNotSignedCertificate: Hashable, Sendable {
         var issuer: Certificate
         var partialChain: [Certificate]
     }
     
-    enum Storage: Hashable {
+    enum Storage: Hashable, Sendable {
         case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
         case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
         case chainFailsToMeetPolicy(ChainFailsToMeetPolicy)
@@ -173,18 +173,18 @@ extension Certificate.Extensions {
 extension VerificationDiagnostic: CustomStringConvertible {
     /// Produces a human readable description of this ``VerificationDiagnostic`` that is potentially expensive to compute.
     public var description: String {
-        storage.description
+        String(describing: storage)
     }
 }
 
 extension VerificationDiagnostic.Storage {
     var description: String {
         switch self {
-        case .leafCertificateHasUnhandledCriticalExtension(let diagnostic): return diagnostic.description
-        case .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(let diagnostic): return diagnostic.description
-        case .chainFailsToMeetPolicy(let diagnostic): return diagnostic.description
-        case .issuerHashUnhandledCriticalExtension(let diagnostic): return diagnostic.description
-        case .issuerHasNotSignedCertificate(let diagnostic): return diagnostic.description
+        case .leafCertificateHasUnhandledCriticalExtension(let diagnostic): return String(describing: diagnostic)
+        case .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(let diagnostic): return String(describing: diagnostic)
+        case .chainFailsToMeetPolicy(let diagnostic): return String(describing: diagnostic)
+        case .issuerHashUnhandledCriticalExtension(let diagnostic): return String(describing: diagnostic)
+        case .issuerHasNotSignedCertificate(let diagnostic): return String(describing: diagnostic)
         }
     }
 }
@@ -194,11 +194,11 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: 
         """
         The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce. \
         Unhandled extensions: \
-        [\(leafCertificate.extensions.unhandledCriticalExtensions(
+        [\(self.leafCertificate.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
-        ).lazy.map { $0.description }.joined(separator: ", "))] \
+        ).lazy.map { String(describing: $0) }.joined(separator: ", "))] \
         Leaf certificate: \
-        \(leafCertificate.description)
+        \(String(describing: self.leafCertificate))
         """
     }
 }
@@ -210,7 +210,7 @@ extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPo
         Reason: \
         \(self.failsToMeetPolicyReason) \
         Leaf Certificate: \
-        \(self.leafCertificate.description)
+        \(String(describing: self.leafCertificate))
         """
     }
 }
@@ -222,7 +222,7 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible
         Reason: \
         \(self.failsToMeetPolicyReason) \
         Chain (from leaf to root): \
-        [\(self.chain.lazy.map { $0.description }.joined(separator: ","))]
+        [\(self.chain.lazy.map { String(describing: $0) }.joined(separator: ","))]
         """
     }
 }
@@ -230,13 +230,13 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible
 extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStringConvertible {
     var description: String {
         """
-        An issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce. \
+        A candidate issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce. \
         Unhandled extensions: \
         [\(self.issuer.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
         ).lazy.map { "- \($0.description)" }.joined(separator: ", "))] \
-        Chain (from leaf to issuer that has critical extensions the policy doesn't enforce): \
-        [\(self.partialChain.lazy.map { $0.description }.joined(separator: ", ")), \
+        Chain (from leaf to candidate issuer that has critical extensions the policy doesn't enforce): \
+        [\(self.partialChain.lazy.map { String(describing: $0) }.joined(separator: ", ")), \
         \(issuer.description)]
         """
     }
@@ -245,9 +245,9 @@ extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStri
 extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConvertible {
     var description: String {
         """
-        An issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain. \
-        Chain (from leaf to issuer that has not signed the certificate before it): \
-        [\(self.partialChain.lazy.map { $0.description }.joined(separator: ", ")), \
+        A candidate issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain. \
+        Chain (from leaf to candidate issuer that has not signed the certificate before it): \
+        [\(self.partialChain.lazy.map { String(describing: $0) }.joined(separator: ", ")), \
         \(issuer.description)]
         """
     }
@@ -280,12 +280,12 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: 
         The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce.
         
         Unhandled extensions:
-        \(leafCertificate.extensions.unhandledCriticalExtensions(
+        \(self.leafCertificate.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
         ).lazy.map { $0.debugDescription }.joined(separator: "\n"))
         
         Leaf certificate:
-        \(leafCertificate.debugDescription)
+        \(self.leafCertificate.debugDescription)
         """
     }
 }
@@ -321,14 +321,14 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomDebugStringConver
 extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomDebugStringConvertible {
     var debugDescription: String {
         """
-        An issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce.
+        A candidate issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce.
         
         Unhandled extensions:
         \(self.issuer.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
         ).lazy.map { "- \($0.debugDescription)" }.joined(separator: "\n"))
         
-        Chain (from leaf to issuer that has critical extensions the policy doesn't enforce):
+        Chain (from leaf to candidate issuer that has critical extensions the policy doesn't enforce):
         \(self.partialChain.lazy.map { $0.debugDescription }.joined(separator: "\n"))
         \(issuer.debugDescription)
         """
@@ -338,11 +338,11 @@ extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomDebu
 extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomDebugStringConvertible {
     var debugDescription: String {
         """
-        An issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain.
+        A candidate issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain.
         
-        Chain (from leaf to issuer that has not signed the certificate before it):
+        Chain (from leaf to candidate issuer that has not signed the certificate before it):
         \(self.partialChain.lazy.map { $0.debugDescription }.joined(separator: "\n"))
-        \(issuer.debugDescription)
+        \(self.issuer.debugDescription)
         """
     }
 }
