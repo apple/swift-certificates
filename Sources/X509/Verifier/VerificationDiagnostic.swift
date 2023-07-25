@@ -297,123 +297,123 @@ extension VerificationDiagnostic.Storage: CustomStringConvertible {
     }
 }
 
-//extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: CustomStringConvertible {
-//    var description: String {
-//        """
-//        The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce. \
-//        Unhandled extensions: \
-//        [\(self.leafCertificate.extensions.unhandledCriticalExtensions(
-//            for: self.handledCriticalExtensions
-//        ).lazy.map { String(describing: $0) }.joined(separator: ", "))] \
-//        Leaf certificate: \
-//        \(String(describing: self.leafCertificate))
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: CustomStringConvertible {
-//    var description: String {
-//        """
-//        Leaf certificate is in the root store of the verifier but it does by itself not meet the policy. \
-//        Reason: \
-//        \(self.failsToMeetPolicyReason) \
-//        Leaf Certificate: \
-//        \(String(describing: self.leafCertificate))
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible {
-//    var description: String {
-//        """
-//        A certificate chain to a certificate in the root store was found but it does not meet the policy. \
-//        Reason: \
-//        \(self.failsToMeetPolicyReason) \
-//        Chain (from leaf to root): \
-//        [\(self.chain.lazy.map { String(describing: $0) }.joined(separator: ","))]
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStringConvertible {
-//    var description: String {
-//        """
-//        A candidate issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce. \
-//        Unhandled extensions: \
-//        [\(self.issuer.extensions.unhandledCriticalExtensions(
-//            for: self.handledCriticalExtensions
-//        ).lazy.map { "- \($0.description)" }.joined(separator: ", "))] \
-//        Chain (from leaf to candidate issuer that has critical extensions the policy doesn't enforce): \
-//        [\(self.partialChain.lazy.map { String(describing: $0) }.joined(separator: ", ")), \
-//        \(issuer.description)]
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConvertible {
-//    var description: String {
-//        """
-//        A candidate issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain. \
-//        Chain (from leaf to candidate issuer that has not signed the certificate before it): \
-//        [\(self.partialChain.lazy.map { String(describing: $0) }.joined(separator: ", ")), \
-//        \(issuer.description)]
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.SearchingForIssuerOfPartialChain: CustomStringConvertible {
-//    var description: String {
-//        """
-//        Searching for issuers of partial candidate chain. \
-//        Chain (from leaf to tip): \
-//        \(self.partialChain)
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore: CustomStringConvertible {
-//    var description: String {
-//        """
-//        Found candidate issuers in the root store of the partial chain. \
-//        Chain (from leaf to tip): \
-//        \(self.partialChain) \
-//        Candidate issuers in the root store: \
-//        \(self.issuersInRootStore)
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermediateStore: CustomStringConvertible {
-//    var description: String {
-//        """
-//        Found candidate issuers in the intermediate store of the partial chain. \
-//        Chain (from leaf to tip): \
-//        \(self.partialChain) \
-//        Candidate issuers in the intermediate store: \
-//        \(self.issuersInIntermediateStore)
-//        """
-//    }
-//}
-//
-//extension VerificationDiagnostic.FoundValidCertificateChain: CustomStringConvertible {
-//    var description: String {
-//        """
-//        Validation completed successfully. \
-//        Verified certificate chain (from leaf to root): \
-//        \(self.validCertificateChain)
-//        """
-//    }
-//}
-//
-//
-//extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringConvertible {
-//    var description: String {
-//        """
-//        Could not validate leaf certificate: \
-//        \(self.leaf)
-//        """
-//    }
-//}
+extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: CustomStringConvertible {
+    var description: String {
+        """
+        The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce. \
+        Unhandled extensions: \
+        [\(self.leafCertificate.extensions.unhandledCriticalExtensions(
+            for: self.handledCriticalExtensions
+        ).lazy.map { String(describing: $0) }.joined(separator: ", "))] \
+        Leaf certificate: \
+        \(String(describing: self.leafCertificate))
+        """
+    }
+}
+
+extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: CustomStringConvertible {
+    var description: String {
+        """
+        Leaf certificate is in the root store of the verifier but it does by itself not meet the policy. \
+        Reason: \
+        \(self.failsToMeetPolicyReason) \
+        Leaf Certificate: \
+        \(String(describing: self.leafCertificate))
+        """
+    }
+}
+
+extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible {
+    var description: String {
+        """
+        A certificate chain to a certificate in the root store was found but it does not meet the policy. \
+        Reason: \
+        \(self.failsToMeetPolicyReason) \
+        Chain (from leaf to root): \
+        [\(self.chain.lazy.map { String(describing: $0) }.joined(separator: ","))]
+        """
+    }
+}
+
+extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStringConvertible {
+    var description: String {
+        """
+        A candidate issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce. \
+        Unhandled extensions: \
+        [\(self.issuer.extensions.unhandledCriticalExtensions(
+            for: self.handledCriticalExtensions
+        ).lazy.map { "- \($0.description)" }.joined(separator: ", "))] \
+        Chain (from leaf to candidate issuer that has critical extensions the policy doesn't enforce): \
+        [\(self.partialChain.lazy.map { String(describing: $0) }.joined(separator: ", ")), \
+        \(issuer.description)]
+        """
+    }
+}
+
+extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConvertible {
+    var description: String {
+        """
+        A candidate issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain. \
+        Chain (from leaf to candidate issuer that has not signed the certificate before it): \
+        [\(self.partialChain.lazy.map { String(describing: $0) }.joined(separator: ", ")), \
+        \(issuer.description)]
+        """
+    }
+}
+
+extension VerificationDiagnostic.SearchingForIssuerOfPartialChain: CustomStringConvertible {
+    var description: String {
+        """
+        Searching for issuers of partial candidate chain. \
+        Chain (from leaf to tip): \
+        \(self.partialChain)
+        """
+    }
+}
+
+extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore: CustomStringConvertible {
+    var description: String {
+        """
+        Found candidate issuers in the root store of the partial chain. \
+        Chain (from leaf to tip): \
+        \(self.partialChain) \
+        Candidate issuers in the root store: \
+        \(self.issuersInRootStore)
+        """
+    }
+}
+
+extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermediateStore: CustomStringConvertible {
+    var description: String {
+        """
+        Found candidate issuers in the intermediate store of the partial chain. \
+        Chain (from leaf to tip): \
+        \(self.partialChain) \
+        Candidate issuers in the intermediate store: \
+        \(self.issuersInIntermediateStore)
+        """
+    }
+}
+
+extension VerificationDiagnostic.FoundValidCertificateChain: CustomStringConvertible {
+    var description: String {
+        """
+        Validation completed successfully. \
+        Verified certificate chain (from leaf to root): \
+        \(self.validCertificateChain)
+        """
+    }
+}
+
+
+extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringConvertible {
+    var description: String {
+        """
+        Could not validate leaf certificate: \
+        \(self.leaf)
+        """
+    }
+}
 
 
 // MARK: CustomDebugStringConvertible
@@ -565,67 +565,5 @@ extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomDebugStr
         Could not validate leaf certificate:
         \(String(reflecting: self.leaf))
         """
-    }
-}
-
-// TODO: remove all the code below in this file
-extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: CustomStringConvertible {
-    var description: String {
-        ".leafCertificateHasUnhandledCriticalExtension(, handledCriticalExtensions:)"
-    }
-}
-
-extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: CustomStringConvertible {
-    var description: String {
-        ".leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(, reason:)"
-    }
-}
-
-extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible {
-    var description: String {
-        ".chainFailsToMeetPolicy(, reason:)"
-    }
-}
-
-extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStringConvertible {
-    var description: String {
-        ".issuerHasUnhandledCriticalExtension(issuer:, partialChain:, handledCriticalExtensions)"
-    }
-}
-
-extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConvertible {
-    var description: String {
-        ".issuerHasNotSignedCertificate(_, partialChain:)"
-    }
-}
-
-extension VerificationDiagnostic.SearchingForIssuerOfPartialChain: CustomStringConvertible {
-    var description: String {
-        ".searchingForIssuerOfPartialChain()"
-    }
-}
-
-extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore: CustomStringConvertible {
-    var description: String {
-        ".foundCandidateIssuersOfPartialChainInRootStore(, issuers:)"
-    }
-}
-
-extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermediateStore: CustomStringConvertible {
-    var description: String {
-        ".foundCandidateIssuersOfPartialChainInIntermediateStore(, issuers:)"
-    }
-}
-
-extension VerificationDiagnostic.FoundValidCertificateChain: CustomStringConvertible {
-    var description: String {
-        ".foundValidCertificateChain()"
-    }
-}
-
-
-extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringConvertible {
-    var description: String {
-        ".couldNotValidateLeafCertificate()"
     }
 }

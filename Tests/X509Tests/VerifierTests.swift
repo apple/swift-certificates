@@ -950,16 +950,6 @@ final class DiagnosticsLog {
     }
 }
 
-extension DiagnosticsLog: CustomStringConvertible {
-    var description: String {
-        """
-        [
-            \(self.diagnostics.map { String(describing: $0) }.joined(separator: ",\n    ")),
-        ]
-        """
-    }
-}
-
 extension DiagnosticsLog: CustomDebugStringConvertible {
     var debugDescription: String {
         """
