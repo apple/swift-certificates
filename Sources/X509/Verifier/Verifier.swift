@@ -60,13 +60,13 @@ public struct Verifier<Policy: VerifierPolicy> {
 
         // This is essentially a DFS of the certificate tree. We attempt to iteratively build up possible chains.
         while let nextPartialCandidate = partialChains.popLast() {
-            diagnosticCallback?(.searchingForIssuerOfPartialChain(nextPartialCandidate.chain))
+            diagnosticCallback?(.searchingForIssuerOfPartialChain(nextPartialCandidate))
             // We want to search for parents. Our preferred parent comes from the root store, as this will potentially
             // produce smaller chains.
             if var rootParents = rootCertificates[nextPartialCandidate.currentTip.issuer] {
-                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInRootStore(nextPartialCandidate, issuers: rootParents))
                 // We then want to sort by suitability.
                 rootParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
+                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInRootStore(nextPartialCandidate, issuers: rootParents))
 
                 // Each of these is now potentially a valid unverified chain.
                 for root in rootParents {
@@ -90,10 +90,10 @@ public struct Verifier<Policy: VerifierPolicy> {
             }
 
             if var intermediateParents = intermediates[nextPartialCandidate.currentTip.issuer] {
-                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInIntermediateStore(nextPartialCandidate, issuers: intermediateParents))
                 // We then want to sort by suitability.
                 intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
-
+                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInIntermediateStore(nextPartialCandidate, issuers: intermediateParents))
+                
                 for parent in intermediateParents {
                     if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent, diagnosticCallback: diagnosticCallback) {
                         continue
