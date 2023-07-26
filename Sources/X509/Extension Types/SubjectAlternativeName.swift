@@ -65,6 +65,12 @@ extension SubjectAlternativeNames: CustomStringConvertible {
     }
 }
 
+extension SubjectAlternativeNames: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "SubjectAlternativeNames([\(self.lazy.map { String(reflecting: $0) }.joined(separator: ", "))])"
+    }
+}
+
 extension SubjectAlternativeNames: RandomAccessCollection, MutableCollection, RangeReplaceableCollection {
     @inlinable
     public var startIndex: Int {

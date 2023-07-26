@@ -268,7 +268,7 @@ extension Certificate: CustomStringConvertible {
         notValidBefore: \(self.notValidBefore), \
         notValidAfter: \(self.notValidAfter), \
         publicKey: \(self.publicKey), \
-        signature: \(self.signature)
+        signature: \(self.signature), \
         extensions: \(self.extensions)\
         )
         """
@@ -281,15 +281,15 @@ extension Certificate: CustomDebugStringConvertible {
         try Certificate(
             version: \(self.version.swiftExpression),
             serialNumber: .init(bytes: \(self.serialNumber.swiftExpression)),
-            issuer: try \(self.issuer.swiftInitializer.indentedExceptFirstLine()),
-            subject: try \(self.subject.swiftInitializer.indentedExceptFirstLine()),
-            notValidBefore: try Date(\(self.notValidBefore.iso8601.debugDescription), strategy: .iso8601),
-            notValidAfter: try Date(\(self.notValidAfter.iso8601.debugDescription), strategy: .iso8601),
-            publicKey: \(self.publicKey.debugDescription),
-            signatureAlgorithmBytes: \(Array(self.signatureAlgorithmBytes).debugDescription),
-            signatureBytes: \(Array(self.signatureBytes).debugDescription)
+            issuer: try \(self.issuer.swiftInitializer.indented()),
+            subject: try \(self.subject.swiftInitializer.indented()),
+            notValidBefore: try Date(\(String(reflecting: self.notValidBefore.iso8601)), strategy: .iso8601),
+            notValidAfter: try Date(\(String(reflecting: self.notValidAfter.iso8601)), strategy: .iso8601),
+            publicKey: \(String(reflecting: self.publicKey)),
+            signatureAlgorithmBytes: \(String(reflecting: Array(self.signatureAlgorithmBytes))),
+            signatureBytes: \(String(reflecting: Array(self.signatureBytes)))
         ) {
-            \(self.extensions.lazy.map { $0.debugDescription }.joined(separator: "\n").indentedExceptFirstLine())
+            \(self.extensions.lazy.map { String(reflecting: $0) }.joined(separator: "\n").indented())
         }
         """
     }

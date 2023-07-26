@@ -693,6 +693,20 @@ extension NameConstraints: CustomStringConvertible {
         return elements.joined(separator: "; ")
     }
 }
+extension NameConstraints: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        var elements: [String] = []
+
+        if self.permittedSubtrees.count > 0 {
+            elements.append("permittedSubtrees: [\(self.permittedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]")
+        }
+        if self.excludedSubtrees.count > 0 {
+            elements.append("excludedSubtrees: [\(self.excludedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]")
+        }
+        
+        return "NameConstraints(\(elements.joined(separator: ", "))"
+    }
+}
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Name Constraints extension.

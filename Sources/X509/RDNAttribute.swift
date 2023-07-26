@@ -224,19 +224,19 @@ extension RelativeDistinguishedName.Attribute {
             // we may have special `RelativeDistinguishedNameConvertible` types
             switch self.type {
             case .RDNAttributeType.commonName:
-                return "CommonName(\(value.debugDescription))"
+                return "CommonName(\(String(reflecting: value)))"
             case .RDNAttributeType.countryName:
-                return "CountryName(\(value.debugDescription))"
+                return "CountryName(\(String(reflecting: value)))"
             case .RDNAttributeType.localityName:
-                return "LocalityName(\(value.debugDescription))"
+                return "LocalityName(\(String(reflecting: value)))"
             case .RDNAttributeType.stateOrProvinceName:
-                return "StateOrProvinceName(\(value.debugDescription))"
+                return "StateOrProvinceName(\(String(reflecting: value)))"
             case .RDNAttributeType.organizationName:
-                return "OrganizationName(\(value.debugDescription))"
+                return "OrganizationName(\(String(reflecting: value)))"
             case .RDNAttributeType.organizationalUnitName:
-                return "OrganizationalUnitName(\(value.debugDescription))"
+                return "OrganizationalUnitName(\(String(reflecting: value)))"
             case .RDNAttributeType.streetAddress:
-                return "StreetAddress(\(value.debugDescription))"
+                return "StreetAddress(\(String(reflecting: value)))"
             default:
                 // unknown attribute, lets fall through to the generic initializer
                 break
@@ -252,9 +252,9 @@ extension RelativeDistinguishedName.Attribute {
         case .any(let asn1Any):
             return ".init(type: \(self.type.swiftInitializer), asn1Any: \(asn1Any.swiftInitializer))"
         case .printable(let printableString):
-            return ".init(type: \(self.type.swiftInitializer), printableString: \(printableString.debugDescription))"
+            return ".init(type: \(self.type.swiftInitializer), printableString: \(String(reflecting: printableString)))"
         case .utf8(let utf8String):
-            return ".init(type: \(self.type.swiftInitializer), utf8String: \(utf8String.debugDescription))"
+            return ".init(type: \(self.type.swiftInitializer), utf8String: \(String(reflecting: utf8String)))"
         }
     }
 }

@@ -218,7 +218,12 @@ extension Certificate.Extensions {
 extension Certificate.Extensions: CustomStringConvertible {
     @inlinable
     public var description: String {
-        self._extensions.lazy.map { $0.description }.joined(separator: ", ")
+        if self.isEmpty {
+            return "(none)"
+        } else {
+            return self._extensions.lazy.map { $0.description }.joined(separator: ", ")
+        }
+        
     }
 }
 
@@ -227,7 +232,7 @@ extension Certificate.Extensions: CustomDebugStringConvertible {
     public var debugDescription: String {
         """
         Certificate.Extensions {
-        \(self._extensions.lazy.map { $0.debugDescription }.joined(separator: "\n").indented())
+            \(self._extensions.lazy.map { String(reflecting: $0) }.joined(separator: "\n").indented())
         }
         """
     }

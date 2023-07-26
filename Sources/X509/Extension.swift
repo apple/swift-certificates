@@ -73,23 +73,61 @@ extension Certificate.Extension: Sendable { }
 
 extension Certificate.Extension: CustomStringConvertible {
     public var description: String {
-        """
-        OID: \(self.oid) \
-        critical: \(self.critical) \
-        value: \(self.value.count) bytes
-        """
+        if let knownExtension = try? AuthorityInformationAccess(self) {
+            return "AuthorityInformationAccess(\(knownExtension))"
+        } else if let knownExtension = try? SubjectKeyIdentifier(self) {
+            return "SubjectKeyIdentifier(\(knownExtension))"
+        } else if let knownExtension = try? AuthorityKeyIdentifier(self) {
+            return "AuthorityKeyIdentifier(\(knownExtension))"
+        } else if let knownExtension = try? ExtendedKeyUsage(self) {
+            return "ExtendedKeyUsage(\(knownExtension))"
+        } else if let knownExtension = try? BasicConstraints(self) {
+            return "BasicConstraints(\(knownExtension))"
+        } else if let knownExtension = try? KeyUsage(self) {
+            return "KeyUsage(\(knownExtension))"
+        } else if let knownExtension = try? NameConstraints(self) {
+            return "NameConstraints(\(knownExtension))"
+        } else if let knownExtension = try? SubjectAlternativeNames(self) {
+            return "SubjectAlternativeNames(\(knownExtension))"
+        } else {
+            return """
+            (\
+            OID: \(self.oid), \
+            critical: \(self.critical), \
+            value: \(self.value.count) bytes\
+            )
+            """
+        }
     }
 }
 
 extension Certificate.Extension: CustomDebugStringConvertible {
     public var debugDescription: String {
-        """
-        Certificate.Extension(
-            oid: \(self.oid.swiftInitializer),
-            critical: \(self.critical),
-            value: [\(self.value.lazy.map { String($0) }.joined(separator: ", "))]
-        )
-        """
+        if let knownExtension = try? AuthorityInformationAccess(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? SubjectKeyIdentifier(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? AuthorityKeyIdentifier(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? ExtendedKeyUsage(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? BasicConstraints(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? KeyUsage(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? NameConstraints(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? SubjectAlternativeNames(self) {
+            return String(reflecting: knownExtension)
+        } else {
+            return """
+            Certificate.Extension(
+                oid: \(self.oid.swiftInitializer),
+                critical: \(self.critical),
+                value: [\(self.value.lazy.map { String($0) }.joined(separator: ", "))]
+            )
+            """
+        }
     }
 }
 

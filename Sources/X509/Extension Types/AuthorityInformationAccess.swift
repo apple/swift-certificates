@@ -65,7 +65,6 @@ extension AuthorityInformationAccess: CustomStringConvertible {
     }
 }
 
-// TODO(cory): Probably also RangeReplaceableCollection, even though it's kinda crap.
 extension AuthorityInformationAccess: RandomAccessCollection {
     @inlinable
     public var startIndex: Int {

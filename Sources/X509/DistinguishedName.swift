@@ -173,7 +173,7 @@ extension DistinguishedName {
     var swiftInitializer: String {
         """
         DistinguishedName {
-        \(self.rdns.lazy.map { $0.swiftInitializer }.joined(separator: "\n").indented())
+            \(self.rdns.lazy.map { $0.swiftInitializer }.joined(separator: "\n").indented())
         }
         """
     }
@@ -182,12 +182,6 @@ extension DistinguishedName {
 extension String {
     @inlinable
     func indented() -> Self {
-        "    " + self.replacingOccurrences(of: "\n", with: "\n    ")
-    }
-}
-extension String {
-    @inlinable
-    func indentedExceptFirstLine() -> Self {
         self.replacingOccurrences(of: "\n", with: "\n    ")
     }
 }

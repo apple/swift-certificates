@@ -172,25 +172,25 @@ extension Certificate.PublicKey: CustomDebugStringConvertible {
         case .p256(let publicKey):
             return """
             Certificate.PublicKey(P256.Signing.PublicKey(rawRepresentation: \
-            \(Array(publicKey.rawRepresentation).debugDescription)\
+            \(String(reflecting: Array(publicKey.rawRepresentation)))\
             ))
             """
         case .p384(let publicKey):
             return """
             Certificate.PublicKey(P384.Signing.PublicKey(rawRepresentation: \
-            \(Array(publicKey.rawRepresentation).debugDescription)\
+            \(String(reflecting: Array(publicKey.rawRepresentation)))\
             ))
             """
         case .p521(let publicKey):
             return """
             Certificate.PublicKey(P521.Signing.PublicKey(rawRepresentation: \
-            \(Array(publicKey.rawRepresentation).debugDescription)\
+            \(String(reflecting: Array(publicKey.rawRepresentation)))\
             ))
             """
         case .rsa(let publicKey):
             return """
             Certificate.PublicKey(_RSA.Signing.PublicKey(derRepresentation: \
-            \(Array(publicKey.derRepresentation).debugDescription)\
+            \(String(reflecting: Array(publicKey.derRepresentation)))\
             ))
             """
         }
