@@ -774,10 +774,14 @@ final class VerifierTests: XCTestCase {
             .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3], issuers: [Self.x1, Self.x2]),
             .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2]),
             .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3, Self.x2], issuers: [Self.t1, Self.t2, Self.t3]),
+            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3),
             .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2]),
             .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuers: [Self.x1, Self.x2]),
+            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuer: Self.x2),
             .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1]),
             .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuers: [Self.t1, Self.t2, Self.t3]),
+            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t2),
+            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t3),
             .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1]),
             .foundCandidateIssuersOfPartialChainInRootStore([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1], issuers: [Self.ca1]),
             .foundValidCertificateChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1]),
@@ -894,6 +898,12 @@ final class VerifierTests: XCTestCase {
             .init(storage: .chainFailsToMeetPolicy(.init([Self.localhostLeaf, Self.ca1]), reason: "policy failure reason")),
             .init(storage: .issuerHasNotSignedCertificate(Self.intermediate1, partialChain: [Self.localhostLeaf])),
             .init(storage: .issuerHasUnhandledCriticalExtension(issuer: Self.intermediate1, partialChain: [Self.localhostLeaf], handledCriticalExtensions: [.cmsData, .cmsSignedData])),
+            .init(storage: .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1])),
+            .init(storage: .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1, Self.ca1WithAlternativePrivateKey])),
+            .init(storage: .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3], issuers: [Self.x1, Self.x2])),
+            .init(storage: .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1])),
+            .init(storage: .couldNotValidateLeafCertificate(Self.localhostLeaf)),
+            .init(storage: .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3)),
         ]
         for diagnostic in diagnostics {
             let description = diagnostic.description

@@ -62,6 +62,11 @@ public struct VerificationDiagnostic: Sendable {
         var leaf: Certificate
     }
     
+    struct IssuerIsAlreadyInTheChain: Hashable, Sendable {
+        var partialChain: [Certificate]
+        var issuer: Certificate
+    }
+    
     enum Storage: Hashable, Sendable {
         case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
         case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
@@ -73,6 +78,7 @@ public struct VerificationDiagnostic: Sendable {
         case foundCandidateIssuersOfPartialChainInIntermediateStore(FoundCandidateIssuersOfPartialChainInIntermediateStore)
         case foundValidCertificateChain(FoundValidCertificateChain)
         case couldNotValidateLeafCertificate(CouldNotValidateLeafCertificate)
+        case issuerIsAlreadyInTheChain(IssuerIsAlreadyInTheChain)
     }
     
     var storage: Storage
@@ -168,6 +174,16 @@ extension VerificationDiagnostic {
     ) -> Self {
         .init(storage: .couldNotValidateLeafCertificate(leaf))
     }
+    
+    static func issuerIsAlreadyInTheChain(
+        _ partialChain: CandidatePartialChain,
+        issuer: Certificate
+    ) -> Self {
+        .init(storage: .issuerIsAlreadyInTheChain(
+            partialChain.chain + CollectionOfOne(partialChain.currentTip),
+            issuer: issuer
+        ))
+    }
 }
 
 extension VerificationDiagnostic.Storage {
@@ -260,6 +276,13 @@ extension VerificationDiagnostic.Storage {
     ) -> Self {
         .couldNotValidateLeafCertificate(.init(leaf: leaf))
     }
+    
+    static func issuerIsAlreadyInTheChain(
+        _ partialChain: [Certificate],
+        issuer: Certificate
+    ) -> Self {
+        .issuerIsAlreadyInTheChain(.init(partialChain: partialChain, issuer: issuer))
+    }
 }
 
 extension Certificate.Extensions {
@@ -293,6 +316,7 @@ extension VerificationDiagnostic.Storage: CustomStringConvertible {
         case .foundCandidateIssuersOfPartialChainInIntermediateStore(let diagnostic): return String(describing: diagnostic)
         case .foundValidCertificateChain(let diagnostic): return String(describing: diagnostic)
         case .couldNotValidateLeafCertificate(let diagnostic): return String(describing: diagnostic)
+        case .issuerIsAlreadyInTheChain(let diagnostic): return String(describing: diagnostic)
         }
     }
 }
@@ -415,6 +439,18 @@ extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringCo
     }
 }
 
+extension VerificationDiagnostic.IssuerIsAlreadyInTheChain: CustomStringConvertible {
+    var description: String {
+        """
+        Candidate issuer is already in partial chain and is therefore skipped because it would always produce a chain that could have been shorter. \
+        Partial chain (from leaf to tip): \
+        \(self.partialChain) \
+        Candidate issuer which is already in the chain above: \
+        \(self.issuer)
+        """
+    }
+}
+
 
 // MARK: CustomDebugStringConvertible
 
@@ -438,6 +474,7 @@ extension VerificationDiagnostic.Storage: CustomDebugStringConvertible {
         case .foundCandidateIssuersOfPartialChainInIntermediateStore(let diagnostic): return String(reflecting: diagnostic)
         case .foundValidCertificateChain(let diagnostic): return String(reflecting: diagnostic)
         case .couldNotValidateLeafCertificate(let diagnostic): return String(reflecting: diagnostic)
+        case .issuerIsAlreadyInTheChain(let diagnostic): return String(reflecting: diagnostic)
         }
     }
 }
@@ -564,6 +601,18 @@ extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomDebugStr
         """
         Could not validate leaf certificate:
         \(String(reflecting: self.leaf))
+        """
+    }
+}
+
+extension VerificationDiagnostic.IssuerIsAlreadyInTheChain: CustomDebugStringConvertible {
+    var debugDescription: String {
+        """
+        Candidate issuer is already in partial chain and is therefore skipped because it would always produce a chain that could have been shorter.
+        Partial chain (from leaf to tip):
+        \(self.partialChain.lazy.map { String(reflecting: $0) }.joined(separator: "\n"))
+        Candidate issuer which is already in the chain above:
+        \(String(reflecting: self.issuer))
         """
     }
 }

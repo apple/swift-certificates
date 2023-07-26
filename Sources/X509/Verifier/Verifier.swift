@@ -119,6 +119,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         // We don't want to re-add the same certificate to the chain: that will always produce a chain that
         // could have been shorter.
         if partialChain.contains(certificate: nextCertificate) {
+            diagnosticCallback?(.issuerIsAlreadyInTheChain(partialChain, issuer: nextCertificate))
             return true
         }
 
