@@ -24,7 +24,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         self.policy = try policy()
     }
 
-    public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((String) -> Void)? = nil) async -> VerificationResult {
+    public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil) async -> VerificationResult {
         var partialChains: [CandidatePartialChain] = [CandidatePartialChain(leaf: leafCertificate)]
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
@@ -32,6 +32,8 @@ public struct Verifier<Policy: VerifierPolicy> {
         // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
         // If so, reject the chain.
         if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
+            
+            diagnosticCallback?(.leafCertificateHasUnhandledCriticalExtension(leafCertificate, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
             return .couldNotValidate([])
         }
 
@@ -47,24 +49,28 @@ public struct Verifier<Policy: VerifierPolicy> {
             switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
             case .meetsPolicy:
                 // We're good!
+                diagnosticCallback?(.foundValidCertificateChain(unverifiedChain.certificates))
                 return .validCertificate(unverifiedChain.certificates)
 
             case .failsToMeetPolicy(reason: let reason):
+                diagnosticCallback?(.leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(leafCertificate, reason: reason))
                 policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
             }
         }
 
         // This is essentially a DFS of the certificate tree. We attempt to iteratively build up possible chains.
         while let nextPartialCandidate = partialChains.popLast() {
+            diagnosticCallback?(.searchingForIssuerOfPartialChain(nextPartialCandidate))
             // We want to search for parents. Our preferred parent comes from the root store, as this will potentially
             // produce smaller chains.
             if var rootParents = rootCertificates[nextPartialCandidate.currentTip.issuer] {
                 // We then want to sort by suitability.
                 rootParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
+                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInRootStore(nextPartialCandidate, issuers: rootParents))
 
                 // Each of these is now potentially a valid unverified chain.
                 for root in rootParents {
-                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root) {
+                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root, diagnosticCallback: diagnosticCallback) {
                         continue
                     }
 
@@ -73,9 +79,11 @@ public struct Verifier<Policy: VerifierPolicy> {
                     switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
                     case .meetsPolicy:
                         // We're good!
+                        diagnosticCallback?(.foundValidCertificateChain(unverifiedChain.certificates))
                         return .validCertificate(unverifiedChain.certificates)
 
                     case .failsToMeetPolicy(reason: let reason):
+                        diagnosticCallback?(.chainFailsToMeetPolicy(unverifiedChain, reason: reason))
                         policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
                     }
                 }
@@ -84,9 +92,10 @@ public struct Verifier<Policy: VerifierPolicy> {
             if var intermediateParents = intermediates[nextPartialCandidate.currentTip.issuer] {
                 // We then want to sort by suitability.
                 intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
-
+                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInIntermediateStore(nextPartialCandidate, issuers: intermediateParents))
+                
                 for parent in intermediateParents {
-                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent) {
+                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent, diagnosticCallback: diagnosticCallback) {
                         continue
                     }
 
@@ -95,24 +104,28 @@ public struct Verifier<Policy: VerifierPolicy> {
                 }
             }
         }
-
+        
+        diagnosticCallback?(.couldNotValidateLeafCertificate(leafCertificate))
         return .couldNotValidate(policyFailures)
     }
 
-    private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate) -> Bool {
+    private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate, diagnosticCallback: ((VerificationDiagnostic) -> Void)?) -> Bool {
         // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
         if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
+            diagnosticCallback?(.issuerHasUnhandledCriticalExtension(issuer: nextCertificate, chain: partialChain, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
             return true
         }
 
         // We don't want to re-add the same certificate to the chain: that will always produce a chain that
         // could have been shorter.
         if partialChain.contains(certificate: nextCertificate) {
+            diagnosticCallback?(.issuerIsAlreadyInTheChain(partialChain, issuer: nextCertificate))
             return true
         }
 
         // We check the signature here: if the signature isn't valid, don't try to apply policy.
         guard nextCertificate.publicKey.isValidSignature(partialChain.currentTip.signature, for: partialChain.currentTip) else {
+            diagnosticCallback?(.issuerHasNotSignedCertificate(nextCertificate, chain: partialChain))
             return true
         }
 
@@ -138,7 +151,7 @@ extension VerificationResult {
     }
 }
 
-fileprivate struct CandidatePartialChain {
+struct CandidatePartialChain: Hashable {
     var chain: [Certificate]
 
     var currentTip: Certificate

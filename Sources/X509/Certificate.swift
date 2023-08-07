@@ -306,6 +306,12 @@ extension Date {
     }
 }
 
+extension Certificate: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return "\(self.subject) - TODO"
+    }
+}
+
 extension Certificate: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {

@@ -17,7 +17,7 @@ import Foundation
 import SwiftASN1
 
 func run(identifier: String) {
-    let derEncodedCAs = try WebPKI.all.map { try! PEMDocument(pemString: $0).derBytes }
+    let derEncodedCAs = WebPKI.all.map { try! PEMDocument(pemString: $0).derBytes }
     measure(identifier: identifier) {
         var totalExtensionCount = 0
         for _ in 0..<1000 {

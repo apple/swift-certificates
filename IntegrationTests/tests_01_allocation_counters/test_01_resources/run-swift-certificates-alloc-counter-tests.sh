@@ -47,7 +47,8 @@ fi
     -p "$here/../../.." \
     -m SwiftASN1 \
     -m X509 \
+    -m Crypto \
     -s "$here/shared.swift" \
     -t "$tmp_dir" \
-    -d <( echo '.package(url: "https://github.com/apple/swift-asn1.git", from: "0.9.1"),' ) \
+    -d <( echo '.package(url: "https://github.com/apple/swift-asn1.git", from: "0.9.1"),.package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),' ) \
     "${tests_to_run[@]}"
