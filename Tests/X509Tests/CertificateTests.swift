@@ -440,21 +440,21 @@ final class CertificateTests: XCTestCase {
     private static let referenceTime = Date(timeIntervalSince1970: 1691504774)
     
     func testCertificateDescription() throws {
-        let ca1PrivateKey = P384.Signing.PrivateKey()
-        let ca1Name = try! DistinguishedName {
+        let privateKey = P384.Signing.PrivateKey()
+        let certificateName1 = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
             CommonName("Swift Certificate Test CA 1")
         }
-        let ski = Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)
-        let certificate = try Certificate(
+        let ski = Insecure.SHA1.hash(data: privateKey.publicKey.derRepresentation)
+        let certificate1 = try Certificate(
             version: .v3,
             serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-            publicKey: .init(ca1PrivateKey.publicKey),
+            publicKey: .init(privateKey.publicKey),
             notValidBefore: Self.referenceTime - .days(365),
             notValidAfter: Self.referenceTime + .days(3650),
-            issuer: ca1Name,
-            subject: ca1Name,
+            issuer: certificateName1,
+            subject: certificateName1,
             signatureAlgorithm: .ecdsaWithSHA384,
             extensions: Certificate.Extensions {
                 Critical(
@@ -463,25 +463,73 @@ final class CertificateTests: XCTestCase {
                 KeyUsage(keyCertSign: true)
                 SubjectKeyIdentifier(keyIdentifier: ArraySlice(ski))
             },
-            issuerPrivateKey: .init(ca1PrivateKey)
+            issuerPrivateKey: .init(privateKey)
         )
         
-        XCTAssertEqual(String(describing: certificate), """
-        Certificate(\
-        version: X509v3, \
-        serialNumber: 1:2:3:4:5:6:7:8:9:a, \
-        issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
-        subject: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
-        notValidBefore: 2022-08-08 14:26:14 +0000, \
-        notValidAfter: 2033-08-05 14:26:14 +0000, \
-        publicKey: P384, \
-        signature: ECDSA, \
-        extensions: [\
-        BasicConstraints(CA=TRUE), \
-        KeyUsage(keyCertSign), \
-        SubjectKeyIdentifier(\(ski.map { String($0, radix: 16) }.joined(separator: ":")))\
-        ]\
+        XCTAssertEqual(
+            String(describing: certificate1),
+            """
+            Certificate(\
+            version: X509v3, \
+            serialNumber: 1:2:3:4:5:6:7:8:9:a, \
+            issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+            subject: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+            notValidBefore: 2022-08-08 14:26:14 +0000, \
+            notValidAfter: 2033-08-05 14:26:14 +0000, \
+            publicKey: P384, \
+            signature: ECDSA, \
+            extensions: [\
+            BasicConstraints(CA=TRUE), \
+            KeyUsage(keyCertSign), \
+            SubjectKeyIdentifier(\(ski.map { String($0, radix: 16) }.joined(separator: ":")))\
+            ]\
+            )
+            """
         )
-        """)
+        
+        let certificate2 = try Certificate(
+            version: .v3,
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
+            publicKey: .init(privateKey.publicKey),
+            notValidBefore: Self.referenceTime - .days(365),
+            notValidAfter: Self.referenceTime + .days(365),
+            issuer: certificate1.subject,
+            subject: try DistinguishedName {
+                CountryName("US")
+                OrganizationName("Apple")
+                CommonName("localhost")
+                StreetAddress("Infinite Loop")
+            },
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.notCertificateAuthority
+                )
+                KeyUsage(keyCertSign: true)
+                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(ski))
+            },
+            issuerPrivateKey: .init(privateKey)
+        )
+        
+        XCTAssertEqual(
+            String(describing: certificate2),
+            """
+            Certificate(\
+            version: X509v3, \
+            serialNumber: 1:2:3:4:5:6:7:8:9:a:b, \
+            issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+            subject: "STREET=Infinite Loop,CN=localhost,O=Apple,C=US", \
+            notValidBefore: 2022-08-08 14:26:14 +0000, \
+            notValidAfter: 2024-08-07 14:26:14 +0000, \
+            publicKey: P384, \
+            signature: ECDSA, \
+            extensions: [\
+            BasicConstraints(CA=FALSE), \
+            KeyUsage(keyCertSign), \
+            AuthorityKeyIdentifier(keyID: \(ski.map { String($0, radix: 16) }.joined(separator: ":")))\
+            ]\
+            )
+            """
+        )
     }
 }
