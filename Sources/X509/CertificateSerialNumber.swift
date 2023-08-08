@@ -96,13 +96,6 @@ extension Certificate.SerialNumber: CustomStringConvertible {
     }
 }
 
-extension Certificate.SerialNumber {
-    var swiftExpression: String {
-        // TODO: convert to StaticBigInt representable but we likely need some runtime BigInt for that.
-        "[\(self.bytes.lazy.map { String($0, radix: 10) }.joined(separator: ", "))]"
-    }
-}
-
 #if swift(>=5.8)
 @available(macOS 13.3, iOS 16.4, watchOS 9.4, tvOS 16.4, *)
 extension Certificate.SerialNumber: ExpressibleByIntegerLiteral {

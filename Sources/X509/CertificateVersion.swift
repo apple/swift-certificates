@@ -58,16 +58,3 @@ extension Certificate.Version: CustomStringConvertible {
         }
     }
 }
-
-extension Certificate.Version {
-    var swiftExpression: String {
-        switch self {
-        case .v1:
-            return ".v1"
-        case .v3:
-            return ".v3"
-        case let unknown:
-            return ".init(rawValue: \(unknown.rawValue))"
-        }
-    }
-}
