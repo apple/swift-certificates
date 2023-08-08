@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
-import Foundation
 
 /// A distinguished name is a name that uniquely identifies a specific entity.
 ///

@@ -74,26 +74,26 @@ extension Certificate.Extension: Sendable { }
 extension Certificate.Extension: CustomStringConvertible {
     public var description: String {
         if let knownExtension = try? AuthorityInformationAccess(self) {
-            return "AuthorityInformationAccess(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? SubjectKeyIdentifier(self) {
-            return "SubjectKeyIdentifier(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? AuthorityKeyIdentifier(self) {
-            return "AuthorityKeyIdentifier(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? ExtendedKeyUsage(self) {
-            return "ExtendedKeyUsage(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? BasicConstraints(self) {
-            return "BasicConstraints(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? KeyUsage(self) {
-            return "KeyUsage(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? NameConstraints(self) {
-            return "NameConstraints(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else if let knownExtension = try? SubjectAlternativeNames(self) {
-            return "SubjectAlternativeNames(\(knownExtension))"
+            return String(reflecting: knownExtension)
         } else {
             return """
-            (\
-            OID: \(self.oid), \
-            critical: \(self.critical), \
+            Extension(\
+            oid: \(String(reflecting: self.oid)), \
+            critical: \(String(reflecting: self.critical)), \
             value: \(self.value.count) bytes\
             )
             """

@@ -23,7 +23,7 @@ extension Certificate {
         var rawValue: Int
 
         @inlinable
-        public init(rawValue: Int) {
+        init(rawValue: Int) {
             self.rawValue = rawValue
         }
 
