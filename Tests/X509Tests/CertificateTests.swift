@@ -440,17 +440,17 @@ final class CertificateTests: XCTestCase {
     private static let referenceTime = Date(timeIntervalSince1970: 1691504774)
     
     func testCertificateDescription() throws {
-        let privateKey = P384.Signing.PrivateKey()
+        let caPrivateKey = P384.Signing.PrivateKey()
         let certificateName1 = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
             CommonName("Swift Certificate Test CA 1")
         }
-        let ski = Insecure.SHA1.hash(data: privateKey.publicKey.derRepresentation)
-        let certificate1 = try Certificate(
+        
+        let ca = try Certificate(
             version: .v3,
             serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-            publicKey: .init(privateKey.publicKey),
+            publicKey: .init(caPrivateKey.publicKey),
             notValidBefore: Self.referenceTime - .days(365),
             notValidAfter: Self.referenceTime + .days(3650),
             issuer: certificateName1,
@@ -461,13 +461,13 @@ final class CertificateTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(ski))
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: caPrivateKey.publicKey.derRepresentation)))
             },
-            issuerPrivateKey: .init(privateKey)
+            issuerPrivateKey: .init(caPrivateKey)
         )
         
         XCTAssertEqual(
-            String(describing: certificate1),
+            String(describing: ca),
             """
             Certificate(\
             version: X509v3, \
@@ -481,19 +481,83 @@ final class CertificateTests: XCTestCase {
             extensions: [\
             BasicConstraints(CA=TRUE), \
             KeyUsage(keyCertSign), \
-            SubjectKeyIdentifier(\(ski.map { String($0, radix: 16) }.joined(separator: ":")))\
+            SubjectKeyIdentifier(\(try ca.extensions.subjectKeyIdentifier!.keyIdentifier.map { String($0, radix: 16) }.joined(separator: ":")))\
             ]\
             )
             """
         )
         
-        let certificate2 = try Certificate(
+        let intermediatePrivateKey = P256.Signing.PrivateKey()
+        let intermediateName = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("Swift Certificate Test Intermediate CA 1")
+        }
+        let intermediate: Certificate = {
+            return try! Certificate(
+                version: .v3,
+                serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
+                publicKey: .init(intermediatePrivateKey.publicKey),
+                notValidBefore: Self.referenceTime - .days(365),
+                notValidAfter: Self.referenceTime + .days(5 * 365),
+                issuer: ca.subject,
+                subject: intermediateName,
+                signatureAlgorithm: .ecdsaWithSHA384,
+                extensions: Certificate.Extensions {
+                    Critical(
+                        BasicConstraints.isCertificateAuthority(maxPathLength: 1)
+                    )
+                    KeyUsage(keyCertSign: true)
+                    AuthorityKeyIdentifier(keyIdentifier: try! ca.extensions.subjectKeyIdentifier!.keyIdentifier)
+                    SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: intermediatePrivateKey.publicKey.derRepresentation)))
+                    NameConstraints(
+                        permittedDNSDomains: ["apple.com."],
+                        excludedDNSDomains: ["www.apple.com."],
+                        permittedIPRanges: [.v4(subnet: "127.0.0.0", mask: "0.0.0.255")],
+                        excludedIPRanges: [.v4("127.0.0.1")],
+                        permittedEmailAddresses: ["foo@exmaple.com.", "bar@example.com."],
+                        excludedEmailAddresses: ["bar@example.com."],
+                        permittedURIDomains: [".example.com"],
+                        forbiddenURIDomains: [".foo.example.com"]
+                    )
+                },
+                issuerPrivateKey: .init(caPrivateKey)
+            )
+        }()
+        
+        XCTAssertEqual(
+            String(describing: intermediate),
+            """
+            Certificate(\
+            version: X509v3, \
+            serialNumber: 1:2:3:4:5:6:7:8:9:a:b, \
+            issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+            subject: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
+            notValidBefore: 2022-08-08 14:26:14 +0000, \
+            notValidAfter: 2028-08-06 14:26:14 +0000, \
+            publicKey: P256, \
+            signature: ECDSA, \
+            extensions: [\
+            BasicConstraints(CA=TRUE, maxPathLength=1), \
+            KeyUsage(keyCertSign), \
+            AuthorityKeyIdentifier(keyID: \(try intermediate.extensions.authorityKeyIdentifier!.keyIdentifier!.map { String($0, radix: 16) }.joined(separator: ":"))), \
+            SubjectKeyIdentifier(\(try intermediate.extensions.subjectKeyIdentifier!.keyIdentifier.map { String($0, radix: 16) }.joined(separator: ":"))), \
+            NameConstraints(\
+            permittedSubtrees: [DNSName("apple.com."), IPAddress([127, 0, 0, 0, 0, 0, 0, 255]), RFC822Name("foo@exmaple.com."), RFC822Name("bar@example.com."), URI(".example.com")], \
+            excludedSubtrees: [DNSName("www.apple.com."), IPAddress([127, 0, 0, 1]), RFC822Name("bar@example.com."), URI(".foo.example.com")]\
+            )\
+            ])
+            """
+        )
+        
+        let localhostPrivateKey = P256.Signing.PrivateKey()
+        let leaf = try Certificate(
             version: .v3,
-            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
-            publicKey: .init(privateKey.publicKey),
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            publicKey: .init(localhostPrivateKey.publicKey),
             notValidBefore: Self.referenceTime - .days(365),
             notValidAfter: Self.referenceTime + .days(365),
-            issuer: certificate1.subject,
+            issuer: intermediateName,
             subject: try DistinguishedName {
                 CountryName("US")
                 OrganizationName("Apple")
@@ -506,30 +570,31 @@ final class CertificateTests: XCTestCase {
                     BasicConstraints.notCertificateAuthority
                 )
                 KeyUsage(keyCertSign: true)
-                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(ski))
+                AuthorityKeyIdentifier(keyIdentifier: try! intermediate.extensions.subjectKeyIdentifier!.keyIdentifier)
             },
-            issuerPrivateKey: .init(privateKey)
+            issuerPrivateKey: .init(localhostPrivateKey)
         )
         
         XCTAssertEqual(
-            String(describing: certificate2),
+            String(describing: leaf),
             """
             Certificate(\
             version: X509v3, \
-            serialNumber: 1:2:3:4:5:6:7:8:9:a:b, \
-            issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+            serialNumber: 1:2:3:4:5:6:7:8:9:a:b:c, \
+            issuer: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
             subject: "STREET=Infinite Loop,CN=localhost,O=Apple,C=US", \
             notValidBefore: 2022-08-08 14:26:14 +0000, \
             notValidAfter: 2024-08-07 14:26:14 +0000, \
-            publicKey: P384, \
+            publicKey: P256, \
             signature: ECDSA, \
             extensions: [\
             BasicConstraints(CA=FALSE), \
             KeyUsage(keyCertSign), \
-            AuthorityKeyIdentifier(keyID: \(ski.map { String($0, radix: 16) }.joined(separator: ":")))\
+            AuthorityKeyIdentifier(keyID: \(try leaf.extensions.authorityKeyIdentifier!.keyIdentifier!.map { String($0, radix: 16) }.joined(separator: ":")))\
             ]\
             )
             """
         )
+        print(intermediate)
     }
 }
