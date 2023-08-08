@@ -196,44 +196,6 @@ public struct Certificate {
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
-    
-    @inlinable
-    public init(
-        version: Version,
-        serialNumber: SerialNumber,
-        issuer: DistinguishedName,
-        subject: DistinguishedName,
-        notValidBefore: Date,
-        notValidAfter: Date,
-        publicKey: PublicKey,
-        signatureAlgorithmBytes: ArraySlice<UInt8>,
-        signatureBytes: ArraySlice<UInt8>,
-        @ExtensionsBuilder extensions: () -> Result<Extensions, Error>
-    ) throws {
-        let signatureAlgorithm = try SignatureAlgorithm(algorithmIdentifier: .init(derEncoded: signatureBytes))
-        let tbsCertificate = TBSCertificate(
-            version: version,
-            serialNumber: serialNumber,
-            signature: signatureAlgorithm,
-            issuer: issuer,
-            validity: .init(
-                notBefore: try .makeTime(from: notValidBefore),
-                notAfter: try .makeTime(from: notValidAfter)
-            ),
-            subject: subject,
-            publicKey: publicKey,
-            extensions: try extensions().get()
-        )
-        self.tbsCertificate = tbsCertificate
-        self.signatureAlgorithm = signatureAlgorithm
-        self.signature = try Signature(
-            signatureAlgorithm: self.signatureAlgorithm,
-            signatureBytes: .init(contentBytes: signatureBytes)
-        )
-        self.tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signatureAlgorithmBytes = signatureAlgorithmBytes
-        self.signatureBytes = signatureBytes
-    }
 
     @inlinable
     init(
