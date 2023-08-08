@@ -140,16 +140,13 @@ extension RelativeDistinguishedName: CustomStringConvertible {
         }.joined(separator: "+")
     }
 }
-extension RelativeDistinguishedName {
-    var swiftInitializer: String {
+
+extension RelativeDistinguishedName: CustomDebugStringConvertible {
+    public var debugDescription: String {
         if self.count == 1 {
-            return self.first!.swiftSingleAttributeInitializer
+            return String(describing: self)
         } else {
-            return """
-            RelativeDistinguishedName(
-                \(self.lazy.map { "\t\($0.description)" }.joined(separator: "\n"))
-            )
-            """
+            return "(\(String(describing: self))"
         }
     }
 }

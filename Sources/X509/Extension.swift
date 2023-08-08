@@ -101,42 +101,6 @@ extension Certificate.Extension: CustomStringConvertible {
     }
 }
 
-extension Certificate.Extension: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        if let knownExtension = try? AuthorityInformationAccess(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? SubjectKeyIdentifier(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? AuthorityKeyIdentifier(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? ExtendedKeyUsage(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? BasicConstraints(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? KeyUsage(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? NameConstraints(self) {
-            return String(reflecting: knownExtension)
-        } else if let knownExtension = try? SubjectAlternativeNames(self) {
-            return String(reflecting: knownExtension)
-        } else {
-            return """
-            Certificate.Extension(
-                oid: \(self.oid.swiftInitializer),
-                critical: \(self.critical),
-                value: [\(self.value.lazy.map { String($0) }.joined(separator: ", "))]
-            )
-            """
-        }
-    }
-}
-
-extension Certificate.Extension: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return "TODO"
-    }
-}
-
 extension Certificate.Extension: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {

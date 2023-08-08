@@ -61,7 +61,13 @@ extension AuthorityInformationAccess: Sendable { }
 
 extension AuthorityInformationAccess: CustomStringConvertible {
     public var description: String {
-        return self.map { String(describing: $0) }.joined(separator: ", ")
+        return self.map { String(reflecting: $0) }.joined(separator: ", ")
+    }
+}
+
+extension AuthorityInformationAccess: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "AuthorityInformationAccess(\(String(describing: self)))"
     }
 }
 
@@ -129,6 +135,12 @@ extension AuthorityInformationAccess.AccessDescription: CustomStringConvertible 
     }
 }
 
+extension AuthorityInformationAccess.AccessDescription: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "(\(String(describing: self)))"
+    }
+}
+
 extension AuthorityInformationAccess.AccessDescription {
     /// The format and meaning of the information included in a single
     /// ``AuthorityInformationAccess/AccessDescription``
@@ -183,6 +195,19 @@ extension AuthorityInformationAccess.AccessDescription.AccessMethod: CustomStrin
             return "Issuer"
         case .unknownType(let oid):
             return String(describing: oid)
+        }
+    }
+}
+
+extension AuthorityInformationAccess.AccessDescription.AccessMethod: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        switch self.backing {
+        case .ocspServer:
+            return "\"OCSP Server\""
+        case .issuingCA:
+            return "\"Issuer\""
+        case .unknownType(let oid):
+            return String(reflecting: oid)
         }
     }
 }

@@ -166,37 +166,6 @@ extension Certificate.PublicKey: CustomStringConvertible {
     }
 }
 
-extension Certificate.PublicKey: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        switch self.backing {
-        case .p256(let publicKey):
-            return """
-            Certificate.PublicKey(P256.Signing.PublicKey(rawRepresentation: \
-            \(String(reflecting: Array(publicKey.rawRepresentation)))\
-            ))
-            """
-        case .p384(let publicKey):
-            return """
-            Certificate.PublicKey(P384.Signing.PublicKey(rawRepresentation: \
-            \(String(reflecting: Array(publicKey.rawRepresentation)))\
-            ))
-            """
-        case .p521(let publicKey):
-            return """
-            Certificate.PublicKey(P521.Signing.PublicKey(rawRepresentation: \
-            \(String(reflecting: Array(publicKey.rawRepresentation)))\
-            ))
-            """
-        case .rsa(let publicKey):
-            return """
-            Certificate.PublicKey(_RSA.Signing.PublicKey(derRepresentation: \
-            \(String(reflecting: Array(publicKey.derRepresentation)))\
-            ))
-            """
-        }
-    }
-}
-
 extension Certificate.PublicKey {
     @usableFromInline
     enum BackingPublicKey: Hashable, Sendable {

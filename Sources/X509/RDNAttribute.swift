@@ -316,6 +316,12 @@ extension RelativeDistinguishedName.Attribute.Value: CustomStringConvertible {
     }
 }
 
+extension RelativeDistinguishedName.Attribute.Value: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        String(reflecting: String(describing: self))
+    }
+}
+
 
 extension RelativeDistinguishedName.Attribute: Hashable { }
 
@@ -344,66 +350,9 @@ extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
             attributeKey = String(describing: type)
         }
 
-        return "\(attributeKey)=\(value.description)"
+        return "\(attributeKey)=\(String(reflecting: value))"
     }
 }
-
-extension RelativeDistinguishedName.Attribute {
-    var swiftSingleAttributeInitializer: String {
-        if case .utf8(let value) = self.value.storage {
-            // we may have special `RelativeDistinguishedNameConvertible` types
-            switch self.type {
-            case .RDNAttributeType.commonName:
-                return "CommonName(\(String(reflecting: value)))"
-            case .RDNAttributeType.countryName:
-                return "CountryName(\(String(reflecting: value)))"
-            case .RDNAttributeType.localityName:
-                return "LocalityName(\(String(reflecting: value)))"
-            case .RDNAttributeType.stateOrProvinceName:
-                return "StateOrProvinceName(\(String(reflecting: value)))"
-            case .RDNAttributeType.organizationName:
-                return "OrganizationName(\(String(reflecting: value)))"
-            case .RDNAttributeType.organizationalUnitName:
-                return "OrganizationalUnitName(\(String(reflecting: value)))"
-            case .RDNAttributeType.streetAddress:
-                return "StreetAddress(\(String(reflecting: value)))"
-            default:
-                // unknown attribute, lets fall through to the generic initializer
-                break
-            }
-        }
-        return """
-        RelativeDistinguishedName(\(self.swiftGenericInitializer))
-        """
-    }
-    
-    var swiftGenericInitializer: String {
-        switch value.storage {
-        case .any(let asn1Any):
-            return ".init(type: \(self.type.swiftInitializer), asn1Any: \(asn1Any.swiftInitializer))"
-        case .printable(let printableString):
-            return ".init(type: \(self.type.swiftInitializer), printableString: \(String(reflecting: printableString)))"
-        case .utf8(let utf8String):
-            return ".init(type: \(self.type.swiftInitializer), utf8String: \(String(reflecting: utf8String)))"
-        }
-    }
-}
-
-extension ASN1Any {
-    var swiftInitializer: String {
-        // TODO: ASN1Any currently don't expose a way to iterate the bytes so we cheat a bit
-        ".init(derEncoded: \(self.description.dropFirst("ASN1Any(".count))"
-    }
-}
-
-extension ASN1ObjectIdentifier {
-    var swiftInitializer: String {
-        // TODO: OIDs currently don't expose a way to iterate the integers so we cheat a bit
-        // TODO: we should map common known OIDs to their named identifiers
-        "[\(self.description.replacingOccurrences(of: ".", with: ", "))]"
-    }
-}
-
 
 extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
     @inlinable

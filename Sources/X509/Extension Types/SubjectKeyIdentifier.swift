@@ -62,7 +62,7 @@ extension SubjectKeyIdentifier: CustomStringConvertible {
 
 extension SubjectKeyIdentifier: CustomDebugStringConvertible {
     public var debugDescription: String {
-        "SubjectKeyIdentifier(\(Array(self.keyIdentifier))"
+        "SubjectKeyIdentifier(\(String(describing: self)))"
     }
 }
 

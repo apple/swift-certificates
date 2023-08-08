@@ -165,24 +165,13 @@ extension DistinguishedName: RandomAccessCollection, MutableCollection, RangeRep
 extension DistinguishedName: CustomStringConvertible {
     @inlinable
     public var description: String {
-        self.reversed().lazy.map { String(describing: $0) }.joined(separator: ",")
+        self.reversed().lazy.map { String(reflecting: $0) }.joined(separator: ", ")
     }
 }
 
-extension DistinguishedName {
-    var swiftInitializer: String {
-        """
-        DistinguishedName {
-            \(self.rdns.lazy.map { $0.swiftInitializer }.joined(separator: "\n").indented())
-        }
-        """
-    }
-}
-
-extension String {
-    @inlinable
-    func indented() -> Self {
-        self.replacingOccurrences(of: "\n", with: "\n    ")
+extension DistinguishedName: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "[\(String(describing: self))]"
     }
 }
 

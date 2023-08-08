@@ -61,13 +61,13 @@ extension SubjectAlternativeNames: Sendable { }
 
 extension SubjectAlternativeNames: CustomStringConvertible {
     public var description: String {
-        self.lazy.map { String(describing: $0) }.joined(separator: ", ")
+        self.lazy.map { String(reflecting: $0) }.joined(separator: ", ")
     }
 }
 
 extension SubjectAlternativeNames: CustomDebugStringConvertible {
     public var debugDescription: String {
-        "SubjectAlternativeNames([\(self.lazy.map { String(reflecting: $0) }.joined(separator: ", "))])"
+        "SubjectAlternativeNames(\(String(describing: self)))"
     }
 }
 

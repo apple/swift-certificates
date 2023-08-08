@@ -261,54 +261,17 @@ extension Certificate: CustomStringConvertible {
     public var description: String {
         """
         Certificate(\
-        version: \(self.version), \
-        serialNumber: \(self.serialNumber), \
-        issuer: \(self.issuer), \
-        subject: \(self.subject), \
-        notValidBefore: \(self.notValidBefore), \
-        notValidAfter: \(self.notValidAfter), \
-        publicKey: \(self.publicKey), \
-        signature: \(self.signature), \
-        extensions: \(self.extensions)\
+        version: \(String(reflecting: self.version)), \
+        serialNumber: \(String(reflecting: self.serialNumber)), \
+        issuer: \(String(reflecting: self.issuer)), \
+        subject: \(String(reflecting: self.subject)), \
+        notValidBefore: \(String(reflecting: self.notValidBefore)), \
+        notValidAfter: \(String(reflecting: self.notValidAfter)), \
+        publicKey: \(String(reflecting: self.publicKey)), \
+        signature: \(String(reflecting: self.signature)), \
+        extensions: \(String(reflecting: self.extensions))\
         )
         """
-    }
-}
-
-extension Certificate: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        """
-        try Certificate(
-            version: \(self.version.swiftExpression),
-            serialNumber: .init(bytes: \(self.serialNumber.swiftExpression)),
-            issuer: try \(self.issuer.swiftInitializer.indented()),
-            subject: try \(self.subject.swiftInitializer.indented()),
-            notValidBefore: try Date(\(String(reflecting: self.notValidBefore.iso8601)), strategy: .iso8601),
-            notValidAfter: try Date(\(String(reflecting: self.notValidAfter.iso8601)), strategy: .iso8601),
-            publicKey: \(String(reflecting: self.publicKey)),
-            signatureAlgorithmBytes: \(String(reflecting: Array(self.signatureAlgorithmBytes))),
-            signatureBytes: \(String(reflecting: Array(self.signatureBytes)))
-        ) {
-            \(self.extensions.lazy.map { String(reflecting: $0) }.joined(separator: "\n").indented())
-        }
-        """
-    }
-}
-
-extension Date {
-    var iso8601: String {
-        if #available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
-            return self.formatted(.iso8601)
-        } else {
-            // TODO: configure DateFormatter to format as iso8601 that is available on older platforms
-            return self.description
-        }
-    }
-}
-
-extension Certificate: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return "\(self.subject) - TODO"
     }
 }
 

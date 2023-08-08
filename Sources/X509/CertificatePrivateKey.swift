@@ -262,7 +262,7 @@ extension Certificate.PrivateKey {
         case .some(.ecdsaP521):
             self = try .init(P521.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
         default:
-            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(String(describing: ecdsaAlgorithm))")
+            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(String(reflecting: ecdsaAlgorithm))")
         }
     }
     

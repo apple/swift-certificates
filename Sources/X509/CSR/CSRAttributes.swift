@@ -137,7 +137,7 @@ extension CertificateSigningRequest.Attributes: RandomAccessCollection {
 extension CertificateSigningRequest.Attributes: CustomStringConvertible {
     @inlinable
     public var description: String {
-        return "Attributes([\(self._attributes.map { String(describing: $0) }.joined(separator: ", "))])"
+        return "Attributes([\(self._attributes.map { String(reflecting: $0) }.joined(separator: ", "))])"
     }
 }
 

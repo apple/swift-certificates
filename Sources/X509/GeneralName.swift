@@ -127,6 +127,12 @@ extension GeneralName: CustomStringConvertible {
     }
 }
 
+extension GeneralName: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "GeneralName(\(String(describing: self)))"
+    }
+}
+
 //GeneralName ::= CHOICE {
 //     otherName                       [0]     OtherName,
 //     rfc822Name                      [1]     IA5String,
@@ -190,7 +196,7 @@ extension GeneralName {
 extension GeneralName.OtherName: CustomStringConvertible {
     @inlinable
     public var description: String {
-        "\(self.typeID): \(String(describing: self.value))"
+        "\(self.typeID): \(String(reflecting: self.value))"
     }
 }
 

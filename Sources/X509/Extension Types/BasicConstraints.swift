@@ -67,6 +67,12 @@ extension BasicConstraints: CustomStringConvertible {
     }
 }
 
+extension BasicConstraints: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "BasicConstraints(\(String(describing: self)))"
+    }
+}
+
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Basic Constraints extension.
     ///

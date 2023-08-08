@@ -314,41 +314,7 @@ extension KeyUsage: CustomStringConvertible {
 
 extension KeyUsage: CustomDebugStringConvertible {
     public var debugDescription: String {
-        var enabledUsages: [String] = []
-
-        if self.digitalSignature {
-            enabledUsages.append("digitalSignature: true")
-        }
-        if self.nonRepudiation {
-            enabledUsages.append("nonRepudiation: true")
-        }
-        if self.keyEncipherment {
-            enabledUsages.append("keyEncipherment: true")
-        }
-        if self.dataEncipherment {
-            enabledUsages.append("dataEncipherment: true")
-        }
-        if self.keyAgreement {
-            enabledUsages.append("keyAgreement: true")
-        }
-        if self.keyCertSign {
-            enabledUsages.append("keyCertSign: true")
-        }
-        if self.cRLSign {
-            enabledUsages.append("cRLSign: true")
-        }
-        if self.encipherOnly {
-            enabledUsages.append("encipherOnly: true")
-        }
-        if self.decipherOnly {
-            enabledUsages.append("decipherOnly: true")
-        }
-
-        return """
-        KeyUsage(\
-        \(enabledUsages.joined(separator: ", "))\
-        )
-        """
+        "KeyUsage(\(String(describing: self)))"
     }
 }
 

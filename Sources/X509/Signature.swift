@@ -61,7 +61,12 @@ extension Certificate.Signature: Sendable { }
 
 extension Certificate.Signature: CustomStringConvertible {
     public var description: String {
-        return String(describing: self.backing)
+        switch backing {
+        case .ecdsa:
+            return "ECDSA"
+        case .rsa:
+            return "RSA"
+        }
     }
 }
 
