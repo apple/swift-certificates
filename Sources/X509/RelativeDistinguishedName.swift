@@ -143,11 +143,7 @@ extension RelativeDistinguishedName: CustomStringConvertible {
 
 extension RelativeDistinguishedName: CustomDebugStringConvertible {
     public var debugDescription: String {
-        if self.count == 1 {
-            return String(describing: self)
-        } else {
-            return "(\(String(describing: self))"
-        }
+        String(reflecting: String(describing: self))
     }
 }
 

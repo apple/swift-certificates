@@ -67,35 +67,35 @@ final class CertificateTests: XCTestCase {
 
         XCTAssertEqual(
             String(describing: GeneralName.dnsName("www.apple.com")),
-            "dnsName: www.apple.com"
+            "DNSName(\"www.apple.com\")"
         )
         XCTAssertEqual(
             String(describing: GeneralName.directoryName(testDN)),
-            "directoryName: CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,C=US"
+            #"DirectoryName("CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,C=US")"#
         )
         XCTAssertEqual(
             try String(describing: GeneralName.ediPartyName(ASN1Any(erasing: ASN1Null()))),
-            "ediPartyName: ASN1Any([5, 0])"
+            "EDIPartyName(ASN1Any([5, 0]))"
         )
         XCTAssertEqual(
             String(describing: GeneralName.ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1]))),
-            "ipAddress: [127, 0, 0, 1]"
+            "IPAddress([127, 0, 0, 1])"
         )
         XCTAssertEqual(
             String(describing: GeneralName.registeredID([1, 2, 3, 4, 5])),
-            "registeredID: 1.2.3.4.5"
+            "RegisteredID(1.2.3.4.5)"
         )
         XCTAssertEqual(
             String(describing: GeneralName.rfc822Name("mail@example.com")),
-            "rfc822Name: mail@example.com"
+            "RFC822Name(\"mail@example.com\")"
         )
         XCTAssertEqual(
             try String(describing: GeneralName.x400Address(ASN1Any(erasing: ASN1Null()))),
-            "x400Address: ASN1Any([5, 0])"
+            "X400Address(ASN1Any([5, 0]))"
         )
         XCTAssertEqual(
             String(describing: GeneralName.uniformResourceIdentifier("http://www.apple.com/")),
-            "uri: http://www.apple.com/"
+            "URI(\"http://www.apple.com/\")"
         )
     }
 
@@ -108,7 +108,7 @@ final class CertificateTests: XCTestCase {
         let s = String(describing: ext)
         XCTAssertEqual(
             s,
-            "Issuer: uri: https://example.com/ca, OCSP Server: uri: http://example.com/ocsp, 1.2.3.4: rfc822Name: mail@example.com"
+            "(Issuer: URI(\"https://example.com/ca\")), (OCSP Server: URI(\"http://example.com/ocsp\")), (1.2.3.4: RFC822Name(\"mail@example.com\"))"
         )
     }
     
@@ -148,21 +148,21 @@ final class CertificateTests: XCTestCase {
         var s = String(describing: ext)
         XCTAssertEqual(
             s,
-            "keyID: a:14:1e:28, issuer: [uri: https://example.com/ca], issuerSerial: 32:3c:46:50"
+            "keyID: a:14:1e:28, issuer: [URI(\"https://example.com/ca\")], issuerSerial: 32:3c:46:50"
         )
 
         ext.keyIdentifier = nil
         s = String(describing: ext)
         XCTAssertEqual(
             s,
-            "issuer: [uri: https://example.com/ca], issuerSerial: 32:3c:46:50"
+            "issuer: [URI(\"https://example.com/ca\")], issuerSerial: 32:3c:46:50"
         )
 
         ext.authorityCertSerialNumber = nil
         s = String(describing: ext)
         XCTAssertEqual(
             s,
-            "issuer: [uri: https://example.com/ca]"
+            "issuer: [URI(\"https://example.com/ca\")]"
         )
 
         ext.authorityCertIssuer = nil
@@ -246,7 +246,7 @@ final class CertificateTests: XCTestCase {
         let s = String(describing: san)
         XCTAssertEqual(
             s,
-            "dnsName: example.com, dnsName: example.org, ipAddress: [127, 0, 0, 1]"
+            "DNSName(\"example.com\"), DNSName(\"example.org\"), IPAddress([127, 0, 0, 1])"
         )
     }
 
@@ -278,19 +278,19 @@ final class CertificateTests: XCTestCase {
         )
         XCTAssertEqual(
             String(describing: ext),
-            "permittedSubtrees: dnsName: example.com, uri: http://example.com; excludedSubtrees: dnsName: example.org, rfc822Name: mail@example.com"
+            "permittedSubtrees: [DNSName(\"example.com\"), URI(\"http://example.com\")], excludedSubtrees: [DNSName(\"example.org\"), RFC822Name(\"mail@example.com\")]"
         )
 
         ext.permittedSubtrees = []
         XCTAssertEqual(
             String(describing: ext),
-            "excludedSubtrees: dnsName: example.org, rfc822Name: mail@example.com"
+            "excludedSubtrees: [DNSName(\"example.org\"), RFC822Name(\"mail@example.com\")]"
         )
 
         swap(&ext.permittedSubtrees, &ext.excludedSubtrees)
         XCTAssertEqual(
             String(describing: ext),
-            "permittedSubtrees: dnsName: example.org, rfc822Name: mail@example.com"
+            "permittedSubtrees: [DNSName(\"example.org\"), RFC822Name(\"mail@example.com\")]"
         )
     }
 
@@ -435,5 +435,53 @@ final class CertificateTests: XCTestCase {
             rsa.publicKey.pkcs1DERRepresentation,
             Data(Certificate.PublicKey(rsa.publicKey).subjectPublicKeyInfoBytes)
         )
+    }
+    
+    private static let referenceTime = Date(timeIntervalSince1970: 1691504774)
+    
+    func testCertificateDescription() throws {
+        let ca1PrivateKey = P384.Signing.PrivateKey()
+        let ca1Name = try! DistinguishedName {
+            CountryName("US")
+            OrganizationName("Apple")
+            CommonName("Swift Certificate Test CA 1")
+        }
+        let ski = Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)
+        let certificate = try Certificate(
+            version: .v3,
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+            publicKey: .init(ca1PrivateKey.publicKey),
+            notValidBefore: Self.referenceTime - .days(365),
+            notValidAfter: Self.referenceTime + .days(3650),
+            issuer: ca1Name,
+            subject: ca1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+                SubjectKeyIdentifier(keyIdentifier: ArraySlice(ski))
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+        
+        XCTAssertEqual(String(describing: certificate), """
+        Certificate(\
+        version: X509v3, \
+        serialNumber: 1:2:3:4:5:6:7:8:9:a, \
+        issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+        subject: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
+        notValidBefore: 2022-08-08 14:26:14 +0000, \
+        notValidAfter: 2033-08-05 14:26:14 +0000, \
+        publicKey: P384, \
+        signature: ECDSA, \
+        extensions: [\
+        BasicConstraints(CA=TRUE), \
+        KeyUsage(keyCertSign), \
+        SubjectKeyIdentifier(\(ski.map { String($0, radix: 16) }.joined(separator: ":")))\
+        ]\
+        )
+        """)
     }
 }

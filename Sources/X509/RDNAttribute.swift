@@ -350,7 +350,7 @@ extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
             attributeKey = String(describing: type)
         }
 
-        return "\(attributeKey)=\(String(reflecting: value))"
+        return "\(attributeKey)=\(value)"
     }
 }
 

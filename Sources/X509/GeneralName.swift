@@ -106,30 +106,24 @@ extension GeneralName: CustomStringConvertible {
     public var description: String {
         switch self {
         case .dnsName(let name):
-            return "dnsName: \(name)"
+            return "DNSName(\(String(reflecting: name)))"
         case .directoryName(let directoryName):
-            return "directoryName: \(directoryName)"
+            return "DirectoryName(\(String(reflecting: directoryName)))"
         case .ediPartyName(let name):
-            return "ediPartyName: \(name)"
+            return "EDIPartyName(\(String(reflecting: name)))"
         case .ipAddress(let address):
-            return "ipAddress: \(address.bytes)"
+            return "IPAddress(\(String(reflecting: Array(address.bytes))))"
         case .otherName(let otherName):
-            return "otherName: \(otherName)"
+            return "OtherName(\(String(reflecting: otherName)))"
         case .registeredID(let id):
-            return "registeredID: \(id)"
+            return "RegisteredID(\(String(reflecting: id)))"
         case .rfc822Name(let name):
-            return "rfc822Name: \(name)"
+            return "RFC822Name(\(String(reflecting: name)))"
         case .uniformResourceIdentifier(let uri):
-            return "uri: \(uri)"
+            return "URI(\(String(reflecting: uri)))"
         case .x400Address(let address):
-            return "x400Address: \(address)"
+            return "X400Address(\(String(reflecting: address)))"
         }
-    }
-}
-
-extension GeneralName: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        "GeneralName(\(String(describing: self)))"
     }
 }
 
