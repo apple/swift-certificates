@@ -312,7 +312,10 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     
     private func printChainForDebugging(_ chain: [Certificate]) {
-        dump(chain) // TODO: replace with Certificate.description once implemented
+        print("chain:")
+        for certificate in chain {
+            print(certificate)
+        }
         do {
             var serializer = DER.Serializer()
             try serializer.serializeSequenceOf(chain)
