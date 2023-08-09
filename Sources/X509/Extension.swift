@@ -73,13 +73,31 @@ extension Certificate.Extension: Sendable { }
 
 extension Certificate.Extension: CustomStringConvertible {
     public var description: String {
-        return "TODO"
-    }
-}
-
-extension Certificate.Extension: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return "TODO"
+        if let knownExtension = try? AuthorityInformationAccess(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? SubjectKeyIdentifier(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? AuthorityKeyIdentifier(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? ExtendedKeyUsage(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? BasicConstraints(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? KeyUsage(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? NameConstraints(self) {
+            return String(reflecting: knownExtension)
+        } else if let knownExtension = try? SubjectAlternativeNames(self) {
+            return String(reflecting: knownExtension)
+        } else {
+            return """
+            Extension(\
+            oid: \(String(reflecting: self.oid)), \
+            critical: \(String(reflecting: self.critical)), \
+            value: \(self.value.count) bytes\
+            )
+            """
+        }
     }
 }
 

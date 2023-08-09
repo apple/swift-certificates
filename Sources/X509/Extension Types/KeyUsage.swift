@@ -312,6 +312,12 @@ extension KeyUsage: CustomStringConvertible {
     }
 }
 
+extension KeyUsage: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "KeyUsage(\(String(describing: self)))"
+    }
+}
+
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Key Usage extension.
     ///

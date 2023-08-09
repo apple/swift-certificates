@@ -221,13 +221,19 @@ extension Certificate: Sendable { }
 
 extension Certificate: CustomStringConvertible {
     public var description: String {
-        return "\(self.subject) - TODO"
-    }
-}
-
-extension Certificate: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return "\(self.subject) - TODO"
+        """
+        Certificate(\
+        version: \(String(reflecting: self.version)), \
+        serialNumber: \(String(reflecting: self.serialNumber)), \
+        issuer: \(String(reflecting: self.issuer)), \
+        subject: \(String(reflecting: self.subject)), \
+        notValidBefore: \(String(reflecting: self.notValidBefore)), \
+        notValidAfter: \(String(reflecting: self.notValidAfter)), \
+        publicKey: \(String(reflecting: self.publicKey)), \
+        signature: \(String(reflecting: self.signature)), \
+        extensions: \(String(reflecting: self.extensions))\
+        )
+        """
     }
 }
 

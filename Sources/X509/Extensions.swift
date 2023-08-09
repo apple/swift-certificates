@@ -218,7 +218,17 @@ extension Certificate.Extensions {
 extension Certificate.Extensions: CustomStringConvertible {
     @inlinable
     public var description: String {
-        return "TODO"
+        if self.isEmpty {
+            return "(none)"
+        } else {
+            return self._extensions.lazy.map { String(reflecting: $0) }.joined(separator: ", ")
+        }
+    }
+}
+
+extension Certificate.Extensions: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "[\(String(describing: self))]"
     }
 }
 

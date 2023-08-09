@@ -60,6 +60,12 @@ extension SubjectKeyIdentifier: CustomStringConvertible {
     }
 }
 
+extension SubjectKeyIdentifier: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "SubjectKeyIdentifier(\(String(describing: self)))"
+    }
+}
+
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Subject Key Identifier extension.
     ///

@@ -85,6 +85,12 @@ extension AuthorityKeyIdentifier: CustomStringConvertible {
     }
 }
 
+extension AuthorityKeyIdentifier: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "AuthorityKeyIdentifier(\(String(describing: self)))"
+    }
+}
+
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this AKI extension.
     ///

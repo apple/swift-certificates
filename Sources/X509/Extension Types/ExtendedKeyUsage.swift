@@ -98,8 +98,14 @@ extension ExtendedKeyUsage: Sendable { }
 extension ExtendedKeyUsage: CustomStringConvertible {
     public var description: String {
         return self.map {
-            String(describing: $0)
+            String(reflecting: $0)
         }.joined(separator: ", ")
+    }
+}
+
+extension ExtendedKeyUsage: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "ExtendedKeyUsage(\(String(describing: self)))"
     }
 }
 
@@ -275,6 +281,31 @@ extension ExtendedKeyUsage.Usage: CustomStringConvertible {
             return "certificateTransparency"
         case .unknown(let oid):
             return String(describing: oid)
+        }
+    }
+}
+
+extension ExtendedKeyUsage.Usage: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        switch self.backing {
+        case .any:
+            return "anyKeyUsage"
+        case .serverAuth:
+            return "serverAuth"
+        case .clientAuth:
+            return "clientAuth"
+        case .codeSigning:
+            return "codeSigning"
+        case .emailProtection:
+            return "emailProtection"
+        case .timeStamping:
+            return "timeStamping"
+        case .ocspSigning:
+            return "ocspSigning"
+        case .certificateTransparency:
+            return "certificateTransparency"
+        case .unknown(let oid):
+            return String(reflecting: oid)
         }
     }
 }

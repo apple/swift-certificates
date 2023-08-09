@@ -316,6 +316,12 @@ extension RelativeDistinguishedName.Attribute.Value: CustomStringConvertible {
     }
 }
 
+extension RelativeDistinguishedName.Attribute.Value: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        String(reflecting: String(describing: self))
+    }
+}
+
 
 extension RelativeDistinguishedName.Attribute: Hashable { }
 
@@ -344,10 +350,9 @@ extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
             attributeKey = String(describing: type)
         }
 
-        return "\(attributeKey)=\(value.description)"
+        return "\(attributeKey)=\(value)"
     }
 }
-
 
 extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
     @inlinable

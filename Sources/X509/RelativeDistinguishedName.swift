@@ -141,6 +141,12 @@ extension RelativeDistinguishedName: CustomStringConvertible {
     }
 }
 
+extension RelativeDistinguishedName: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        String(reflecting: String(describing: self))
+    }
+}
+
 extension RelativeDistinguishedName: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {

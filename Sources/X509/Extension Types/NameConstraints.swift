@@ -684,13 +684,19 @@ extension NameConstraints: CustomStringConvertible {
         var elements: [String] = []
 
         if self.permittedSubtrees.count > 0 {
-            elements.append("permittedSubtrees: \(self.permittedSubtrees.map { String(describing: $0) }.joined(separator: ", "))")
+            elements.append("permittedSubtrees: [\(self.permittedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]")
         }
         if self.excludedSubtrees.count > 0 {
-            elements.append("excludedSubtrees: \(self.excludedSubtrees.map { String(describing: $0) }.joined(separator: ", "))")
+            elements.append("excludedSubtrees: [\(self.excludedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]")
         }
 
-        return elements.joined(separator: "; ")
+        return elements.joined(separator: ", ")
+    }
+}
+
+extension NameConstraints: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return "NameConstraints(\(String(describing: self)))"
     }
 }
 

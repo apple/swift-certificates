@@ -168,6 +168,12 @@ extension DistinguishedName: CustomStringConvertible {
     }
 }
 
+extension DistinguishedName: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        String(reflecting: String(describing: self))
+    }
+}
+
 extension DistinguishedName: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {

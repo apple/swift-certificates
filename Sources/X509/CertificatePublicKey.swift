@@ -153,7 +153,16 @@ extension Certificate.PublicKey: Sendable { }
 
 extension Certificate.PublicKey: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        switch self.backing {
+        case .p256:
+            return "P256"
+        case .p384:
+            return "P384"
+        case .p521:
+            return "P521"
+        case .rsa(let publicKey):
+            return "RSA\(publicKey.keySizeInBits)"
+        }
     }
 }
 
