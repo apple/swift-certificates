@@ -939,6 +939,55 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testPathLengthConstraintsOnRootsAreAppliedBasePolicy() async throws {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.basicConstraints)
     }
+    
+    func _pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(_ policyFactory: PolicyFactory) async throws {
+        // We are building a certificate chain that looks like this:
+        // Cert(Iss=Y, Sub=X, Key=1, pathLen=0)
+        // Cert(Iss=X, Sub=X, Key=2) // self issued with different public key
+        // Cert(Iss=X, Sub=Z, Key=3)
+        
+        
+        let alternativeRoot = TestPKI.issueCA(
+            extensions: try Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+            }
+        )
+        
+        let intermediate = TestPKI.issueIntermediate(
+            name: alternativeRoot.subject,
+            key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
+            extensions: try .init {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: 0)
+                )
+            },
+            issuer: .unconstrainedRoot
+        )
+
+        let leaf = TestPKI.issueLeaf(issuer: .init(name: alternativeRoot.subject, key: .init(TestPKI.unconstrainedIntermediateKey)))
+
+        var verifier = Verifier(rootCertificates: CertificateStore([alternativeRoot])) {
+            policyFactory.create(TestPKI.startDate + 2.5)
+        }
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([intermediate]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Unable to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [leaf, intermediate, alternativeRoot])
+    }
+    
+    func testPathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates() async throws {
+        try await self._pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(.rfc5280)
+    }
+
+    func testPathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificatesBasePolicy() async throws {
+        try await self._pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(.basicConstraints)
+    }
 
     func testDNSNameConstraintsExcludedSubtrees() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
@@ -1575,32 +1624,13 @@ fileprivate enum TestPKI {
         CommonName("Swift Certificate Test Intermediate 2")
     }
 
-    enum Issuer {
-        case unconstrainedRoot
-        case unconstrainedIntermediate
-        case secondLevelIntermediate
-
-        var name: DistinguishedName {
-            switch self {
-            case .unconstrainedRoot:
-                return unconstrainedCAName
-            case .unconstrainedIntermediate:
-                return unconstrainedIntermediateName
-            case .secondLevelIntermediate:
-                return secondLevelIntermediateName
-            }
-        }
-
-        var key: Certificate.PrivateKey {
-            switch self {
-            case .unconstrainedRoot:
-                return .init(unconstrainedCAPrivateKey)
-            case .unconstrainedIntermediate:
-                return .init(unconstrainedIntermediateKey)
-            case .secondLevelIntermediate:
-                return .init(secondLevelIntermediateKey)
-            }
-        }
+    struct Issuer {
+        static let unconstrainedRoot = Self(name: TestPKI.unconstrainedCAName, key: .init(TestPKI.unconstrainedCAPrivateKey))
+        static let unconstrainedIntermediate = Self(name: TestPKI.unconstrainedIntermediateName, key: .init(TestPKI.unconstrainedIntermediateKey))
+        static let secondLevelIntermediate = Self(name: TestPKI.secondLevelIntermediateName, key: .init(TestPKI.secondLevelIntermediateKey))
+        
+        var name: DistinguishedName
+        var key: Certificate.PrivateKey
     }
 
     static func issueLeaf(
