@@ -262,6 +262,38 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
+    
+    func testValidV1CertsAreAccepted() async throws {
+        let roots = CertificateStore([TestPKI.unconstrainedCA])
+        let leaf = TestPKI.issueLeaf(version: .v1, issuer: .unconstrainedIntermediate, customExtensions: .init())
+
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
+    }
+    
+    func testValidV1CertsWithExtensionsAreRejected() async throws {
+        let roots = CertificateStore([TestPKI.unconstrainedCA])
+        let leaf = TestPKI.issueLeaf(version: .v1, issuer: .unconstrainedIntermediate, customExtensions: try .init {
+            Certificate.Extension(oid: [1, 2, 3, 4], critical: false, value: [5, 6, 7, 8])
+        })
+
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        guard case .couldNotValidate(let policyFailures) = result else {
+            XCTFail("Validated: \(result)")
+            return
+        }
+         
+        XCTAssertEqual(policyFailures.count, 1)
+    }
 
     private func _expiredLeafIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
@@ -1602,6 +1634,7 @@ fileprivate enum TestPKI {
     }
 
     static func issueLeaf(
+        version: Certificate.Version = .v3,
         commonName: String = "Leaf",
         notValidBefore: Date = Self.startDate,
         notValidAfter: Date = Self.startDate + .days(365),
@@ -1631,7 +1664,7 @@ fileprivate enum TestPKI {
         }
 
         return try! Certificate(
-            version: .v3,
+            version: version,
             serialNumber: .init(),
             publicKey: .init(leafKey.publicKey),
             notValidBefore: notValidBefore,
