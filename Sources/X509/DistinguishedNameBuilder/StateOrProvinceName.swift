@@ -30,7 +30,7 @@ public struct StateOrProvinceName: RelativeDistinguishedNameConvertible {
     }
 
     @inlinable
-    public func makeRDN() throws -> RelativeDistinguishedName {
+    public func makeRDN() -> RelativeDistinguishedName {
         return RelativeDistinguishedName(
             .init(type: .RDNAttributeType.stateOrProvinceName, utf8String: name)
         )

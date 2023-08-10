@@ -33,8 +33,7 @@
 public struct DistinguishedNameBuilder {
     @inlinable
     public static func buildExpression<Extension: RelativeDistinguishedNameConvertible>(_ expression: Extension) -> DistinguishedName {
-        // TODO: Remove the try!
-        try! DistinguishedName([expression.makeRDN()])
+        DistinguishedName([expression.makeRDN()])
     }
 
     @inlinable
@@ -69,5 +68,5 @@ public struct DistinguishedNameBuilder {
 }
 
 public protocol RelativeDistinguishedNameConvertible {
-    func makeRDN() throws -> RelativeDistinguishedName
+    func makeRDN() -> RelativeDistinguishedName
 }

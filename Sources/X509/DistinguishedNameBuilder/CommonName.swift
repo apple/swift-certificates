@@ -30,7 +30,7 @@ public struct CommonName: RelativeDistinguishedNameConvertible {
     }
 
     @inlinable
-    public func makeRDN() throws -> RelativeDistinguishedName {
+    public func makeRDN() -> RelativeDistinguishedName {
         return RelativeDistinguishedName(
             .init(type: .RDNAttributeType.commonName, utf8String: name)
         )
