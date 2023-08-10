@@ -86,8 +86,30 @@ struct BasicConstraintsPolicy: VerifierPolicy {
             } catch {
                 return .failsToMeetPolicy(reason: "RFC5280Policy: Error processing basic constraints for \(cert): \(error)")
             }
-
-            subCACount += 1
+            
+            if cert.issuer != cert.subject {
+                // only non-self-issued certificates count against the maxPathLength limit
+                //
+                // RFC Section 4.2.1.9.  Basic Constraints
+                // [...]
+                // The pathLenConstraint field is meaningful only if the cA boolean is
+                // asserted and the key usage extension, if present, asserts the
+                // keyCertSign bit (Section 4.2.1.3).  In this case, it gives the
+                // maximum number of non-self-issued intermediate certificates that may
+                // follow this certificate in a valid certification path.  (Note: The
+                // last certificate in the certification path is not an intermediate
+                // certificate, and is not included in this limit.  Usually, the last
+                // certificate is an end entity certificate, but it can be a CA
+                // certificate.)  A pathLenConstraint of zero indicates that no non-
+                // self-issued intermediate CA certificates may follow in a valid
+                // certification path.  Where it appears, the pathLenConstraint field
+                // MUST be greater than or equal to zero.  Where pathLenConstraint does
+                // not appear, no limit is imposed.
+                // [...]
+                // https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.9
+                
+                subCACount += 1
+            }
         }
 
         return .meetsPolicy
