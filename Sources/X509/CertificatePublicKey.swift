@@ -331,7 +331,7 @@ extension _RSA.Signing.PublicKey {
 
 extension Certificate.PublicKey {
     @inlinable
-    static var pemDiscriminatorForPublicKey: String { "PUBLIC KEY" }
+    static var pemDiscriminator: String { "PUBLIC KEY" }
 
     @inlinable
     public init(pemEncoded: String) throws {
@@ -340,10 +340,10 @@ extension Certificate.PublicKey {
 
     @inlinable
     public init(pemDocument: PEMDocument) throws {
-        guard pemDocument.discriminator == Self.pemDiscriminatorForPublicKey else {
+        guard pemDocument.discriminator == Self.pemDiscriminator else {
             throw ASN1Error.invalidPEMDocument(
                 reason:
-                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPublicKey) instead"
+                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminator) instead"
             )
         }
 

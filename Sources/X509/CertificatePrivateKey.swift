@@ -215,13 +215,13 @@ extension Certificate.PrivateKey {
 @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 extension Certificate.PrivateKey {
     @inlinable
-    static var pemDiscriminatorForRSAPrivateKey: String { "RSA PRIVATE KEY" }
+    static var pemDiscriminatorForRSA: String { "RSA PRIVATE KEY" }
 
     @inlinable
-    static var pemDiscriminatorForSEC1PrivateKey: String { "EC PRIVATE KEY" }
+    static var pemDiscriminatorForSEC1: String { "EC PRIVATE KEY" }
 
     @inlinable
-    static var pemDiscriminatorForPKCS8PrivateKey: String { "PRIVATE KEY" }
+    static var pemDiscriminatorForPKCS8: String { "PRIVATE KEY" }
 
     @inlinable
     public init(pemEncoded: String) throws {
@@ -231,14 +231,14 @@ extension Certificate.PrivateKey {
     @inlinable
     public init(pemDocument: PEMDocument) throws {
         switch pemDocument.discriminator {
-        case Self.pemDiscriminatorForRSAPrivateKey:
+        case Self.pemDiscriminatorForRSA:
             self = try .init(_CryptoExtras._RSA.Signing.PrivateKey.init(derRepresentation: pemDocument.derBytes))
 
-        case Self.pemDiscriminatorForSEC1PrivateKey:
+        case Self.pemDiscriminatorForSEC1:
             let sec1 = try SEC1PrivateKey(derEncoded: pemDocument.derBytes)
             self = try .init(ecdsaAlgorithm: sec1.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
 
-        case Self.pemDiscriminatorForPKCS8PrivateKey:
+        case Self.pemDiscriminatorForPKCS8:
             let pkcs8 = try PKCS8PrivateKey(derEncoded: pemDocument.derBytes)
             switch pkcs8.algorithm {
             case .ecdsaP256, .ecdsaP384, .ecdsaP521:
@@ -259,7 +259,7 @@ extension Certificate.PrivateKey {
         default:
             throw ASN1Error.invalidPEMDocument(
                 reason:
-                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPKCS8PrivateKey), \(Self.pemDiscriminatorForSEC1PrivateKey) or \(Self.pemDiscriminatorForRSAPrivateKey) instead"
+                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPKCS8), \(Self.pemDiscriminatorForSEC1) or \(Self.pemDiscriminatorForRSA) instead"
             )
         }
     }
