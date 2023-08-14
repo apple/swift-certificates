@@ -85,7 +85,7 @@ final class DNSNamesTests: XCTestCase {
         ("*.test.FR", "wwW.tESt.fr", false),
         (".uk", "f.uk", false),
         ("?.bar.foo.com", "w.bar.foo.com", false),
-        ("(www|ftp).foo.com", "www.foo.com", false), // regex!
+        ("(www|ftp).foo.com", "www.foo.com", false),  // regex!
         ("www.foo.com\0", "www.foo.com", false),
         ("www.foo.com\0*.foo.com", "www.foo.com", false),
         ("ww.house.example", "www.house.example", false),

@@ -63,11 +63,16 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedSignatureAlgorithm``.
     @inline(never)
     public static func unsupportedSignatureAlgorithm(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .unsupportedSignatureAlgorithm, reason: reason, file: file, line: line
+                code: .unsupportedSignatureAlgorithm,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -77,11 +82,16 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedPublicKeyAlgorithm``.
     @inline(never)
     public static func unsupportedPublicKeyAlgorithm(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .unsupportedPublicKeyAlgorithm, reason: reason, file: file, line: line
+                code: .unsupportedPublicKeyAlgorithm,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -91,11 +101,16 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/invalidSignatureForCertificate``.
     @inline(never)
     public static func invalidSignatureForCertificate(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .invalidSignatureForCertificate, reason: reason, file: file, line: line
+                code: .invalidSignatureForCertificate,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -105,11 +120,16 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/incorrectOIDForExtension``.
     @inline(never)
     public static func incorrectOIDForExtension(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .incorrectOIDForExtension, reason: reason, file: file, line: line
+                code: .incorrectOIDForExtension,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -119,25 +139,35 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedDigestAlgorithm``.
     @inline(never)
     public static func unsupportedDigestAlgorithm(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .unsupportedDigestAlgorithm, reason: reason, file: file, line: line
+                code: .unsupportedDigestAlgorithm,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
-    
+
     /// A digest private key isn't supported
     /// - Parameter reason: A detailed reason indicating the unsupported private key.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedPrivateKey``.
     @inline(never)
     public static func unsupportedPrivateKey(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .unsupportedPrivateKey, reason: reason, file: file, line: line
+                code: .unsupportedPrivateKey,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -147,11 +177,16 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/incorrectOIDForAttribute``.
     @inline(never)
     public static func incorrectOIDForAttribute(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .incorrectOIDForAttribute, reason: reason, file: file, line: line
+                code: .incorrectOIDForAttribute,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -161,25 +196,35 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/invalidCSRAttribute``.
     @inline(never)
     public static func invalidCSRAttribute(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .invalidCSRAttribute, reason: reason, file: file, line: line
+                code: .invalidCSRAttribute,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
-    
+
     /// An OID is present twice.
     /// - Parameter reason: A detailed reason detailing which OID is duplicate.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/duplicateOID``.
     @inline(never)
     public static func duplicateOID(
-        reason: String, file: String = #fileID, line: UInt = #line
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
     ) -> CertificateError {
         return CertificateError(
             backing: .init(
-                code: .duplicateOID, reason: reason, file: file, line: line
+                code: .duplicateOID,
+                reason: reason,
+                file: file,
+                line: line
             )
         )
     }
@@ -224,7 +269,7 @@ extension CertificateError {
 
         /// The digest algorithm isn't supported.
         public static let unsupportedDigestAlgorithm = ErrorCode(.unsupportedDigestAlgorithm)
-        
+
         /// The private key isn't supported.
         public static let unsupportedPrivateKey = ErrorCode(.unsupportedPrivateKey)
 
@@ -233,7 +278,7 @@ extension CertificateError {
 
         /// A CSR attribute is invalid.
         public static let invalidCSRAttribute = ErrorCode(.invalidCSRAttribute)
-        
+
         /// An OID is present twice.
         public static let duplicateOID = ErrorCode(.duplicateOID)
 
@@ -266,7 +311,7 @@ extension CertificateError {
         }
 
         // Only the error code matters for equality.
-        static func ==(lhs: Backing, rhs: Backing) -> Bool {
+        static func == (lhs: Backing, rhs: Backing) -> Bool {
             return lhs.code == rhs.code
         }
 

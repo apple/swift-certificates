@@ -180,7 +180,10 @@ extension GeneralName {
             try coder.appendConstructedNode(identifier: identifier) { coder in
                 try coder.serialize(self.typeID)
                 if let value = self.value {
-                    try coder.serialize(value, explicitlyTaggedWithIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific))
+                    try coder.serialize(
+                        value,
+                        explicitlyTaggedWithIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific)
+                    )
                 }
             }
         }

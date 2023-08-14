@@ -28,7 +28,7 @@ struct CMSVersion: RawRepresentable, Hashable, Sendable {
     init(rawValue: Int) {
         self.rawValue = rawValue
     }
-    
+
     @usableFromInline static let v0 = Self(rawValue: 0)
     @usableFromInline static let v1 = Self(rawValue: 1)
     @usableFromInline static let v2 = Self(rawValue: 2)

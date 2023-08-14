@@ -21,7 +21,7 @@ public struct _TinyArray<Element> {
         case one(Element)
         case arbitrary([Element])
     }
-    
+
     @usableFromInline
     var storage: Storage
 }
@@ -34,21 +34,21 @@ extension _TinyArray: Sendable where Element: Sendable {}
 
 extension _TinyArray: RandomAccessCollection {
     public typealias Element = Element
-    
+
     public typealias Index = Int
-    
+
     @inlinable
     public subscript(position: Int) -> Element {
         get {
             self.storage[position]
         }
     }
-    
+
     @inlinable
     public var startIndex: Int {
         self.storage.startIndex
     }
-    
+
     @inlinable
     public var endIndex: Int {
         self.storage.endIndex
@@ -60,38 +60,38 @@ extension _TinyArray {
     public init(_ elements: some Sequence<Element>) {
         self.storage = .init(elements)
     }
-    
+
     @inlinable
     public init(_ elements: some Sequence<Result<Element, some Error>>) throws {
         self.storage = try .init(elements)
     }
-    
+
     @inlinable
     public init() {
         self.storage = .init()
     }
-    
+
     @inlinable
     public mutating func append(_ newElement: Element) {
         self.storage.append(newElement)
     }
-    
+
     @inlinable
-    public mutating func append(contentsOf newElements: some Sequence<Element>){
+    public mutating func append(contentsOf newElements: some Sequence<Element>) {
         self.storage.append(contentsOf: newElements)
     }
-    
+
     @discardableResult
     @inlinable
     public mutating func remove(at index: Int) -> Element {
         self.storage.remove(at: index)
     }
-    
+
     @inlinable
     public mutating func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
         try self.storage.removeAll(where: shouldBeRemoved)
     }
-    
+
     @inlinable
     public mutating func sort(by areInIncreasingOrder: (Element, Element) throws -> Bool) rethrows {
         try self.storage.sort(by: areInIncreasingOrder)
@@ -102,7 +102,7 @@ extension _TinyArray {
 
 extension _TinyArray.Storage: Equatable where Element: Equatable {
     @inlinable
-    static func ==(lhs: Self, rhs: Self) -> Bool {
+    static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.one(let lhs), .one(let rhs)):
             return lhs == rhs
@@ -110,14 +110,14 @@ extension _TinyArray.Storage: Equatable where Element: Equatable {
             // we don't use lhs.elementsEqual(rhs) so we can hit the fast path from Array
             // if both arrays share the same underlying storage: https://github.com/apple/swift/blob/b42019005988b2d13398025883e285a81d323efa/stdlib/public/core/Array.swift#L1775
             return lhs == rhs
-            
+
         case (.one(let element), .arbitrary(let array)),
             (.arbitrary(let array), .one(let element)):
             guard array.count == 1 else {
                 return false
             }
             return element == array[0]
-            
+
         }
     }
 }
@@ -148,12 +148,12 @@ extension _TinyArray.Storage: RandomAccessCollection {
             }
         }
     }
-    
+
     @inlinable
     var startIndex: Int {
         0
     }
-    
+
     @inlinable
     var endIndex: Int {
         switch self {
@@ -162,14 +162,14 @@ extension _TinyArray.Storage: RandomAccessCollection {
         }
     }
 }
- 
+
 extension _TinyArray.Storage {
     @inlinable
     init(_ elements: some Sequence<Element>) {
         self = .arbitrary([])
         self.append(contentsOf: elements)
     }
-    
+
     @inlinable
     init(_ newElements: some Sequence<Result<Element, some Error>>) throws {
         var iterator = newElements.makeIterator()
@@ -183,7 +183,7 @@ extension _TinyArray.Storage {
             self = .one(firstElement)
             return
         }
-        
+
         var elements: [Element] = []
         elements.reserveCapacity(newElements.underestimatedCount)
         elements.append(firstElement)
@@ -193,19 +193,19 @@ extension _TinyArray.Storage {
         }
         self = .arbitrary(elements)
     }
-    
+
     @inlinable
     init() {
         self = .arbitrary([])
     }
-    
+
     @inlinable
     mutating func append(_ newElement: Element) {
         self.append(contentsOf: CollectionOfOne(newElement))
     }
-    
+
     @inlinable
-    mutating func append(contentsOf newElements: some Sequence<Element>){
+    mutating func append(contentsOf newElements: some Sequence<Element>) {
         switch self {
         case .one(let firstElement):
             var iterator = newElements.makeIterator()
@@ -219,7 +219,7 @@ extension _TinyArray.Storage {
             elements.append(secondElement)
             elements.appendRemainingElements(from: &iterator)
             self = .arbitrary(elements)
-            
+
         case .arbitrary(var elements):
             if elements.isEmpty {
                 // if `self` is currently empty and `newElements` just contains a single
@@ -240,15 +240,15 @@ extension _TinyArray.Storage {
                 elements.append(secondElement)
                 elements.appendRemainingElements(from: &iterator)
                 self = .arbitrary(elements)
-            
+
             } else {
                 elements.append(contentsOf: newElements)
                 self = .arbitrary(elements)
             }
-            
+
         }
     }
-    
+
     @discardableResult
     @inlinable
     mutating func remove(at index: Int) -> Element {
@@ -259,16 +259,16 @@ extension _TinyArray.Storage {
             }
             self = .arbitrary([])
             return oldElement
-            
+
         case .arbitrary(var elements):
             defer {
                 self = .arbitrary(elements)
             }
             return elements.remove(at: index)
-            
+
         }
     }
-    
+
     @inlinable
     mutating func removeAll(where shouldBeRemoved: (Element) throws -> Bool) rethrows {
         switch self {
@@ -276,16 +276,16 @@ extension _TinyArray.Storage {
             if try shouldBeRemoved(oldElement) {
                 self = .arbitrary([])
             }
-            
+
         case .arbitrary(var elements):
             defer {
                 self = .arbitrary(elements)
             }
             return try elements.removeAll(where: shouldBeRemoved)
-            
+
         }
     }
-    
+
     @inlinable
     mutating func sort(by areInIncreasingOrder: (Element, Element) throws -> Bool) rethrows {
         switch self {
@@ -296,12 +296,11 @@ extension _TinyArray.Storage {
             defer {
                 self = .arbitrary(elements)
             }
-            
+
             try elements.sort(by: areInIncreasingOrder)
         }
     }
 }
-
 
 extension Array {
     @inlinable

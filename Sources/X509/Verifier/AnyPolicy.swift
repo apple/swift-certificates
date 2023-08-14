@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-
 /// ``AnyPolicy`` can be used to erase the concrete type of some ``VerifierPolicy``.
 ///  Only use ``AnyPolicy`` if type erasure is necessary.
 ///  Instead try to use conditional inclusion of different policies using ``PolicyBuilder``.
@@ -29,29 +28,29 @@ import SwiftASN1
 public struct AnyPolicy: VerifierPolicy {
     @usableFromInline
     var policy: any VerifierPolicy
-    
-    
+
     @inlinable
     /// Erases the type of some ``VerifierPolicy`` to ``AnyPolicy``.
     /// - Parameter policy: the concrete ``VerifierPolicy``
     public init(_ policy: some VerifierPolicy) {
         self.policy = policy
     }
-    
+
     /// Erases the type of some ``VerifierPolicy`` to ``AnyPolicy``.
     /// - Parameter policy: the ``VerifierPolicy`` constructed using the ``PolicyBuilder`` DSL.
     @inlinable
     public init(@PolicyBuilder makePolicy: () throws -> some VerifierPolicy) rethrows {
         self.init(try makePolicy())
     }
-    
+
     @inlinable
     public var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] {
         policy.verifyingCriticalExtensions
     }
-    
+
     @inlinable
-    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
+    {
         await policy.chainMeetsPolicyRequirements(chain: chain)
     }
 }

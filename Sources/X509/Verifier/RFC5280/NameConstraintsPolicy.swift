@@ -23,7 +23,7 @@ struct NameConstraintsPolicy: VerifierPolicy {
     ]
 
     @inlinable
-    init() { }
+    init() {}
 
     @inlinable
     func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
@@ -82,11 +82,17 @@ struct NameConstraintsPolicy: VerifierPolicy {
             }
 
             for name in names {
-                if case .failsToMeetPolicy(let reason) = Self._validatePermittedSubtrees(constraints.permittedSubtrees, name) {
+                if case .failsToMeetPolicy(let reason) = Self._validatePermittedSubtrees(
+                    constraints.permittedSubtrees,
+                    name
+                ) {
                     return .failsToMeetPolicy(reason: reason)
                 }
 
-                if case .failsToMeetPolicy(let reason) = Self._validateExcludedSubtrees(constraints.excludedSubtrees, name) {
+                if case .failsToMeetPolicy(let reason) = Self._validateExcludedSubtrees(
+                    constraints.excludedSubtrees,
+                    name
+                ) {
                     return .failsToMeetPolicy(reason: reason)
                 }
             }
@@ -97,26 +103,39 @@ struct NameConstraintsPolicy: VerifierPolicy {
 
     @inlinable
     static func _validateExcludedSubtrees(
-        _ excludedSubtrees: [GeneralName], _ name: GeneralName
+        _ excludedSubtrees: [GeneralName],
+        _ name: GeneralName
     ) -> PolicyEvaluationResult {
         // For excluded trees, if _any_ match then the name is forbidden.
         for excludedSubtree in excludedSubtrees {
             switch (excludedSubtree, name) {
             case (.directoryName(let constraint), .directoryName(let presentedName)):
                 if directoryNameMatchesConstraint(directoryName: presentedName, constraint: constraint) {
-                    return .failsToMeetPolicy(reason: "RFC5280Policy: directoryName \(presentedName) is excluded by \(excludedSubtree) in name constraints")
+                    return .failsToMeetPolicy(
+                        reason:
+                            "RFC5280Policy: directoryName \(presentedName) is excluded by \(excludedSubtree) in name constraints"
+                    )
                 }
             case (.dnsName(let constraint), .dnsName(let presentedName)):
                 if dnsNameMatchesConstraint(dnsName: presentedName.utf8, constraint: constraint.utf8) {
-                    return .failsToMeetPolicy(reason: "RFC5280Policy: dnsName \(presentedName) is excluded by \(excludedSubtree) in name constraints")
+                    return .failsToMeetPolicy(
+                        reason:
+                            "RFC5280Policy: dnsName \(presentedName) is excluded by \(excludedSubtree) in name constraints"
+                    )
                 }
             case (.ipAddress(let constraint), .ipAddress(let presentedName)):
                 if ipAddressMatchesConstraint(ipAddress: presentedName, constraint: constraint) {
-                    return .failsToMeetPolicy(reason: "RFC5280Policy: ipAddress \(presentedName) is excluded by \(excludedSubtree) in name constraints")
+                    return .failsToMeetPolicy(
+                        reason:
+                            "RFC5280Policy: ipAddress \(presentedName) is excluded by \(excludedSubtree) in name constraints"
+                    )
                 }
             case (.uniformResourceIdentifier(let constraint), .uniformResourceIdentifier(let presentedName)):
                 if uriNameMatchesConstraint(uriName: presentedName, constraint: constraint) {
-                    return .failsToMeetPolicy(reason: "RFC5280Policy: URI \(presentedName) is excluded by \(excludedSubtree) in name constraints")
+                    return .failsToMeetPolicy(
+                        reason:
+                            "RFC5280Policy: URI \(presentedName) is excluded by \(excludedSubtree) in name constraints"
+                    )
                 }
             case (.directoryName, _), (.dnsName, _), (.ipAddress, _), (.uniformResourceIdentifier, _):
                 // We support these, but the current name isn't of that type.
@@ -127,7 +146,10 @@ struct NameConstraintsPolicy: VerifierPolicy {
                 // Of the set that's currently unsupported, we should probably support rfc822Name (a.k.a. email address).
                 // For now we're omitting it, but at some point someone is going to run into this limitation and we'll want to come
                 // back and fix it.
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Unable to validate excluded subtree for name \(excludedSubtree), unsupported constraint")
+                return .failsToMeetPolicy(
+                    reason:
+                        "RFC5280Policy: Unable to validate excluded subtree for name \(excludedSubtree), unsupported constraint"
+                )
             }
         }
 
@@ -137,7 +159,8 @@ struct NameConstraintsPolicy: VerifierPolicy {
 
     @inlinable
     static func _validatePermittedSubtrees(
-        _ permittedSubtrees: [GeneralName], _ name: GeneralName
+        _ permittedSubtrees: [GeneralName],
+        _ name: GeneralName
     ) -> PolicyEvaluationResult {
         var evaluatedAtLeastOneConstraint = false
 
@@ -182,16 +205,20 @@ struct NameConstraintsPolicy: VerifierPolicy {
                 // Of the set that's currently unsupported, we should probably support rfc822Name (a.k.a. email address).
                 // For now we're omitting it, but at some point someone is going to run into this limitation and we'll want to come
                 // back and fix it.
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Unable to validate permitted subtree for name \(permittedSubtree), unsupported constraint")
+                return .failsToMeetPolicy(
+                    reason:
+                        "RFC5280Policy: Unable to validate permitted subtree for name \(permittedSubtree), unsupported constraint"
+                )
             }
         }
 
         // Uh-oh, nothing matched! This is only a problem if we have at least one constraint for the given type.
-        if evaluatedAtLeastOneConstraint {
-            return .failsToMeetPolicy(reason: "RFC5280Policy: Unable to validate permitted subtree for \(permittedSubtrees), no matches!")
-        } else {
+        guard evaluatedAtLeastOneConstraint else {
             return .meetsPolicy
         }
+        return .failsToMeetPolicy(
+            reason: "RFC5280Policy: Unable to validate permitted subtree for \(permittedSubtrees), no matches!"
+        )
     }
 }
 
@@ -238,12 +265,11 @@ extension Certificate {
 
             @inlinable
             mutating func next() -> GeneralName? {
-                if let subject = self.subject {
-                    self.subject = nil
-                    return .directoryName(subject)
-                } else {
+                guard let subject = self.subject else {
                     return self.alternativeNames.popFirst()
                 }
+                self.subject = nil
+                return .directoryName(subject)
             }
         }
     }

@@ -72,7 +72,7 @@ extension Certificate {
             var rng = SystemRandomNumberGenerator()
             self.init(generator: &rng)
         }
-        
+
         /// Construct a random 20-byte serial number.
         ///
         /// Serial numbers should be generated randomly, and may contain up to 20 bytes. This
@@ -86,9 +86,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.SerialNumber: Hashable { }
+extension Certificate.SerialNumber: Hashable {}
 
-extension Certificate.SerialNumber: Sendable { }
+extension Certificate.SerialNumber: Sendable {}
 
 extension Certificate.SerialNumber: CustomStringConvertible {
     public var description: String {
@@ -104,20 +104,20 @@ extension Certificate.SerialNumber: ExpressibleByIntegerLiteral {
     /// - Parameter integerLiteral: The raw big-endian bytes of the serial number.
     @inlinable
     public init(integerLiteral number: StaticBigInt) {
-        var bytes = Array<UInt8>()
+        var bytes = [UInt8]()
         let wordCount = (number.bitWidth - 1) / (MemoryLayout<UInt>.size * 8) + 1
         bytes.reserveCapacity(wordCount / MemoryLayout<UInt>.size)
-        
+
         for wordIndex in (0..<wordCount).reversed() {
             bytes.appendBigEndianBytes(number[wordIndex])
         }
-        
+
         self.bytes = ArraySlice(normalisingToASN1IntegerForm: bytes)
     }
 }
 #endif
 
-extension Array<UInt8> {
+extension [UInt8] {
     @inlinable
     mutating func appendBigEndianBytes(_ number: UInt) {
         let number = number.bigEndian

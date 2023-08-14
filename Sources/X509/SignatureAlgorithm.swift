@@ -28,9 +28,9 @@ extension Certificate {
         @inlinable
         init(algorithmIdentifier: AlgorithmIdentifier) {
             switch algorithmIdentifier {
-                // Per RFC 4055 § 5, we need to accept the RSA parameters field being
-                // absent, but we must _produce_ the one with an explicit NULL. So we
-                // normalise the signature algorithm here.
+            // Per RFC 4055 § 5, we need to accept the RSA parameters field being
+            // absent, but we must _produce_ the one with an explicit NULL. So we
+            // normalise the signature algorithm here.
             case .sha1WithRSAEncryptionUsingNil:
                 self._algorithmIdentifier = .sha1WithRSAEncryption
             case .sha256WithRSAEncryptionUsingNil:
@@ -88,9 +88,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.SignatureAlgorithm: Hashable { }
+extension Certificate.SignatureAlgorithm: Hashable {}
 
-extension Certificate.SignatureAlgorithm: Sendable { }
+extension Certificate.SignatureAlgorithm: Sendable {}
 
 extension Certificate.SignatureAlgorithm: CustomStringConvertible {
     public var description: String {
@@ -136,7 +136,9 @@ extension AlgorithmIdentifier {
         case .sha1WithRSAEncryption:
             self = .sha1
         default:
-            throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot generate digest algorithm for \(signatureAlgorithm)")
+            throw CertificateError.unsupportedSignatureAlgorithm(
+                reason: "Cannot generate digest algorithm for \(signatureAlgorithm)"
+            )
         }
     }
 }

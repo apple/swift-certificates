@@ -18,55 +18,55 @@ public struct VerificationDiagnostic: Sendable {
         var leafCertificate: Certificate
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
-    
+
     struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: Hashable, Sendable {
         var leafCertificate: Certificate
         var failsToMeetPolicyReason: String
     }
-    
+
     struct ChainFailsToMeetPolicy: Hashable, Sendable {
         var chain: UnverifiedCertificateChain
         var failsToMeetPolicyReason: String
     }
-    
+
     struct IssuerHasUnhandledCriticalExtension: Hashable, Sendable {
         var issuer: Certificate
         var partialChain: [Certificate]
         var handledCriticalExtensions: [ASN1ObjectIdentifier]
     }
-    
+
     struct IssuerHasNotSignedCertificate: Hashable, Sendable {
         var issuer: Certificate
         var partialChain: [Certificate]
     }
-    
+
     struct SearchingForIssuerOfPartialChain: Hashable, Sendable {
         var partialChain: [Certificate]
     }
-    
+
     struct FoundCandidateIssuersOfPartialChainInRootStore: Hashable, Sendable {
         var partialChain: [Certificate]
         var issuersInRootStore: [Certificate]
     }
-    
+
     struct FoundCandidateIssuersOfPartialChainInIntermediateStore: Hashable, Sendable {
         var partialChain: [Certificate]
         var issuersInIntermediateStore: [Certificate]
     }
-    
+
     struct FoundValidCertificateChain: Hashable, Sendable {
         var validCertificateChain: [Certificate]
     }
-    
+
     struct CouldNotValidateLeafCertificate: Hashable, Sendable {
         var leaf: Certificate
     }
-    
+
     struct IssuerIsAlreadyInTheChain: Hashable, Sendable {
         var partialChain: [Certificate]
         var issuer: Certificate
     }
-    
+
     enum Storage: Hashable, Sendable {
         case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
         case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
@@ -75,12 +75,14 @@ public struct VerificationDiagnostic: Sendable {
         case issuerHasNotSignedCertificate(IssuerHasNotSignedCertificate)
         case searchingForIssuerOfPartialChain(SearchingForIssuerOfPartialChain)
         case foundCandidateIssuersOfPartialChainInRootStore(FoundCandidateIssuersOfPartialChainInRootStore)
-        case foundCandidateIssuersOfPartialChainInIntermediateStore(FoundCandidateIssuersOfPartialChainInIntermediateStore)
+        case foundCandidateIssuersOfPartialChainInIntermediateStore(
+            FoundCandidateIssuersOfPartialChainInIntermediateStore
+        )
         case foundValidCertificateChain(FoundValidCertificateChain)
         case couldNotValidateLeafCertificate(CouldNotValidateLeafCertificate)
         case issuerIsAlreadyInTheChain(IssuerIsAlreadyInTheChain)
     }
-    
+
     var storage: Storage
 }
 
@@ -89,100 +91,116 @@ extension VerificationDiagnostic {
         _ leafCertificate: Certificate,
         handledCriticalExtensions: [ASN1ObjectIdentifier]
     ) -> Self {
-        self.init(storage: .leafCertificateHasUnhandledCriticalExtension(
-            leafCertificate,
-            handledCriticalExtensions: handledCriticalExtensions
-        ))
+        self.init(
+            storage: .leafCertificateHasUnhandledCriticalExtension(
+                leafCertificate,
+                handledCriticalExtensions: handledCriticalExtensions
+            )
+        )
     }
-    
+
     static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
         _ leafCertificate: Certificate,
         reason failsToMeetPolicyReason: String
     ) -> Self {
-        self.init(storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
-            leafCertificate,
-            reason: failsToMeetPolicyReason
-        ))
+        self.init(
+            storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
+                leafCertificate,
+                reason: failsToMeetPolicyReason
+            )
+        )
     }
-    
+
     static func chainFailsToMeetPolicy(
         _ chain: UnverifiedCertificateChain,
         reason failsToMeetPolicyReason: String
     ) -> Self {
-        self.init(storage: .chainFailsToMeetPolicy(
-            chain,
-            reason: failsToMeetPolicyReason
-        ))
+        self.init(
+            storage: .chainFailsToMeetPolicy(
+                chain,
+                reason: failsToMeetPolicyReason
+            )
+        )
     }
-    
+
     static func issuerHasUnhandledCriticalExtension(
         issuer: Certificate,
         chain: CandidatePartialChain,
         handledCriticalExtensions: [ASN1ObjectIdentifier]
     ) -> Self {
-        self.init(storage: .issuerHasUnhandledCriticalExtension(
-            issuer: issuer,
-            partialChain: chain.chain + CollectionOfOne(chain.currentTip),
-            handledCriticalExtensions: handledCriticalExtensions
-        ))
+        self.init(
+            storage: .issuerHasUnhandledCriticalExtension(
+                issuer: issuer,
+                partialChain: chain.chain + CollectionOfOne(chain.currentTip),
+                handledCriticalExtensions: handledCriticalExtensions
+            )
+        )
     }
-    
+
     static func issuerHasNotSignedCertificate(
         _ issuer: Certificate,
         chain: CandidatePartialChain
     ) -> Self {
-        self.init(storage: .issuerHasNotSignedCertificate(
-            issuer,
-            partialChain: chain.chain + CollectionOfOne(chain.currentTip)
-        ))
+        self.init(
+            storage: .issuerHasNotSignedCertificate(
+                issuer,
+                partialChain: chain.chain + CollectionOfOne(chain.currentTip)
+            )
+        )
     }
-    
+
     static func searchingForIssuerOfPartialChain(
         _ partialChain: CandidatePartialChain
     ) -> Self {
         .init(storage: .searchingForIssuerOfPartialChain(partialChain.chain + CollectionOfOne(partialChain.currentTip)))
     }
-    
+
     static func foundCandidateIssuersOfPartialChainInRootStore(
         _ partialChain: CandidatePartialChain,
         issuers issuersInRootStore: [Certificate]
     ) -> Self {
-        .init(storage: .foundCandidateIssuersOfPartialChainInRootStore(
-            partialChain.chain + CollectionOfOne(partialChain.currentTip),
-            issuers: issuersInRootStore
-        ))
+        .init(
+            storage: .foundCandidateIssuersOfPartialChainInRootStore(
+                partialChain.chain + CollectionOfOne(partialChain.currentTip),
+                issuers: issuersInRootStore
+            )
+        )
     }
-    
+
     static func foundCandidateIssuersOfPartialChainInIntermediateStore(
         _ partialChain: CandidatePartialChain,
         issuers issuersInIntermediateStore: [Certificate]
     ) -> Self {
-        .init(storage: .foundCandidateIssuersOfPartialChainInIntermediateStore(
-            partialChain.chain + CollectionOfOne(partialChain.currentTip),
-            issuers: issuersInIntermediateStore
-        ))
+        .init(
+            storage: .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                partialChain.chain + CollectionOfOne(partialChain.currentTip),
+                issuers: issuersInIntermediateStore
+            )
+        )
     }
-    
+
     static func foundValidCertificateChain(
         _ validCertificateChain: [Certificate]
     ) -> Self {
         .init(storage: .foundValidCertificateChain(validCertificateChain))
     }
-    
+
     static func couldNotValidateLeafCertificate(
         _ leaf: Certificate
     ) -> Self {
         .init(storage: .couldNotValidateLeafCertificate(leaf))
     }
-    
+
     static func issuerIsAlreadyInTheChain(
         _ partialChain: CandidatePartialChain,
         issuer: Certificate
     ) -> Self {
-        .init(storage: .issuerIsAlreadyInTheChain(
-            partialChain.chain + CollectionOfOne(partialChain.currentTip),
-            issuer: issuer
-        ))
+        .init(
+            storage: .issuerIsAlreadyInTheChain(
+                partialChain.chain + CollectionOfOne(partialChain.currentTip),
+                issuer: issuer
+            )
+        )
     }
 }
 
@@ -191,92 +209,106 @@ extension VerificationDiagnostic.Storage {
         _ leafCertificate: Certificate,
         handledCriticalExtensions: [ASN1ObjectIdentifier]
     ) -> Self {
-        .leafCertificateHasUnhandledCriticalExtension(.init(
-            leafCertificate: leafCertificate,
-            handledCriticalExtensions: handledCriticalExtensions
-        ))
+        .leafCertificateHasUnhandledCriticalExtension(
+            .init(
+                leafCertificate: leafCertificate,
+                handledCriticalExtensions: handledCriticalExtensions
+            )
+        )
     }
-    
+
     static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
         _ leafCertificate: Certificate,
         reason failsToMeetPolicyReason: String
     ) -> Self {
-        .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(.init(
-            leafCertificate: leafCertificate,
-            failsToMeetPolicyReason: failsToMeetPolicyReason
-        ))
+        .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
+            .init(
+                leafCertificate: leafCertificate,
+                failsToMeetPolicyReason: failsToMeetPolicyReason
+            )
+        )
     }
-    
+
     static func chainFailsToMeetPolicy(
         _ chain: UnverifiedCertificateChain,
         reason failsToMeetPolicyReason: String
     ) -> Self {
-        .chainFailsToMeetPolicy(.init(
-            chain: chain,
-            failsToMeetPolicyReason: failsToMeetPolicyReason
-        ))
+        .chainFailsToMeetPolicy(
+            .init(
+                chain: chain,
+                failsToMeetPolicyReason: failsToMeetPolicyReason
+            )
+        )
     }
-    
+
     static func issuerHasUnhandledCriticalExtension(
         issuer: Certificate,
         partialChain: [Certificate],
         handledCriticalExtensions: [ASN1ObjectIdentifier]
     ) -> Self {
-        .issuerHashUnhandledCriticalExtension(.init(
-            issuer: issuer,
-            partialChain: partialChain,
-            handledCriticalExtensions: handledCriticalExtensions
-        ))
+        .issuerHashUnhandledCriticalExtension(
+            .init(
+                issuer: issuer,
+                partialChain: partialChain,
+                handledCriticalExtensions: handledCriticalExtensions
+            )
+        )
     }
-    
+
     static func issuerHasNotSignedCertificate(
         _ issuer: Certificate,
         partialChain: [Certificate]
     ) -> Self {
-        .issuerHasNotSignedCertificate(.init(
-            issuer: issuer,
-            partialChain: partialChain
-        ))
+        .issuerHasNotSignedCertificate(
+            .init(
+                issuer: issuer,
+                partialChain: partialChain
+            )
+        )
     }
-    
+
     static func searchingForIssuerOfPartialChain(
         _ partialChain: [Certificate]
     ) -> Self {
         .searchingForIssuerOfPartialChain(.init(partialChain: partialChain))
     }
-    
+
     static func foundCandidateIssuersOfPartialChainInRootStore(
         _ partialChain: [Certificate],
         issuers issuersInRootStore: [Certificate]
     ) -> Self {
-        .foundCandidateIssuersOfPartialChainInRootStore(.init(
-            partialChain: partialChain,
-            issuersInRootStore: issuersInRootStore
-        ))
+        .foundCandidateIssuersOfPartialChainInRootStore(
+            .init(
+                partialChain: partialChain,
+                issuersInRootStore: issuersInRootStore
+            )
+        )
     }
-    
+
     static func foundCandidateIssuersOfPartialChainInIntermediateStore(
         _ partialChain: [Certificate],
         issuers issuersInIntermediateStore: [Certificate]
     ) -> Self {
-        .foundCandidateIssuersOfPartialChainInIntermediateStore(.init(
-            partialChain: partialChain,
-            issuersInIntermediateStore: issuersInIntermediateStore
-        ))
+        .foundCandidateIssuersOfPartialChainInIntermediateStore(
+            .init(
+                partialChain: partialChain,
+                issuersInIntermediateStore: issuersInIntermediateStore
+            )
+        )
     }
-    
+
     static func foundValidCertificateChain(
         _ validCertificateChain: [Certificate]
     ) -> Self {
         .foundValidCertificateChain(.init(validCertificateChain: validCertificateChain))
     }
-    
+
     static func couldNotValidateLeafCertificate(
         _ leaf: Certificate
     ) -> Self {
         .couldNotValidateLeafCertificate(.init(leaf: leaf))
     }
-    
+
     static func issuerIsAlreadyInTheChain(
         _ partialChain: [Certificate],
         issuer: Certificate
@@ -287,7 +319,9 @@ extension VerificationDiagnostic.Storage {
 
 extension Certificate.Extensions {
     @inlinable
-    func unhandledCriticalExtensions(for handledCriticalExtensions: [ASN1ObjectIdentifier]) -> some Sequence<Certificate.Extension> {
+    func unhandledCriticalExtensions(
+        for handledCriticalExtensions: [ASN1ObjectIdentifier]
+    ) -> some Sequence<Certificate.Extension> {
         self.lazy.filter { ext in
             ext.critical && !handledCriticalExtensions.contains(ext.oid)
         }
@@ -313,7 +347,8 @@ extension VerificationDiagnostic.Storage: CustomStringConvertible {
         case .issuerHasNotSignedCertificate(let diagnostic): return String(describing: diagnostic)
         case .searchingForIssuerOfPartialChain(let diagnostic): return String(describing: diagnostic)
         case .foundCandidateIssuersOfPartialChainInRootStore(let diagnostic): return String(describing: diagnostic)
-        case .foundCandidateIssuersOfPartialChainInIntermediateStore(let diagnostic): return String(describing: diagnostic)
+        case .foundCandidateIssuersOfPartialChainInIntermediateStore(let diagnostic):
+            return String(describing: diagnostic)
         case .foundValidCertificateChain(let diagnostic): return String(describing: diagnostic)
         case .couldNotValidateLeafCertificate(let diagnostic): return String(describing: diagnostic)
         case .issuerIsAlreadyInTheChain(let diagnostic): return String(describing: diagnostic)
@@ -429,7 +464,6 @@ extension VerificationDiagnostic.FoundValidCertificateChain: CustomStringConvert
     }
 }
 
-
 extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringConvertible {
     var description: String {
         """
@@ -450,7 +484,6 @@ extension VerificationDiagnostic.IssuerIsAlreadyInTheChain: CustomStringConverti
         """
     }
 }
-
 
 // MARK: CustomDebugStringConvertible
 
@@ -475,13 +508,15 @@ extension VerificationDiagnostic.Storage {
     var multilineDescription: String {
         switch self {
         case .leafCertificateHasUnhandledCriticalExtension(let diagnostic): return diagnostic.multilineDescription
-        case .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(let diagnostic): return diagnostic.multilineDescription
+        case .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(let diagnostic):
+            return diagnostic.multilineDescription
         case .chainFailsToMeetPolicy(let diagnostic): return diagnostic.multilineDescription
         case .issuerHashUnhandledCriticalExtension(let diagnostic): return diagnostic.multilineDescription
         case .issuerHasNotSignedCertificate(let diagnostic): return diagnostic.multilineDescription
         case .searchingForIssuerOfPartialChain(let diagnostic): return diagnostic.multilineDescription
         case .foundCandidateIssuersOfPartialChainInRootStore(let diagnostic): return diagnostic.multilineDescription
-        case .foundCandidateIssuersOfPartialChainInIntermediateStore(let diagnostic): return diagnostic.multilineDescription
+        case .foundCandidateIssuersOfPartialChainInIntermediateStore(let diagnostic):
+            return diagnostic.multilineDescription
         case .foundValidCertificateChain(let diagnostic): return diagnostic.multilineDescription
         case .couldNotValidateLeafCertificate(let diagnostic): return diagnostic.multilineDescription
         case .issuerIsAlreadyInTheChain(let diagnostic): return diagnostic.multilineDescription
@@ -493,12 +528,12 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions {
     var multilineDescription: String {
         """
         The leaf certificate has critical extensions that the policy does not understand and therefore can't enforce.
-        
+
         Unhandled extensions:
         \(self.leafCertificate.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
         ).lazy.map { String(reflecting: $0) }.joined(separator: "\n"))
-        
+
         Leaf certificate:
         \(String(reflecting: self.leafCertificate))
         """
@@ -509,10 +544,10 @@ extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPo
     var multilineDescription: String {
         """
         Leaf certificate is in the root store of the verifier but it does by itself not meet the policy.
-        
+
         Reason:
         \(String(reflecting: self.failsToMeetPolicyReason))
-        
+
         Leaf Certificate:
         \(String(reflecting: self.leafCertificate))
         """
@@ -523,10 +558,10 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy {
     var multilineDescription: String {
         """
         A certificate chain to a certificate in the root store was found but it does not meet the policy.
-        
+
         Reason:
         \(String(reflecting: self.failsToMeetPolicyReason))
-        
+
         Chain (from leaf to root):
         \(self.chain.lazy.map { String(reflecting: $0) }.joined(separator: "\n"))
         """
@@ -537,12 +572,12 @@ extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension {
     var multilineDescription: String {
         """
         A candidate issuer of a certificate in the (partial) chain has critical extensions that the policy does not understand and therefore can't enforce.
-        
+
         Unhandled extensions:
         \(self.issuer.extensions.unhandledCriticalExtensions(
             for: self.handledCriticalExtensions
         ).lazy.map { "- \(String(reflecting: $0))" }.joined(separator: "\n"))
-        
+
         Chain (from leaf to candidate issuer that has critical extensions the policy doesn't enforce):
         \(self.partialChain.lazy.map { String(reflecting: $0) }.joined(separator: "\n"))
         \(String(reflecting: issuer))
@@ -554,7 +589,7 @@ extension VerificationDiagnostic.IssuerHasNotSignedCertificate {
     var multilineDescription: String {
         """
         A candidate issuer of a certificate in the (partial) chain has not signed the previous certificate in the chain.
-        
+
         Chain (from leaf to candidate issuer that has not signed the certificate before it):
         \(self.partialChain.lazy.map { String(reflecting: $0) }.joined(separator: "\n"))
         \(String(reflecting: self.issuer))

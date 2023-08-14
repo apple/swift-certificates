@@ -25,7 +25,7 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
 
     @usableFromInline
     static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
-    
+
     case issuerAndSerialNumber(CMSIssuerAndSerialNumber)
     case subjectKeyIdentifier(SubjectKeyIdentifier)
 
@@ -36,7 +36,9 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
             self = try .issuerAndSerialNumber(.init(derEncoded: node))
 
         case Self.skiIdentifier:
-            self = try .subjectKeyIdentifier(.init(keyIdentifier: .init(derEncoded: node, withIdentifier: Self.skiIdentifier)))
+            self = try .subjectKeyIdentifier(
+                .init(keyIdentifier: .init(derEncoded: node, withIdentifier: Self.skiIdentifier))
+            )
 
         default:
             throw ASN1Error.unexpectedFieldType(node.identifier)
@@ -51,7 +53,7 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
 
         case .subjectKeyIdentifier(let subjectKeyIdentifier):
             try subjectKeyIdentifier.keyIdentifier.serialize(into: &coder, withIdentifier: Self.skiIdentifier)
-            
+
         }
     }
 

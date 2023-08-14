@@ -103,7 +103,9 @@ public struct CertificateSigningRequest {
         self.signatureAlgorithm = signatureAlgorithm
         self.signature = signature
         self.infoBytes = try DER.Serializer.serialized(element: self.info)[...]
-        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(
+            element: AlgorithmIdentifier(self.signatureAlgorithm)
+        )[...]
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
@@ -137,7 +139,9 @@ public struct CertificateSigningRequest {
         let infoBytes = try DER.Serializer.serialized(element: self.info)
         self.signature = try privateKey.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
         self.infoBytes = infoBytes[...]
-        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(
+            element: AlgorithmIdentifier(self.signatureAlgorithm)
+        )[...]
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
@@ -152,21 +156,25 @@ public struct CertificateSigningRequest {
     ) throws {
         self.info = info
         self.signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: signatureAlgorithm)
-        self.signature = try Certificate.Signature(signatureAlgorithm: self.signatureAlgorithm, signatureBytes: signature)
+        self.signature = try Certificate.Signature(
+            signatureAlgorithm: self.signatureAlgorithm,
+            signatureBytes: signature
+        )
         self.infoBytes = infoBytes
         self.signatureAlgorithmBytes = signatureAlgorithmBytes
         self.signatureBytes = signatureBytes
     }
 }
 
-extension CertificateSigningRequest: Hashable { }
+extension CertificateSigningRequest: Hashable {}
 
-extension CertificateSigningRequest: Sendable { }
+extension CertificateSigningRequest: Sendable {}
 
 extension CertificateSigningRequest: CustomStringConvertible {
     @inlinable
     public var description: String {
-        return "CertificateSigningRequest(version: \(self.version), subject: \(self.subject), publicKey: \(self.publicKey), attributes: \(self.attributes), signatureAlgorithm: \(self.signatureAlgorithm), signature: \(self.signature)"
+        return
+            "CertificateSigningRequest(version: \(self.version), subject: \(self.subject), publicKey: \(self.publicKey), attributes: \(self.attributes), signatureAlgorithm: \(self.signatureAlgorithm), signature: \(self.signature)"
     }
 }
 
@@ -180,8 +188,8 @@ extension CertificateSigningRequest: DERImplicitlyTaggable {
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             guard let infoNode = nodes.next(),
-                  let signatureAlgorithmNode = nodes.next(),
-                  let signatureNode = nodes.next()
+                let signatureAlgorithmNode = nodes.next(),
+                let signatureNode = nodes.next()
             else {
                 throw ASN1Error.invalidASN1Object(reason: "Invalid CSR object, insufficient ASN.1 nodes")
             }

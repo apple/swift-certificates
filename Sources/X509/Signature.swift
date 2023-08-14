@@ -55,9 +55,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.Signature: Hashable { }
+extension Certificate.Signature: Hashable {}
 
-extension Certificate.Signature: Sendable { }
+extension Certificate.Signature: Sendable {}
 
 extension Certificate.Signature: CustomStringConvertible {
     public var description: String {
@@ -77,7 +77,7 @@ extension Certificate.Signature {
         case rsa(_CryptoExtras._RSA.Signing.RSASignature)
 
         @inlinable
-        static func ==(lhs: BackingSignature, rhs: BackingSignature) -> Bool {
+        static func == (lhs: BackingSignature, rhs: BackingSignature) -> Bool {
             switch (lhs, rhs) {
             case (.ecdsa(let l), .ecdsa(let r)):
                 return l == r

@@ -80,7 +80,7 @@ extension Certificate {
     public struct Extensions {
         @usableFromInline
         var _extensions: [Certificate.Extension]
-        
+
         /// Produce a new Extensions container from a collection of ``Certificate/Extension``.
         ///
         /// - Parameter extensions: The base extensions.
@@ -88,7 +88,7 @@ extension Certificate {
         @inlinable
         public init<Elements>(_ extensions: Elements) throws where Elements: Sequence, Elements.Element == Extension {
             self._extensions = Array(extensions)
-            
+
             // This limit is somewhat arbitrary. Linear search for under 32 elements
             // is faster than hashing and fast enough to not be a significant performance bottleneck.
             // We have this limit because a bad actor could increase the number of elements to an arbitrary number which
@@ -96,13 +96,19 @@ extension Certificate {
             // This can be used for DoS attacks so we have added this limit.
             let maxExtensions = 32
             guard self._extensions.count <= maxExtensions else {
-                throw ASN1Error.invalidASN1Object(reason: "Too many extensions. Found \(self._extensions.count) but only \(maxExtensions) are allowed.")
+                throw ASN1Error.invalidASN1Object(
+                    reason:
+                        "Too many extensions. Found \(self._extensions.count) but only \(maxExtensions) are allowed."
+                )
             }
-            
+
             if let (firstIndex, secondIndex) = self._extensions.findDuplicates(by: { $0.oid == $1.oid }) {
                 let firstExt = self._extensions[firstIndex]
                 let secondExt = self._extensions[secondIndex]
-                throw CertificateError.duplicateOID(reason: "duplicate extension for OID \(firstExt.oid). First extension \(firstExt) at \(firstIndex) and second extension \(secondExt) at \(secondIndex)")
+                throw CertificateError.duplicateOID(
+                    reason:
+                        "duplicate extension for OID \(firstExt.oid). First extension \(firstExt) at \(firstIndex) and second extension \(secondExt) at \(secondIndex)"
+                )
             }
         }
 
@@ -137,9 +143,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.Extensions: Hashable { }
+extension Certificate.Extensions: Hashable {}
 
-extension Certificate.Extensions: Sendable { }
+extension Certificate.Extensions: Sendable {}
 
 extension Certificate.Extensions: RandomAccessCollection {
     /// Produce a new empty Extensions container.
@@ -147,17 +153,17 @@ extension Certificate.Extensions: RandomAccessCollection {
     public init() {
         self._extensions = []
     }
-    
+
     @inlinable
     public var startIndex: Int {
         self._extensions.startIndex
     }
-    
+
     @inlinable
     public var endIndex: Int {
         self._extensions.endIndex
     }
-    
+
     @inlinable
     public subscript(position: Int) -> Certificate.Extension {
         get {
@@ -165,7 +171,6 @@ extension Certificate.Extensions: RandomAccessCollection {
         }
     }
 }
-
 
 // MARK: Modifying methods
 extension Certificate.Extensions {
@@ -177,12 +182,15 @@ extension Certificate.Extensions {
     @inlinable
     public mutating func append(_ extension: Certificate.Extension) throws {
         if let oldExtension = self._extensions.first(where: { $0.oid == `extension`.oid }) {
-            throw CertificateError.duplicateOID(reason: "tried to append an extension for OID \(`extension`.oid) which is already present. Old extension: \(oldExtension) New extension: \(`extension`)")
+            throw CertificateError.duplicateOID(
+                reason:
+                    "tried to append an extension for OID \(`extension`.oid) which is already present. Old extension: \(oldExtension) New extension: \(`extension`)"
+            )
         } else {
             self._extensions.append(`extension`)
         }
     }
-    
+
     /// Updates the ``Certificate/Extension`` stored in the dictionary for the ``Certificate/Extension/oid`` of the `extension`,
     /// or appends `extension` if an ``Certificate/Extension`` with same  ``Certificate/Extension/oid`` does not exist.
     ///
@@ -191,16 +199,15 @@ extension Certificate.Extensions {
     @inlinable
     @discardableResult
     public mutating func update(_ extension: Certificate.Extension) -> Certificate.Extension? {
-        if let index = self._extensions.firstIndex(where: { $0.oid == `extension`.oid }) {
-            let oldExtension = self._extensions[index]
-            self._extensions[index] = `extension`
-            return oldExtension
-        } else {
+        guard let index = self._extensions.firstIndex(where: { $0.oid == `extension`.oid }) else {
             self._extensions.append(`extension`)
             return nil
         }
+        let oldExtension = self._extensions[index]
+        self._extensions[index] = `extension`
+        return oldExtension
     }
-    
+
     /// Removes the ``Certificate/Extension`` with the given `oid`.
     /// - Parameter oid: The  ``Certificate/Extension/oid`` of the``Certificate/Extension`` to remove.
     /// - Returns: The ``Certificate/Extension`` that was removed,
@@ -218,11 +225,10 @@ extension Certificate.Extensions {
 extension Certificate.Extensions: CustomStringConvertible {
     @inlinable
     public var description: String {
-        if self.isEmpty {
-            return "(none)"
-        } else {
+        guard self.isEmpty else {
             return self._extensions.lazy.map { String(reflecting: $0) }.joined(separator: ", ")
         }
+        return "(none)"
     }
 }
 

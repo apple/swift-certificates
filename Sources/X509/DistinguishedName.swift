@@ -99,7 +99,8 @@ public struct DistinguishedName {
     ///
     /// - Parameter attributes: The sequence of ``RelativeDistinguishedName/Attribute``s that make up the ``DistinguishedName``.
     @inlinable
-    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
+    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) throws
+    where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
         self.rdns = attributes.map { RelativeDistinguishedName($0) }
     }
 
@@ -130,9 +131,9 @@ public struct DistinguishedName {
     }
 }
 
-extension DistinguishedName: Hashable { }
+extension DistinguishedName: Hashable {}
 
-extension DistinguishedName: Sendable { }
+extension DistinguishedName: Sendable {}
 
 extension DistinguishedName: RandomAccessCollection, MutableCollection, RangeReplaceableCollection {
     @inlinable
@@ -156,7 +157,8 @@ extension DistinguishedName: RandomAccessCollection, MutableCollection, RangeRep
     }
 
     @inlinable
-    public mutating func replaceSubrange<NewElements>(_ subrange: Range<Int>, with newElements: NewElements) where NewElements: Collection, RelativeDistinguishedName == NewElements.Element {
+    public mutating func replaceSubrange<NewElements>(_ subrange: Range<Int>, with newElements: NewElements)
+    where NewElements: Collection, RelativeDistinguishedName == NewElements.Element {
         self.rdns.replaceSubrange(subrange, with: newElements)
     }
 }

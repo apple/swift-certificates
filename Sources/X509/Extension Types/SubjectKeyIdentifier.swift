@@ -42,7 +42,9 @@ public struct SubjectKeyIdentifier {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.subjectKeyIdentifier else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectKeyIdentifier), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectKeyIdentifier), got \(ext.oid)"
+            )
         }
 
         let asn1KeyIdentifier = try ASN1OctetString(derEncoded: ext.value)
@@ -50,9 +52,9 @@ public struct SubjectKeyIdentifier {
     }
 }
 
-extension SubjectKeyIdentifier: Hashable { }
+extension SubjectKeyIdentifier: Hashable {}
 
-extension SubjectKeyIdentifier: Sendable { }
+extension SubjectKeyIdentifier: Sendable {}
 
 extension SubjectKeyIdentifier: CustomStringConvertible {
     public var description: String {
@@ -77,7 +79,11 @@ extension Certificate.Extension {
         let asn1Representation = ASN1OctetString(contentBytes: ski.keyIdentifier)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
-        self.init(oid: .X509ExtensionID.subjectKeyIdentifier, critical: critical, value: serializer.serializedBytes[...])
+        self.init(
+            oid: .X509ExtensionID.subjectKeyIdentifier,
+            critical: critical,
+            value: serializer.serializedBytes[...]
+        )
     }
 }
 

@@ -49,7 +49,7 @@ extension CertificateSigningRequest {
 
 extension CertificateSigningRequest.Attribute: Hashable {
     @inlinable
-    public static func ==(lhs: CertificateSigningRequest.Attribute, rhs: CertificateSigningRequest.Attribute) -> Bool {
+    public static func == (lhs: CertificateSigningRequest.Attribute, rhs: CertificateSigningRequest.Attribute) -> Bool {
         if lhs.oid != rhs.oid { return false }
         if lhs.values.count != rhs.values.count { return false }
 
@@ -78,7 +78,7 @@ extension CertificateSigningRequest.Attribute: Hashable {
     }
 }
 
-extension CertificateSigningRequest.Attribute: Sendable { }
+extension CertificateSigningRequest.Attribute: Sendable {}
 
 extension CertificateSigningRequest.Attribute: CustomStringConvertible {
     public var description: String {

@@ -28,25 +28,35 @@ struct OCSPTBSRequest: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
     var version: OCSPVersion
-    
+
     var requestorName: GeneralName?
-    
+
     var requestList: [OCSPSingleRequest]
-    
+
     var requestExtensions: Certificate.Extensions?
-    
-    init(version: OCSPVersion, requestorName: GeneralName? = nil, requestList: [OCSPSingleRequest], requestExtensions: Certificate.Extensions? = nil) {
+
+    init(
+        version: OCSPVersion,
+        requestorName: GeneralName? = nil,
+        requestList: [OCSPSingleRequest],
+        requestExtensions: Certificate.Extensions? = nil
+    ) {
         self.version = version
         self.requestorName = requestorName
         self.requestList = requestList
         self.requestExtensions = requestExtensions
     }
-    
+
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let version = try DER.decodeDefaultExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific, defaultValue: Int(0))
+            let version = try DER.decodeDefaultExplicitlyTagged(
+                &nodes,
+                tagNumber: 0,
+                tagClass: .contextSpecific,
+                defaultValue: Int(0)
+            )
             let requestorName = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
                 try GeneralName(derEncoded: $0)
             }
@@ -54,7 +64,7 @@ struct OCSPTBSRequest: DERImplicitlyTaggable, Hashable {
             let extensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 2, tagClass: .contextSpecific) {
                 try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: $0)
             }
-            
+
             return .init(
                 version: .init(rawValue: version),
                 requestorName: requestorName,
@@ -63,7 +73,7 @@ struct OCSPTBSRequest: DERImplicitlyTaggable, Hashable {
             )
         }
     }
-    
+
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             if self.version != .v1 {

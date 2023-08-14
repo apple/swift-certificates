@@ -47,7 +47,7 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable, Sendable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
     @usableFromInline var version: CMSVersion
     @usableFromInline var digestAlgorithms: [AlgorithmIdentifier]
     @usableFromInline var encapContentInfo: CMSEncapsulatedContentInfo
@@ -74,17 +74,22 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable, Sendable {
         self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
             let version = try CMSVersion(rawValue: Int.init(derEncoded: &nodes))
             let digestAlgorithms = try DER.set(of: AlgorithmIdentifier.self, identifier: .set, nodes: &nodes)
-            
+
             let encapContentInfo = try CMSEncapsulatedContentInfo(derEncoded: &nodes)
-            let certificates = try DER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
-                try DER.set(of: Certificate.self, identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific), rootNode: node)
+            let certificates = try DER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                node in
+                try DER.set(
+                    of: Certificate.self,
+                    identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
+                    rootNode: node
+                )
             }
-            
+
             // we need to skip this node even though we don't support it
             _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
-            
+
             let signerInfos = try DER.set(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
-            
+
             return .init(
                 version: version,
                 digestAlgorithms: digestAlgorithms,

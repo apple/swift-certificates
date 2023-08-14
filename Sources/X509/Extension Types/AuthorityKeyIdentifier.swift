@@ -36,7 +36,11 @@ public struct AuthorityKeyIdentifier {
     ///   - authorityCertIssuer: The name of the issuer of the issuing cert.
     ///   - authorityCertSerialNumber: The serial number of the issuing cert.
     @inlinable
-    public init(keyIdentifier: ArraySlice<UInt8>? = nil, authorityCertIssuer: [GeneralName]? = nil, authorityCertSerialNumber: Certificate.SerialNumber? = nil) {
+    public init(
+        keyIdentifier: ArraySlice<UInt8>? = nil,
+        authorityCertIssuer: [GeneralName]? = nil,
+        authorityCertSerialNumber: Certificate.SerialNumber? = nil
+    ) {
         self.keyIdentifier = keyIdentifier
         self.authorityCertIssuer = authorityCertIssuer
         self.authorityCertSerialNumber = authorityCertSerialNumber
@@ -51,19 +55,23 @@ public struct AuthorityKeyIdentifier {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.authorityKeyIdentifier else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityKeyIdentifier), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityKeyIdentifier), got \(ext.oid)"
+            )
         }
 
         let asn1KeyIdentifier = try AuthorityKeyIdentifierValue(derEncoded: ext.value)
         self.keyIdentifier = asn1KeyIdentifier.keyIdentifier.map { $0.bytes }
         self.authorityCertIssuer = asn1KeyIdentifier.authorityCertIssuer
-        self.authorityCertSerialNumber = asn1KeyIdentifier.authorityCertSerialNumber.map { Certificate.SerialNumber(bytes: $0) }
+        self.authorityCertSerialNumber = asn1KeyIdentifier.authorityCertSerialNumber.map {
+            Certificate.SerialNumber(bytes: $0)
+        }
     }
 }
 
-extension AuthorityKeyIdentifier: Hashable { }
+extension AuthorityKeyIdentifier: Hashable {}
 
-extension AuthorityKeyIdentifier: Sendable { }
+extension AuthorityKeyIdentifier: Sendable {}
 
 extension AuthorityKeyIdentifier: CustomStringConvertible {
     public var description: String {
@@ -102,7 +110,11 @@ extension Certificate.Extension {
         let asn1Representation = AuthorityKeyIdentifierValue(aki)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
-        self.init(oid: .X509ExtensionID.authorityKeyIdentifier, critical: critical, value: serializer.serializedBytes[...])
+        self.init(
+            oid: .X509ExtensionID.authorityKeyIdentifier,
+            critical: critical,
+            value: serializer.serializedBytes[...]
+        )
     }
 }
 
@@ -130,7 +142,11 @@ struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable {
     var authorityCertSerialNumber: ArraySlice<UInt8>?
 
     @inlinable
-    init(keyIdentifier: ASN1OctetString?, authorityCertIssuer: [GeneralName]?, authorityCertSerialNumber: ArraySlice<UInt8>?) {
+    init(
+        keyIdentifier: ASN1OctetString?,
+        authorityCertIssuer: [GeneralName]?,
+        authorityCertSerialNumber: ArraySlice<UInt8>?
+    ) {
         self.keyIdentifier = keyIdentifier
         self.authorityCertIssuer = authorityCertIssuer
         self.authorityCertSerialNumber = authorityCertSerialNumber
@@ -146,12 +162,23 @@ struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable {
     @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let keyIdentifier: ASN1OctetString? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 0, tagClass: .contextSpecific))
-            let authorityCertIssuer: GeneralNames? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific))
-            let authorityCertSerialNumber: ArraySlice<UInt8>? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 2, tagClass: .contextSpecific))
+            let keyIdentifier: ASN1OctetString? = try DER.optionalImplicitlyTagged(
+                &nodes,
+                tag: .init(tagWithNumber: 0, tagClass: .contextSpecific)
+            )
+            let authorityCertIssuer: GeneralNames? = try DER.optionalImplicitlyTagged(
+                &nodes,
+                tag: .init(tagWithNumber: 1, tagClass: .contextSpecific)
+            )
+            let authorityCertSerialNumber: ArraySlice<UInt8>? = try DER.optionalImplicitlyTagged(
+                &nodes,
+                tag: .init(tagWithNumber: 2, tagClass: .contextSpecific)
+            )
 
             return AuthorityKeyIdentifierValue(
-                keyIdentifier: keyIdentifier, authorityCertIssuer: authorityCertIssuer?.names, authorityCertSerialNumber: authorityCertSerialNumber
+                keyIdentifier: keyIdentifier,
+                authorityCertIssuer: authorityCertIssuer?.names,
+                authorityCertSerialNumber: authorityCertSerialNumber
             )
         }
     }
@@ -159,11 +186,18 @@ struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable {
     @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
-            try coder.serializeOptionalImplicitlyTagged(self.keyIdentifier, withIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific))
             try coder.serializeOptionalImplicitlyTagged(
-                self.authorityCertIssuer.map { GeneralNames($0) }, withIdentifier: .init(tagWithNumber: 1, tagClass: .contextSpecific)
+                self.keyIdentifier,
+                withIdentifier: .init(tagWithNumber: 0, tagClass: .contextSpecific)
             )
-            try coder.serializeOptionalImplicitlyTagged(self.authorityCertSerialNumber, withIdentifier: .init(tagWithNumber: 2, tagClass: .contextSpecific))
+            try coder.serializeOptionalImplicitlyTagged(
+                self.authorityCertIssuer.map { GeneralNames($0) },
+                withIdentifier: .init(tagWithNumber: 1, tagClass: .contextSpecific)
+            )
+            try coder.serializeOptionalImplicitlyTagged(
+                self.authorityCertSerialNumber,
+                withIdentifier: .init(tagWithNumber: 2, tagClass: .contextSpecific)
+            )
         }
     }
 }

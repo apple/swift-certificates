@@ -23,7 +23,7 @@ struct BasicConstraintsPolicy: VerifierPolicy {
     ]
 
     @inlinable
-    init() { }
+    init() {}
 
     @inlinable
     func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
@@ -56,7 +56,9 @@ struct BasicConstraintsPolicy: VerifierPolicy {
                     return .failsToMeetPolicy(reason: "RFC5280Policy: Self-signed cert \(leaf) is not marked as a CA")
                 }
             } catch {
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Error processing basic constraints for \(leaf): \(error)")
+                return .failsToMeetPolicy(
+                    reason: "RFC5280Policy: Error processing basic constraints for \(leaf): \(error)"
+                )
             }
         }
 
@@ -73,7 +75,10 @@ struct BasicConstraintsPolicy: VerifierPolicy {
                     ()
                 case (.some(.isCertificateAuthority(.some(let maxPathLength))), _) where maxPathLength < subCACount:
                     // Is a CA, but the max path length is smaller than the number of sub CAs we have.
-                    return .failsToMeetPolicy(reason: "RFC5280Policy: CA \(cert) has maximum path length \(maxPathLength), but chain has \(subCACount) subCAs")
+                    return .failsToMeetPolicy(
+                        reason:
+                            "RFC5280Policy: CA \(cert) has maximum path length \(maxPathLength), but chain has \(subCACount) subCAs"
+                    )
 
                 case (.some(.isCertificateAuthority), _):
                     // Is a CA, but either the max path length is at least as large as our current set of sub CAs, or there isn't one.
@@ -84,9 +89,11 @@ struct BasicConstraintsPolicy: VerifierPolicy {
                     return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) is not marked as a CA")
                 }
             } catch {
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Error processing basic constraints for \(cert): \(error)")
+                return .failsToMeetPolicy(
+                    reason: "RFC5280Policy: Error processing basic constraints for \(cert): \(error)"
+                )
             }
-            
+
             if cert.issuer != cert.subject {
                 // only non-self-issued certificates count against the maxPathLength limit
                 //
@@ -107,7 +114,7 @@ struct BasicConstraintsPolicy: VerifierPolicy {
                 // not appear, no limit is imposed.
                 // [...]
                 // https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.9
-                
+
                 subCACount += 1
             }
         }

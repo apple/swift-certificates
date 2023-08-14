@@ -53,7 +53,7 @@ extension Int64 {
 
     @inlinable
     static var secondsFromEpochToYear2000: Int64 {
-        946684800
+        946_684_800
     }
 
     @inlinable
@@ -245,7 +245,10 @@ extension Int64 {
         }
 
         leaps += (97 * cycles) + (24 * centuries) - (isLeap ? 1 : 0)
-        return (seconds: ((year - 100) * .secondsPerYear) + (leaps * .secondsPerDay) + .secondsFromEpochToYear2000 + .secondsPerDay, isLeap: isLeap)
+        return (
+            seconds: ((year - 100) * .secondsPerYear) + (leaps * .secondsPerDay) + .secondsFromEpochToYear2000
+                + .secondsPerDay, isLeap: isLeap
+        )
     }
 
     @inlinable

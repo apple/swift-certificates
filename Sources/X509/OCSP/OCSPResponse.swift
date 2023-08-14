@@ -38,15 +38,19 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let responseStatus = try OCSPResponseStatus(derEncoded: &nodes)
-            let responseBytes = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+            let responseBytes = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                node in
                 try OCSPResponseBytes(derEncoded: node)
             }
             switch responseStatus {
             case .successful:
                 guard let responseBytes,
-                      responseBytes.responseType == .OCSP.basicResponse
+                    responseBytes.responseType == .OCSP.basicResponse
                 else {
-                    throw ASN1Error.invalidASN1Object(reason: "Successful response does not have appropriate response bytes: \(String(describing: responseBytes))")
+                    throw ASN1Error.invalidASN1Object(
+                        reason:
+                            "Successful response does not have appropriate response bytes: \(String(describing: responseBytes))"
+                    )
                 }
                 return .successful(try BasicOCSPResponse(derEncoded: responseBytes.response.bytes))
             case .malformedRequest:
@@ -62,7 +66,7 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
             }
         }
     }
-    
+
     private init(unsuccessfulStatus: OCSPResponse, responseBytes: OCSPResponseBytes?) throws {
         if case .successful = unsuccessfulStatus {
             preconditionFailure("this init is not allowed to be called with a successful response status")
@@ -80,12 +84,12 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
             case .successful(let basicResponse):
                 let responseBytes = try OCSPResponseBytes(encoding: basicResponse)
                 try coder.serialize(responseBytes, explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific)
-                
+
             case .malformedRequest,
-                    .internalError,
-                    .tryLater,
-                    .sigRequired,
-                    .unauthorized:
+                .internalError,
+                .tryLater,
+                .sigRequired,
+                .unauthorized:
                 break
             }
         }

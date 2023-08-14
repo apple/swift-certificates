@@ -106,8 +106,10 @@ public enum CMS {
 
             // We have a bunch of very specific requirements here: in particular, we need to have only one signature. We also only want
             // to tolerate v1 signatures and detached signatures.
-            guard signedData.version == .v1, signedData.signerInfos.count == 1, signedData.encapContentInfo.eContentType == .cmsData,
-                  signedData.encapContentInfo.eContent == nil else {
+            guard signedData.version == .v1, signedData.signerInfos.count == 1,
+                signedData.encapContentInfo.eContentType == .cmsData,
+                signedData.encapContentInfo.eContent == nil
+            else {
                 return .failure(.init(invalidCMSBlockReason: "Invalid signed data: \(signedData)"))
             }
 
@@ -145,9 +147,20 @@ public enum CMS {
             // Ok at this point we've done the cheap stuff and we're fairly confident we have the entity who should have
             // done the signing. Our next step is to confirm that they did in fact sign the data. For that we have to compute
             // the digest and validate the signature.
-            let signature = try Certificate.Signature(signatureAlgorithm: signatureAlgorithm, signatureBytes: signer.signature)
-            guard signingCert.publicKey.isValidSignature(signature, for: dataBytes, signatureAlgorithm: signatureAlgorithm) else {
-                return .failure(.init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)"))
+            let signature = try Certificate.Signature(
+                signatureAlgorithm: signatureAlgorithm,
+                signatureBytes: signer.signature
+            )
+            guard
+                signingCert.publicKey.isValidSignature(
+                    signature,
+                    for: dataBytes,
+                    signatureAlgorithm: signatureAlgorithm
+                )
+            else {
+                return .failure(
+                    .init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)")
+                )
             }
         } catch {
             return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
@@ -157,7 +170,7 @@ public enum CMS {
         // This force-unwrap is safe: we know there are certificates because we've located at least one certificate from this set!
         var untrustedIntermediates = CertificateStore(signedData.certificates!)
         untrustedIntermediates.insert(contentsOf: additionalIntermediateCertificates)
-        
+
         var verifier = try Verifier(rootCertificates: trustRoots, policy: policy)
         let result = await verifier.validate(leafCertificate: signingCert, intermediates: untrustedIntermediates)
 
@@ -207,7 +220,7 @@ public enum CMS {
             public var reason: String
 
             @inlinable
-            public init(reason: String){
+            public init(reason: String) {
                 self.reason = reason
             }
         }
@@ -225,7 +238,9 @@ extension Array where Element == Certificate {
         switch signerInfo.signerIdentifier {
         case .issuerAndSerialNumber(let issuerAndSerialNumber):
             for cert in self {
-                if cert.issuer == issuerAndSerialNumber.issuer && cert.serialNumber == issuerAndSerialNumber.serialNumber {
+                if cert.issuer == issuerAndSerialNumber.issuer
+                    && cert.serialNumber == issuerAndSerialNumber.serialNumber
+                {
                     return cert
                 }
             }
@@ -241,6 +256,9 @@ extension Array where Element == Certificate {
 extension Certificate.Signature {
     @inlinable
     init(signatureAlgorithm: Certificate.SignatureAlgorithm, signatureBytes: ASN1OctetString) throws {
-        self = try Certificate.Signature(signatureAlgorithm: signatureAlgorithm, signatureBytes: ASN1BitString(bytes: signatureBytes.bytes))
+        self = try Certificate.Signature(
+            signatureAlgorithm: signatureAlgorithm,
+            signatureBytes: ASN1BitString(bytes: signatureBytes.bytes)
+        )
     }
 }

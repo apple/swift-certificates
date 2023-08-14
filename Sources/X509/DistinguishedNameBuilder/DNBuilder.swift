@@ -32,7 +32,9 @@
 @resultBuilder
 public struct DistinguishedNameBuilder {
     @inlinable
-    public static func buildExpression<Extension: RelativeDistinguishedNameConvertible>(_ expression: Extension) -> DistinguishedName {
+    public static func buildExpression<Extension: RelativeDistinguishedNameConvertible>(
+        _ expression: Extension
+    ) -> DistinguishedName {
         // TODO: Remove the try!
         try! DistinguishedName([expression.makeRDN()])
     }

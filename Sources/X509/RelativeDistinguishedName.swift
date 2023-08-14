@@ -37,16 +37,16 @@ public struct RelativeDistinguishedName {
     @usableFromInline
     var attributes: _TinyArray<Attribute>
 
-    
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
-    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence) where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
+    public init<AttributeSequence: Sequence>(_ attributes: AttributeSequence)
+    where AttributeSequence.Element == RelativeDistinguishedName.Attribute {
         self.attributes = .init(attributes)
         Self._sortElements(&self.attributes)
     }
-    
+
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
     /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
@@ -54,7 +54,7 @@ public struct RelativeDistinguishedName {
     public init(_ attribute: Attribute) {
         self.init(CollectionOfOne(attribute))
     }
-    
+
     @inlinable
     init(_ attributes: DER.LazySetOfSequence<Attribute>) throws {
         self.attributes = try .init(attributes)
@@ -68,9 +68,9 @@ public struct RelativeDistinguishedName {
     }
 }
 
-extension RelativeDistinguishedName: Hashable { }
+extension RelativeDistinguishedName: Hashable {}
 
-extension RelativeDistinguishedName: Sendable { }
+extension RelativeDistinguishedName: Sendable {}
 
 extension RelativeDistinguishedName: RandomAccessCollection {
     @inlinable
@@ -105,11 +105,12 @@ extension RelativeDistinguishedName: RandomAccessCollection {
     ///
     /// - Parameter attributes: The ``Attribute``s to be inserted.
     @inlinable
-    public mutating func insert<Attributes: Collection>(contentsOf attributes: Attributes) where Attributes.Element == RelativeDistinguishedName.Attribute {
+    public mutating func insert<Attributes: Collection>(contentsOf attributes: Attributes)
+    where Attributes.Element == RelativeDistinguishedName.Attribute {
         self.attributes.append(contentsOf: attributes)
         Self._sortElements(&self.attributes)
     }
-    
+
     /// Removes and returns the ``Attribute`` at the specified position.
     ///
     /// - Parameter index: The position of the ``Attribute`` to remove.
@@ -120,7 +121,7 @@ extension RelativeDistinguishedName: RandomAccessCollection {
         self.attributes.remove(at: index)
         // removing an element doesn't change the order and therefore sorting is not required
     }
-    
+
     /// Removes all the ``Attribute``s that satisfy the given predicate.
     /// - Parameter shouldBeRemoved: A closure that takes an ``Attribute`` of the
     ///   ``RelativeDistinguishedName`` as its argument and returns a Boolean value indicating
@@ -192,7 +193,7 @@ extension RelativeDistinguishedName: DERImplicitlyTaggable {
             // We got to the end of the shorter element, so all current elements are equal.
             // If lhs is shorter, it comes earlier, _unless_ all of rhs's trailing elements are zero.
             let trailing = rhsBytes.dropFirst(lhsBytes.count)
-            if trailing.count == 0 || trailing.allSatisfy({ $0 == 0}) {
+            if trailing.count == 0 || trailing.allSatisfy({ $0 == 0 }) {
                 // Must return false when the two elements are equal.
                 return false
             }
@@ -200,4 +201,3 @@ extension RelativeDistinguishedName: DERImplicitlyTaggable {
         }
     }
 }
-
