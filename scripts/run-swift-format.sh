@@ -1,9 +1,9 @@
 #!/bin/bash
 ##===----------------------------------------------------------------------===##
 ##
-## This source file is part of the SwiftASN1 open source project
+## This source file is part of the SwiftCertificates open source project
 ##
-## Copyright (c) 2022-2023 Apple Inc. and the SwiftASN1 project authors
+## Copyright (c) 2023 Apple Inc. and the SwiftASN1 project authors
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
