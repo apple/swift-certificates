@@ -125,8 +125,8 @@ public struct DistinguishedName {
     ///
     /// - Parameter builder: The ``DistinguishedNameBuilder`` block.
     @inlinable
-    public init(@DistinguishedNameBuilder builder: () throws -> DistinguishedName) throws {
-        self = try builder()
+    public init(@DistinguishedNameBuilder builder: () throws -> Result<DistinguishedName, any Error>) throws {
+        self = try builder().get()
     }
 }
 
