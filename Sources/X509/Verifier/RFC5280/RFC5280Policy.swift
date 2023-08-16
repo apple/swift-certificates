@@ -35,9 +35,9 @@ public struct RFC5280Policy: VerifierPolicy {
         // done a very poor job of actually implementing it. The result is that policing KeyUsage produces minimal value
         // in terms of increased security, but produces a substantial uptick in the number of unbuildable chains. So
         // we _pretend_ to police the key usage, and just...don't.
-        .X509ExtensionID.keyUsage
+        .X509ExtensionID.keyUsage,
     ]
-    
+
     @usableFromInline
     let versionPolicy: VersionPolicy
 
@@ -75,11 +75,14 @@ public struct RFC5280Policy: VerifierPolicy {
         if case .failsToMeetPolicy(let reason) = self.versionPolicy.chainMeetsPolicyRequirements(chain: chain) {
             return .failsToMeetPolicy(reason: reason)
         }
-        if let expiryPolicy = self.expiryPolicy, case .failsToMeetPolicy(let reason) = expiryPolicy.chainMeetsPolicyRequirements(chain: chain) {
+        if let expiryPolicy = self.expiryPolicy,
+            case .failsToMeetPolicy(let reason) = expiryPolicy.chainMeetsPolicyRequirements(chain: chain)
+        {
             return .failsToMeetPolicy(reason: reason)
         }
 
-        if case .failsToMeetPolicy(let reason) = self.basicConstraintsPolicy.chainMeetsPolicyRequirements(chain: chain) {
+        if case .failsToMeetPolicy(let reason) = self.basicConstraintsPolicy.chainMeetsPolicyRequirements(chain: chain)
+        {
             return .failsToMeetPolicy(reason: reason)
         }
 

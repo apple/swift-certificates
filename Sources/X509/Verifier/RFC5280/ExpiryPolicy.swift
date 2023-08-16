@@ -40,7 +40,10 @@ struct ExpiryPolicy: VerifierPolicy {
             let notValidAfter = GeneralizedTime(cert.tbsCertificate.validity.notAfter)
 
             if notValidBefore > notValidAfter {
-                return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) has invalid expiry, notValidAfter is earlier than notValidBefore")
+                return .failsToMeetPolicy(
+                    reason:
+                        "RFC5280Policy: Certificate \(cert) has invalid expiry, notValidAfter is earlier than notValidBefore"
+                )
             }
 
             if self.validationTime < notValidBefore {

@@ -22,9 +22,9 @@ struct OCSPVersion {
     static let v1 = Self(rawValue: 0)
 }
 
-extension OCSPVersion: Hashable { }
+extension OCSPVersion: Hashable {}
 
-extension OCSPVersion: Sendable { }
+extension OCSPVersion: Sendable {}
 
 extension OCSPVersion: Comparable {
     static func < (lhs: Self, rhs: Self) -> Bool {

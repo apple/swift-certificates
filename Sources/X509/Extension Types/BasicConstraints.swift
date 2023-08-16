@@ -38,7 +38,9 @@ public enum BasicConstraints {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.basicConstraints else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.basicConstraints), got \(ext.oid)"
+            )
         }
 
         let basicConstraintsValue = try BasicConstraintsValue(derEncoded: ext.value)
@@ -50,9 +52,9 @@ public enum BasicConstraints {
     }
 }
 
-extension BasicConstraints: Hashable { }
+extension BasicConstraints: Hashable {}
 
-extension BasicConstraints: Sendable { }
+extension BasicConstraints: Sendable {}
 
 extension BasicConstraints: CustomStringConvertible {
     public var description: String {
@@ -115,7 +117,10 @@ struct BasicConstraintsValue: DERImplicitlyTaggable {
 
         // CA's must not assert the path len constraint field unless isCA is true.
         guard pathLenConstraint == nil || isCA else {
-            throw ASN1Error.invalidASN1Object(reason: "Invalid combination of isCA (\(isCA)) and path length constraint (\(String(describing: pathLenConstraint))")
+            throw ASN1Error.invalidASN1Object(
+                reason:
+                    "Invalid combination of isCA (\(isCA)) and path length constraint (\(String(describing: pathLenConstraint))"
+            )
         }
     }
 

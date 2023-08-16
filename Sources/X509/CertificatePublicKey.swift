@@ -99,7 +99,11 @@ extension Certificate.PublicKey {
     /// - Returns: Whether the signature was produced by signing `certificate` with the private key corresponding to this public key.
     @inlinable
     public func isValidSignature(_ signature: Certificate.Signature, for certificate: Certificate) -> Bool {
-        return self.isValidSignature(signature, for: certificate.tbsCertificateBytes, signatureAlgorithm: certificate.signatureAlgorithm)
+        return self.isValidSignature(
+            signature,
+            for: certificate.tbsCertificateBytes,
+            signatureAlgorithm: certificate.signatureAlgorithm
+        )
     }
 
     /// Confirms that `signature` is a valid signature for `csr`, created by the
@@ -118,7 +122,11 @@ extension Certificate.PublicKey {
     }
 
     @inlinable
-    internal func isValidSignature<Bytes: DataProtocol>(_ signature: Certificate.Signature, for bytes: Bytes, signatureAlgorithm: Certificate.SignatureAlgorithm) -> Bool {
+    internal func isValidSignature<Bytes: DataProtocol>(
+        _ signature: Certificate.Signature,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
         let digest: Digest
         do {
             let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
@@ -147,9 +155,9 @@ extension Certificate.PublicKey {
     }
 }
 
-extension Certificate.PublicKey: Hashable { }
+extension Certificate.PublicKey: Hashable {}
 
-extension Certificate.PublicKey: Sendable { }
+extension Certificate.PublicKey: Sendable {}
 
 extension Certificate.PublicKey: CustomStringConvertible {
     public var description: String {
@@ -175,7 +183,7 @@ extension Certificate.PublicKey {
         case rsa(_CryptoExtras._RSA.Signing.PublicKey)
 
         @inlinable
-        static func ==(lhs: BackingPublicKey, rhs: BackingPublicKey) -> Bool {
+        static func == (lhs: BackingPublicKey, rhs: BackingPublicKey) -> Bool {
             switch (lhs, rhs) {
             case (.p256(let l), .p256(let r)):
                 return l.rawRepresentation == r.rawRepresentation
@@ -242,7 +250,7 @@ extension Certificate.PublicKey {
     /// The `subjectPublicKeyInfoBytes` property represents the public key in its canonical form that is determined by the key's algorithm and common representation.
     @inlinable
     public var subjectPublicKeyInfoBytes: ArraySlice<UInt8> {
-         SubjectPublicKeyInfo(self).key.bytes
+        SubjectPublicKeyInfo(self).key.bytes
     }
 }
 
@@ -254,7 +262,9 @@ extension _RSA.Signing.Padding {
             self = .insecurePKCS1v1_5
         default:
             // Either this is RSA PSS, or we hit a bug. Either way, unsupported.
-            throw CertificateError.unsupportedSignatureAlgorithm(reason: "Unable to determine RSA padding mode for \(signatureAlgorithm)")
+            throw CertificateError.unsupportedSignatureAlgorithm(
+                reason: "Unable to determine RSA padding mode for \(signatureAlgorithm)"
+            )
         }
     }
 }
@@ -267,11 +277,10 @@ extension P256.Signing.PublicKey {
     /// - parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
-        if case .p256(let inner) = key.backing {
-            self = inner
-        } else {
+        guard case .p256(let inner) = key.backing else {
             return nil
         }
+        self = inner
     }
 }
 
@@ -283,11 +292,10 @@ extension P384.Signing.PublicKey {
     /// - parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
-        if case .p384(let inner) = key.backing {
-            self = inner
-        } else {
+        guard case .p384(let inner) = key.backing else {
             return nil
         }
+        self = inner
     }
 }
 
@@ -299,11 +307,10 @@ extension P521.Signing.PublicKey {
     /// - parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
-        if case .p521(let inner) = key.backing {
-            self = inner
-        } else {
+        guard case .p521(let inner) = key.backing else {
             return nil
         }
+        self = inner
     }
 }
 
@@ -315,32 +322,34 @@ extension _RSA.Signing.PublicKey {
     /// - parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
-        if case .rsa(let inner) = key.backing {
-            self = inner
-        } else {
+        guard case .rsa(let inner) = key.backing else {
             return nil
         }
+        self = inner
     }
 }
 
 extension Certificate.PublicKey {
     @inlinable
-    static var pemDiscriminatorForPublicKey: String { "PUBLIC KEY" }
-    
+    static var pemDiscriminator: String { "PUBLIC KEY" }
+
     @inlinable
     public init(pemEncoded: String) throws {
         try self.init(pemDocument: PEMDocument(pemString: pemEncoded))
     }
-    
+
     @inlinable
     public init(pemDocument: PEMDocument) throws {
-        guard pemDocument.discriminator == Self.pemDiscriminatorForPublicKey else {
-            throw ASN1Error.invalidPEMDocument(reason: "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPublicKey) instead")
+        guard pemDocument.discriminator == Self.pemDiscriminator else {
+            throw ASN1Error.invalidPEMDocument(
+                reason:
+                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminator) instead"
+            )
         }
-        
+
         try self.init(spki: try SubjectPublicKeyInfo(derEncoded: pemDocument.derBytes))
     }
-    
+
     func serializeAsPEM() throws -> PEMDocument {
         let spki = SubjectPublicKeyInfo(self)
         let derBytes = try DER.Serializer.serialized(element: spki)

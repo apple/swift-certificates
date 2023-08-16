@@ -35,9 +35,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.Version: Hashable { }
+extension Certificate.Version: Hashable {}
 
-extension Certificate.Version: Sendable { }
+extension Certificate.Version: Sendable {}
 
 extension Certificate.Version: Comparable {
     @inlinable

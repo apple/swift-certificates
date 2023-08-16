@@ -24,7 +24,11 @@ public struct Verifier<Policy: VerifierPolicy> {
         self.policy = try policy()
     }
 
-    public mutating func validate(leafCertificate: Certificate, intermediates: CertificateStore, diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil) async -> VerificationResult {
+    public mutating func validate(
+        leafCertificate: Certificate,
+        intermediates: CertificateStore,
+        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil
+    ) async -> VerificationResult {
         var partialChains: [CandidatePartialChain] = [CandidatePartialChain(leaf: leafCertificate)]
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
@@ -32,8 +36,13 @@ public struct Verifier<Policy: VerifierPolicy> {
         // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
         // If so, reject the chain.
         if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
-            
-            diagnosticCallback?(.leafCertificateHasUnhandledCriticalExtension(leafCertificate, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
+
+            diagnosticCallback?(
+                .leafCertificateHasUnhandledCriticalExtension(
+                    leafCertificate,
+                    handledCriticalExtensions: self.policy.verifyingCriticalExtensions
+                )
+            )
             return .couldNotValidate([])
         }
 
@@ -53,8 +62,12 @@ public struct Verifier<Policy: VerifierPolicy> {
                 return .validCertificate(unverifiedChain.certificates)
 
             case .failsToMeetPolicy(reason: let reason):
-                diagnosticCallback?(.leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(leafCertificate, reason: reason))
-                policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
+                diagnosticCallback?(
+                    .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(leafCertificate, reason: reason)
+                )
+                policyFailures.append(
+                    VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
+                )
             }
         }
 
@@ -66,11 +79,17 @@ public struct Verifier<Policy: VerifierPolicy> {
             if var rootParents = rootCertificates[nextPartialCandidate.currentTip.issuer] {
                 // We then want to sort by suitability.
                 rootParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
-                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInRootStore(nextPartialCandidate, issuers: rootParents))
+                diagnosticCallback?(
+                    .foundCandidateIssuersOfPartialChainInRootStore(nextPartialCandidate, issuers: rootParents)
+                )
 
                 // Each of these is now potentially a valid unverified chain.
                 for root in rootParents {
-                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: root, diagnosticCallback: diagnosticCallback) {
+                    if self.shouldSkipAddingCertificate(
+                        partialChain: nextPartialCandidate,
+                        nextCertificate: root,
+                        diagnosticCallback: diagnosticCallback
+                    ) {
                         continue
                     }
 
@@ -84,7 +103,9 @@ public struct Verifier<Policy: VerifierPolicy> {
 
                     case .failsToMeetPolicy(reason: let reason):
                         diagnosticCallback?(.chainFailsToMeetPolicy(unverifiedChain, reason: reason))
-                        policyFailures.append(VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason))
+                        policyFailures.append(
+                            VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
+                        )
                     }
                 }
             }
@@ -92,10 +113,19 @@ public struct Verifier<Policy: VerifierPolicy> {
             if var intermediateParents = intermediates[nextPartialCandidate.currentTip.issuer] {
                 // We then want to sort by suitability.
                 intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
-                diagnosticCallback?(.foundCandidateIssuersOfPartialChainInIntermediateStore(nextPartialCandidate, issuers: intermediateParents))
-                
+                diagnosticCallback?(
+                    .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                        nextPartialCandidate,
+                        issuers: intermediateParents
+                    )
+                )
+
                 for parent in intermediateParents {
-                    if self.shouldSkipAddingCertificate(partialChain: nextPartialCandidate, nextCertificate: parent, diagnosticCallback: diagnosticCallback) {
+                    if self.shouldSkipAddingCertificate(
+                        partialChain: nextPartialCandidate,
+                        nextCertificate: parent,
+                        diagnosticCallback: diagnosticCallback
+                    ) {
                         continue
                     }
 
@@ -104,15 +134,25 @@ public struct Verifier<Policy: VerifierPolicy> {
                 }
             }
         }
-        
+
         diagnosticCallback?(.couldNotValidateLeafCertificate(leafCertificate))
         return .couldNotValidate(policyFailures)
     }
 
-    private func shouldSkipAddingCertificate(partialChain: CandidatePartialChain, nextCertificate: Certificate, diagnosticCallback: ((VerificationDiagnostic) -> Void)?) -> Bool {
+    private func shouldSkipAddingCertificate(
+        partialChain: CandidatePartialChain,
+        nextCertificate: Certificate,
+        diagnosticCallback: ((VerificationDiagnostic) -> Void)?
+    ) -> Bool {
         // We want to confirm that the certificate has no unhandled critical extensions. If it does, we can't build the chain.
         if nextCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
-            diagnosticCallback?(.issuerHasUnhandledCriticalExtension(issuer: nextCertificate, chain: partialChain, handledCriticalExtensions: self.policy.verifyingCriticalExtensions))
+            diagnosticCallback?(
+                .issuerHasUnhandledCriticalExtension(
+                    issuer: nextCertificate,
+                    chain: partialChain,
+                    handledCriticalExtensions: self.policy.verifyingCriticalExtensions
+                )
+            )
             return true
         }
 
@@ -124,7 +164,9 @@ public struct Verifier<Policy: VerifierPolicy> {
         }
 
         // We check the signature here: if the signature isn't valid, don't try to apply policy.
-        guard nextCertificate.publicKey.isValidSignature(partialChain.currentTip.signature, for: partialChain.currentTip) else {
+        guard
+            nextCertificate.publicKey.isValidSignature(partialChain.currentTip.signature, for: partialChain.currentTip)
+        else {
             diagnosticCallback?(.issuerHasNotSignedCertificate(nextCertificate, chain: partialChain))
             return true
         }
@@ -177,17 +219,11 @@ struct CandidatePartialChain: Hashable {
         //
         // This criteria is motivated by RFC 4158 § 5.2 (loop detection)
         func match(_ left: Certificate, _ right: Certificate) -> Bool {
-            (
-                left.subject == right.subject &&
-                left.publicKey == right.publicKey &&
-                left.extensions.subjectAlternativeNameBytes == right.extensions.subjectAlternativeNameBytes
-            )
+            (left.subject == right.subject && left.publicKey == right.publicKey
+                && left.extensions.subjectAlternativeNameBytes == right.extensions.subjectAlternativeNameBytes)
         }
 
-        return (
-            self.chain.contains(where: { match($0, certificate) }) ||
-            match(self.currentTip, certificate)
-        )
+        return (self.chain.contains(where: { match($0, certificate) }) || match(self.currentTip, certificate))
     }
 
     func appending(_ newElement: Certificate) -> CandidatePartialChain {

@@ -89,7 +89,9 @@ public struct KeyUsage {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.keyUsage else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.keyUsage), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.keyUsage), got \(ext.oid)"
+            )
         }
 
         let keyUsageValue = try ASN1BitString(derEncoded: ext.value)
@@ -272,9 +274,9 @@ public struct KeyUsage {
     }
 }
 
-extension KeyUsage: Hashable { }
+extension KeyUsage: Hashable {}
 
-extension KeyUsage: Sendable { }
+extension KeyUsage: Sendable {}
 
 extension KeyUsage: CustomStringConvertible {
     public var description: String {

@@ -25,19 +25,19 @@ struct OCSPSignature: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
     var algorithmIIdentifier: AlgorithmIdentifier
-    
+
     var signature: ASN1BitString
-    
+
     var certs: [Certificate]?
-    
+
     init(algorithmIIdentifier: AlgorithmIdentifier, signature: ASN1BitString, certs: [Certificate]? = nil) {
         self.algorithmIIdentifier = algorithmIIdentifier
         self.signature = signature
         self.certs = certs
     }
-    
+
     init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
             let algorithmIdentifier = try AlgorithmIdentifier(derEncoded: &nodes)
@@ -48,7 +48,7 @@ struct OCSPSignature: DERImplicitlyTaggable, Hashable {
             return .init(algorithmIIdentifier: algorithmIdentifier, signature: signature, certs: certs)
         }
     }
-    
+
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try self.algorithmIIdentifier.serialize(into: &coder)

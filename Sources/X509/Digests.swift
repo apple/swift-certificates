@@ -24,7 +24,10 @@ enum Digest {
     case sha512(SHA512Digest)
 
     @inlinable
-    static func computeDigest<Bytes: DataProtocol>(for bytes: Bytes, using digestIdentifier: AlgorithmIdentifier) throws -> Digest {
+    static func computeDigest<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        using digestIdentifier: AlgorithmIdentifier
+    ) throws -> Digest {
         switch digestIdentifier {
         case .sha1, .sha1UsingNil:
             return .insecureSHA1(Insecure.SHA1.hash(data: bytes))
@@ -46,7 +49,7 @@ extension P256.Signing.PublicKey {
     @inlinable
     func isValidSignature(_ signature: Certificate.Signature, for digest: Digest) -> Bool {
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
-              let innerSignature = P256.Signing.ECDSASignature(rawInnerSignature)
+            let innerSignature = P256.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
             return false
@@ -69,7 +72,7 @@ extension P384.Signing.PublicKey {
     @inlinable
     func isValidSignature(_ signature: Certificate.Signature, for digest: Digest) -> Bool {
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
-              let innerSignature = P384.Signing.ECDSASignature(rawInnerSignature)
+            let innerSignature = P384.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
             return false
@@ -92,7 +95,7 @@ extension P521.Signing.PublicKey {
     @inlinable
     func isValidSignature(_ signature: Certificate.Signature, for digest: Digest) -> Bool {
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
-              let innerSignature = P521.Signing.ECDSASignature(rawInnerSignature)
+            let innerSignature = P521.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
             return false
@@ -113,7 +116,8 @@ extension P521.Signing.PublicKey {
 
 extension _RSA.Signing.PublicKey {
     @inlinable
-    func isValidSignature(_ signature: Certificate.Signature, for digest: Digest, padding: _RSA.Signing.Padding) -> Bool {
+    func isValidSignature(_ signature: Certificate.Signature, for digest: Digest, padding: _RSA.Signing.Padding) -> Bool
+    {
         guard case .rsa(let innerSignature) = signature.backing else {
             // Signature mismatch
             return false
@@ -136,7 +140,10 @@ extension _RSA.Signing.PublicKey {
 
 extension P256.Signing.PrivateKey {
     @inlinable
-    func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        digestAlgorithm: AlgorithmIdentifier
+    ) throws -> Certificate.Signature {
         let signature: P256.Signing.ECDSASignature
 
         switch try Digest.computeDigest(for: bytes, using: digestAlgorithm) {
@@ -157,7 +164,10 @@ extension P256.Signing.PrivateKey {
 #if canImport(Darwin)
 extension SecureEnclave.P256.Signing.PrivateKey {
     @inlinable
-    func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        digestAlgorithm: AlgorithmIdentifier
+    ) throws -> Certificate.Signature {
         let signature: P256.Signing.ECDSASignature
 
         switch try Digest.computeDigest(for: bytes, using: digestAlgorithm) {
@@ -178,7 +188,10 @@ extension SecureEnclave.P256.Signing.PrivateKey {
 
 extension P384.Signing.PrivateKey {
     @inlinable
-    func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        digestAlgorithm: AlgorithmIdentifier
+    ) throws -> Certificate.Signature {
         let signature: P384.Signing.ECDSASignature
 
         switch try Digest.computeDigest(for: bytes, using: digestAlgorithm) {
@@ -198,7 +211,10 @@ extension P384.Signing.PrivateKey {
 
 extension P521.Signing.PrivateKey {
     @inlinable
-    func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier) throws -> Certificate.Signature {
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        digestAlgorithm: AlgorithmIdentifier
+    ) throws -> Certificate.Signature {
         let signature: P521.Signing.ECDSASignature
 
         switch try Digest.computeDigest(for: bytes, using: digestAlgorithm) {
@@ -218,7 +234,11 @@ extension P521.Signing.PrivateKey {
 
 extension _RSA.Signing.PrivateKey {
     @inlinable
-    func signature<Bytes: DataProtocol>(for bytes: Bytes, digestAlgorithm: AlgorithmIdentifier, padding: _RSA.Signing.Padding) throws -> Certificate.Signature {
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        digestAlgorithm: AlgorithmIdentifier,
+        padding: _RSA.Signing.Padding
+    ) throws -> Certificate.Signature {
         let signature: _RSA.Signing.RSASignature
 
         switch try Digest.computeDigest(for: bytes, using: digestAlgorithm) {

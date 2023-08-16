@@ -61,92 +61,114 @@ final class DistinguishedNameBuilderTests: XCTestCase {
                 throw MyError()
             }
         }
-        
+
         let `true` = true
         let `false` = false
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            MyThrowingName()
-        }) { error in
-            XCTAssertTrue(error is MyError, "wrong error \(error)")
-        }
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            MyThrowingName()
-            MyThrowingName()
-        }) { error in
-            XCTAssertTrue(error is MyError, "wrong error \(error)")
-        }
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            for _ in 0..<3 {
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
                 MyThrowingName()
             }
-        }) { error in
+        ) { error in
             XCTAssertTrue(error is MyError, "wrong error \(error)")
         }
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            CommonName("test")
-            MyThrowingName()
-        }) { error in
-            XCTAssertTrue(error is MyError, "wrong error \(error)")
-        }
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            MyThrowingName()
-            CommonName("test")
-        }) { error in
-            XCTAssertTrue(error is MyError, "wrong error \(error)")
-        }
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            if `true` {
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
+                MyThrowingName()
                 MyThrowingName()
             }
-        }) { error in
+        ) { error in
             XCTAssertTrue(error is MyError, "wrong error \(error)")
         }
-        
-        XCTAssertNoThrow(try DistinguishedName {
-            if `false` {
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
+                for _ in 0..<3 {
+                    MyThrowingName()
+                }
+            }
+        ) { error in
+            XCTAssertTrue(error is MyError, "wrong error \(error)")
+        }
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
+                CommonName("test")
                 MyThrowingName()
             }
-        })
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            if `true` {
+        ) { error in
+            XCTAssertTrue(error is MyError, "wrong error \(error)")
+        }
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
                 MyThrowingName()
-            } else {
                 CommonName("test")
             }
-        }) { error in
+        ) { error in
             XCTAssertTrue(error is MyError, "wrong error \(error)")
         }
-        
-        XCTAssertNoThrow(try DistinguishedName {
-            if `false` {
-                MyThrowingName()
-            } else {
-                CommonName("test")
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
+                if `true` {
+                    MyThrowingName()
+                }
             }
-        })
-        
-        XCTAssertNoThrow(try DistinguishedName {
-            if `true` {
-                CommonName("test")
-            } else {
-                MyThrowingName()
+        ) { error in
+            XCTAssertTrue(error is MyError, "wrong error \(error)")
+        }
+
+        XCTAssertNoThrow(
+            try DistinguishedName {
+                if `false` {
+                    MyThrowingName()
+                }
             }
-        })
-        
-        XCTAssertThrowsError(try DistinguishedName {
-            if `false` {
-                CommonName("test")
-            } else {
-                MyThrowingName()
+        )
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
+                if `true` {
+                    MyThrowingName()
+                } else {
+                    CommonName("test")
+                }
             }
-        }) { error in
+        ) { error in
+            XCTAssertTrue(error is MyError, "wrong error \(error)")
+        }
+
+        XCTAssertNoThrow(
+            try DistinguishedName {
+                if `false` {
+                    MyThrowingName()
+                } else {
+                    CommonName("test")
+                }
+            }
+        )
+
+        XCTAssertNoThrow(
+            try DistinguishedName {
+                if `true` {
+                    CommonName("test")
+                } else {
+                    MyThrowingName()
+                }
+            }
+        )
+
+        XCTAssertThrowsError(
+            try DistinguishedName {
+                if `false` {
+                    CommonName("test")
+                } else {
+                    MyThrowingName()
+                }
+            }
+        ) { error in
             XCTAssertTrue(error is MyError, "wrong error \(error)")
         }
     }

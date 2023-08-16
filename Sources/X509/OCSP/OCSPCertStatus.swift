@@ -100,7 +100,8 @@ struct OCSPRevokedInfo: DERImplicitlyTaggable, Hashable {
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let revocationTime = try GeneralizedTime(derEncoded: &nodes)
-            let revocationReason = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+            let revocationReason = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                node in
                 try CRLReason(derEncoded: node)
             }
 

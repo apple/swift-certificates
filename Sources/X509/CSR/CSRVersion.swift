@@ -30,9 +30,9 @@ extension CertificateSigningRequest {
     }
 }
 
-extension CertificateSigningRequest.Version: Hashable { }
+extension CertificateSigningRequest.Version: Hashable {}
 
-extension CertificateSigningRequest.Version: Sendable { }
+extension CertificateSigningRequest.Version: Sendable {}
 
 extension CertificateSigningRequest.Version: Comparable {
     @inlinable

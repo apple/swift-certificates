@@ -47,7 +47,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testRSASHA1CSR() throws {
-        let url = Bundle.module.url(forResource: "rsa_sha1", withExtension: "der", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "rsa_sha1",
+            withExtension: "der",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try Data(contentsOf: url)
         let csr = try CertificateSigningRequest(derEncoded: Array(bytes))
 
@@ -59,7 +63,7 @@ final class CSRTests: XCTestCase {
                 .init(type: .NameAttributes.stateOrProvinceName, printableString: "Texas"),
                 .init(type: .NameAttributes.localityName, printableString: "Austin"),
                 .init(type: .NameAttributes.organizationName, printableString: "PyCA"),
-                .init(type: .NameAttributes.commonName, printableString: "cryptography.io")
+                .init(type: .NameAttributes.commonName, printableString: "cryptography.io"),
             ])
         )
         XCTAssertNotNil(_RSA.Signing.PublicKey(csr.publicKey))
@@ -73,7 +77,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testRSASHA1CSRPEM() throws {
-        let url = Bundle.module.url(forResource: "rsa_sha1", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "rsa_sha1",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let pemDocument = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: pemDocument)
 
@@ -85,7 +93,7 @@ final class CSRTests: XCTestCase {
                 .init(type: .NameAttributes.stateOrProvinceName, printableString: "Texas"),
                 .init(type: .NameAttributes.localityName, printableString: "Austin"),
                 .init(type: .NameAttributes.organizationName, printableString: "PyCA"),
-                .init(type: .NameAttributes.commonName, printableString: "cryptography.io")
+                .init(type: .NameAttributes.commonName, printableString: "cryptography.io"),
             ])
         )
         XCTAssertNotNil(_RSA.Signing.PublicKey(csr.publicKey))
@@ -101,26 +109,42 @@ final class CSRTests: XCTestCase {
     }
 
     func testUnsupportedSignatureAlgorithmDER() throws {
-        let url = Bundle.module.url(forResource: "rsa_md4", withExtension: "der", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "rsa_md4",
+            withExtension: "der",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try Data(contentsOf: url)
         XCTAssertThrowsError(try CertificateSigningRequest(derEncoded: Array(bytes)))
     }
 
     func testUnsupportedSignatureAlgorithmPEM() throws {
-        let url = Bundle.module.url(forResource: "rsa_md4", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "rsa_md4",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         XCTAssertThrowsError(try CertificateSigningRequest(pemEncoded: bytes))
     }
 
     func testBadVersion() throws {
-        let url = Bundle.module.url(forResource: "bad-version", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "bad-version",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
         XCTAssertEqual(csr.version, .init(rawValue: 1))
     }
 
     func testDuplicateExtension() throws {
-        let url = Bundle.module.url(forResource: "two_basic_constraints", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "two_basic_constraints",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         #if canImport(Darwin)
         XCTExpectFailure("Currently don't police extension uniqueness")
@@ -133,7 +157,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testUnknownCriticalExtension() throws {
-        let url = Bundle.module.url(forResource: "unsupported_extension_critical", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "unsupported_extension_critical",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -151,7 +179,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testUnknownExtension() throws {
-        let url = Bundle.module.url(forResource: "unsupported_extension", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "unsupported_extension",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -169,7 +201,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testNoExtensions() throws {
-        let url = Bundle.module.url(forResource: "challenge-unstructured", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "challenge-unstructured",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -177,7 +213,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testBasicConstraints() throws {
-        let url = Bundle.module.url(forResource: "basic_constraints", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "basic_constraints",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -197,7 +237,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testSubjectAlternativeName() throws {
-        let url = Bundle.module.url(forResource: "san_rsa_sha1", withExtension: "der", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "san_rsa_sha1",
+            withExtension: "der",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try Data(contentsOf: url)
         let csr = try CertificateSigningRequest(derEncoded: Array(bytes))
 
@@ -218,7 +262,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testSubjectAlternativeNamePEM() throws {
-        let url = Bundle.module.url(forResource: "san_rsa_sha1", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "san_rsa_sha1",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -239,7 +287,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testFreeIPABadCritical() throws {
-        let url = Bundle.module.url(forResource: "freeipa-bad-critical", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "freeipa-bad-critical",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -247,7 +299,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testInvalidSignature() throws {
-        let url = Bundle.module.url(forResource: "invalid_signature", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "invalid_signature",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -255,7 +311,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testRSASHA256Signature() throws {
-        let url = Bundle.module.url(forResource: "rsa_sha256", withExtension: "der", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "rsa_sha256",
+            withExtension: "der",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try Data(contentsOf: url)
         let csr = try CertificateSigningRequest(derEncoded: Array(bytes))
 
@@ -263,7 +323,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testRSASHA256SignaturePEM() throws {
-        let url = Bundle.module.url(forResource: "rsa_sha256", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "rsa_sha256",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: bytes)
 
@@ -271,7 +335,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testECDSACSR() throws {
-        let url = Bundle.module.url(forResource: "ec_sha256", withExtension: "der", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "ec_sha256",
+            withExtension: "der",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let bytes = try Data(contentsOf: url)
         let csr = try CertificateSigningRequest(derEncoded: Array(bytes))
 
@@ -297,7 +365,11 @@ final class CSRTests: XCTestCase {
     }
 
     func testECDSACSRPEM() throws {
-        let url = Bundle.module.url(forResource: "ec_sha256", withExtension: "pem", subdirectory: "CSR Vectors/cryptography")!
+        let url = Bundle.module.url(
+            forResource: "ec_sha256",
+            withExtension: "pem",
+            subdirectory: "CSR Vectors/cryptography"
+        )!
         let pemDocument = try String(decoding: Data(contentsOf: url), as: UTF8.self)
         let csr = try CertificateSigningRequest(pemEncoded: pemDocument)
 
@@ -345,12 +417,18 @@ final class CSRTests: XCTestCase {
     func testCanReplaceElementInAttributes() throws {
         var attributes = CertificateSigningRequest.Attributes([
             CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 1)]),
-            CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4, 5], values: [try ASN1Any(erasing: 2)])
+            CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4, 5], values: [try ASN1Any(erasing: 2)]),
         ])
 
-        attributes[oid: [1, 2, 3, 4]] = CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 3)])
+        attributes[oid: [1, 2, 3, 4]] = CertificateSigningRequest.Attribute(
+            oid: [1, 2, 3, 4],
+            values: [try ASN1Any(erasing: 3)]
+        )
         attributes[oid: [1, 2, 3, 4, 5]] = nil
-        attributes[oid: [4, 3, 2, 1]] = CertificateSigningRequest.Attribute(oid: [4, 3, 2, 1], values: [try ASN1Any(erasing: 4)])
+        attributes[oid: [4, 3, 2, 1]] = CertificateSigningRequest.Attribute(
+            oid: [4, 3, 2, 1],
+            values: [try ASN1Any(erasing: 4)]
+        )
 
         XCTAssertEqual(attributes.count, 2)
         XCTAssertEqual(
@@ -429,7 +507,10 @@ final class CSRTests: XCTestCase {
 
         XCTAssertNotEqual(
             CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 5)]),
-            CertificateSigningRequest.Attribute(oid: [1, 2, 3, 4], values: [try ASN1Any(erasing: 5), try ASN1Any(erasing: 10)])
+            CertificateSigningRequest.Attribute(
+                oid: [1, 2, 3, 4],
+                values: [try ASN1Any(erasing: 5), try ASN1Any(erasing: 10)]
+            )
         )
     }
 

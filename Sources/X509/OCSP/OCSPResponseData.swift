@@ -42,11 +42,13 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
 
     var responseExtensions: Certificate.Extensions?
 
-    init(version: OCSPVersion = .v1,
-         responderID: ResponderID,
-         producedAt: GeneralizedTime,
-         responses: [OCSPSingleResponse],
-         responseExtensions: Certificate.Extensions? = nil) {
+    init(
+        version: OCSPVersion = .v1,
+        responderID: ResponderID,
+        producedAt: GeneralizedTime,
+        responses: [OCSPSingleResponse],
+        responseExtensions: Certificate.Extensions? = nil
+    ) {
         self.version = version
         self.responderID = responderID
         self.producedAt = producedAt
@@ -56,18 +58,27 @@ struct OCSPResponseData: DERImplicitlyTaggable, Hashable {
 
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let version = try DER.decodeDefaultExplicitlyTagged(&nodes,
-                                                                 tagNumber: 0,
-                                                                 tagClass: .contextSpecific,
-                                                                 defaultValue: 0) { try Int(derEncoded: $0) }
+            let version = try DER.decodeDefaultExplicitlyTagged(
+                &nodes,
+                tagNumber: 0,
+                tagClass: .contextSpecific,
+                defaultValue: 0
+            ) { try Int(derEncoded: $0) }
             let responderID = try ResponderID(derEncoded: &nodes)
             let producedAt = try GeneralizedTime(derEncoded: &nodes)
             let responses = try DER.sequence(of: OCSPSingleResponse.self, identifier: .sequence, nodes: &nodes)
-            let responseExtensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { node in
+            let responseExtensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific)
+            { node in
                 try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
             }
 
-            return .init(version: .init(rawValue: version), responderID: responderID, producedAt: producedAt, responses: responses, responseExtensions: try responseExtensions.map { try .init($0) })
+            return .init(
+                version: .init(rawValue: version),
+                responderID: responderID,
+                producedAt: producedAt,
+                responses: responses,
+                responseExtensions: try responseExtensions.map { try .init($0) }
+            )
         }
     }
 

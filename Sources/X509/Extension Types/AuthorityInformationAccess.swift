@@ -22,7 +22,7 @@ import SwiftASN1
 public struct AuthorityInformationAccess {
     @usableFromInline
     var descriptions: [AccessDescription]
-    
+
     /// Create a new empty ``AuthorityInformationAccess/`` object
     /// containing no access descriptions.
     public init() {
@@ -47,7 +47,9 @@ public struct AuthorityInformationAccess {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.authorityInformationAccess else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess), got \(ext.oid)"
+            )
         }
 
         let aiaSyntax = try AuthorityInfoAccessSyntax(derEncoded: ext.value)
@@ -55,9 +57,9 @@ public struct AuthorityInformationAccess {
     }
 }
 
-extension AuthorityInformationAccess: Hashable { }
+extension AuthorityInformationAccess: Hashable {}
 
-extension AuthorityInformationAccess: Sendable { }
+extension AuthorityInformationAccess: Sendable {}
 
 extension AuthorityInformationAccess: CustomStringConvertible {
     public var description: String {
@@ -125,9 +127,9 @@ extension AuthorityInformationAccess {
     }
 }
 
-extension AuthorityInformationAccess.AccessDescription: Hashable { }
+extension AuthorityInformationAccess.AccessDescription: Hashable {}
 
-extension AuthorityInformationAccess.AccessDescription: Sendable { }
+extension AuthorityInformationAccess.AccessDescription: Sendable {}
 
 extension AuthorityInformationAccess.AccessDescription: CustomStringConvertible {
     public var description: String {
@@ -181,9 +183,9 @@ extension AuthorityInformationAccess.AccessDescription {
     }
 }
 
-extension AuthorityInformationAccess.AccessDescription.AccessMethod: Hashable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod: Hashable {}
 
-extension AuthorityInformationAccess.AccessDescription.AccessMethod: Sendable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod: Sendable {}
 
 extension AuthorityInformationAccess.AccessDescription.AccessMethod: CustomStringConvertible {
     @inlinable
@@ -212,9 +214,9 @@ extension AuthorityInformationAccess.AccessDescription.AccessMethod: CustomDebug
     }
 }
 
-extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Hashable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Hashable {}
 
-extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Sendable { }
+extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Sendable {}
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this AIA extension.
@@ -227,7 +229,11 @@ extension Certificate.Extension {
         let asn1Representation = AuthorityInfoAccessSyntax(aia)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
-        self.init(oid: .X509ExtensionID.authorityInformationAccess, critical: critical, value: serializer.serializedBytes[...])
+        self.init(
+            oid: .X509ExtensionID.authorityInformationAccess,
+            critical: critical,
+            value: serializer.serializedBytes[...]
+        )
     }
 }
 

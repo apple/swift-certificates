@@ -47,20 +47,23 @@ struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable, Sendable {
             let eContent = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 try ASN1OctetString(derEncoded: node)
             }
-            
+
             return .init(eContentType: eContentType, eContent: eContent)
         }
     }
 
     @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-        try coder.appendConstructedNode(identifier: identifier, { coder in
-            try coder.serialize(eContentType)
-            if let eContent {
-                try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { coder in
-                    try coder.serialize(eContent)
+        try coder.appendConstructedNode(
+            identifier: identifier,
+            { coder in
+                try coder.serialize(eContentType)
+                if let eContent {
+                    try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific) { coder in
+                        try coder.serialize(eContent)
+                    }
                 }
             }
-        })
+        )
     }
 }

@@ -67,9 +67,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.Extension: Hashable { }
+extension Certificate.Extension: Hashable {}
 
-extension Certificate.Extension: Sendable { }
+extension Certificate.Extension: Sendable {}
 
 extension Certificate.Extension: CustomStringConvertible {
     public var description: String {
@@ -91,12 +91,12 @@ extension Certificate.Extension: CustomStringConvertible {
             return String(reflecting: knownExtension)
         } else {
             return """
-            Extension(\
-            oid: \(String(reflecting: self.oid)), \
-            critical: \(String(reflecting: self.critical)), \
-            value: \(self.value.count) bytes\
-            )
-            """
+                Extension(\
+                oid: \(String(reflecting: self.oid)), \
+                critical: \(String(reflecting: self.critical)), \
+                value: \(self.value.count) bytes\
+                )
+                """
         }
     }
 }

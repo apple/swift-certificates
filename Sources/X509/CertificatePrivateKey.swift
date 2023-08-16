@@ -62,7 +62,7 @@ extension Certificate {
         public init(_ rsa: _RSA.Signing.PrivateKey) {
             self.backing = .rsa(rsa)
         }
-        
+
         #if canImport(Darwin)
         /// Construct a private key wrapping a SecureEnclave.P256 private key.
         /// - Parameter secureEnclaveP256: The SecureEnclave.P256 private key to wrap.
@@ -73,7 +73,10 @@ extension Certificate {
         #endif
 
         @inlinable
-        internal func sign<Bytes: DataProtocol>(bytes: Bytes, signatureAlgorithm: SignatureAlgorithm) throws -> Signature {
+        internal func sign<Bytes: DataProtocol>(
+            bytes: Bytes,
+            signatureAlgorithm: SignatureAlgorithm
+        ) throws -> Signature {
             try self.validateAlgorithmForKey(algorithm: signatureAlgorithm)
             let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
 
@@ -119,16 +122,22 @@ extension Certificate {
             switch self.backing {
             case .p256, .p384, .p521:
                 if !algorithm.isECDSA {
-                    throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with ECDSA key \(self)")
+                    throw CertificateError.unsupportedSignatureAlgorithm(
+                        reason: "Cannot use \(algorithm) with ECDSA key \(self)"
+                    )
                 }
             case .rsa:
                 if !algorithm.isRSA {
-                    throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with RSA key \(self)")
+                    throw CertificateError.unsupportedSignatureAlgorithm(
+                        reason: "Cannot use \(algorithm) with RSA key \(self)"
+                    )
                 }
             #if canImport(Darwin)
             case .secureEnclaveP256:
                 if !algorithm.isECDSA {
-                    throw CertificateError.unsupportedSignatureAlgorithm(reason: "Cannot use \(algorithm) with ECDSA key \(self)")
+                    throw CertificateError.unsupportedSignatureAlgorithm(
+                        reason: "Cannot use \(algorithm) with ECDSA key \(self)"
+                    )
                 }
             #endif
             }
@@ -137,9 +146,9 @@ extension Certificate {
     }
 }
 
-extension Certificate.PrivateKey: Hashable { }
+extension Certificate.PrivateKey: Hashable {}
 
-extension Certificate.PrivateKey: Sendable { }
+extension Certificate.PrivateKey: Sendable {}
 
 extension Certificate.PrivateKey: CustomStringConvertible {
     public var description: String {
@@ -159,7 +168,7 @@ extension Certificate.PrivateKey {
         #endif
 
         @inlinable
-        static func ==(lhs: BackingPrivateKey, rhs: BackingPrivateKey) -> Bool {
+        static func == (lhs: BackingPrivateKey, rhs: BackingPrivateKey) -> Bool {
             switch (lhs, rhs) {
             case (.p256(let l), .p256(let r)):
                 return l.rawRepresentation == r.rawRepresentation
@@ -206,52 +215,55 @@ extension Certificate.PrivateKey {
 @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 extension Certificate.PrivateKey {
     @inlinable
-    static var pemDiscriminatorForRSAPrivateKey: String { "RSA PRIVATE KEY" }
-    
+    static var pemDiscriminatorForRSA: String { "RSA PRIVATE KEY" }
+
     @inlinable
-    static var pemDiscriminatorForSEC1PrivateKey: String { "EC PRIVATE KEY" }
-    
+    static var pemDiscriminatorForSEC1: String { "EC PRIVATE KEY" }
+
     @inlinable
-    static var pemDiscriminatorForPKCS8PrivateKey: String { "PRIVATE KEY" }
-    
+    static var pemDiscriminatorForPKCS8: String { "PRIVATE KEY" }
+
     @inlinable
     public init(pemEncoded: String) throws {
         try self.init(pemDocument: PEMDocument(pemString: pemEncoded))
     }
-    
+
     @inlinable
     public init(pemDocument: PEMDocument) throws {
         switch pemDocument.discriminator {
-        case Self.pemDiscriminatorForRSAPrivateKey:
+        case Self.pemDiscriminatorForRSA:
             self = try .init(_CryptoExtras._RSA.Signing.PrivateKey.init(derRepresentation: pemDocument.derBytes))
-            
-        case Self.pemDiscriminatorForSEC1PrivateKey:
+
+        case Self.pemDiscriminatorForSEC1:
             let sec1 = try SEC1PrivateKey(derEncoded: pemDocument.derBytes)
             self = try .init(ecdsaAlgorithm: sec1.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
-            
-        case Self.pemDiscriminatorForPKCS8PrivateKey:
+
+        case Self.pemDiscriminatorForPKCS8:
             let pkcs8 = try PKCS8PrivateKey(derEncoded: pemDocument.derBytes)
             switch pkcs8.algorithm {
             case .ecdsaP256, .ecdsaP384, .ecdsaP521:
                 let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
                 if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
-                    throw ASN1Error.invalidASN1Object(reason: "algorithm missmatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)")
+                    throw ASN1Error.invalidASN1Object(
+                        reason: "algorithm missmatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
+                    )
                 }
                 self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
-                
+
             case .rsaKey:
                 self = try .init(_CryptoExtras._RSA.Signing.PrivateKey(derRepresentation: pkcs8.privateKey.bytes))
             default:
                 throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm)")
             }
-            
+
         default:
             throw ASN1Error.invalidPEMDocument(
-                reason: "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPKCS8PrivateKey), \(Self.pemDiscriminatorForSEC1PrivateKey) or \(Self.pemDiscriminatorForRSAPrivateKey) instead"
+                reason:
+                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminatorForPKCS8), \(Self.pemDiscriminatorForSEC1) or \(Self.pemDiscriminatorForRSA) instead"
             )
         }
     }
-    
+
     @inlinable
     init(ecdsaAlgorithm: AlgorithmIdentifier?, rawEncodedPrivateKey: ArraySlice<UInt8>) throws {
         switch ecdsaAlgorithm {
@@ -262,10 +274,12 @@ extension Certificate.PrivateKey {
         case .some(.ecdsaP521):
             self = try .init(P521.Signing.PrivateKey(rawRepresentation: rawEncodedPrivateKey))
         default:
-            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(String(reflecting: ecdsaAlgorithm))")
+            throw CertificateError.unsupportedPrivateKey(
+                reason: "unknown algorithm \(String(reflecting: ecdsaAlgorithm))"
+            )
         }
     }
-    
+
     @inlinable
     public func serializeAsPEM() throws -> PEMDocument {
         switch backing {
@@ -275,7 +289,9 @@ extension Certificate.PrivateKey {
         case .rsa(let key): return try PEMDocument(pemString: key.pemRepresentation)
         #if canImport(Darwin)
         case .secureEnclaveP256:
-            throw CertificateError.unsupportedPrivateKey(reason: "secure enclave private keys can not be serialised as PEM")
+            throw CertificateError.unsupportedPrivateKey(
+                reason: "secure enclave private keys can not be serialised as PEM"
+            )
         #endif
         }
     }

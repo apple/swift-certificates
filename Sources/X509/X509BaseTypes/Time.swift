@@ -51,13 +51,12 @@ enum Time: DERParseable, DERSerializable, Hashable, Sendable {
 
         // The rule is if the year is outside the range 1950-2049 inclusive, we should encode
         // it as a generalized time. Otherwise, use a UTCTime.
-        if ((1950)..<(2050)).contains(components.year) {
-            let utcTime = try UTCTime(components)
-            return .utcTime(utcTime)
-        } else {
+        guard ((1950)..<(2050)).contains(components.year) else {
             let generalizedTime = try GeneralizedTime(components)
             return .generalTime(generalizedTime)
         }
+        let utcTime = try UTCTime(components)
+        return .utcTime(utcTime)
     }
 }
 
@@ -86,12 +85,22 @@ extension Date {
 
     @inlinable
     init(_ time: GeneralizedTime) {
-        self = Date(fromUTCDate: (year: time.year, month: time.month, day: time.day, hours: time.hours, minutes: time.minutes, seconds: time.seconds))
+        self = Date(
+            fromUTCDate: (
+                year: time.year, month: time.month, day: time.day, hours: time.hours, minutes: time.minutes,
+                seconds: time.seconds
+            )
+        )
     }
 
     @inlinable
     init(_ time: UTCTime) {
-        self = Date(fromUTCDate: (year: time.year, month: time.month, day: time.day, hours: time.hours, minutes: time.minutes, seconds: time.seconds))
+        self = Date(
+            fromUTCDate: (
+                year: time.year, month: time.month, day: time.day, hours: time.hours, minutes: time.minutes,
+                seconds: time.seconds
+            )
+        )
     }
 }
 
@@ -103,7 +112,15 @@ extension GeneralizedTime {
             self = t
         case .utcTime(let t):
             // This can never throw, all valid UTCTimes are valid GeneralizedTimes
-            self = try! GeneralizedTime(year: t.year, month: t.month, day: t.day, hours: t.hours, minutes: t.minutes, seconds: t.seconds, fractionalSeconds: 0)
+            self = try! GeneralizedTime(
+                year: t.year,
+                month: t.month,
+                day: t.day,
+                hours: t.hours,
+                minutes: t.minutes,
+                seconds: t.seconds,
+                fractionalSeconds: 0
+            )
         }
     }
 

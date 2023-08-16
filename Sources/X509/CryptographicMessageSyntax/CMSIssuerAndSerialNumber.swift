@@ -28,7 +28,7 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
     @usableFromInline var issuer: DistinguishedName
     @usableFromInline var serialNumber: Certificate.SerialNumber
 

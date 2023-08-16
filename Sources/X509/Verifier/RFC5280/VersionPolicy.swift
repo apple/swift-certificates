@@ -19,15 +19,17 @@ import SwiftASN1
 struct VersionPolicy: VerifierPolicy {
     @inlinable
     var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] { [] }
-    
+
     @inlinable
     init() {}
-    
+
     @inlinable
     func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
         for certificate in chain {
             if certificate.version == .v1 && certificate.extensions.isEmpty == false {
-                return .failsToMeetPolicy(reason: "version 1 certificate contains extensions but should not: \(certificate)")
+                return .failsToMeetPolicy(
+                    reason: "version 1 certificate contains extensions but should not: \(certificate)"
+                )
             }
         }
         return .meetsPolicy

@@ -42,7 +42,7 @@ extension CertificateSigningRequest {
     public struct Attributes {
         @usableFromInline
         var _attributes: [Attribute]
-        
+
         /// Produce a new Attributes container from a collection of ``CertificateSigningRequest/Attribute``.
         ///
         /// - Parameter attributes: The base attributes.
@@ -59,9 +59,10 @@ extension CertificateSigningRequest {
 
 extension CertificateSigningRequest.Attributes: Hashable {
     @inlinable
-    public static func ==(lhs: CertificateSigningRequest.Attributes, rhs: CertificateSigningRequest.Attributes) -> Bool {
+    public static func == (lhs: CertificateSigningRequest.Attributes, rhs: CertificateSigningRequest.Attributes) -> Bool
+    {
         if lhs.count != rhs.count { return false }
-        
+
         for element in lhs {
             if !rhs.contains(element) { return false }
         }
@@ -84,7 +85,7 @@ extension CertificateSigningRequest.Attributes: Hashable {
     }
 }
 
-extension CertificateSigningRequest.Attributes: Sendable { }
+extension CertificateSigningRequest.Attributes: Sendable {}
 
 extension CertificateSigningRequest.Attributes: RandomAccessCollection {
     @inlinable
@@ -127,7 +128,8 @@ extension CertificateSigningRequest.Attributes: RandomAccessCollection {
     ///
     /// - Parameter extensions: The sequence of new ``Certificate/Attribute``s to insert.
     @inlinable
-    public mutating func insert<Extensions: Sequence>(contentsOf extensions: Extensions) where Extensions.Element == CertificateSigningRequest.Attribute {
+    public mutating func insert<Extensions: Sequence>(contentsOf extensions: Extensions)
+    where Extensions.Element == CertificateSigningRequest.Attribute {
         for element in extensions {
             self[oid: element.oid] = element
         }
