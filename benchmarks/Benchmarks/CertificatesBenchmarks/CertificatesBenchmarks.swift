@@ -31,11 +31,11 @@ let benchmarks = {
     
     let derEncodedCAs = WebPKI.all.map { try! PEMDocument(pemString: $0).derBytes }
     Benchmark("Parse WebPKI Roots") { benchmark in
-        for _ in 0..<1000 {
+        //for _ in 0..<1000 {
             for derEncodedCA in derEncodedCAs {
                 blackHole(try! Certificate(derEncoded: derEncodedCA).extensions.count)
             }
-        }
+        //}
     }
     
     Benchmark("TinyArray non-allocating functions") { benchmark in
