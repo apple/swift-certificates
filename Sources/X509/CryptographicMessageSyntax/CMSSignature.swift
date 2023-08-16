@@ -49,7 +49,9 @@ extension CMSSignature: DERImplicitlyTaggable {
 
     @inlinable
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
-        guard let base = try CMSContentInfo(derEncoded: rootNode, withIdentifier: identifier).signedData, base.version == .v1 else {
+        guard let base = try CMSContentInfo(derEncoded: rootNode, withIdentifier: identifier).signedData,
+            base.version == .v1
+        else {
             throw CMS.Error.unexpectedCMSType
         }
 

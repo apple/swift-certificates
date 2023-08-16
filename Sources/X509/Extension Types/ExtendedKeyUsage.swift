@@ -28,7 +28,7 @@ public struct ExtendedKeyUsage {
     @inlinable
     public init<Usages: Sequence>(_ usages: Usages) throws where Usages.Element == Usage {
         self.usages = Array(usages)
-        
+
         // This limit is somewhat arbitrary. Linear search for under 32 elements
         // is faster than hashing and fast enough to not be a significant performance bottleneck.
         // We have this limit because a bad actor could increase the number of elements to an arbitrary number which
@@ -36,12 +36,16 @@ public struct ExtendedKeyUsage {
         // This can be used for DoS attacks so we have added this limit.
         let maxUsages = 32
         guard self.usages.count <= maxUsages else {
-            throw ASN1Error.invalidASN1Object(reason: "Too many extended key usages. Found \(self.usages.count) but only \(maxUsages) are allowed.")
+            throw ASN1Error.invalidASN1Object(
+                reason: "Too many extended key usages. Found \(self.usages.count) but only \(maxUsages) are allowed."
+            )
         }
-        
+
         if let (firstIndex, secondIndex) = self.usages.findDuplicates(by: ==) {
             let usage = self.usages[firstIndex]
-            throw CertificateError.duplicateOID(reason: "duplicate \(usage) usage. First at \(firstIndex) and second at \(secondIndex)")
+            throw CertificateError.duplicateOID(
+                reason: "duplicate \(usage) usage. First at \(firstIndex) and second at \(secondIndex)"
+            )
         }
     }
 
@@ -54,14 +58,15 @@ public struct ExtendedKeyUsage {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.extendedKeyUsage else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage), got \(ext.oid)"
+            )
         }
 
         let asn1EKU = try ASN1ExtendedKeyUsage(derEncoded: ext.value)
         try self.init(asn1EKU.usages.map { Usage(oid: $0) })
     }
-    
-    
+
     /// Create a new empty ``ExtendedKeyUsage`` object with no usages.
     @inlinable
     public init() {
@@ -91,9 +96,9 @@ extension Array {
     }
 }
 
-extension ExtendedKeyUsage: Hashable { }
+extension ExtendedKeyUsage: Hashable {}
 
-extension ExtendedKeyUsage: Sendable { }
+extension ExtendedKeyUsage: Sendable {}
 
 extension ExtendedKeyUsage: CustomStringConvertible {
     public var description: String {
@@ -139,7 +144,7 @@ extension ExtendedKeyUsage {
     public mutating func append(_ usage: Element) -> (inserted: Bool, index: Int) {
         self.insert(usage, at: self.endIndex)
     }
-    
+
     /// Insert a new `usage` to this set at the specified index, if `self` doesn't
     /// already contain it.
     ///
@@ -163,7 +168,7 @@ extension ExtendedKeyUsage {
         }
         return (false, index)
     }
-    
+
     /// Removes the given `usage` from `self`, if present.
     /// - Parameter usage: The  ``Usage`` to remove.
     /// - Returns: The ``Usage`` that was removed or `nil` if `usage` was not present.
@@ -256,9 +261,9 @@ extension ExtendedKeyUsage {
     }
 }
 
-extension ExtendedKeyUsage.Usage: Hashable { }
+extension ExtendedKeyUsage.Usage: Hashable {}
 
-extension ExtendedKeyUsage.Usage: Sendable { }
+extension ExtendedKeyUsage.Usage: Sendable {}
 
 extension ExtendedKeyUsage.Usage: CustomStringConvertible {
     public var description: String {
@@ -310,9 +315,9 @@ extension ExtendedKeyUsage.Usage: CustomDebugStringConvertible {
     }
 }
 
-extension ExtendedKeyUsage.Usage.Backing: Hashable { }
+extension ExtendedKeyUsage.Usage.Backing: Hashable {}
 
-extension ExtendedKeyUsage.Usage.Backing: Sendable { }
+extension ExtendedKeyUsage.Usage.Backing: Sendable {}
 
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Extended Key Usage extension.

@@ -34,7 +34,8 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     @inlinable
-    mutating func insert<Certificates: Sequence>(contentsOf certificates: Certificates) where Certificates.Element == Certificate {
+    mutating func insert<Certificates: Sequence>(contentsOf certificates: Certificates)
+    where Certificates.Element == Certificate {
         for certificate in certificates {
             self.insert(certificate)
         }

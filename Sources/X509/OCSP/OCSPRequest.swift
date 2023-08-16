@@ -24,16 +24,16 @@ struct OCSPRequest: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
     var tbsRequest: OCSPTBSRequest
-    
+
     var signature: OCSPSignature?
-    
+
     init(tbsRequest: OCSPTBSRequest, signature: OCSPSignature? = nil) {
         self.tbsRequest = tbsRequest
         self.signature = signature
     }
-    
+
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let tbsRequest = try OCSPTBSRequest(derEncoded: &nodes)
@@ -43,7 +43,7 @@ struct OCSPRequest: DERImplicitlyTaggable, Hashable {
             return .init(tbsRequest: tbsRequest, signature: signature)
         }
     }
-    
+
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.tbsRequest)
@@ -53,6 +53,3 @@ struct OCSPRequest: DERImplicitlyTaggable, Hashable {
         }
     }
 }
-
-
-

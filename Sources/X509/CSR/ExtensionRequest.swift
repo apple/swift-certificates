@@ -39,11 +39,15 @@ public struct ExtensionRequest: Hashable, Sendable {
     @inlinable
     public init(_ attribute: CertificateSigningRequest.Attribute) throws {
         guard attribute.oid == .CSRAttributes.extensionRequest else {
-            throw CertificateError.incorrectOIDForAttribute(reason: "Expected \(ASN1ObjectIdentifier.CSRAttributes.extensionRequest), got \(attribute.oid)")
+            throw CertificateError.incorrectOIDForAttribute(
+                reason: "Expected \(ASN1ObjectIdentifier.CSRAttributes.extensionRequest), got \(attribute.oid)"
+            )
         }
 
         guard attribute.values.count == 1 else {
-            throw CertificateError.invalidCSRAttribute(reason: "Invalid number of values for extension request attribute: \(attribute.values)")
+            throw CertificateError.invalidCSRAttribute(
+                reason: "Invalid number of values for extension request attribute: \(attribute.values)"
+            )
         }
 
         let extRequest = try ExtensionRequestAttribute(asn1Any: attribute.values.first!)
@@ -58,7 +62,10 @@ extension CertificateSigningRequest.Attribute {
     ///     - extensionRequest: The ``ExtensionRequest`` to wrap.
     @inlinable
     public init(_ extensionRequest: ExtensionRequest) throws {
-        self.init(oid: .CSRAttributes.extensionRequest, values: [try ASN1Any(erasing: ExtensionRequestAttribute(extensionRequest))])
+        self.init(
+            oid: .CSRAttributes.extensionRequest,
+            values: [try ASN1Any(erasing: ExtensionRequestAttribute(extensionRequest))]
+        )
     }
 }
 

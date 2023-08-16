@@ -47,7 +47,9 @@ public struct SubjectAlternativeNames {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.subjectAlternativeName else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.subjectAlternativeName), got \(ext.oid)"
+            )
         }
 
         let asn1SAN = try GeneralNames(derEncoded: ext.value)
@@ -55,9 +57,9 @@ public struct SubjectAlternativeNames {
     }
 }
 
-extension SubjectAlternativeNames: Hashable { }
+extension SubjectAlternativeNames: Hashable {}
 
-extension SubjectAlternativeNames: Sendable { }
+extension SubjectAlternativeNames: Sendable {}
 
 extension SubjectAlternativeNames: CustomStringConvertible {
     public var description: String {
@@ -93,7 +95,8 @@ extension SubjectAlternativeNames: RandomAccessCollection, MutableCollection, Ra
     }
 
     @inlinable
-    public mutating func replaceSubrange<NewElements>(_ subrange: Range<Int>, with newElements: NewElements) where NewElements: Collection, GeneralName == NewElements.Element {
+    public mutating func replaceSubrange<NewElements>(_ subrange: Range<Int>, with newElements: NewElements)
+    where NewElements: Collection, GeneralName == NewElements.Element {
         self.names.replaceSubrange(subrange, with: newElements)
     }
 }
@@ -109,7 +112,11 @@ extension Certificate.Extension {
         let asn1Representation = GeneralNames(san.names)
         var serializer = DER.Serializer()
         try serializer.serialize(asn1Representation)
-        self.init(oid: .X509ExtensionID.subjectAlternativeName, critical: critical, value: serializer.serializedBytes[...])
+        self.init(
+            oid: .X509ExtensionID.subjectAlternativeName,
+            critical: critical,
+            value: serializer.serializedBytes[...]
+        )
     }
 }
 
@@ -118,4 +125,3 @@ extension SubjectAlternativeNames: CertificateExtensionConvertible {
         return try .init(self, critical: false)
     }
 }
-

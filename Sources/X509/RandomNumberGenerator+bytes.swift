@@ -21,7 +21,7 @@ extension RandomNumberGenerator {
         while bytes.count < count {
             bytes.appendLittleEndianBytes(self.next())
         }
-        
+
         return bytes[..<count]
     }
 }

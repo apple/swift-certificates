@@ -15,7 +15,7 @@
 import Foundation
 import XCTest
 import SwiftASN1
-@testable @_spi(DisableValidityCheck) import X509
+@testable@_spi(DisableValidityCheck) import X509
 import Crypto
 
 class RFC5280PolicyBase: XCTestCase {
@@ -24,43 +24,48 @@ class RFC5280PolicyBase: XCTestCase {
         case expiry
         case basicConstraints
         case nameConstraints
-        
+
         @PolicyBuilder
         func create(_ validationTime: Date) -> some VerifierPolicy {
             switch self {
             case .rfc5280:
                 RFC5280Policy(validationTime: validationTime)
-                
+
             case .expiry:
                 ExpiryPolicy(validationTime: validationTime)
                 CatchAllPolicy()
-                
+
             case .basicConstraints:
                 BasicConstraintsPolicy()
                 CatchAllPolicy()
-                
+
             case .nameConstraints:
                 NameConstraintsPolicy()
                 CatchAllPolicy()
-                
+
             }
         }
-        
+
         // This do-nothing policy
         struct CatchAllPolicy: VerifierPolicy {
             let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
                 .X509ExtensionID.basicConstraints,
                 .X509ExtensionID.nameConstraints,
-                .X509ExtensionID.keyUsage
+                .X509ExtensionID.keyUsage,
             ]
-            
+
             func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
                 return .meetsPolicy
             }
         }
     }
-    
-    func nameconstraintsExcludedSubtrees(excludedSubtrees: [GeneralName], subjectAlternativeNames: [GeneralName], match: Bool, policyFactory: PolicyFactory) async throws {
+
+    func nameconstraintsExcludedSubtrees(
+        excludedSubtrees: [GeneralName],
+        subjectAlternativeNames: [GeneralName],
+        match: Bool,
+        policyFactory: PolicyFactory
+    ) async throws {
         let alternativeRoot = TestPKI.issueCA(
             extensions: try! Certificate.Extensions {
                 Critical(
@@ -109,27 +114,37 @@ class RFC5280PolicyBase: XCTestCase {
         // Test a constraint on the root affecting the leaf
         var roots = CertificateStore([alternativeRoot])
         var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        var result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         switch (match, result) {
         case (true, .couldNotValidate), (false, .validCertificate):
             // Expected outcomes
             ()
         default:
-            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)")
+            XCTFail(
+                "Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)"
+            )
         }
 
         // Test a constraint on the intermediate affecting the leaf.
         roots = CertificateStore([TestPKI.unconstrainedCA])
         verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+        result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([alternativeIntermediate])
+        )
 
         switch (match, result) {
         case (true, .couldNotValidate), (false, .validCertificate):
             // Expected outcomes
             ()
         default:
-            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+            XCTFail(
+                "Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)"
+            )
         }
 
         // Test a constraint on the root affecting the intermediate
@@ -137,20 +152,28 @@ class RFC5280PolicyBase: XCTestCase {
         verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.startDate + 2.5)
         }
-        result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
+        result = await verifier.validate(
+            leafCertificate: leafWithoutNames,
+            intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason])
+        )
 
         switch (match, result) {
         case (true, .couldNotValidate), (false, .validCertificate):
             // Expected outcomes
             ()
         default:
-            XCTFail("Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+            XCTFail(
+                "Incorrect validation on excluded subtrees \(excludedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)"
+            )
         }
 
         // Unconstrained everything.
         roots = CertificateStore([TestPKI.unconstrainedCA])
         verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
+        result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason])
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Unable to validate with unconstrained root: \(result)")
@@ -160,7 +183,12 @@ class RFC5280PolicyBase: XCTestCase {
         XCTAssertEqual(chain, [leaf, intermediateWithAConstrainedNameForSomeReason, TestPKI.unconstrainedCA])
     }
 
-    func nameconstraintsPermittedSubtrees(permittedSubtrees: [GeneralName], subjectAlternativeNames: [GeneralName], match: Bool, policyFactory: PolicyFactory) async throws {
+    func nameconstraintsPermittedSubtrees(
+        permittedSubtrees: [GeneralName],
+        subjectAlternativeNames: [GeneralName],
+        match: Bool,
+        policyFactory: PolicyFactory
+    ) async throws {
         let alternativeRoot = TestPKI.issueCA(
             extensions: try! Certificate.Extensions {
                 Critical(
@@ -209,40 +237,55 @@ class RFC5280PolicyBase: XCTestCase {
         // Test a constraint on the root affecting the leaf
         var roots = CertificateStore([alternativeRoot])
         var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        var result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         switch (match, result) {
         case (true, .validCertificate), (false, .couldNotValidate):
             // Expected outcomes
             ()
         default:
-            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)")
+            XCTFail(
+                "Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from root, expected \(match) got \(result)"
+            )
         }
 
         // Test a constraint on the intermediate affecting the leaf.
         roots = CertificateStore([TestPKI.unconstrainedCA])
         verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+        result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([alternativeIntermediate])
+        )
 
         switch (match, result) {
         case (true, .validCertificate), (false, .couldNotValidate):
             // Expected outcomes
             ()
         default:
-            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+            XCTFail(
+                "Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)"
+            )
         }
 
         // Test a constraint on the root affecting the intermediate
         roots = CertificateStore([alternativeRoot])
         verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        result = await verifier.validate(leafCertificate: leafWithoutNames, intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason]))
+        result = await verifier.validate(
+            leafCertificate: leafWithoutNames,
+            intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason])
+        )
 
         switch (match, result) {
         case (true, .validCertificate), (false, .couldNotValidate):
             // Expected outcomes
             ()
         default:
-            XCTFail("Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)")
+            XCTFail(
+                "Incorrect validation on excluded subtrees \(permittedSubtrees) for \(subjectAlternativeNames) from intermediate, expected \(match) got \(result)"
+            )
         }
     }
 }
@@ -253,7 +296,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
         var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -262,13 +308,16 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
-    
+
     func testValidV1CertsAreAccepted() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(version: .v1, issuer: .unconstrainedIntermediate, customExtensions: .init())
 
         var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -277,21 +326,28 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
-    
+
     func testValidV1CertsWithExtensionsAreRejected() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
-        let leaf = TestPKI.issueLeaf(version: .v1, issuer: .unconstrainedIntermediate, customExtensions: try .init {
-            Certificate.Extension(oid: [1, 2, 3, 4], critical: false, value: [5, 6, 7, 8])
-        })
+        let leaf = TestPKI.issueLeaf(
+            version: .v1,
+            issuer: .unconstrainedIntermediate,
+            customExtensions: try .init {
+                Certificate.Extension(oid: [1, 2, 3, 4], critical: false, value: [5, 6, 7, 8])
+            }
+        )
 
         var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Validated: \(result)")
             return
         }
-         
+
         XCTAssertEqual(policyFailures.count, 1)
     }
 
@@ -302,11 +358,14 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate + 2.0,  // One second validity window
             issuer: .unconstrainedIntermediate
         )
-        
+
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.startDate + 3.0)
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -333,9 +392,12 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         )
 
         var verifier = Verifier(rootCertificates: roots) {
-                RFC5280Policy.withValidityCheckDisabled()
-            }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+            RFC5280Policy.withValidityCheckDisabled()
+        }
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -354,7 +416,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.unconstrainedIntermediate.notValidAfter + 1.0)
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -379,11 +444,14 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.unconstrainedIntermediate.notValidAfter + 2.0,  // Later than the intermediate.
             issuer: .unconstrainedIntermediate
         )
-        
+
         var verifier = Verifier(rootCertificates: roots) {
             RFC5280Policy.withValidityCheckDisabled()
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -398,11 +466,14 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.unconstrainedCA.notValidAfter + 2.0,  // Later than the root.
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
-        
+
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.unconstrainedCA.notValidAfter + 1.0)
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -431,7 +502,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             RFC5280Policy.withValidityCheckDisabled()
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -450,7 +524,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.startDate + 1.0)
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -475,11 +552,14 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate + 3.0,  // One second validity window
             issuer: .unconstrainedIntermediate
         )
-        
+
         var verifier = Verifier(rootCertificates: roots) {
             RFC5280Policy.withValidityCheckDisabled()
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -498,9 +578,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.unconstrainedIntermediate.notValidBefore - 1.0)
         }
-        
-        
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -529,8 +611,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             RFC5280Policy.withValidityCheckDisabled()
         }
-        
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -545,12 +630,15 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate,
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
-        
+
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.unconstrainedCA.notValidBefore - 1.0)
         }
-        
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -575,11 +663,14 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             notValidAfter: TestPKI.startDate,
             issuer: .unconstrainedRoot  // Issue off the root directly to avoid the intermediate getting involved.
         )
-        
+
         var verifier = Verifier(rootCertificates: roots) {
             RFC5280Policy.withValidityCheckDisabled()
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -598,7 +689,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             policyFactory.create(TestPKI.startDate + 2.5)
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate(let policyFailures) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -627,7 +721,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: roots) {
             RFC5280Policy.withValidityCheckDisabled()
         }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate = result else {
             XCTFail("Failed to validate: \(result)")
@@ -637,7 +734,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
     // This is a BasicConstraints extension that is invalid gibberish
     private static let brokenBasicConstraints = Certificate.Extension(
-        oid: .X509ExtensionID.basicConstraints, critical: true, value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        oid: .X509ExtensionID.basicConstraints,
+        critical: true,
+        value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     )
 
     func _selfSignedCertsMustBeMarkedAsCA(_ policyFactory: PolicyFactory) async throws {
@@ -645,7 +744,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: nil)), true),
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: 0)), true),
             (TestPKI.issueSelfSignedCert(basicConstraints: .notCertificateAuthority), false),
-            (TestPKI.issueSelfSignedCert(customExtensions: try Certificate.Extensions([Self.brokenBasicConstraints])), false),
+            (
+                TestPKI.issueSelfSignedCert(
+                    customExtensions: try Certificate.Extensions([Self.brokenBasicConstraints])
+                ), false
+            ),
             (TestPKI.issueSelfSignedCert(version: .v1), true),
         ]
 
@@ -703,7 +806,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
                 extensions: try Certificate.Extensions([Self.brokenBasicConstraints]),
                 issuer: .unconstrainedRoot
-            )
+            ),
         ]
 
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
@@ -712,18 +815,24 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             var verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
                 policyFactory.create(TestPKI.startDate + 2.5)
             }
-            var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([badIntermediate]))
+            var result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([badIntermediate])
+            )
 
             guard case .couldNotValidate = result else {
                 XCTFail("Incorrectly validated with \(badIntermediate) in chain")
                 return
             }
-            
+
             // Adding the better CA in works better, _and_ we don't use the bad intermediate!
             verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
                 policyFactory.create(TestPKI.startDate + 2.5)
             }
-            result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([badIntermediate, TestPKI.unconstrainedIntermediate]))
+            result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([badIntermediate, TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .validCertificate(let chain) = result else {
                 XCTFail("Unable to validate with both bad and good intermediate in chain")
@@ -766,27 +875,33 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func _rootCAMustBeMarkedCAInBasicConstraints(_ policyFactory: PolicyFactory) async throws {
         let invalidRootCAs = [
             // Explicitly not being a CA is bad
-            TestPKI.issueCA(extensions: try! Certificate.Extensions {
-                Critical(
-                    BasicConstraints.notCertificateAuthority
-                )
-            }),
+            TestPKI.issueCA(
+                extensions: try! Certificate.Extensions {
+                    Critical(
+                        BasicConstraints.notCertificateAuthority
+                    )
+                }
+            ),
 
             // Not having BasicConstraints at all is also bad.
             TestPKI.issueCA(extensions: Certificate.Extensions()),
 
             // As is having broken BasicConstraints
-            TestPKI.issueCA(extensions: try Certificate.Extensions([Self.brokenBasicConstraints]))
+            TestPKI.issueCA(extensions: try Certificate.Extensions([Self.brokenBasicConstraints])),
         ]
 
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
         for badRoot in invalidRootCAs {
             var verifier = Verifier(
-                rootCertificates: CertificateStore([badRoot])) {
-                    policyFactory.create(TestPKI.startDate + 2.5)
-                }
-            var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+                rootCertificates: CertificateStore([badRoot])
+            ) {
+                policyFactory.create(TestPKI.startDate + 2.5)
+            }
+            var result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .couldNotValidate = result else {
                 XCTFail("Incorrectly validated with \(badRoot) in chain")
@@ -797,7 +912,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             verifier = Verifier(rootCertificates: CertificateStore([badRoot, TestPKI.unconstrainedCA])) {
                 policyFactory.create(TestPKI.startDate + 2.5)
             }
-            result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+            result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .validCertificate(let chain) = result else {
                 XCTFail("Unable to validate with both bad and good root in chain")
@@ -812,7 +930,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             verifier = Verifier(rootCertificates: CertificateStore([v1Root])) {
                 policyFactory.create(TestPKI.startDate + 2.5)
             }
-            result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+            result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .validCertificate(let chain) = result else {
                 XCTFail("Unable to validate with v1 root in chain")
@@ -847,12 +968,15 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         )
 
         let leaf = TestPKI.issueLeaf(issuer: .secondLevelIntermediate)
-        
+
         var verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
             policyFactory.create(TestPKI.startDate + 2.5)
         }
-        
-        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([secondLevelIntermediate, TestPKI.unconstrainedIntermediate]))
+
+        var result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([secondLevelIntermediate, TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated with \(secondLevelIntermediate) in chain")
@@ -870,13 +994,17 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             },
             issuer: .unconstrainedRoot
         )
-        
+
         verifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
             policyFactory.create(TestPKI.startDate + 2.5)
         }
-            
-        
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([secondLevelIntermediate, newFirstLevelIntermediate, TestPKI.unconstrainedIntermediate]))
+
+        result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([
+                secondLevelIntermediate, newFirstLevelIntermediate, TestPKI.unconstrainedIntermediate,
+            ])
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Unable to validate with both bad and good intermediate in chain")
@@ -911,7 +1039,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         var verifier = Verifier(rootCertificates: CertificateStore([alternativeRoot])) {
             policyFactory.create(TestPKI.startDate + 2.5)
         }
-        var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        var result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated with \(alternativeRoot) in chain")
@@ -922,7 +1053,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         verifier = Verifier(rootCertificates: CertificateStore([alternativeRoot, TestPKI.unconstrainedCA])) {
             policyFactory.create(TestPKI.startDate + 2.5)
         }
-        result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Unable to validate with both bad and good intermediate in chain")
@@ -939,14 +1073,13 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testPathLengthConstraintsOnRootsAreAppliedBasePolicy() async throws {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.basicConstraints)
     }
-    
+
     func _pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(_ policyFactory: PolicyFactory) async throws {
         // We are building a certificate chain that looks like this:
         // Cert(Iss=Y, Sub=X, Key=1, pathLen=0)
         // Cert(Iss=X, Sub=X, Key=2) // self issued with different public key
         // Cert(Iss=X, Sub=Z, Key=3)
-        
-        
+
         let alternativeRoot = TestPKI.issueCA(
             extensions: try Certificate.Extensions {
                 Critical(
@@ -954,7 +1087,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 )
             }
         )
-        
+
         let intermediate = TestPKI.issueIntermediate(
             name: alternativeRoot.subject,
             key: .init(TestPKI.unconstrainedIntermediateKey.publicKey),
@@ -966,7 +1099,9 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             issuer: .unconstrainedRoot
         )
 
-        let leaf = TestPKI.issueLeaf(issuer: .init(name: alternativeRoot.subject, key: .init(TestPKI.unconstrainedIntermediateKey)))
+        let leaf = TestPKI.issueLeaf(
+            issuer: .init(name: alternativeRoot.subject, key: .init(TestPKI.unconstrainedIntermediateKey))
+        )
 
         var verifier = Verifier(rootCertificates: CertificateStore([alternativeRoot])) {
             policyFactory.create(TestPKI.startDate + 2.5)
@@ -980,7 +1115,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         XCTAssertEqual(chain, [leaf, intermediate, alternativeRoot])
     }
-    
+
     func testPathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates() async throws {
         try await self._pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(.rfc5280)
     }
@@ -992,7 +1127,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testDNSNameConstraintsExcludedSubtrees() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .rfc5280
+                excludedSubtrees: [.dnsName(constraint)],
+                subjectAlternativeNames: [.dnsName(dnsName)],
+                match: match,
+                policyFactory: .rfc5280
             )
         }
     }
@@ -1000,7 +1138,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testDNSNameConstraintsExcludedSubtreesBasePolicy() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .nameConstraints
+                excludedSubtrees: [.dnsName(constraint)],
+                subjectAlternativeNames: [.dnsName(dnsName)],
+                match: match,
+                policyFactory: .nameConstraints
             )
         }
     }
@@ -1008,7 +1149,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testIPAddressNameConstraintsExcludedSubtrees() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .rfc5280
+                excludedSubtrees: [.ipAddress(constraint)],
+                subjectAlternativeNames: [.ipAddress(ipAddress)],
+                match: match,
+                policyFactory: .rfc5280
             )
         }
     }
@@ -1016,7 +1160,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testIPAddressNameConstraintsExcludedSubtreesBasePolicy() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
-                excludedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .nameConstraints
+                excludedSubtrees: [.ipAddress(constraint)],
+                subjectAlternativeNames: [.ipAddress(ipAddress)],
+                match: match,
+                policyFactory: .nameConstraints
             )
         }
     }
@@ -1025,7 +1172,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.directoryName(firstName)], subjectAlternativeNames: [.directoryName(secondName)], match: firstName == secondName, policyFactory: .rfc5280
+                    excludedSubtrees: [.directoryName(firstName)],
+                    subjectAlternativeNames: [.directoryName(secondName)],
+                    match: firstName == secondName,
+                    policyFactory: .rfc5280
                 )
             }
         }
@@ -1035,7 +1185,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.directoryName(firstName)], subjectAlternativeNames: [.directoryName(secondName)], match: firstName == secondName, policyFactory: .nameConstraints
+                    excludedSubtrees: [.directoryName(firstName)],
+                    subjectAlternativeNames: [.directoryName(secondName)],
+                    match: firstName == secondName,
+                    policyFactory: .nameConstraints
                 )
             }
         }
@@ -1044,7 +1197,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testDNSNameConstraintsPermittedSubtrees() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .rfc5280
+                permittedSubtrees: [.dnsName(constraint)],
+                subjectAlternativeNames: [.dnsName(dnsName)],
+                match: match,
+                policyFactory: .rfc5280
             )
         }
     }
@@ -1052,7 +1208,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testDNSNameConstraintsPermittedSubtreesBasePolicy() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.dnsName(constraint)], subjectAlternativeNames: [.dnsName(dnsName)], match: match, policyFactory: .nameConstraints
+                permittedSubtrees: [.dnsName(constraint)],
+                subjectAlternativeNames: [.dnsName(dnsName)],
+                match: match,
+                policyFactory: .nameConstraints
             )
         }
     }
@@ -1060,7 +1219,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testIPAddressNameConstraintsPermittedSubtrees() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .rfc5280
+                permittedSubtrees: [.ipAddress(constraint)],
+                subjectAlternativeNames: [.ipAddress(ipAddress)],
+                match: match,
+                policyFactory: .rfc5280
             )
         }
     }
@@ -1068,7 +1230,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func testIPAddressNameConstraintsPermittedSubtreesBasePolicy() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
-                permittedSubtrees: [.ipAddress(constraint)], subjectAlternativeNames: [.ipAddress(ipAddress)], match: match, policyFactory: .nameConstraints
+                permittedSubtrees: [.ipAddress(constraint)],
+                subjectAlternativeNames: [.ipAddress(ipAddress)],
+                match: match,
+                policyFactory: .nameConstraints
             )
         }
     }
@@ -1085,7 +1250,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.directoryName(firstName), .directoryName(TestPKI.unconstrainedIntermediateName), .directoryName(leafName)],
+                    permittedSubtrees: [
+                        .directoryName(firstName), .directoryName(TestPKI.unconstrainedIntermediateName),
+                        .directoryName(leafName),
+                    ],
                     subjectAlternativeNames: [.directoryName(secondName)],
                     match: firstName == secondName,
                     policyFactory: .rfc5280
@@ -1106,7 +1274,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.directoryName(firstName), .directoryName(TestPKI.unconstrainedIntermediateName), .directoryName(leafName)],
+                    permittedSubtrees: [
+                        .directoryName(firstName), .directoryName(TestPKI.unconstrainedIntermediateName),
+                        .directoryName(leafName),
+                    ],
                     subjectAlternativeNames: [.directoryName(secondName)],
                     match: firstName == secondName,
                     policyFactory: .nameConstraints
@@ -1118,9 +1289,11 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
     func allExcludedSubtreesAreEvaluated(_ policyFactory: PolicyFactory) async throws {
         // This confirms that so long as there exists _a_ constraint, it matches, even if there are others.
         let names: [GeneralName] = [
-            .directoryName(try! DistinguishedName {
-                CommonName("Excluded")
-            }),
+            .directoryName(
+                try! DistinguishedName {
+                    CommonName("Excluded")
+                }
+            ),
             .uniformResourceIdentifier("http://example.com"),
             .dnsName("example.org"),
             .ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1])),
@@ -1150,7 +1323,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             )
 
             var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-            let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+            let result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .couldNotValidate = result else {
                 XCTFail("Unexpectedly validated")
@@ -1194,7 +1370,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
             var roots = CertificateStore([alternativeRoot])
             var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-            var result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+            var result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .couldNotValidate = result else {
                 XCTFail("Unexpectedly validated")
@@ -1219,7 +1398,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
             roots = CertificateStore([alternativeRoot])
             verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-            result = await verifier.validate(leafCertificate: constrainedLeaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+            result = await verifier.validate(
+                leafCertificate: constrainedLeaf,
+                intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+            )
 
             guard case .couldNotValidate = result else {
                 XCTFail("Unexpectedly validated")
@@ -1238,12 +1420,16 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
     // This is a NameConstraints extension that is invalid gibberish
     private static let brokenNameConstraints = Certificate.Extension(
-        oid: .X509ExtensionID.nameConstraints, critical: true, value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        oid: .X509ExtensionID.nameConstraints,
+        critical: true,
+        value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     )
 
     // This is a SAN extension that is invalid gibberish
     private static let brokenSubjectAlternativeName = Certificate.Extension(
-        oid: .X509ExtensionID.subjectAlternativeName, critical: true, value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        oid: .X509ExtensionID.subjectAlternativeName,
+        critical: true,
+        value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     )
 
     func brokenExtensionsPreventValidation(_ policyFactory: PolicyFactory) async throws {
@@ -1285,7 +1471,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         // First test the bad root.
         var roots = CertificateStore([alternativeRoot])
         var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        var result = await verifier.validate(leafCertificate: goodLeaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        var result = await verifier.validate(
+            leafCertificate: goodLeaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Unexpectedly validated")
@@ -1295,7 +1484,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         // Then the bad leaf.
         roots = CertificateStore([goodRootWithConstraint])
         verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-        result = await verifier.validate(leafCertificate: bustedSAN, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        result = await verifier.validate(
+            leafCertificate: bustedSAN,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Unexpectedly validated")
@@ -1321,7 +1513,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             .dnsName("example.com"),
             .ipAddress(ASN1OctetString(contentBytes: [127, 0, 0, 1, 255, 0, 0, 0])),
             .uniformResourceIdentifier("example.com"),
-            .directoryName(name)
+            .directoryName(name),
         ]
 
         let alternativeIntermediate = TestPKI.issueIntermediate(
@@ -1346,7 +1538,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             )
 
             var verifier = Verifier(rootCertificates: roots) { policyFactory.create(TestPKI.startDate + 2.5) }
-            let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+            let result = await verifier.validate(
+                leafCertificate: leaf,
+                intermediates: CertificateStore([alternativeIntermediate])
+            )
 
             guard case .couldNotValidate = result else {
                 XCTFail("Unexpectedly validated")
@@ -1391,7 +1586,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
         var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([alternativeIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([alternativeIntermediate])
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -1416,7 +1614,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
 
         var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
-        let result = await verifier.validate(leafCertificate: leaf, intermediates: CertificateStore([TestPKI.unconstrainedIntermediate]))
+        let result = await verifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated: \(result)")
@@ -1432,12 +1633,18 @@ final class RFC5280PolicyURINameTests1: RFC5280PolicyBase {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             for uri in DNSNamesTests.urisThatMatch(dnsName) {
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .rfc5280
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: match,
+                    policyFactory: .rfc5280
                 )
 
                 // Never works inverted
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .rfc5280
+                    excludedSubtrees: [.uniformResourceIdentifier(uri)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
+                    match: false,
+                    policyFactory: .rfc5280
                 )
             }
 
@@ -1448,7 +1655,10 @@ final class RFC5280PolicyURINameTests1: RFC5280PolicyBase {
 
             for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .rfc5280
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: false,
+                    policyFactory: .rfc5280
                 )
             }
         }
@@ -1461,12 +1671,18 @@ final class RFC5280PolicyURINameTests2: RFC5280PolicyBase {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             for uri in DNSNamesTests.urisThatMatch(dnsName) {
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .nameConstraints
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: match,
+                    policyFactory: .nameConstraints
                 )
 
                 // Never works inverted
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .nameConstraints
+                    excludedSubtrees: [.uniformResourceIdentifier(uri)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
+                    match: false,
+                    policyFactory: .nameConstraints
                 )
             }
 
@@ -1477,7 +1693,10 @@ final class RFC5280PolicyURINameTests2: RFC5280PolicyBase {
 
             for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
                 try await self.nameconstraintsExcludedSubtrees(
-                    excludedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .nameConstraints
+                    excludedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: false,
+                    policyFactory: .nameConstraints
                 )
             }
         }
@@ -1490,12 +1709,18 @@ final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             for uri in DNSNamesTests.urisThatMatch(dnsName) {
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .rfc5280
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: match,
+                    policyFactory: .rfc5280
                 )
 
                 // Never works inverted
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .rfc5280
+                    permittedSubtrees: [.uniformResourceIdentifier(uri)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
+                    match: false,
+                    policyFactory: .rfc5280
                 )
             }
 
@@ -1506,7 +1731,10 @@ final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
 
             for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .rfc5280
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: false,
+                    policyFactory: .rfc5280
                 )
             }
         }
@@ -1519,12 +1747,18 @@ final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             for uri in DNSNamesTests.urisThatMatch(dnsName) {
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: match, policyFactory: .nameConstraints
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: match,
+                    policyFactory: .nameConstraints
                 )
 
                 // Never works inverted
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(uri)], subjectAlternativeNames: [.uniformResourceIdentifier(constraint)], match: false, policyFactory: .nameConstraints
+                    permittedSubtrees: [.uniformResourceIdentifier(uri)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
+                    match: false,
+                    policyFactory: .nameConstraints
                 )
             }
 
@@ -1535,14 +1769,17 @@ final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
 
             for uri in DNSNamesTests.urisThatDontMatch(dnsName) {
                 try await self.nameconstraintsPermittedSubtrees(
-                    permittedSubtrees: [.uniformResourceIdentifier(constraint)], subjectAlternativeNames: [.uniformResourceIdentifier(uri)], match: false, policyFactory: .nameConstraints
+                    permittedSubtrees: [.uniformResourceIdentifier(constraint)],
+                    subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
+                    match: false,
+                    policyFactory: .nameConstraints
                 )
             }
         }
     }
 }
 
-fileprivate enum TestPKI {
+private enum TestPKI {
     static let startDate = Date()
 
     static let unconstrainedCAPrivateKey = P384.Signing.PrivateKey()
@@ -1602,7 +1839,13 @@ fileprivate enum TestPKI {
             issuer: .unconstrainedRoot
         )
     }()
-    static func issueIntermediate(name: DistinguishedName, version: Certificate.Version = .v3, key: Certificate.PublicKey, extensions: Certificate.Extensions, issuer: Issuer) -> Certificate {
+    static func issueIntermediate(
+        name: DistinguishedName,
+        version: Certificate.Version = .v3,
+        key: Certificate.PublicKey,
+        extensions: Certificate.Extensions,
+        issuer: Issuer
+    ) -> Certificate {
         return try! Certificate(
             version: version,
             serialNumber: .init(),
@@ -1625,10 +1868,19 @@ fileprivate enum TestPKI {
     }
 
     struct Issuer {
-        static let unconstrainedRoot = Self(name: TestPKI.unconstrainedCAName, key: .init(TestPKI.unconstrainedCAPrivateKey))
-        static let unconstrainedIntermediate = Self(name: TestPKI.unconstrainedIntermediateName, key: .init(TestPKI.unconstrainedIntermediateKey))
-        static let secondLevelIntermediate = Self(name: TestPKI.secondLevelIntermediateName, key: .init(TestPKI.secondLevelIntermediateKey))
-        
+        static let unconstrainedRoot = Self(
+            name: TestPKI.unconstrainedCAName,
+            key: .init(TestPKI.unconstrainedCAPrivateKey)
+        )
+        static let unconstrainedIntermediate = Self(
+            name: TestPKI.unconstrainedIntermediateName,
+            key: .init(TestPKI.unconstrainedIntermediateKey)
+        )
+        static let secondLevelIntermediate = Self(
+            name: TestPKI.secondLevelIntermediateName,
+            key: .init(TestPKI.secondLevelIntermediateKey)
+        )
+
         var name: DistinguishedName
         var key: Certificate.PrivateKey
     }

@@ -40,11 +40,13 @@ struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
 
     var extensions: Certificate.Extensions?
 
-    init(certID: OCSPCertID,
-         certStatus: OCSPCertStatus,
-         thisUpdate: GeneralizedTime,
-         nextUpdate: GeneralizedTime?,
-         extensions: Certificate.Extensions? = nil) {
+    init(
+        certID: OCSPCertID,
+        certStatus: OCSPCertStatus,
+        thisUpdate: GeneralizedTime,
+        nextUpdate: GeneralizedTime?,
+        extensions: Certificate.Extensions? = nil
+    ) {
         self.certID = certID
         self.certStatus = certStatus
         self.thisUpdate = thisUpdate
@@ -57,18 +59,22 @@ struct OCSPSingleResponse: DERImplicitlyTaggable, Hashable {
             let certID = try OCSPCertID(derEncoded: &nodes)
             let certStatus = try OCSPCertStatus(derEncoded: &nodes)
             let thisUpdate = try GeneralizedTime(derEncoded: &nodes)
-            let nextUpdate = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+            let nextUpdate = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                node in
                 try GeneralizedTime(derEncoded: node)
             }
-            let extensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { node in
+            let extensions = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
+                node in
                 try DER.sequence(of: Certificate.Extension.self, identifier: .sequence, rootNode: node)
             }
 
-            return .init(certID: certID,
-                         certStatus: certStatus,
-                         thisUpdate: thisUpdate,
-                         nextUpdate: nextUpdate,
-                         extensions: try extensions.map { try .init($0) })
+            return .init(
+                certID: certID,
+                certStatus: certStatus,
+                thisUpdate: thisUpdate,
+                nextUpdate: nextUpdate,
+                extensions: try extensions.map { try .init($0) }
+            )
         }
     }
 

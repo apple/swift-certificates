@@ -41,9 +41,9 @@ struct CertificationRequestInfo {
     }
 }
 
-extension CertificationRequestInfo: Hashable { }
+extension CertificationRequestInfo: Hashable {}
 
-extension CertificationRequestInfo: Sendable { }
+extension CertificationRequestInfo: Sendable {}
 
 // CertificationRequestInfo ::= SEQUENCE {
 //      version       INTEGER { v1(0) } (v1,...),

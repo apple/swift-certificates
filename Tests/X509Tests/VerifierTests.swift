@@ -42,7 +42,9 @@ final class VerifierTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -63,7 +65,9 @@ final class VerifierTests: XCTestCase {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca2PrivateKey)
         )
@@ -84,7 +88,11 @@ final class VerifierTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(
+                        Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)
+                    )
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -111,7 +119,9 @@ final class VerifierTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca2PrivateKey)
         )
@@ -132,7 +142,9 @@ final class VerifierTests: XCTestCase {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -160,7 +172,11 @@ final class VerifierTests: XCTestCase {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(
+                        Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)
+                    )
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -200,7 +216,9 @@ final class VerifierTests: XCTestCase {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -382,7 +400,9 @@ final class VerifierTests: XCTestCase {
                 AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
 
                 // Note this is the SKI for the _wrong key_.
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
                 SubjectAlternativeNames([.dnsName("example.com")])
             },
             issuerPrivateKey: .init(ca1PrivateKey)
@@ -422,7 +442,9 @@ final class VerifierTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: 1)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(xKey)
         )
@@ -442,7 +464,9 @@ final class VerifierTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                AuthorityKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(t1t2Key)
         )
@@ -462,7 +486,9 @@ final class VerifierTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                AuthorityKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation))
+                )
                 SubjectAlternativeNames([.dnsName("foo.example.com")])
             },
             issuerPrivateKey: .init(t1t2Key)
@@ -482,7 +508,9 @@ final class VerifierTests: XCTestCase {
                 Critical(
                     BasicConstraints.notCertificateAuthority
                 )
-                AuthorityKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation)))
+                AuthorityKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: t3Key.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(t3Key)
         )
@@ -495,9 +523,13 @@ final class VerifierTests: XCTestCase {
     func testTrivialChainBuilding() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -505,22 +537,35 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
-        
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
-        ])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
     }
 
     func testMissingIntermediateFailsToBuild() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .couldNotValidate(let policyResults) = result else {
             XCTFail("Accidentally validated: \(result)")
@@ -529,18 +574,25 @@ final class VerifierTests: XCTestCase {
 
         XCTAssertEqual(policyResults, [])
         print(log)
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .couldNotValidateLeafCertificate(Self.localhostLeaf),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .couldNotValidateLeafCertificate(Self.localhostLeaf),
+            ]
+        )
     }
 
     func testMissingRootFailsToBuild() async throws {
         let roots = CertificateStore([])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .couldNotValidate(let policyResults) = result else {
             XCTFail("Accidentally validated: \(result)")
@@ -548,20 +600,30 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(policyResults, [])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .couldNotValidateLeafCertificate(Self.localhostLeaf),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .couldNotValidateLeafCertificate(Self.localhostLeaf),
+            ]
+        )
     }
 
     func testExtraRootsAreIgnored() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -569,21 +631,34 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
     }
 
     func testPuttingRootsInTheIntermediariesIsntAProblem() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1, Self.ca2]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca1, Self.ca2]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -591,21 +666,34 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
     }
 
     func testSupportsCrossSignedRootWithoutTrouble() async throws {
         let roots = CertificateStore([Self.ca2])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca1CrossSignedByCA2]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca1CrossSignedByCA2]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -614,23 +702,41 @@ final class VerifierTests: XCTestCase {
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
 
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1CrossSignedByCA2]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2], issuers: [Self.ca2]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1CrossSignedByCA2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2],
+                    issuers: [Self.ca2]
+                ),
+                .foundValidCertificateChain([
+                    Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2,
+                ]),
+            ]
+        )
     }
 
     func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -638,21 +744,34 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
     }
 
     func testPrefersToUseIntermediatesWithSKIThatMatches() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.intermediate1WithoutSKIAKI]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.intermediate1WithoutSKIAKI]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -660,21 +779,34 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1WithoutSKIAKI, Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1WithoutSKIAKI, Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
     }
 
     func testPrefersNoSKIToNonMatchingSKI() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -682,21 +814,34 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1WithoutSKIAKI, Self.ca1])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers: [Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI, Self.ca1]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1WithoutSKIAKI],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI, Self.ca1]),
+            ]
+        )
     }
 
     func testRejectsRootsThatDidNotSignTheCertBeforeThem() async throws {
         let roots = CertificateStore([Self.ca1WithAlternativePrivateKey, Self.ca2])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.ca1CrossSignedByCA2, Self.ca2CrossSignedByCA1, Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.ca1CrossSignedByCA2, Self.ca2CrossSignedByCA1, Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -704,20 +849,37 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers:[Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1WithAlternativePrivateKey]),
-            .issuerHasNotSignedCertificate(
-                Self.ca1WithAlternativePrivateKey,
-                partialChain: [Self.localhostLeaf, Self.intermediate1]
-            ),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1CrossSignedByCA2]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2], issuers: [Self.ca2]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1WithAlternativePrivateKey]
+                ),
+                .issuerHasNotSignedCertificate(
+                    Self.ca1WithAlternativePrivateKey,
+                    partialChain: [Self.localhostLeaf, Self.intermediate1]
+                ),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1CrossSignedByCA2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2],
+                    issuers: [Self.ca2]
+                ),
+                .foundValidCertificateChain([
+                    Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2,
+                ]),
+            ]
+        )
     }
 
     func testPolicyFailuresCanFindLongerPaths() async throws {
@@ -728,7 +890,11 @@ final class VerifierTests: XCTestCase {
             FailIfCertInChainPolicy(forbiddenCert: Self.ca1)
             Self.defaultPolicy
         }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -736,27 +902,51 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
-        
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf], issuers:[Self.intermediate1]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1]),
-            .chainFailsToMeetPolicy(UnverifiedCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]), reason: "chain must not contain forbidden certificate"),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1CrossSignedByCA2]),
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2], issuers: [Self.ca2]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2]),
-        ])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .chainFailsToMeetPolicy(
+                    UnverifiedCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+                    reason: "chain must not contain forbidden certificate"
+                ),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1CrossSignedByCA2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2],
+                    issuers: [Self.ca2]
+                ),
+                .foundValidCertificateChain([
+                    Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2,
+                ]),
+            ]
+        )
     }
 
     func testInsanePKICanStillBuild() async throws {
         let roots = CertificateStore([Self.ca1])
         let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x1, Self.x2])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.insaneLeaf, intermediates: intermediates, diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.insaneLeaf,
+            intermediates: intermediates,
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -764,64 +954,99 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1])
-        
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.insaneLeaf]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf], issuers: [Self.t1, Self.t2, Self.t3]),
-            .issuerHasNotSignedCertificate(Self.t1, partialChain: [Self.insaneLeaf]),
-            .issuerHasNotSignedCertificate(Self.t2, partialChain: [Self.insaneLeaf]),
-            .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3], issuers: [Self.x1, Self.x2]),
-            .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3, Self.x2], issuers: [Self.t1, Self.t2, Self.t3]),
-            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3),
-            .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuers: [Self.x1, Self.x2]),
-            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuer: Self.x2),
-            .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1]),
-            .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuers: [Self.t1, Self.t2, Self.t3]),
-            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t2),
-            .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t3),
-            .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1], issuers: [Self.ca1]),
-            .foundValidCertificateChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1]),
-        ])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf],
+                    issuers: [Self.t1, Self.t2, Self.t3]
+                ),
+                .issuerHasNotSignedCertificate(Self.t1, partialChain: [Self.insaneLeaf]),
+                .issuerHasNotSignedCertificate(Self.t2, partialChain: [Self.insaneLeaf]),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3],
+                    issuers: [Self.x1, Self.x2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2],
+                    issuers: [Self.t1, Self.t2, Self.t3]
+                ),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2, Self.t2],
+                    issuers: [Self.x1, Self.x2]
+                ),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuer: Self.x2),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1],
+                    issuers: [Self.t1, Self.t2, Self.t3]
+                ),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t2),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t3),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1]),
+            ]
+        )
     }
 
     func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.isolatedSelfSignedCert,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated: \(result)")
             return
         }
-        
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.isolatedSelfSignedCert]),
-            .couldNotValidateLeafCertificate(Self.isolatedSelfSignedCert),
-        ])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.isolatedSelfSignedCert]),
+                .couldNotValidateLeafCertificate(Self.isolatedSelfSignedCert),
+            ]
+        )
     }
 
     func testSelfSignedCertsAreTrustedWhenInTrustStore() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCert])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCert, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.isolatedSelfSignedCert,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
             return
         }
-        
+
         XCTAssertEqual(chain, [Self.isolatedSelfSignedCert])
-        XCTAssertEqual(log, [
-            .foundValidCertificateChain([Self.isolatedSelfSignedCert])
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .foundValidCertificateChain([Self.isolatedSelfSignedCert])
+            ]
+        )
     }
 
     func testTrustRootsCanBeNonSelfSignedLeaves() async throws {
@@ -836,9 +1061,13 @@ final class VerifierTests: XCTestCase {
 
         let roots = CertificateStore([Self.localhostLeaf])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { IgnoreBasicConstraintsPolicy() }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -846,17 +1075,24 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf])
-        XCTAssertEqual(log, [
-            .foundValidCertificateChain([Self.localhostLeaf])
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .foundValidCertificateChain([Self.localhostLeaf])
+            ]
+        )
     }
 
     func testTrustRootsCanBeNonSelfSignedIntermediates() async throws {
         let roots = CertificateStore([Self.intermediate1])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.localhostLeaf, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate: \(result)")
@@ -864,64 +1100,110 @@ final class VerifierTests: XCTestCase {
         }
 
         XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1])
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
-            .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1]),
-        ])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1]),
+            ]
+        )
     }
 
     func testWePoliceCriticalExtensionsOnLeafCerts() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCertWithWeirdCriticalExtension])
         let log = DiagnosticsLog()
-        
+
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
-        let result = await verifier.validate(leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension, intermediates: CertificateStore([Self.intermediate1]), diagnosticCallback: log.append(_:))
+        let result = await verifier.validate(
+            leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
 
         guard case .couldNotValidate = result else {
             XCTFail("Incorrectly validated: \(result)")
             return
         }
-        
-        XCTAssertEqual(log, [
-            .leafCertificateHasUnhandledCriticalExtension(
-                Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
-                handledCriticalExtensions: Self.defaultPolicy.verifyingCriticalExtensions
-            )
-        ])
+
+        XCTAssertEqual(
+            log,
+            [
+                .leafCertificateHasUnhandledCriticalExtension(
+                    Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
+                    handledCriticalExtensions: Self.defaultPolicy.verifyingCriticalExtensions
+                )
+            ]
+        )
     }
-    
+
     func testVerificationDiagnosticDescriptionDoesNotIncludeNewLines() {
         let diagnostics: [VerificationDiagnostic] = [
-            .init(storage: .leafCertificateHasUnhandledCriticalExtension(Self.localhostLeaf, handledCriticalExtensions: [.cmsData, .cmsSignedData])),
-            .init(storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(Self.localhostLeaf, reason: "policy failure reason")),
-            .init(storage: .chainFailsToMeetPolicy(.init([Self.localhostLeaf, Self.ca1]), reason: "policy failure reason")),
+            .init(
+                storage: .leafCertificateHasUnhandledCriticalExtension(
+                    Self.localhostLeaf,
+                    handledCriticalExtensions: [.cmsData, .cmsSignedData]
+                )
+            ),
+            .init(
+                storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
+                    Self.localhostLeaf,
+                    reason: "policy failure reason"
+                )
+            ),
+            .init(
+                storage: .chainFailsToMeetPolicy(
+                    .init([Self.localhostLeaf, Self.ca1]),
+                    reason: "policy failure reason"
+                )
+            ),
             .init(storage: .issuerHasNotSignedCertificate(Self.intermediate1, partialChain: [Self.localhostLeaf])),
-            .init(storage: .issuerHasUnhandledCriticalExtension(issuer: Self.intermediate1, partialChain: [Self.localhostLeaf], handledCriticalExtensions: [.cmsData, .cmsSignedData])),
+            .init(
+                storage: .issuerHasUnhandledCriticalExtension(
+                    issuer: Self.intermediate1,
+                    partialChain: [Self.localhostLeaf],
+                    handledCriticalExtensions: [.cmsData, .cmsSignedData]
+                )
+            ),
             .init(storage: .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1])),
-            .init(storage: .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf, Self.intermediate1], issuers: [Self.ca1, Self.ca1WithAlternativePrivateKey])),
-            .init(storage: .foundCandidateIssuersOfPartialChainInIntermediateStore([Self.insaneLeaf, Self.t3], issuers: [Self.x1, Self.x2])),
+            .init(
+                storage: .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1, Self.ca1WithAlternativePrivateKey]
+                )
+            ),
+            .init(
+                storage: .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3],
+                    issuers: [Self.x1, Self.x2]
+                )
+            ),
             .init(storage: .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1])),
             .init(storage: .couldNotValidateLeafCertificate(Self.localhostLeaf)),
             .init(storage: .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3)),
         ]
         for diagnostic in diagnostics {
             let description = diagnostic.description
-            XCTAssertFalse(description.contains { $0 == "\n" }, "Diagnostic description contains new line: \(description)")
+            XCTAssertFalse(
+                description.contains { $0 == "\n" },
+                "Diagnostic description contains new line: \(description)"
+            )
         }
     }
 }
 
-fileprivate struct FailIfCalledPolicy: VerifierPolicy {
+private struct FailIfCalledPolicy: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
-    mutating func chainMeetsPolicyRequirements(chain: X509.UnverifiedCertificateChain) async -> X509.PolicyEvaluationResult {
+    mutating func chainMeetsPolicyRequirements(
+        chain: X509.UnverifiedCertificateChain
+    ) async -> X509.PolicyEvaluationResult {
         XCTFail("Policy was called with chain \(chain)")
         return .failsToMeetPolicy(reason: "policy must not be called")
     }
 }
 
-fileprivate struct FailIfCertInChainPolicy: VerifierPolicy {
+private struct FailIfCertInChainPolicy: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     private let forbiddenCert: Certificate
@@ -931,11 +1213,10 @@ fileprivate struct FailIfCertInChainPolicy: VerifierPolicy {
     }
 
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        if chain.contains(self.forbiddenCert) {
-            return .failsToMeetPolicy(reason: "chain must not contain forbidden certificate")
-        } else {
+        guard chain.contains(self.forbiddenCert) else {
             return .meetsPolicy
         }
+        return .failsToMeetPolicy(reason: "chain must not contain forbidden certificate")
     }
 }
 
@@ -974,7 +1255,7 @@ extension DiagnosticsLog: CustomDebugStringConvertible {
 }
 
 extension DiagnosticsLog: Equatable {
-    static func ==(lhs: DiagnosticsLog, rhs: DiagnosticsLog) -> Bool {
+    static func == (lhs: DiagnosticsLog, rhs: DiagnosticsLog) -> Bool {
         lhs.diagnostics == rhs.diagnostics
     }
 }
@@ -984,4 +1265,3 @@ extension DiagnosticsLog: ExpressibleByArrayLiteral {
         self.init(diagnostics: elements)
     }
 }
-

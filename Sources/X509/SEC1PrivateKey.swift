@@ -40,7 +40,7 @@ import SwiftASN1
 struct SEC1PrivateKey: DERImplicitlyTaggable, PEMRepresentable {
     @usableFromInline
     static let defaultPEMDiscriminator: String = "EC PRIVATE KEY"
-    
+
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         return .sequence
@@ -64,7 +64,8 @@ struct SEC1PrivateKey: DERImplicitlyTaggable, PEMRepresentable {
             }
 
             let privateKey = try ASN1OctetString(derEncoded: &nodes)
-            let parameters = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+            let parameters = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                node in
                 return try ASN1ObjectIdentifier(derEncoded: node)
             }
             let publicKey = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { node in

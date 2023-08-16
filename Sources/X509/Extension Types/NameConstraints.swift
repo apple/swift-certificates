@@ -26,79 +26,83 @@ import SwiftASN1
 public struct NameConstraints {
     public struct DNSNames: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         public typealias Element = String
-        
+
         @inlinable
-        public static func ==(lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
         }
-        
+
         @usableFromInline
         var subtrees: [GeneralName]
-        
+
         @inlinable
         public var description: String {
             "[\(self.joined(separator: ", "))]"
         }
-        
+
         @inlinable
         init(subtrees: [GeneralName]) {
             self.subtrees = subtrees
         }
-        
+
         @inlinable
         public init(_ elements: some Sequence<String>) {
             self.subtrees = elements.map { .dnsName($0) }
         }
-        
+
         @inlinable
         public init(arrayLiteral elements: String...) {
             self.init(elements)
         }
-        
+
         @inlinable
         public func hash(into hasher: inout Hasher) {
             hasher.combine(contentsOf: self)
         }
-        
+
         public struct Index: Comparable {
             @inlinable
-            public static func <(lhs: Self, rhs: Self) -> Bool {
+            public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
             }
             @usableFromInline
             var wrapped: Int
-            
+
             @inlinable
             init(_ wrapped: Int) {
                 self.wrapped = wrapped
             }
         }
-        
+
         @inlinable
         public var startIndex: Index {
-            Index(self.subtrees.firstIndex(where: {
-                guard case .dnsName = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees.firstIndex(where: {
+                    guard case .dnsName = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public var endIndex: Index {
             Index(self.subtrees.endIndex)
         }
-        
+
         @inlinable
         public func index(after i: Index) -> Index {
-            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
-                guard case .dnsName = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                    guard case .dnsName = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public subscript(position: Index) -> String {
             guard case .dnsName(let name) = self.subtrees[position.wrapped] else {
@@ -106,7 +110,7 @@ public struct NameConstraints {
             }
             return name
         }
-        
+
         @inlinable
         var filtered: some Sequence<GeneralName> {
             self.subtrees.lazy.filter {
@@ -120,77 +124,81 @@ public struct NameConstraints {
 
     public struct IPRanges: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
-        public static func ==(lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
         }
-        
+
         @usableFromInline
         var subtrees: [GeneralName]
-        
+
         @inlinable
         public var description: String {
             "[\(self.lazy.map { String(describing: $0.bytes) }.joined(separator: ", "))]"
         }
-        
+
         @inlinable
         init(subtrees: [GeneralName]) {
             self.subtrees = subtrees
         }
-        
+
         @inlinable
         public init(_ elements: some Sequence<ASN1OctetString>) {
             self.subtrees = elements.map { .ipAddress($0) }
         }
-        
+
         @inlinable
         public init(arrayLiteral elements: ASN1OctetString...) {
             self.init(elements)
         }
-        
+
         @inlinable
         public func hash(into hasher: inout Hasher) {
             hasher.combine(contentsOf: self)
         }
-        
+
         public struct Index: Comparable {
             @inlinable
-            public static func <(lhs: Self, rhs: Self) -> Bool {
+            public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
             }
             @usableFromInline
             var wrapped: Int
-            
+
             @inlinable
             init(_ wrapped: Int) {
                 self.wrapped = wrapped
             }
         }
-        
+
         @inlinable
         public var startIndex: Index {
-            Index(self.subtrees.firstIndex(where: {
-                guard case .ipAddress = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees.firstIndex(where: {
+                    guard case .ipAddress = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public var endIndex: Index {
             Index(self.subtrees.endIndex)
         }
-        
+
         @inlinable
         public func index(after i: Index) -> Index {
-            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
-                guard case .ipAddress = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                    guard case .ipAddress = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public subscript(position: Index) -> ASN1OctetString {
             guard case .ipAddress(let ipAddress) = self.subtrees[position.wrapped] else {
@@ -198,7 +206,7 @@ public struct NameConstraints {
             }
             return ipAddress
         }
-        
+
         @inlinable
         var filtered: some Sequence<GeneralName> {
             self.subtrees.lazy.filter {
@@ -212,77 +220,81 @@ public struct NameConstraints {
 
     public struct EmailAddresses: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
-        public static func ==(lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
         }
-        
+
         @usableFromInline
         var subtrees: [GeneralName]
-        
+
         @inlinable
         public var description: String {
             "[\(self.joined(separator: ", "))]"
         }
-        
+
         @inlinable
         init(subtrees: [GeneralName]) {
             self.subtrees = subtrees
         }
-        
+
         @inlinable
         public init(_ elements: some Sequence<String>) {
             self.subtrees = elements.map { .rfc822Name($0) }
         }
-        
+
         @inlinable
         public init(arrayLiteral elements: String...) {
             self.init(elements)
         }
-        
+
         @inlinable
         public func hash(into hasher: inout Hasher) {
             hasher.combine(contentsOf: self)
         }
-        
+
         public struct Index: Comparable {
             @inlinable
-            public static func <(lhs: Self, rhs: Self) -> Bool {
+            public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
             }
             @usableFromInline
             var wrapped: Int
-            
+
             @inlinable
             init(_ wrapped: Int) {
                 self.wrapped = wrapped
             }
         }
-        
+
         @inlinable
         public var startIndex: Index {
-            Index(self.subtrees.firstIndex(where: {
-                guard case .rfc822Name = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees.firstIndex(where: {
+                    guard case .rfc822Name = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public var endIndex: Index {
             Index(self.subtrees.endIndex)
         }
-        
+
         @inlinable
         public func index(after i: Index) -> Index {
-            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
-                guard case .rfc822Name = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                    guard case .rfc822Name = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public subscript(position: Index) -> String {
             guard case .rfc822Name(let emailAddress) = self.subtrees[position.wrapped] else {
@@ -290,7 +302,7 @@ public struct NameConstraints {
             }
             return emailAddress
         }
-        
+
         @inlinable
         var filtered: some Sequence<GeneralName> {
             self.subtrees.lazy.filter {
@@ -304,77 +316,81 @@ public struct NameConstraints {
 
     public struct URIDomains: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
-        public static func ==(lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.elementsEqual(rhs)
         }
-        
+
         @usableFromInline
         var subtrees: [GeneralName]
-        
+
         @inlinable
         public var description: String {
             "[\(self.joined(separator: ", "))]"
         }
-        
+
         @inlinable
         init(subtrees: [GeneralName]) {
             self.subtrees = subtrees
         }
-        
+
         @inlinable
         public init(_ elements: some Sequence<String>) {
             self.subtrees = elements.map { .uniformResourceIdentifier($0) }
         }
-        
+
         @inlinable
         public init(arrayLiteral elements: String...) {
             self.init(elements)
         }
-        
+
         @inlinable
         public func hash(into hasher: inout Hasher) {
             hasher.combine(contentsOf: self)
         }
-        
+
         public struct Index: Comparable {
             @inlinable
-            public static func <(lhs: Self, rhs: Self) -> Bool {
+            public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
             }
             @usableFromInline
             var wrapped: Int
-            
+
             @inlinable
             init(_ wrapped: Int) {
                 self.wrapped = wrapped
             }
         }
-        
+
         @inlinable
         public var startIndex: Index {
-            Index(self.subtrees.firstIndex(where: {
-                guard case .uniformResourceIdentifier = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees.firstIndex(where: {
+                    guard case .uniformResourceIdentifier = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public var endIndex: Index {
             Index(self.subtrees.endIndex)
         }
-        
+
         @inlinable
         public func index(after i: Index) -> Index {
-            Index(self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
-                guard case .uniformResourceIdentifier = $0 else {
-                    return false
-                }
-                return true
-            }) ?? self.subtrees.endIndex)
+            Index(
+                self.subtrees[i.wrapped...].dropFirst().firstIndex(where: {
+                    guard case .uniformResourceIdentifier = $0 else {
+                        return false
+                    }
+                    return true
+                }) ?? self.subtrees.endIndex
+            )
         }
-        
+
         @inlinable
         public subscript(position: Index) -> String {
             guard case .uniformResourceIdentifier(let uri) = self.subtrees[position.wrapped] else {
@@ -382,7 +398,7 @@ public struct NameConstraints {
             }
             return uri
         }
-        
+
         @inlinable
         var filtered: some Sequence<GeneralName> {
             self.subtrees.lazy.filter {
@@ -393,8 +409,7 @@ public struct NameConstraints {
             }
         }
     }
-    
-    
+
     /// The DNS name trees that are permitted in certificates issued by this CA.
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
@@ -607,22 +622,18 @@ public struct NameConstraints {
     ) {
         self.permittedSubtrees = []
         self.permittedSubtrees.reserveCapacity(
-            permittedDNSDomains.underestimatedCount +
-            permittedIPRanges.underestimatedCount +
-            permittedEmailAddresses.underestimatedCount +
-            permittedURIDomains.underestimatedCount
+            permittedDNSDomains.underestimatedCount + permittedIPRanges.underestimatedCount
+                + permittedEmailAddresses.underestimatedCount + permittedURIDomains.underestimatedCount
         )
         self.permittedSubtrees.append(contentsOf: permittedDNSDomains.lazy.map { .dnsName($0) })
         self.permittedSubtrees.append(contentsOf: permittedIPRanges.lazy.map { .ipAddress($0) })
         self.permittedSubtrees.append(contentsOf: permittedEmailAddresses.lazy.map { .rfc822Name($0) })
         self.permittedSubtrees.append(contentsOf: permittedURIDomains.lazy.map { .uniformResourceIdentifier($0) })
-        
+
         self.excludedSubtrees = []
         self.excludedSubtrees.reserveCapacity(
-            excludedDNSDomains.underestimatedCount +
-            excludedIPRanges.underestimatedCount +
-            excludedEmailAddresses.underestimatedCount +
-            forbiddenURIDomains.underestimatedCount
+            excludedDNSDomains.underestimatedCount + excludedIPRanges.underestimatedCount
+                + excludedEmailAddresses.underestimatedCount + forbiddenURIDomains.underestimatedCount
         )
         self.excludedSubtrees.append(contentsOf: excludedDNSDomains.lazy.map { .dnsName($0) })
         self.excludedSubtrees.append(contentsOf: excludedIPRanges.lazy.map { .ipAddress($0) })
@@ -653,7 +664,9 @@ public struct NameConstraints {
     @inlinable
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.nameConstraints else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.nameConstraints), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.X509ExtensionID.nameConstraints), got \(ext.oid)"
+            )
         }
 
         let nameConstraintsValue = try NameConstraintsValue(derEncoded: ext.value)
@@ -675,19 +688,23 @@ extension Hasher {
     }
 }
 
-extension NameConstraints: Hashable { }
+extension NameConstraints: Hashable {}
 
-extension NameConstraints: Sendable { }
+extension NameConstraints: Sendable {}
 
 extension NameConstraints: CustomStringConvertible {
     public var description: String {
         var elements: [String] = []
 
         if self.permittedSubtrees.count > 0 {
-            elements.append("permittedSubtrees: [\(self.permittedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]")
+            elements.append(
+                "permittedSubtrees: [\(self.permittedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]"
+            )
         }
         if self.excludedSubtrees.count > 0 {
-            elements.append("excludedSubtrees: [\(self.excludedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]")
+            elements.append(
+                "excludedSubtrees: [\(self.excludedSubtrees.map { String(reflecting: $0) }.joined(separator: ", "))]"
+            )
         }
 
         return elements.joined(separator: ", ")
@@ -754,10 +771,19 @@ struct NameConstraintsValue: DERImplicitlyTaggable {
     @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let permittedSubtrees: GeneralSubtrees? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 0, tagClass: .contextSpecific))
-            let excludedSubtrees: GeneralSubtrees? = try DER.optionalImplicitlyTagged(&nodes, tag: .init(tagWithNumber: 1, tagClass: .contextSpecific))
+            let permittedSubtrees: GeneralSubtrees? = try DER.optionalImplicitlyTagged(
+                &nodes,
+                tag: .init(tagWithNumber: 0, tagClass: .contextSpecific)
+            )
+            let excludedSubtrees: GeneralSubtrees? = try DER.optionalImplicitlyTagged(
+                &nodes,
+                tag: .init(tagWithNumber: 1, tagClass: .contextSpecific)
+            )
 
-            return NameConstraintsValue(permittedSubtrees: permittedSubtrees.map { $0.base }, excludedSubtrees: excludedSubtrees.map { $0.base })
+            return NameConstraintsValue(
+                permittedSubtrees: permittedSubtrees.map { $0.base },
+                excludedSubtrees: excludedSubtrees.map { $0.base }
+            )
         }
     }
 

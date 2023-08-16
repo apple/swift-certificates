@@ -83,7 +83,7 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
     }
 
     var responseData: OCSPResponseData
-    
+
     var responseDataBytes: ArraySlice<UInt8>
 
     var signatureAlgorithm: AlgorithmIdentifier
@@ -92,7 +92,13 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
 
     var certs: [Certificate]?
 
-    init(responseData: OCSPResponseData, responseDataBytes: ArraySlice<UInt8>, signatureAlgorithm: AlgorithmIdentifier, signature: ASN1BitString, certs: [Certificate]?) {
+    init(
+        responseData: OCSPResponseData,
+        responseDataBytes: ArraySlice<UInt8>,
+        signatureAlgorithm: AlgorithmIdentifier,
+        signature: ASN1BitString,
+        certs: [Certificate]?
+    ) {
         self.responseData = responseData
         self.responseDataBytes = responseDataBytes
         self.signatureAlgorithm = signatureAlgorithm
@@ -108,15 +114,20 @@ struct BasicOCSPResponse: DERImplicitlyTaggable, Hashable {
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1BitString(derEncoded: &nodes)
 
-            
             let certs = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 try DER.sequence(of: Certificate.self, identifier: .sequence, rootNode: node)
             }
 
-            return .init(responseData: responseData, responseDataBytes: responseDataNode.encodedBytes, signatureAlgorithm: signatureAlgorithm, signature: signature, certs: certs)
+            return .init(
+                responseData: responseData,
+                responseDataBytes: responseDataNode.encodedBytes,
+                signatureAlgorithm: signatureAlgorithm,
+                signature: signature,
+                certs: certs
+            )
         }
     }
-    
+
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             coder.serializeRawBytes(self.responseDataBytes)

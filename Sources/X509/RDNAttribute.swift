@@ -37,10 +37,10 @@ extension RelativeDistinguishedName {
                 /// the custom `Hashable` conformance takes care of this and treats them as equal.
                 case any(ASN1Any)
             }
-            
+
             @usableFromInline
             var storage: Storage
-            
+
             @inlinable
             init(storage: Storage) {
                 self.storage = storage
@@ -68,7 +68,7 @@ extension RelativeDistinguishedName {
 
 extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
     @inlinable
-    static func ==(lhs: Self, rhs: Self) -> Bool {
+    static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case let (.printable(lhs), .printable(rhs)):
             return lhs == rhs
@@ -80,7 +80,7 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
             return ASN1Any(lhs) == ASN1Any(rhs)
         }
     }
-    
+
     @inlinable
     func hash(into hasher: inout Hasher) {
         switch self {
@@ -89,7 +89,7 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
             hasher.combine(ASN1Any(self))
         case .utf8(let string):
             hasher.combine(String.ASN1UTF8StringView(string: string))
-            
+
         case .any(let asn1Any):
             hasher.combine(asn1Any)
         }
@@ -101,17 +101,17 @@ extension String {
     struct ASN1UTF8StringView {
         @usableFromInline
         let string: String
-        
+
         @usableFromInline
         let length: ASN1Length
-        
+
         @usableFromInline
         let count: Int
         @inlinable
-        
+
         init(string: String) {
             self.string = string
-            
+
             let utf8Count = self.string.utf8.count
             self.length = ASN1Length(length: utf8Count)
             // tag + utf8 bytes length + utf8 bytes
@@ -125,12 +125,12 @@ extension String.ASN1UTF8StringView: RandomAccessCollection {
     var startIndex: Int {
         0
     }
-    
+
     @inlinable
     var endIndex: Int {
         count
     }
-    
+
     @inlinable
     subscript(position: Int) -> UInt8 {
         switch position {
@@ -158,19 +158,18 @@ extension String.ASN1UTF8StringView: Hashable {
     }
 }
 
-
 @usableFromInline
 struct ASN1Length: Hashable {
     @usableFromInline
     var length: Int
-    
+
     @usableFromInline
     var count: Int
-    
+
     @inlinable
     init(length: Int) {
         self.length = length
-        
+
         // ASN.1 lengths are in two forms. If we can store the length in 7 bits, we should:
         // that requires only one byte. Otherwise, we need multiple bytes: work out how many,
         // plus one for the length of the length bytes.
@@ -193,29 +192,27 @@ extension ASN1Length: RandomAccessCollection {
     var startIndex: Int {
         0
     }
-    
+
     @inlinable
     var endIndex: Int {
         count
     }
-    
+
     @inlinable
     subscript(position: Int) -> UInt8 {
         precondition(position >= 0 && position < self.count)
-        if self.length <= 0x7F {
-            return UInt8(truncatingIfNeeded: self.length)
-        } else {
-            if position == 0 {
-                // We first write the number of length bytes
-                // we needed, setting the high bit.
-                return 0b1000_0000 | UInt8(self.count &- 1)
-            } else {
+        guard self.length <= 0x7F else {
+            guard position == 0 else {
                 //Then we write the bytes of the length.
                 let integerBytesCollection = IntegerBytesCollection(self.length)
                 let index = integerBytesCollection.index(integerBytesCollection.startIndex, offsetBy: position &- 1)
                 return integerBytesCollection[index]
             }
+            // We first write the number of length bytes
+            // we needed, setting the high bit.
+            return 0b1000_0000 | UInt8(self.count &- 1)
         }
+        return UInt8(truncatingIfNeeded: self.length)
     }
 }
 
@@ -258,7 +255,7 @@ extension RelativeDistinguishedName.Attribute.Value {
         _ = try ASN1PrintableString(printableString)
         self.storage = .printable(printableString)
     }
-    
+
     @inlinable
     public init(asn1Any: ASN1Any) {
         self.storage = .any(asn1Any)
@@ -283,13 +280,14 @@ extension RelativeDistinguishedName.Attribute.Value: CustomStringConvertible {
                 }
             }
         }
-        
+
         // This is a very slow way to do this, but until we have any evidence that
         // this is hot code I'm happy to do it slowly.
         let unescapedBytes = Array(text.utf8)
         let charsToEscape: [UInt8] = [
             UInt8(ascii: ","), UInt8(ascii: "+"), UInt8(ascii: "\""), UInt8(ascii: "\\"),
-            UInt8(ascii: "<"), UInt8(ascii: ">"), UInt8(ascii: ";")]
+            UInt8(ascii: "<"), UInt8(ascii: ">"), UInt8(ascii: ";"),
+        ]
 
         let leadingBytesToEscape = unescapedBytes.prefix(while: {
             $0 == UInt8(ascii: " ") || $0 == UInt8(ascii: "#")
@@ -303,11 +301,10 @@ extension RelativeDistinguishedName.Attribute.Value: CustomStringConvertible {
 
         var escapedBytes = leadingBytesToEscape.flatMap { [UInt8(ascii: "\\"), $0] }
         escapedBytes += middleBytes.flatMap {
-            if charsToEscape.contains($0) {
-                return [UInt8(ascii: "\\"), $0]
-            } else {
+            guard charsToEscape.contains($0) else {
                 return [$0]
             }
+            return [UInt8(ascii: "\\"), $0]
         }
         escapedBytes += trailingBytesToEscape.flatMap { [UInt8(ascii: "\\"), $0] }
 
@@ -322,10 +319,9 @@ extension RelativeDistinguishedName.Attribute.Value: CustomDebugStringConvertibl
     }
 }
 
+extension RelativeDistinguishedName.Attribute: Hashable {}
 
-extension RelativeDistinguishedName.Attribute: Hashable { }
-
-extension RelativeDistinguishedName.Attribute: Sendable { }
+extension RelativeDistinguishedName.Attribute: Sendable {}
 
 extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
     @inlinable
@@ -367,7 +363,7 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
             guard let valueNode = nodes.next() else {
                 throw ASN1Error.invalidASN1Object(reason: "RelativeDistinguishedName.Attribute.Value is missing")
             }
-            
+
             let value: Value
             switch type {
             /// ```
@@ -457,11 +453,11 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
             ///                           (SIZE (1..ub-organizational-unit-name)) }
             /// ```
             case .RDNAttributeType.commonName,
-                    .RDNAttributeType.localityName,
-                    .RDNAttributeType.stateOrProvinceName,
-                    .RDNAttributeType.organizationName,
-                    .RDNAttributeType.organizationalUnitName:
-                
+                .RDNAttributeType.localityName,
+                .RDNAttributeType.stateOrProvinceName,
+                .RDNAttributeType.organizationName,
+                .RDNAttributeType.organizationalUnitName:
+
                 switch valueNode.identifier {
                 case ASN1UTF8String.defaultIdentifier:
                     value = try .init(utf8String: String(ASN1UTF8String(derEncoded: valueNode)))
@@ -470,7 +466,7 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
                 default:
                     value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
                 }
-                
+
             /// ```
             /// -- Naming attributes of type X520countryName (digraph from IS 3166)
             ///
@@ -485,11 +481,11 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
                 default:
                     value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
                 }
-                
+
             default:
                 value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
             }
-            
+
             return .init(type: type, value: value)
         }
     }
@@ -525,7 +521,7 @@ extension RelativeDistinguishedName.Attribute {
         self.type = type
         self.value = try .init(printableString: printableString)
     }
-    
+
     /// Create a new attribute from a given type and value.
     ///
     /// - Parameter type: The type of the attribute.

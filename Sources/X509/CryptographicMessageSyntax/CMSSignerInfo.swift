@@ -44,7 +44,7 @@ struct CMSSignerInfo: DERImplicitlyTaggable, Hashable, Sendable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
-    
+
     @usableFromInline var version: CMSVersion
     @usableFromInline var signerIdentifier: CMSSignerIdentifier
     @usableFromInline var digestAlgorithm: AlgorithmIdentifier
@@ -93,24 +93,28 @@ struct CMSSignerInfo: DERImplicitlyTaggable, Hashable, Sendable {
             switch signerIdentifier {
             case .issuerAndSerialNumber:
                 guard version == .v1 else {
-                    throw Error.versionAndSignerIdentifierMismatch("expected \(CMSVersion.v1) but got \(version) where signerIdentifier is \(signerIdentifier)")
+                    throw Error.versionAndSignerIdentifierMismatch(
+                        "expected \(CMSVersion.v1) but got \(version) where signerIdentifier is \(signerIdentifier)"
+                    )
                 }
             case .subjectKeyIdentifier:
                 guard version == .v3 else {
-                    throw Error.versionAndSignerIdentifierMismatch("expected \(CMSVersion.v3) but got \(version) where signerIdentifier is \(signerIdentifier)")
+                    throw Error.versionAndSignerIdentifierMismatch(
+                        "expected \(CMSVersion.v3) but got \(version) where signerIdentifier is \(signerIdentifier)"
+                    )
                 }
             }
             let digestAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
-            
+
             // we don't support signedAttrs yet but we still need to skip them
             _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { _ in }
-            
+
             let signatureAlgorithm = try AlgorithmIdentifier(derEncoded: &nodes)
             let signature = try ASN1OctetString(derEncoded: &nodes)
-            
+
             // we don't support unsignedAttrs yet but we still need to skip them
             _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
-            
+
             return .init(
                 version: version,
                 signerIdentifier: signerIdentifier,

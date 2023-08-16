@@ -41,10 +41,12 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
         .sequence
     }
 
-    init(hashAlgorithm: AlgorithmIdentifier,
-         issuerNameHash: ASN1OctetString,
-         issuerKeyHash: ASN1OctetString,
-         serialNumber: Certificate.SerialNumber) {
+    init(
+        hashAlgorithm: AlgorithmIdentifier,
+        issuerNameHash: ASN1OctetString,
+        issuerKeyHash: ASN1OctetString,
+        serialNumber: Certificate.SerialNumber
+    ) {
         self.hashAlgorithm = hashAlgorithm
         self.issuerNameHash = issuerNameHash
         self.issuerKeyHash = issuerKeyHash
@@ -72,10 +74,12 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
             let issuerKeyHash = try ASN1OctetString(derEncoded: &nodes)
             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
 
-            return .init(hashAlgorithm: hashAlgorithm,
-                         issuerNameHash: issuerNameHash,
-                         issuerKeyHash: issuerKeyHash,
-                         serialNumber: .init(bytes: serialNumber))
+            return .init(
+                hashAlgorithm: hashAlgorithm,
+                issuerNameHash: issuerNameHash,
+                issuerKeyHash: issuerKeyHash,
+                serialNumber: .init(bytes: serialNumber)
+            )
         }
     }
 

@@ -61,7 +61,7 @@ enum OCSPResponseStatus: DERImplicitlyTaggable, Hashable {
             throw ASN1Error.invalidASN1Object(reason: "Unexpected OCSP response status: \(rawValue)")
         }
     }
-    
+
     var integerValue: Int {
         switch self {
         case .successful: return 0

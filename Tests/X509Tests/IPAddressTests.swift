@@ -53,10 +53,19 @@ final class IPAddressNameTests: XCTestCase {
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe80::", mask: "ffff:ffff:ffff:ffff::"), true),
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe80::8d:0:0:0", mask: "ffff:ffff:ffff:ffff:ffff::"), true),
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe80::8d:f7d:0:0", mask: "ffff:ffff:ffff:ffff:ffff:ffff::"), true),
-        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe80::8d:f7d:79c5:0", mask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:0"), true),
-        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe80::8d:f7d:79c5:5719", mask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), true),
+        (
+            .v6("fe80::8d:f7d:79c5:5719"),
+            .v6(subnet: "fe80::8d:f7d:79c5:0", mask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:0"), true
+        ),
+        (
+            .v6("fe80::8d:f7d:79c5:5719"),
+            .v6(subnet: "fe80::8d:f7d:79c5:5719", mask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), true
+        ),
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe81::", mask: "ffff:ffff:ffff:ffff::"), false),
-        (.v6("fe80::8d:f7d:79d5:5719"), .v6(subnet: "fe80::8d:f7d:79c5:5719", mask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), false),
+        (
+            .v6("fe80::8d:f7d:79d5:5719"),
+            .v6(subnet: "fe80::8d:f7d:79c5:5719", mask: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), false
+        ),
 
         // CIDR mask with zero bytes in weird places.
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe80::8d:f7d:79c5:5719", mask: "::ffff"), false),
@@ -71,7 +80,10 @@ final class IPAddressNameTests: XCTestCase {
 
         // CIDR masks with weird bit patterns
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe81::8d:f7d:79c5:5719", mask: "ffff:ffff:c9c9::"), false),
-        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "fe81::8d:f7d:79c5:5719", mask: "ffff:ffff:feff:ffff:ffff:ffff:ffff:ffff"), false),
+        (
+            .v6("fe80::8d:f7d:79c5:5719"),
+            .v6(subnet: "fe81::8d:f7d:79c5:5719", mask: "ffff:ffff:feff:ffff:ffff:ffff:ffff:ffff"), false
+        ),
 
         // All zero mask matches nothing
         (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "::", mask: "::"), false),

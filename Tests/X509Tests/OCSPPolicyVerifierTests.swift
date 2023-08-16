@@ -32,7 +32,7 @@ actor TestRequester: OCSPRequester {
     private let file: StaticString
     private let line: UInt
     var queryCount: Int = 0
-    
+
     init(
         query: @escaping @Sendable (OCSPRequest, String) async -> QueryResult,
         file: StaticString = #file,
@@ -42,7 +42,7 @@ actor TestRequester: OCSPRequester {
         self.file = file
         self.line = line
     }
-    
+
     func query(request requestDerEncoded: [UInt8], uri: String) async -> OCSPRequesterQueryResult {
         queryCount += 1
         let request: OCSPRequest
@@ -111,9 +111,7 @@ struct AssertNoThrowRequester<Wrapped: OCSPRequester>: OCSPRequester {
             XCTFail("test query closure throw hard failure \(error)", file: file, line: line)
             return .terminalError(error)
         }
-        
-            
-        
+
     }
 }
 
@@ -124,7 +122,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         CommonName("Swift Certificate Test CA 1")
     }
     private static let ca1PrivateKey = P384.Signing.PrivateKey()
-    
+
     private static func ca(ocspServer: String? = nil) -> Certificate {
         try! Certificate(
             version: .v3,
@@ -140,12 +138,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
                 if let ocspServer {
                     AuthorityInformationAccess([
                         AuthorityInformationAccess.AccessDescription(
                             method: .ocspServer,
-                            location: GeneralName.uniformResourceIdentifier(ocspServer))
+                            location: GeneralName.uniformResourceIdentifier(ocspServer)
+                        )
                     ])
                 }
             },
@@ -153,7 +154,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
     private static let ca1: Certificate = ca()
-    
+
     fileprivate static let intermediatePrivateKey = P384.Signing.PrivateKey()
     private static let leafPrivateKey = P384.Signing.PrivateKey()
     private static func certificate(
@@ -183,14 +184,15 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                     AuthorityInformationAccess([
                         AuthorityInformationAccess.AccessDescription(
                             method: .ocspServer,
-                            location: GeneralName.uniformResourceIdentifier(ocspServer))
+                            location: GeneralName.uniformResourceIdentifier(ocspServer)
+                        )
                     ])
                 }
             },
             issuerPrivateKey: .init(issuerPrivateKey)
         )
     }
-    
+
     fileprivate static let intermediate1Name = try! DistinguishedName {
         CountryName("US")
         OrganizationName("Apple")
@@ -201,7 +203,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         OrganizationName("Apple")
         CommonName("localhost")
     }
-    
+
     private static func intermediate(ocspServer: String? = nil) -> Certificate {
         certificate(
             subject: intermediate1Name,
@@ -212,7 +214,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             ocspServer: ocspServer
         )
     }
-    
+
     private static func leaf(ocspServer: String? = nil) -> Certificate {
         certificate(
             subject: localhostLeafName,
@@ -223,17 +225,19 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             ocspServer: ocspServer
         )
     }
-    
+
     private static let chainWithSingleCertWithOCSP = [
         leaf(ocspServer: responderURI),
         intermediate(),
     ]
-    
+
     private static let responderURI = "http://ocsp.apple.com/path"
-    fileprivate static let responderId = ResponderID.byName(try! DistinguishedName {
-        CommonName("Swift OCSP Test Responder")
-    })
-    
+    fileprivate static let responderId = ResponderID.byName(
+        try! DistinguishedName {
+            CommonName("Swift OCSP Test Responder")
+        }
+    )
+
     private static let responderIntermediate1Name = try! DistinguishedName {
         CountryName("US")
         OrganizationName("Apple")
@@ -252,14 +256,14 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         extensions: Certificate.Extensions {},
         issuerPrivateKey: .init(ca1PrivateKey)
     )
-    
+
     private let validationTime = Date()
-    
+
     private enum ExpectedVerificationResult {
         case failsToMeetPolicy
         case meetsPolicy
     }
-    
+
     private func assertChain(
         soft: ExpectedVerificationResult,
         hard: ExpectedVerificationResult,
@@ -272,19 +276,49 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     ) async {
         switch soft {
         case .failsToMeetPolicy:
-            await self.assertChainFailsToMeetPolicy(mode: .soft, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, file: file, line: line)
+            await self.assertChainFailsToMeetPolicy(
+                mode: .soft,
+                chain: chain,
+                requester: requester(),
+                expectedQueryCount: expectedQueryCount,
+                file: file,
+                line: line
+            )
         case .meetsPolicy:
-            await self.assertChainMeetsPolicy(mode: .soft, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, validationTime: validationTime, file: file, line: line)
+            await self.assertChainMeetsPolicy(
+                mode: .soft,
+                chain: chain,
+                requester: requester(),
+                expectedQueryCount: expectedQueryCount,
+                validationTime: validationTime,
+                file: file,
+                line: line
+            )
         }
-        
+
         switch hard {
         case .failsToMeetPolicy:
-            await self.assertChainFailsToMeetPolicy(mode: .hard, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, file: file, line: line)
+            await self.assertChainFailsToMeetPolicy(
+                mode: .hard,
+                chain: chain,
+                requester: requester(),
+                expectedQueryCount: expectedQueryCount,
+                file: file,
+                line: line
+            )
         case .meetsPolicy:
-            await self.assertChainMeetsPolicy(mode: .hard, chain: chain, requester: requester(), expectedQueryCount: expectedQueryCount, validationTime: validationTime, file: file, line: line)
+            await self.assertChainMeetsPolicy(
+                mode: .hard,
+                chain: chain,
+                requester: requester(),
+                expectedQueryCount: expectedQueryCount,
+                validationTime: validationTime,
+                file: file,
+                line: line
+            )
         }
     }
-    
+
     private func assertChainMeetsPolicy(
         mode: OCSPFailureMode = .hard,
         chain: [Certificate],
@@ -310,7 +344,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             XCTAssertEqual(queryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
         }
     }
-    
+
     private func printChainForDebugging(_ chain: [Certificate]) {
         print("chain:")
         for certificate in chain {
@@ -325,14 +359,14 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             print("failed to serialise chain \(error)")
         }
     }
-    
+
     private func assertChainFailsToMeetPolicy(
         mode: OCSPFailureMode = .hard,
         chain: [Certificate],
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
         validationTime: Date? = nil,
-        
+
         file: StaticString = #file,
         line: UInt = #line
     ) async {
@@ -349,10 +383,16 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         }
         if let testRequest = requester as? TestRequester {
             let actualQueryCount = await testRequest.queryCount
-            XCTAssertEqual(actualQueryCount, expectedQueryCount, "unexpected requester query count", file: file, line: line)
+            XCTAssertEqual(
+                actualQueryCount,
+                expectedQueryCount,
+                "unexpected requester query count",
+                file: file,
+                line: line
+            )
         }
     }
-    
+
     func testSingleCertWithOCSP() async {
         let now = self.validationTime
         await self.assertChain(
@@ -365,21 +405,25 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
-                return .successful(try .signed(
-                    producedAt: .init(validationTime),
-                    responses: [OCSPSingleResponse(
-                        certID: singleRequest.certID,
-                        certStatus: .good,
-                        thisUpdate: .init(now - .days(1)),
-                        nextUpdate: .init(now + .days(1))
-                    )]) {
+                return .successful(
+                    try .signed(
+                        producedAt: .init(validationTime),
+                        responses: [
+                            OCSPSingleResponse(
+                                certID: singleRequest.certID,
+                                certStatus: .good,
+                                thisUpdate: .init(now - .days(1)),
+                                nextUpdate: .init(now + .days(1))
+                            )
+                        ]
+                    ) {
                         nonce
                     }
                 )
             }
         )
     }
-    
+
     func testWrongNonce() async {
         let now = self.validationTime
         await self.assertChain(
@@ -392,21 +436,25 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertNotNil(try request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
-                return .successful(try .signed(
-                    producedAt: .init(validationTime),
-                    responses: [OCSPSingleResponse(
-                    certID: singleRequest.certID,
-                    certStatus: .good,
-                    thisUpdate: .init(now - .days(1)),
-                    nextUpdate: .init(now + .days(1))
-                    )]) {
+                return .successful(
+                    try .signed(
+                        producedAt: .init(validationTime),
+                        responses: [
+                            OCSPSingleResponse(
+                                certID: singleRequest.certID,
+                                certStatus: .good,
+                                thisUpdate: .init(now - .days(1)),
+                                nextUpdate: .init(now + .days(1))
+                            )
+                        ]
+                    ) {
                         OCSPNonce()
                     }
                 )
             }
         )
     }
-    
+
     func testRevokedCert() async {
         let now = self.validationTime
         await self.assertChain(
@@ -419,24 +467,30 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
-                return .successful(try .signed(
-                    producedAt: .init(validationTime),
-                    responses: [OCSPSingleResponse(
-                        certID: singleRequest.certID,
-                        certStatus: .revoked(.init(
-                            revocationTime: .init(now),
-                            revocationReason: .unspecified
-                        )),
-                        thisUpdate: .init(now - .days(1)),
-                        nextUpdate: .init(now + .days(1))
-                    )]) {
+                return .successful(
+                    try .signed(
+                        producedAt: .init(validationTime),
+                        responses: [
+                            OCSPSingleResponse(
+                                certID: singleRequest.certID,
+                                certStatus: .revoked(
+                                    .init(
+                                        revocationTime: .init(now),
+                                        revocationReason: .unspecified
+                                    )
+                                ),
+                                thisUpdate: .init(now - .days(1)),
+                                nextUpdate: .init(now + .days(1))
+                            )
+                        ]
+                    ) {
                         nonce
                     }
                 )
             }
         )
     }
-    
+
     func testInvalidResponderCertChain() async {
         let now = self.validationTime
         await self.assertChain(
@@ -449,24 +503,28 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
-                return .successful(try .signed(
-                    responderID: .byName(Self.invalidResponderIntermediate1.subject),
-                    producedAt: .init(validationTime),
-                    responses: [OCSPSingleResponse(
-                        certID: singleRequest.certID,
-                        certStatus: .good,
-                        thisUpdate: .init(now - .days(1)),
-                        nextUpdate: .init(now + .days(1))
-                    )],
-                    privateKey: Self.responderIntermediate1PrivateKey,
-                    certs: [Self.invalidResponderIntermediate1]) {
+                return .successful(
+                    try .signed(
+                        responderID: .byName(Self.invalidResponderIntermediate1.subject),
+                        producedAt: .init(validationTime),
+                        responses: [
+                            OCSPSingleResponse(
+                                certID: singleRequest.certID,
+                                certStatus: .good,
+                                thisUpdate: .init(now - .days(1)),
+                                nextUpdate: .init(now + .days(1))
+                            )
+                        ],
+                        privateKey: Self.responderIntermediate1PrivateKey,
+                        certs: [Self.invalidResponderIntermediate1]
+                    ) {
                         nonce
                     }
                 )
             }
         )
     }
-    
+
     func testResponderSignatureAlgorithmIdentifierMismatch() async {
         let now = self.validationTime
         await self.assertChain(
@@ -479,29 +537,31 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
-                
+
                 let responseData = OCSPResponseData(
                     version: .v1,
                     responderID: Self.responderId,
                     producedAt: .init(Date()),
-                    responses: [OCSPSingleResponse(
-                        certID: singleRequest.certID,
-                        certStatus: .good,
-                        thisUpdate: .init(now - .days(1)),
-                        nextUpdate: .init(now + .days(1))
-                    )],
+                    responses: [
+                        OCSPSingleResponse(
+                            certID: singleRequest.certID,
+                            certStatus: .good,
+                            thisUpdate: .init(now - .days(1)),
+                            nextUpdate: .init(now + .days(1))
+                        )
+                    ],
                     responseExtensions: try .init {
                         nonce
                     }
                 )
-                
+
                 var serializer = DER.Serializer()
                 try serializer.serialize(responseData)
                 let tbsCertificateBytes = serializer.serializedBytes[...]
-                
+
                 let digest = SHA384.hash(data: tbsCertificateBytes)
                 let signature = try Self.intermediatePrivateKey.signature(for: digest)
-                
+
                 let response = try BasicOCSPResponse(
                     responseData: responseData,
                     // signature digest was creating using SHA384 but we specify the wrong identifier SHA256
@@ -513,7 +573,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             }
         )
     }
-    
+
     func testResponseDoesNotIncludeResponseForRequestedCert() async {
         let now = self.validationTime
         await self.assertChain(
@@ -525,26 +585,30 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 XCTAssertNil(request.signature)
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
-                return .successful(try .signed(
-                    producedAt: .init(validationTime),
-                    responses: [OCSPSingleResponse(
-                        certID: .init(
-                            hashAlgorithm: .init(algorithm: .sha1NoSign, parameters: nil),
-                            issuerNameHash: .init(contentBytes: [0, 1, 2, 3, 4][...]),
-                            issuerKeyHash: .init(contentBytes: [6, 7, 8, 9, 10][...]),
-                            serialNumber: .init()
-                        ),
-                        certStatus: .good,
-                        thisUpdate: .init(now - .days(1)),
-                        nextUpdate: .init(now + .days(1))
-                    )]) {
+                return .successful(
+                    try .signed(
+                        producedAt: .init(validationTime),
+                        responses: [
+                            OCSPSingleResponse(
+                                certID: .init(
+                                    hashAlgorithm: .init(algorithm: .sha1NoSign, parameters: nil),
+                                    issuerNameHash: .init(contentBytes: [0, 1, 2, 3, 4][...]),
+                                    issuerKeyHash: .init(contentBytes: [6, 7, 8, 9, 10][...]),
+                                    serialNumber: .init()
+                                ),
+                                certStatus: .good,
+                                thisUpdate: .init(now - .days(1)),
+                                nextUpdate: .init(now + .days(1))
+                            )
+                        ]
+                    ) {
                         nonce
                     }
                 )
             }
         )
     }
-    
+
     func testShouldNotQueryResponderIfNoOCSPServerIsDefined() async {
         await self.assertChain(
             soft: .meetsPolicy,
@@ -561,7 +625,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             expectedQueryCount: 0
         )
     }
-    
+
     func testLastCertificateIsNotAllowedToHaveOCSP() async {
         await self.assertChain(
             soft: .failsToMeetPolicy,
@@ -578,7 +642,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             expectedQueryCount: 0
         )
     }
-    
+
     func testDoesNotFailOnSoftFailure() async {
         await self.assertChain(
             soft: .meetsPolicy,
@@ -590,7 +654,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             }
         )
     }
-    
+
     func testFailsOnTerminalError() async {
         await self.assertChain(
             soft: .failsToMeetPolicy,
@@ -602,7 +666,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             }
         )
     }
-    
+
     func testTimeValidation() async {
         func responseWithCertStatusGood(
             producedAt: Date = self.validationTime,
@@ -615,20 +679,24 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
                 XCTAssertEqual(request.tbsRequest.requestList.count, 1)
                 let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
-                return .successful(try .signed(
-                    producedAt: .init(producedAt),
-                    responses: [OCSPSingleResponse(
-                        certID: singleRequest.certID,
-                        certStatus: .good,
-                        thisUpdate: .init(thisUpdate),
-                        nextUpdate: nextUpdate.map { .init($0) }
-                    )]) {
+                return .successful(
+                    try .signed(
+                        producedAt: .init(producedAt),
+                        responses: [
+                            OCSPSingleResponse(
+                                certID: singleRequest.certID,
+                                certStatus: .good,
+                                thisUpdate: .init(thisUpdate),
+                                nextUpdate: nextUpdate.map { .init($0) }
+                            )
+                        ]
+                    ) {
                         nonce
                     }
                 )
             }
         }
-        
+
         /// produced at is in the future
         await self.assertChain(
             soft: .meetsPolicy,
@@ -640,7 +708,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 nextUpdate: self.validationTime + 1
             )
         )
-        
+
         /// is almost exactly in the current time window
         await self.assertChain(
             soft: .meetsPolicy,
@@ -651,7 +719,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 nextUpdate: self.validationTime + 1
             )
         )
-        
+
         /// is almost exactly in the current time window with leeway
         await self.assertChain(
             soft: .meetsPolicy,
@@ -663,7 +731,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 nextUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 2
             )
         )
-        
+
         /// no next update
         await self.assertChain(
             soft: .meetsPolicy,
@@ -685,7 +753,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 nextUpdate: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 2
             )
         )
-        
+
         /// next update is in the past
         await self.assertChain(
             soft: .meetsPolicy,
@@ -707,7 +775,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             )
         )
     }
-    
+
     func testWWWDotAppleDotComResponder() async throws {
         actor StaticOCSPRequester: OCSPRequester {
             var responses: [OCSPResponse]
@@ -730,7 +798,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 }
             }
         }
-        
+
         func load(_ filePath: String, extension: String) throws -> [UInt8] {
             guard let url = Bundle.module.url(forResource: filePath, withExtension: `extension`) else {
                 struct CouldNotGetURLFromBundle: Error {
@@ -739,7 +807,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 }
                 throw CouldNotGetURLFromBundle(filePath: filePath, extension: `extension`)
             }
-            
+
             return Array(try Data(contentsOf: url))
         }
         func loadCertificate(_ filePath: String, extension: String) throws -> Certificate {
@@ -748,14 +816,19 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         func loadOCSPResponse(_ filePath: String, extension: String) throws -> OCSPResponse {
             try OCSPResponse(derEncoded: load(filePath, extension: `extension`))
         }
-        
+
         let root = try loadCertificate("www.apple.com.root", extension: "der")
         let intermediate = try loadCertificate("www.apple.com.intermediate", extension: "der")
         let leaf = try loadCertificate("www.apple.com", extension: "der")
         let ocspResponseLeaf = try loadOCSPResponse("www.apple.com.ocsp-response", extension: "der")
-        let ocspResponseIntermediate = try loadOCSPResponse("www.apple.com.intermediate.ocsp-response", extension: "der")
-        let timeOfOCSPRequest = try Date(GeneralizedTime(year: 2023, month: 3, day: 15, hours: 15, minutes: 36, seconds: 0, fractionalSeconds: 0.0))
-        
+        let ocspResponseIntermediate = try loadOCSPResponse(
+            "www.apple.com.intermediate.ocsp-response",
+            extension: "der"
+        )
+        let timeOfOCSPRequest = try Date(
+            GeneralizedTime(year: 2023, month: 3, day: 15, hours: 15, minutes: 36, seconds: 0, fractionalSeconds: 0.0)
+        )
+
         await self.assertChain(
             soft: .meetsPolicy,
             hard: .meetsPolicy,
@@ -778,10 +851,10 @@ extension BasicOCSPResponse {
         var serializer = DER.Serializer()
         try serializer.serialize(responseData)
         let tbsCertificateBytes = serializer.serializedBytes[...]
-        
+
         let digest = SHA384.hash(data: tbsCertificateBytes)
         let signature = try privateKey.signature(for: digest)
-        
+
         return try .init(
             responseData: responseData,
             signatureAlgorithm: .ecdsaWithSHA384,
@@ -796,7 +869,9 @@ extension BasicOCSPResponse {
         responses: [OCSPSingleResponse],
         privateKey: P384.Signing.PrivateKey = OCSPVerifierPolicyTests.intermediatePrivateKey,
         certs: [Certificate]? = [],
-        @ExtensionsBuilder responseExtensions: () throws -> Result<Certificate.Extensions, any Error> = { .success(Certificate.Extensions()) }
+        @ExtensionsBuilder responseExtensions: () throws -> Result<Certificate.Extensions, any Error> = {
+            .success(Certificate.Extensions())
+        }
     ) throws -> Self {
         try .signed(
             responseData: .init(
@@ -810,7 +885,7 @@ extension BasicOCSPResponse {
             certs: certs
         )
     }
-    
+
     init(
         responseData: OCSPResponseData,
         signatureAlgorithm: AlgorithmIdentifier,

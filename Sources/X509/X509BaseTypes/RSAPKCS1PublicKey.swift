@@ -53,7 +53,6 @@ struct RSAPKCS1PublicKey: DERImplicitlyTaggable, Hashable, Sendable {
         self.publicExponent = publicExponent
     }
 
-
     @inlinable
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
@@ -62,4 +61,3 @@ struct RSAPKCS1PublicKey: DERImplicitlyTaggable, Hashable, Sendable {
         }
     }
 }
-

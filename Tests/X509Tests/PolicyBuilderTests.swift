@@ -18,10 +18,10 @@ import SwiftASN1
 @testable import X509
 import Crypto
 
-fileprivate struct Policy: VerifierPolicy {
+private struct Policy: VerifierPolicy {
     var result: PolicyEvaluationResult = .meetsPolicy
     var verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
-    
+
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         result
     }
@@ -29,85 +29,121 @@ fileprivate struct Policy: VerifierPolicy {
 
 final class PolicyBuilderTests: XCTestCase {
     func testVerifyingCriticalExtensions_empty() {
-        XCTAssertEqual(Set(AnyPolicy {
-            
-        }.verifyingCriticalExtensions), [
-            
-        ])
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+
+                }.verifyingCriticalExtensions
+            ),
+            []
+        )
     }
-    
+
     func testVerifyingCriticalExtensions_concatenation() {
-        XCTAssertEqual(Set(AnyPolicy {
-            Policy(verifyingCriticalExtensions: [[1]])
-        }.verifyingCriticalExtensions), [
-            [1],
-        ])
-        
-        XCTAssertEqual(Set(AnyPolicy {
-            Policy(verifyingCriticalExtensions: [[1]])
-            Policy(verifyingCriticalExtensions: [[2]])
-        }.verifyingCriticalExtensions), [
-            [1],
-            [2],
-        ])
-        
-        XCTAssertEqual(Set(AnyPolicy {
-            Policy(verifyingCriticalExtensions: [[1]])
-            Policy(verifyingCriticalExtensions: [[2]])
-            Policy(verifyingCriticalExtensions: [[3]])
-        }.verifyingCriticalExtensions), [
-            [1],
-            [2],
-            [3],
-        ])
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    Policy(verifyingCriticalExtensions: [[1]])
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1]
+            ]
+        )
+
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    Policy(verifyingCriticalExtensions: [[1]])
+                    Policy(verifyingCriticalExtensions: [[2]])
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1],
+                [2],
+            ]
+        )
+
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    Policy(verifyingCriticalExtensions: [[1]])
+                    Policy(verifyingCriticalExtensions: [[2]])
+                    Policy(verifyingCriticalExtensions: [[3]])
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1],
+                [2],
+                [3],
+            ]
+        )
     }
-    
+
     func testVerifyingCriticalExtensions_if() {
         let `true` = true
         let `false` = false
-        XCTAssertEqual(Set(AnyPolicy {
-            if `true` {
-                Policy(verifyingCriticalExtensions: [[1]])
-            }
-        }.verifyingCriticalExtensions), [
-            [1],
-        ])
-        
-        XCTAssertEqual(Set(AnyPolicy {
-            if `false` {
-                Policy(verifyingCriticalExtensions: [[1]])
-            }
-        }.verifyingCriticalExtensions), [
-            
-        ])
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    if `true` {
+                        Policy(verifyingCriticalExtensions: [[1]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1]
+            ]
+        )
+
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    if `false` {
+                        Policy(verifyingCriticalExtensions: [[1]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            []
+        )
     }
-    
+
     func testVerifyingCriticalExtensions_ifElse() {
         let `true` = true
         let `false` = false
-        XCTAssertEqual(Set(AnyPolicy {
-            if `true` {
-                Policy(verifyingCriticalExtensions: [[1]])
-            } else {
-                Policy(verifyingCriticalExtensions: [[2]])
-            }
-        }.verifyingCriticalExtensions), [
-            [1],
-        ])
-        
-        XCTAssertEqual(Set(AnyPolicy {
-            if `false` {
-                Policy(verifyingCriticalExtensions: [[1]])
-            } else {
-                Policy(verifyingCriticalExtensions: [[2]])
-            }
-        }.verifyingCriticalExtensions), [
-            [2],
-        ])
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    if `true` {
+                        Policy(verifyingCriticalExtensions: [[1]])
+                    } else {
+                        Policy(verifyingCriticalExtensions: [[2]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1]
+            ]
+        )
+
+        XCTAssertEqual(
+            Set(
+                AnyPolicy {
+                    if `false` {
+                        Policy(verifyingCriticalExtensions: [[1]])
+                    } else {
+                        Policy(verifyingCriticalExtensions: [[2]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [2]
+            ]
+        )
     }
-    
+
     private static let privateKey = P384.Signing.PrivateKey()
-    
+
     private static let certificate = try! Certificate(
         version: .v3,
         serialNumber: .init(),
@@ -128,11 +164,11 @@ final class PolicyBuilderTests: XCTestCase {
         extensions: .init(),
         issuerPrivateKey: .init(privateKey)
     )
-    
+
     private let chain = UnverifiedCertificateChain([
         certificate
     ])
-    
+
     private func assertMeetsPolicy(
         @PolicyBuilder makePolicy: () throws -> some VerifierPolicy,
         chain: UnverifiedCertificateChain? = nil,
@@ -160,50 +196,50 @@ final class PolicyBuilderTests: XCTestCase {
             return
         }
     }
-    
+
     func testChainMeetsPolicyRequirements_empty() async {
         await assertMeetsPolicy {
-            
+
         }
     }
-    
+
     func testChainMeetsPolicyRequirements_concatenation() async {
         await assertMeetsPolicy {
             Policy(result: .meetsPolicy)
         }
-        
+
         await assertMeetsPolicy {
             Policy(result: .meetsPolicy)
             Policy(result: .meetsPolicy)
         }
-        
+
         await assertMeetsPolicy {
             Policy(result: .meetsPolicy)
             Policy(result: .meetsPolicy)
             Policy(result: .meetsPolicy)
         }
-        
+
         await assertFailsToMeetPolicy {
             Policy(result: .failsToMeetPolicy(reason: ""))
         }
-        
+
         await assertFailsToMeetPolicy {
             Policy(result: .meetsPolicy)
             Policy(result: .failsToMeetPolicy(reason: ""))
         }
-        
+
         await assertFailsToMeetPolicy {
             Policy(result: .failsToMeetPolicy(reason: ""))
             Policy(result: .meetsPolicy)
         }
-        
+
         await assertFailsToMeetPolicy {
             Policy(result: .meetsPolicy)
             Policy(result: .meetsPolicy)
             Policy(result: .failsToMeetPolicy(reason: ""))
         }
     }
-    
+
     func testChainMeetsPolicyRequirements_if() async {
         let `true` = true
         let `false` = false
@@ -212,26 +248,26 @@ final class PolicyBuilderTests: XCTestCase {
                 Policy(result: .meetsPolicy)
             }
         }
-        
+
         await assertMeetsPolicy {
             if `false` {
                 Policy(result: .meetsPolicy)
             }
         }
-        
+
         await assertFailsToMeetPolicy {
             if `true` {
                 Policy(result: .failsToMeetPolicy(reason: ""))
             }
         }
-        
+
         await assertMeetsPolicy {
             if `false` {
                 Policy(result: .failsToMeetPolicy(reason: ""))
             }
         }
     }
-    
+
     func testChainMeetsPolicyRequirements_ifElse() async {
         let `true` = true
         let `false` = false
@@ -242,7 +278,7 @@ final class PolicyBuilderTests: XCTestCase {
                 Policy(result: .meetsPolicy)
             }
         }
-        
+
         await assertMeetsPolicy {
             if `false` {
                 Policy(result: .meetsPolicy)
@@ -250,7 +286,7 @@ final class PolicyBuilderTests: XCTestCase {
                 Policy(result: .meetsPolicy)
             }
         }
-        
+
         await assertFailsToMeetPolicy {
             if `true` {
                 Policy(result: .failsToMeetPolicy(reason: ""))
@@ -258,7 +294,7 @@ final class PolicyBuilderTests: XCTestCase {
                 Policy(result: .meetsPolicy)
             }
         }
-        
+
         await assertMeetsPolicy {
             if `false` {
                 Policy(result: .failsToMeetPolicy(reason: ""))
@@ -266,7 +302,7 @@ final class PolicyBuilderTests: XCTestCase {
                 Policy(result: .meetsPolicy)
             }
         }
-                                                  
+
         await assertMeetsPolicy {
             if `true` {
                 Policy(result: .meetsPolicy)
@@ -274,7 +310,7 @@ final class PolicyBuilderTests: XCTestCase {
                 Policy(result: .failsToMeetPolicy(reason: ""))
             }
         }
-        
+
         await assertFailsToMeetPolicy {
             if `false` {
                 Policy(result: .meetsPolicy)
@@ -283,7 +319,7 @@ final class PolicyBuilderTests: XCTestCase {
             }
         }
     }
-    
+
     func testAnyPolicyTypeIsPreserved() {
         // tested at compile time
         let _: Verifier<AnyPolicy> = Verifier(rootCertificates: CertificateStore()) {

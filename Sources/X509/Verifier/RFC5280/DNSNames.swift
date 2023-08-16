@@ -109,14 +109,14 @@ extension NameConstraintsPolicy {
                 return false
             case (.some, .some(let constraintLabel)) where constraintLabel.count == 0:
                 // We have an empty constraint label. This must be last, so confirm that.
-                if reverseConstraintLabels.hasMoreLabels {
-                    // This label is empty, and not last, which is unacceptable.
-                    return false
-                } else {
+                guard reverseConstraintLabels.hasMoreLabels else {
                     // The period matches everything else, so we're good to go.
                     return true
                 }
-            case (.some(let dnsLabel), .some(let constraintLabel)) where dnsLabel.caseInsensitiveASCIIMatch(constraintLabel):
+                // This label is empty, and not last, which is unacceptable.
+                return false
+            case (.some(let dnsLabel), .some(let constraintLabel))
+            where dnsLabel.caseInsensitiveASCIIMatch(constraintLabel):
                 // The two labels match, continue.
                 continue
             case (.some, .some):
@@ -256,20 +256,19 @@ struct ReverseDNSLabelSequence: Sequence {
 
             // We walk backwards from the end until we find a period, then
             // we slice out that section and return it.
-            if let periodIndex = base.lastIndex(of: ASCII_PERIOD) {
-                // Ok, we found a period. Slice out that section, then drop the
-                // period and save the updated base.
-                let labelStartIndex = base.index(after: periodIndex)
-                let label = base[labelStartIndex...]
-                self.base = base[..<periodIndex]
-                return label
-            } else {
+            guard let periodIndex = base.lastIndex(of: ASCII_PERIOD) else {
                 // No period left! Return the entirety of what is left as the label,
                 // and then store nil.
                 let label = base
                 self.base = nil
                 return label
             }
+            // Ok, we found a period. Slice out that section, then drop the
+            // period and save the updated base.
+            let labelStartIndex = base.index(after: periodIndex)
+            let label = base[labelStartIndex...]
+            self.base = base[..<periodIndex]
+            return label
         }
 
         @inlinable var hasMoreLabels: Bool {
@@ -288,9 +287,12 @@ extension String.UTF8View.SubSequence {
             return false
         }
 
-        return self.elementsEqual(other, by: { selfByte, otherByte in
-            (selfByte & Self.asciiCaseInsensitiveMask) == (otherByte & Self.asciiCaseInsensitiveMask)
-        })
+        return self.elementsEqual(
+            other,
+            by: { selfByte, otherByte in
+                (selfByte & Self.asciiCaseInsensitiveMask) == (otherByte & Self.asciiCaseInsensitiveMask)
+            }
+        )
     }
 
     @usableFromInline

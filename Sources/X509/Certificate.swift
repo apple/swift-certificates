@@ -183,7 +183,10 @@ public struct Certificate {
             serialNumber: serialNumber,
             signature: signatureAlgorithm,
             issuer: issuer,
-            validity: try Validity(notBefore: .makeTime(from: notValidBefore), notAfter: .makeTime(from: notValidAfter)),
+            validity: try Validity(
+                notBefore: .makeTime(from: notValidBefore),
+                notAfter: .makeTime(from: notValidAfter)
+            ),
             subject: subject,
             publicKey: publicKey,
             extensions: extensions
@@ -193,7 +196,9 @@ public struct Certificate {
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
         self.signature = try issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
-        self.signatureAlgorithmBytes = try DER.Serializer.serialized(element: AlgorithmIdentifier(self.signatureAlgorithm))[...]
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(
+            element: AlgorithmIdentifier(self.signatureAlgorithm)
+        )[...]
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
@@ -215,9 +220,9 @@ public struct Certificate {
     }
 }
 
-extension Certificate: Hashable { }
+extension Certificate: Hashable {}
 
-extension Certificate: Sendable { }
+extension Certificate: Sendable {}
 
 extension Certificate: CustomStringConvertible {
     public var description: String {
@@ -247,8 +252,8 @@ extension Certificate: DERImplicitlyTaggable {
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             guard let tbsCertificateNode = nodes.next(),
-                  let signatureAlgorithmNode = nodes.next(),
-                  let signatureNode = nodes.next()
+                let signatureAlgorithmNode = nodes.next(),
+                let signatureNode = nodes.next()
             else {
                 throw ASN1Error.invalidASN1Object(reason: "Invalid certificate object, insufficient ASN.1 nodes")
             }

@@ -14,7 +14,6 @@
 
 import SwiftASN1
 
-
 /// ``OCSPNonce`` is defined in ASN.1 as:
 /// ```
 /// Nonce ::= OCTET STRING(SIZE(1..32))
@@ -25,31 +24,35 @@ struct OCSPNonce: DERImplicitlyTaggable, Hashable, Sendable {
         ASN1OctetString.defaultIdentifier
     }
     var rawValue: ASN1OctetString
-    
+
     init() {
         var generator = SystemRandomNumberGenerator()
         self.init(generator: &generator)
     }
-    
+
     init(generator: inout some RandomNumberGenerator) {
         self.rawValue = .init(contentBytes: generator.bytes(count: 32))
     }
-    
+
     init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .OCSPExtensionID.nonceIdentifier else {
-            throw CertificateError.incorrectOIDForExtension(reason: "Expected \(ASN1ObjectIdentifier.OCSPExtensionID.nonceIdentifier), got \(ext.oid)")
+            throw CertificateError.incorrectOIDForExtension(
+                reason: "Expected \(ASN1ObjectIdentifier.OCSPExtensionID.nonceIdentifier), got \(ext.oid)"
+            )
         }
 
         try self.init(derEncoded: ext.value)
     }
-    
+
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self.rawValue = try ASN1OctetString(derEncoded: rootNode, withIdentifier: identifier)
         guard (1...32).contains(self.rawValue.bytes.count) else {
-            throw ASN1Error.unsupportedFieldLength(reason: "OCSP Nonce has invalid number of bytes: \(self.rawValue.bytes.count)")
+            throw ASN1Error.unsupportedFieldLength(
+                reason: "OCSP Nonce has invalid number of bytes: \(self.rawValue.bytes.count)"
+            )
         }
     }
-    
+
     func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try rawValue.serialize(into: &coder, withIdentifier: identifier)
     }
@@ -77,7 +80,6 @@ extension OCSPNonce: CertificateExtensionConvertible {
         try .init(self, critical: false)
     }
 }
-
 
 extension Certificate.Extensions {
     var ocspNonce: OCSPNonce? {
