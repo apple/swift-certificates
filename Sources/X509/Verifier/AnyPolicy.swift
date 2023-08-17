@@ -90,13 +90,3 @@ struct LegacyPolicySet: VerifierPolicy {
         return .meetsPolicy
     }
 }
-
-@available(*, deprecated, message: "use PolicyBuilder to construct a custom policy")
-public typealias PolicySet = AnyPolicy
-
-extension AnyPolicy {
-    @available(*, deprecated, message: "use PolicyBuilder to construct a custom policy")
-    public init(policies: [any VerifierPolicy]) {
-        self.init(LegacyPolicySet(policies: policies))
-    }
-}
