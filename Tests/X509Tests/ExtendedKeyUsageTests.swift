@@ -160,7 +160,7 @@ final class ExtendedKeyUsageTests: XCTestCase {
     func testLargeNumberOfExtensions() throws {
         let usages = try ExtendedKeyUsage(
             (0..<32).map {
-                ExtendedKeyUsage.Usage(oid: [$0])
+                ExtendedKeyUsage.Usage(oid: [1, $0])
             }
         )
         XCTAssertEqual(usages.count, 32)
@@ -170,7 +170,7 @@ final class ExtendedKeyUsageTests: XCTestCase {
         XCTAssertThrowsError(
             try ExtendedKeyUsage(
                 (0..<33).map {
-                    ExtendedKeyUsage.Usage(oid: [$0])
+                    ExtendedKeyUsage.Usage(oid: [1, $0])
                 }
             )
         )
@@ -178,7 +178,7 @@ final class ExtendedKeyUsageTests: XCTestCase {
         XCTAssertThrowsError(
             try ExtendedKeyUsage(
                 (0..<10_000).map {
-                    ExtendedKeyUsage.Usage(oid: [$0])
+                    ExtendedKeyUsage.Usage(oid: [1, $0])
                 }
             )
         )

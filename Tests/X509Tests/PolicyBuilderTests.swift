@@ -43,39 +43,39 @@ final class PolicyBuilderTests: XCTestCase {
         XCTAssertEqual(
             Set(
                 AnyPolicy {
-                    Policy(verifyingCriticalExtensions: [[1]])
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
                 }.verifyingCriticalExtensions
             ),
             [
-                [1]
+                [1, 1]
             ]
         )
 
         XCTAssertEqual(
             Set(
                 AnyPolicy {
-                    Policy(verifyingCriticalExtensions: [[1]])
-                    Policy(verifyingCriticalExtensions: [[2]])
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
+                    Policy(verifyingCriticalExtensions: [[1, 2]])
                 }.verifyingCriticalExtensions
             ),
             [
-                [1],
-                [2],
+                [1, 1],
+                [1, 2],
             ]
         )
 
         XCTAssertEqual(
             Set(
                 AnyPolicy {
-                    Policy(verifyingCriticalExtensions: [[1]])
-                    Policy(verifyingCriticalExtensions: [[2]])
-                    Policy(verifyingCriticalExtensions: [[3]])
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
+                    Policy(verifyingCriticalExtensions: [[1, 2]])
+                    Policy(verifyingCriticalExtensions: [[1, 3]])
                 }.verifyingCriticalExtensions
             ),
             [
-                [1],
-                [2],
-                [3],
+                [1, 1],
+                [1, 2],
+                [1, 3],
             ]
         )
     }
@@ -87,12 +87,12 @@ final class PolicyBuilderTests: XCTestCase {
             Set(
                 AnyPolicy {
                     if `true` {
-                        Policy(verifyingCriticalExtensions: [[1]])
+                        Policy(verifyingCriticalExtensions: [[1, 1]])
                     }
                 }.verifyingCriticalExtensions
             ),
             [
-                [1]
+                [1, 1]
             ]
         )
 
@@ -100,7 +100,7 @@ final class PolicyBuilderTests: XCTestCase {
             Set(
                 AnyPolicy {
                     if `false` {
-                        Policy(verifyingCriticalExtensions: [[1]])
+                        Policy(verifyingCriticalExtensions: [[1, 1]])
                     }
                 }.verifyingCriticalExtensions
             ),
@@ -115,14 +115,14 @@ final class PolicyBuilderTests: XCTestCase {
             Set(
                 AnyPolicy {
                     if `true` {
-                        Policy(verifyingCriticalExtensions: [[1]])
+                        Policy(verifyingCriticalExtensions: [[1, 1]])
                     } else {
-                        Policy(verifyingCriticalExtensions: [[2]])
+                        Policy(verifyingCriticalExtensions: [[1, 2]])
                     }
                 }.verifyingCriticalExtensions
             ),
             [
-                [1]
+                [1, 1]
             ]
         )
 
@@ -130,14 +130,14 @@ final class PolicyBuilderTests: XCTestCase {
             Set(
                 AnyPolicy {
                     if `false` {
-                        Policy(verifyingCriticalExtensions: [[1]])
+                        Policy(verifyingCriticalExtensions: [[1, 1]])
                     } else {
-                        Policy(verifyingCriticalExtensions: [[2]])
+                        Policy(verifyingCriticalExtensions: [[1, 2]])
                     }
                 }.verifyingCriticalExtensions
             ),
             [
-                [2]
+                [1, 2]
             ]
         )
     }
