@@ -38,7 +38,7 @@ final class ExtensionBuilderTests: XCTestCase {
             }
 
             for i in 19..<22 {
-                Certificate.Extension(oid: [UInt(i)], critical: false, value: [22])
+                Certificate.Extension(oid: [1, UInt(i)], critical: false, value: [22])
             }
         }
 
@@ -47,9 +47,9 @@ final class ExtensionBuilderTests: XCTestCase {
             Certificate.Extension(oid: .X509ExtensionID.authorityKeyIdentifier, critical: true, value: [4, 5, 6]),
             Certificate.Extension(oid: .X509ExtensionID.basicConstraints, critical: true, value: [7, 8, 9]),
             Certificate.Extension(oid: .X509ExtensionID.nameConstraints, critical: false, value: [13, 14, 15]),
-            Certificate.Extension(oid: [19], critical: false, value: [22]),
-            Certificate.Extension(oid: [20], critical: false, value: [22]),
-            Certificate.Extension(oid: [21], critical: false, value: [22]),
+            Certificate.Extension(oid: [1, 19], critical: false, value: [22]),
+            Certificate.Extension(oid: [1, 20], critical: false, value: [22]),
+            Certificate.Extension(oid: [1, 21], critical: false, value: [22]),
         ])
 
         XCTAssertEqual(extensions, expectedExtensions)
@@ -113,7 +113,7 @@ final class ExtensionBuilderTests: XCTestCase {
 
         XCTAssertThrowsError(
             try Certificate.Extensions {
-                Certificate.Extension(oid: [1], critical: false, value: [1])
+                Certificate.Extension(oid: [1, 1], critical: false, value: [1])
                 MyThrowingExtension()
             }
         ) { error in
@@ -123,7 +123,7 @@ final class ExtensionBuilderTests: XCTestCase {
         XCTAssertThrowsError(
             try Certificate.Extensions {
                 MyThrowingExtension()
-                Certificate.Extension(oid: [1], critical: false, value: [1])
+                Certificate.Extension(oid: [1, 1], critical: false, value: [1])
             }
         ) { error in
             XCTAssertTrue(error is MyError, "wrong error \(error)")
@@ -152,7 +152,7 @@ final class ExtensionBuilderTests: XCTestCase {
                 if `true` {
                     MyThrowingExtension()
                 } else {
-                    Certificate.Extension(oid: [1], critical: false, value: [1])
+                    Certificate.Extension(oid: [1, 1], critical: false, value: [1])
                 }
             }
         ) { error in
@@ -164,7 +164,7 @@ final class ExtensionBuilderTests: XCTestCase {
                 if `false` {
                     MyThrowingExtension()
                 } else {
-                    Certificate.Extension(oid: [1], critical: false, value: [1])
+                    Certificate.Extension(oid: [1, 1], critical: false, value: [1])
                 }
             }
         )
@@ -172,7 +172,7 @@ final class ExtensionBuilderTests: XCTestCase {
         XCTAssertNoThrow(
             try Certificate.Extensions {
                 if `true` {
-                    Certificate.Extension(oid: [1], critical: false, value: [1])
+                    Certificate.Extension(oid: [1, 1], critical: false, value: [1])
                 } else {
                     MyThrowingExtension()
                 }
@@ -182,7 +182,7 @@ final class ExtensionBuilderTests: XCTestCase {
         XCTAssertThrowsError(
             try Certificate.Extensions {
                 if `false` {
-                    Certificate.Extension(oid: [1], critical: false, value: [1])
+                    Certificate.Extension(oid: [1, 1], critical: false, value: [1])
                 } else {
                     MyThrowingExtension()
                 }
@@ -195,8 +195,8 @@ final class ExtensionBuilderTests: XCTestCase {
     func testInitDuplicateHandling() {
         XCTAssertThrowsError(
             try Certificate.Extensions([
-                .init(oid: [1], critical: false, value: [1]),
-                .init(oid: [1], critical: false, value: [2]),
+                .init(oid: [1, 1], critical: false, value: [1]),
+                .init(oid: [1, 1], critical: false, value: [2]),
             ])
         ) { error in
             XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
@@ -204,9 +204,9 @@ final class ExtensionBuilderTests: XCTestCase {
 
         XCTAssertThrowsError(
             try Certificate.Extensions([
-                .init(oid: [1], critical: false, value: [1]),
-                .init(oid: [2], critical: false, value: [1]),
-                .init(oid: [1], critical: false, value: [2]),
+                .init(oid: [1, 1], critical: false, value: [1]),
+                .init(oid: [1, 2], critical: false, value: [1]),
+                .init(oid: [1, 1], critical: false, value: [2]),
             ])
         ) { error in
             XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
@@ -224,70 +224,70 @@ final class ExtensionBuilderTests: XCTestCase {
 
     func testAppend() {
         var extensions = Certificate.Extensions()
-        XCTAssertNoThrow(try extensions.append(.init(oid: [1], critical: false, value: [1])))
-        XCTAssertNoThrow(try extensions.append(.init(oid: [2], critical: true, value: [1])))
+        XCTAssertNoThrow(try extensions.append(.init(oid: [1, 1], critical: false, value: [1])))
+        XCTAssertNoThrow(try extensions.append(.init(oid: [1, 2], critical: true, value: [1])))
         XCTAssertEqual(
             extensions,
             try Certificate.Extensions([
-                .init(oid: [1], critical: false, value: [1]),
-                .init(oid: [2], critical: true, value: [1]),
+                .init(oid: [1, 1], critical: false, value: [1]),
+                .init(oid: [1, 2], critical: true, value: [1]),
             ])
         )
-        XCTAssertThrowsError(try extensions.append(.init(oid: [2], critical: false, value: [1]))) { error in
+        XCTAssertThrowsError(try extensions.append(.init(oid: [1, 2], critical: false, value: [1]))) { error in
             XCTAssertEqual((error as? CertificateError)?.code, .duplicateOID, "wrong error \(error)")
         }
         XCTAssertEqual(
             extensions,
             try Certificate.Extensions([
-                .init(oid: [1], critical: false, value: [1]),
-                .init(oid: [2], critical: true, value: [1]),
+                .init(oid: [1, 1], critical: false, value: [1]),
+                .init(oid: [1, 2], critical: true, value: [1]),
             ])
         )
     }
 
     func testUpdate() {
         var extensions = Certificate.Extensions()
-        extensions.update(.init(oid: [1], critical: false, value: [1]))
+        extensions.update(.init(oid: [1, 1], critical: false, value: [1]))
         XCTAssertEqual(
-            extensions.update(.init(oid: [1], critical: false, value: [2])),
-            .init(oid: [1], critical: false, value: [1])
+            extensions.update(.init(oid: [1, 1], critical: false, value: [2])),
+            .init(oid: [1, 1], critical: false, value: [1])
         )
         XCTAssertEqual(
             extensions,
             try Certificate.Extensions([
-                .init(oid: [1], critical: false, value: [2])
+                .init(oid: [1, 1], critical: false, value: [2])
             ])
         )
     }
 
     func testRemove() {
         var extensions = Certificate.Extensions()
-        extensions.remove([1])
+        extensions.remove([1, 1])
         XCTAssertEqual(extensions, Certificate.Extensions())
-        XCTAssertNoThrow(try extensions.append(.init(oid: [1], critical: false, value: [1])))
-        XCTAssertNoThrow(try extensions.append(.init(oid: [2], critical: true, value: [1])))
-        extensions.remove([2])
+        XCTAssertNoThrow(try extensions.append(.init(oid: [1, 1], critical: false, value: [1])))
+        XCTAssertNoThrow(try extensions.append(.init(oid: [1, 2], critical: true, value: [1])))
+        extensions.remove([1, 2])
         XCTAssertEqual(
             extensions,
             try Certificate.Extensions {
-                Certificate.Extension(oid: [1], critical: false, value: [1])
+                Certificate.Extension(oid: [1, 1], critical: false, value: [1])
             }
         )
-        extensions.remove([2])
+        extensions.remove([1, 2])
         XCTAssertEqual(
             extensions,
             try Certificate.Extensions {
-                Certificate.Extension(oid: [1], critical: false, value: [1])
+                Certificate.Extension(oid: [1, 1], critical: false, value: [1])
             }
         )
-        extensions.remove([1])
+        extensions.remove([1, 1])
         XCTAssertEqual(extensions, Certificate.Extensions())
     }
 
     func testLargeNumberOfExtensions() throws {
         let ext = try Certificate.Extensions(
             (0..<32).map {
-                Certificate.Extension(oid: [$0], critical: false, value: [1, 2, 3, 4])
+                Certificate.Extension(oid: [1, $0], critical: false, value: [1, 2, 3, 4])
             }
         )
         XCTAssertEqual(ext.count, 32)
@@ -297,7 +297,7 @@ final class ExtensionBuilderTests: XCTestCase {
         XCTAssertThrowsError(
             try Certificate.Extensions(
                 (0..<33).map {
-                    Certificate.Extension(oid: [$0], critical: false, value: [1, 2, 3, 4])
+                    Certificate.Extension(oid: [1, $0], critical: false, value: [1, 2, 3, 4])
                 }
             )
         )
@@ -305,7 +305,7 @@ final class ExtensionBuilderTests: XCTestCase {
         XCTAssertThrowsError(
             try Certificate.Extensions(
                 (0..<10_000).map {
-                    Certificate.Extension(oid: [$0], critical: false, value: [1, 2, 3, 4])
+                    Certificate.Extension(oid: [1, $0], critical: false, value: [1, 2, 3, 4])
                 }
             )
         )
