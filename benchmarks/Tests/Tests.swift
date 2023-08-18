@@ -2,6 +2,11 @@ import Sources
 import XCTest
 
 final class TestRunner: XCTestCase {
+    override func setUpWithError() throws {
+        #if DEBUG
+        throw XCTSkip("performance tests only run in release mode")
+        #endif
+    }
     func testVerifier() async {
         for _ in 0..<100 {
             await verifier()
@@ -10,20 +15,20 @@ final class TestRunner: XCTestCase {
     
     func testPraseWebPKIRoots() {
         let runParseWebPKIRoots = parseWebPKIRoots()
-        for _ in 0..<10000 {
+        for _ in 0..<1000 {
             runParseWebPKIRoots()
         }
     }
     
     func testTinyArrayNonAllocationFunctions() {
-        
-        tinyArrayNonAllocationFunctions()
-        
+        for _ in 0..<1000 {
+            tinyArrayNonAllocationFunctions()
+        }
     }
     
     func testTinyArrayAppend() {
-        
-        tinyArrayAppend()
-        
+        for _ in 0..<1000 {
+            tinyArrayAppend()
+        }
     }
 }
