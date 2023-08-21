@@ -21,12 +21,12 @@ public struct VerificationDiagnostic: Sendable {
 
     struct LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: Hashable, Sendable {
         var leafCertificate: Certificate
-        var failsToMeetPolicyReason: String
+        var failsToMeetPolicyReason: PolicyFailureReason
     }
 
     struct ChainFailsToMeetPolicy: Hashable, Sendable {
         var chain: UnverifiedCertificateChain
-        var failsToMeetPolicyReason: String
+        var failsToMeetPolicyReason: PolicyFailureReason
     }
 
     struct IssuerHasUnhandledCriticalExtension: Hashable, Sendable {
@@ -101,7 +101,7 @@ extension VerificationDiagnostic {
 
     static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
         _ leafCertificate: Certificate,
-        reason failsToMeetPolicyReason: String
+        reason failsToMeetPolicyReason: PolicyFailureReason
     ) -> Self {
         self.init(
             storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
@@ -113,7 +113,7 @@ extension VerificationDiagnostic {
 
     static func chainFailsToMeetPolicy(
         _ chain: UnverifiedCertificateChain,
-        reason failsToMeetPolicyReason: String
+        reason failsToMeetPolicyReason: PolicyFailureReason
     ) -> Self {
         self.init(
             storage: .chainFailsToMeetPolicy(
@@ -219,7 +219,7 @@ extension VerificationDiagnostic.Storage {
 
     static func leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
         _ leafCertificate: Certificate,
-        reason failsToMeetPolicyReason: String
+        reason failsToMeetPolicyReason: PolicyFailureReason
     ) -> Self {
         .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
             .init(
@@ -231,7 +231,7 @@ extension VerificationDiagnostic.Storage {
 
     static func chainFailsToMeetPolicy(
         _ chain: UnverifiedCertificateChain,
-        reason failsToMeetPolicyReason: String
+        reason failsToMeetPolicyReason: PolicyFailureReason
     ) -> Self {
         .chainFailsToMeetPolicy(
             .init(

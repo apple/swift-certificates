@@ -918,7 +918,7 @@ final class VerifierTests: XCTestCase {
                 ),
                 .chainFailsToMeetPolicy(
                     UnverifiedCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
-                    reason: "chain must not contain forbidden certificate"
+                    reason: .init("chain must not contain forbidden certificate")
                 ),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.localhostLeaf, Self.intermediate1],
@@ -1148,13 +1148,13 @@ final class VerifierTests: XCTestCase {
             .init(
                 storage: .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(
                     Self.localhostLeaf,
-                    reason: "policy failure reason"
+                    reason: .init("policy failure reason")
                 )
             ),
             .init(
                 storage: .chainFailsToMeetPolicy(
                     .init([Self.localhostLeaf, Self.ca1]),
-                    reason: "policy failure reason"
+                    reason: .init("policy failure reason")
                 )
             ),
             .init(storage: .issuerHasNotSignedCertificate(Self.intermediate1, partialChain: [Self.localhostLeaf])),
