@@ -75,6 +75,7 @@ struct BasicConstraintsPolicy: VerifierPolicy {
                     ()
                 case (.some(.isCertificateAuthority(.some(let maxPathLength))), _) where maxPathLength < subCACount:
                     // Is a CA, but the max path length is smaller than the number of sub CAs we have.
+                    let subCACount = subCACount
                     return .failsToMeetPolicy(
                         reason:
                             "RFC5280Policy: CA \(cert) has maximum path length \(maxPathLength), but chain has \(subCACount) subCAs"

@@ -183,10 +183,10 @@ public enum VerificationResult: Hashable, Sendable {
 extension VerificationResult {
     public struct PolicyFailure: Hashable, Sendable {
         public var chain: UnverifiedCertificateChain
-        public var policyFailureReason: String
+        public var policyFailureReason: PolicyFailureReason
 
         @inlinable
-        public init(chain: UnverifiedCertificateChain, policyFailureReason: String) {
+        public init(chain: UnverifiedCertificateChain, policyFailureReason: PolicyFailureReason) {
             self.chain = chain
             self.policyFailureReason = policyFailureReason
         }

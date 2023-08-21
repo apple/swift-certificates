@@ -249,7 +249,7 @@ extension OCSPVerifierPolicy.Storage {
 
     /// Returns `.meetsPolicy` if the `failureMode` is set to `.soft`.
     /// If it is set to `.hard` it will return `.failsToMeetPolicy` with the given `reason`.
-    private func softFailure(reason: String) -> PolicyEvaluationResult {
+    private func softFailure(reason: PolicyFailureReason) -> PolicyEvaluationResult {
         switch self.failureMode.storage {
         case .soft:
             return .meetsPolicy
@@ -299,7 +299,7 @@ extension OCSPVerifierPolicy.Storage {
         do {
             authorityInformationAccess = try certificate.extensions.authorityInformationAccess
         } catch {
-            return self.softFailure(reason: "failed to decode AuthorityInformationAccess \(error)")
+            return self.softFailure(reason: .init("failed to decode AuthorityInformationAccess \(error)"))
         }
         guard let authorityInformationAccess else {
             // OCSP not necessary for certificate
@@ -320,14 +320,16 @@ extension OCSPVerifierPolicy.Storage {
             return responderURI
         }.first
         guard let responderURI else {
-            return self.softFailure(reason: "expected OCSP location to be a URI but got \(ocspAccessDescriptions)")
+            return self.softFailure(
+                reason: .init("expected OCSP location to be a URI but got \(ocspAccessDescriptions)")
+            )
         }
 
         let certID: OCSPCertID
         do {
             certID = try OCSPCertID(hashAlgorithm: requestHashAlgorithm, certificate: certificate, issuer: issuer)
         } catch {
-            return self.softFailure(reason: "failed to create OCSPCertID \(error)")
+            return self.softFailure(reason: .init("failed to create OCSPCertID \(error)"))
         }
 
         return await self.queryAndVerifyCertificateStatus(for: certID, responderURI: responderURI, issuer: issuer)
@@ -346,7 +348,7 @@ extension OCSPVerifierPolicy.Storage {
             try serializer.serialize(request)
             requestBytes = serializer.serializedBytes
         } catch {
-            return self.softFailure(reason: "failed to create OCSPRequest \(error)")
+            return self.softFailure(reason: .init("failed to create OCSPRequest \(error)"))
         }
 
         let responseDerEncoded: [UInt8]
@@ -364,7 +366,7 @@ extension OCSPVerifierPolicy.Storage {
         do {
             response = try OCSPResponse(derEncoded: responseDerEncoded[...])
         } catch {
-            return self.softFailure(reason: "OCSP deserialisation failed \(error)")
+            return self.softFailure(reason: .init("OCSP deserialisation failed \(error)"))
         }
 
         return await self.verifyResponse(response, requestedCertID: certID, requestNonce: requestNonce, issuer: issuer)
@@ -378,7 +380,7 @@ extension OCSPVerifierPolicy.Storage {
     ) async -> PolicyEvaluationResult {
         switch response {
         case .unauthorized, .tryLater, .sigRequired, .malformedRequest, .internalError:
-            return self.softFailure(reason: "OCSP request failed \(OCSPResponseStatus(response))")
+            return self.softFailure(reason: .init("OCSP request failed \(OCSPResponseStatus(response))"))
         case .successful(let basicResponse):
             return await self.verifySuccessfulResponse(
                 basicResponse,
@@ -397,8 +399,9 @@ extension OCSPVerifierPolicy.Storage {
     ) async -> PolicyEvaluationResult {
         guard let response = basicResponse.responseData.responses.first(where: { $0.certID == requestedCertID }) else {
             return self.softFailure(
-                reason:
+                reason: .init(
                     "OCSP response does not include a response for the queried certificate \(requestedCertID) - responses: \(basicResponse.responseData.responses)"
+                )
             )
         }
 
@@ -410,7 +413,9 @@ extension OCSPVerifierPolicy.Storage {
         }
 
         guard basicResponse.responseData.version == .v1 else {
-            return self.softFailure(reason: "OCSP response version unsupported \(basicResponse.responseData.version)")
+            return self.softFailure(
+                reason: .init("OCSP response version unsupported \(basicResponse.responseData.version)")
+            )
         }
 
         switch basicResponse.responseData.verifyTime(validationTime: self.validationTime) {
@@ -427,13 +432,13 @@ extension OCSPVerifierPolicy.Storage {
                 if let responseNonce = try basicResponse.responseData.responseExtensions?.ocspNonce,
                     requestNonce != responseNonce
                 {
-                    return self.softFailure(reason: "OCSP response nonce does not match request nonce")
+                    return self.softFailure(reason: .init("OCSP response nonce does not match request nonce"))
                 }
             } else {
                 precondition(nonceExtensionEnabled == false)
             }
         } catch {
-            return self.softFailure(reason: "failed to decode nonce response \(error)")
+            return self.softFailure(reason: .init("failed to decode nonce response \(error)"))
         }
 
         switch response.verifyTime(validationTime: self.validationTime) {
@@ -449,7 +454,7 @@ extension OCSPVerifierPolicy.Storage {
                 reason: "revoked through OCSP, reason: \(info.revocationReason?.description ?? "nil")"
             )
         case .unknown:
-            return self.softFailure(reason: "OCSP response returned as status unknown")
+            return self.softFailure(reason: .init("OCSP response returned as status unknown"))
         case .good:
             return .meetsPolicy
         }
