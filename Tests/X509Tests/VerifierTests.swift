@@ -574,7 +574,7 @@ final class VerifierTests: XCTestCase {
             ]
         )
     }
-    
+
     func testRootsWithSPIArePreferred() async throws {
         let roots = CertificateStore([Self.ca1WithoutSubjectKeyIdentifier, Self.ca1])
         let log = DiagnosticsLog()
