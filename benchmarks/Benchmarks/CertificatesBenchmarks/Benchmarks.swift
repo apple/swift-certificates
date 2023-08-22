@@ -16,7 +16,12 @@ import Benchmark
 import Sources
 
 let benchmarks = {
-    Benchmark("Verifier", configuration: .init(warmupIterations: 1)) { benchmark in
+    Benchmark.defaultConfiguration = .init(
+        metrics: [.mallocCountTotal],
+        warmupIterations: 1
+    )
+    
+    Benchmark("Verifier") { benchmark in
         await verifier()
     }
     
