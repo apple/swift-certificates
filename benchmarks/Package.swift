@@ -8,7 +8,7 @@ let package = Package(
         .macOS(.v13),
     ],
     dependencies: [
-        .package(path: "../"), // `swift-certificates`
+        .package(name: "swift-certificates", path: "../"),
         .package(url: "https://github.com/ordo-one/package-benchmark", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", .upToNextMinor(from: "0.10.0")),
