@@ -22,19 +22,27 @@ let benchmarks = {
     )
     
     Benchmark("Verifier") { benchmark in
-        await verifier()
+        for _ in benchmark.scaledIterations {
+            await verifier()
+        }
     }
     
     let runParseWebPKIRoots = parseWebPKIRoots()
     Benchmark("Parse WebPKI Roots") { benchmark in
-        runParseWebPKIRoots()
+        for _ in benchmark.scaledIterations {
+            runParseWebPKIRoots()
+        }
     }
     
     Benchmark("TinyArray non-allocating functions") { benchmark in
-        tinyArrayNonAllocationFunctions()
+        for _ in benchmark.scaledIterations {
+            tinyArrayNonAllocationFunctions()
+        }
     }
     
     Benchmark("TinyArray.append(_:)") { benchmark in
-        tinyArrayAppend()
+        for _ in benchmark.scaledIterations {
+            tinyArrayAppend()
+        }
     }
 }
