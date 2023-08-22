@@ -120,7 +120,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                     )
                 )
 
-                for parent in intermediateParents {
+                for parent in intermediateParents.reversed() {
                     if self.shouldSkipAddingCertificate(
                         partialChain: nextPartialCandidate,
                         nextCertificate: parent,
@@ -242,7 +242,7 @@ extension Array where Element == Certificate {
             return
         }
 
-        self.sort(by: { $0.issuerPreference(subjectAKI: aki) < $1.issuerPreference(subjectAKI: aki) })
+        self.sort(by: { $0.issuerPreference(subjectAKI: aki) > $1.issuerPreference(subjectAKI: aki) })
     }
 }
 
