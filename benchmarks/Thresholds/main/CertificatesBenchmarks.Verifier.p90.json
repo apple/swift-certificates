@@ -1,16 +1,3 @@
-[
-  {
-    "mallocCountTotal" : {
-
-    }
-  },
-  {
-    "relative" : [
-
-    ],
-    "absolute" : [
-      4,
-      1252
-    ]
-  }
-]
+{
+  "mallocCountTotal" : 1258
+}

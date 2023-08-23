@@ -18,7 +18,7 @@ import Foundation
 
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(
-        metrics: [.mallocCountTotal, .syscalls, .retainCount],
+        metrics: [.mallocCountTotal, .syscalls] + .arc,
         warmupIterations: 1
     )
 

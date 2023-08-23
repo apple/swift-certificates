@@ -29,7 +29,7 @@ services:
 
   update-benchmark-baseline:
     <<: *common
-    command: /bin/bash -xcl "cd benchmarks && swift package --allow-writing-to-package-directory benchmark --format metricP90AbsoluteThresholds --path Thresholds/$${SWIFT_VERSION-}/"
+    command: /bin/bash -xcl "cd benchmarks && swift package --scratch-path .build/$${SWIFT_VERSION-}/ --allow-writing-to-package-directory benchmark --format metricP90AbsoluteThresholds --path Thresholds/$${SWIFT_VERSION-}/"
   # util
 
   shell:
