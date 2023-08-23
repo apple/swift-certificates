@@ -10,35 +10,7 @@
     ],
     "absolute" : [
       4,
-      6421001
-    ]
-  },
-  {
-    "retainReleaseDelta" : {
-
-    }
-  },
-  {
-    "relative" : [
-
-    ],
-    "absolute" : [
-      4,
-      784000
-    ]
-  },
-  {
-    "releaseCount" : {
-
-    }
-  },
-  {
-    "relative" : [
-
-    ],
-    "absolute" : [
-      4,
-      7205001
+      6422
     ]
   },
   {
@@ -52,7 +24,7 @@
     ],
     "absolute" : [
       4,
-      419017
+      435
     ]
   }
 ]

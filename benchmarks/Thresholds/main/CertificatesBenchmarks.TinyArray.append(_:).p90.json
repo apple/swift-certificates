@@ -1,6 +1,6 @@
 [
   {
-    "releaseCount" : {
+    "retainCount" : {
 
     }
   },
@@ -10,7 +10,7 @@
     ],
     "absolute" : [
       4,
-      12001
+      1
     ]
   },
   {
@@ -24,35 +24,7 @@
     ],
     "absolute" : [
       4,
-      10017
-    ]
-  },
-  {
-    "retainReleaseDelta" : {
-
-    }
-  },
-  {
-    "relative" : [
-
-    ],
-    "absolute" : [
-      4,
-      12000
-    ]
-  },
-  {
-    "retainCount" : {
-
-    }
-  },
-  {
-    "relative" : [
-
-    ],
-    "absolute" : [
-      4,
-      1
+      26
     ]
   }
 ]
