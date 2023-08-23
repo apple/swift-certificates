@@ -76,6 +76,7 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
             return lhs == rhs
         case (.printable, .utf8), (.utf8, .printable):
             return false
+            
         default:
             return ASN1Any(lhs) == ASN1Any(rhs)
         }
@@ -84,11 +85,11 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
     @inlinable
     func hash(into hasher: inout Hasher) {
         switch self {
-        case .printable:
-            // TODO: implement a ASN1PrintableStringView over a String that conforms to RandomAccessCollection and can lazily get bytes that are equal to ASN1Any(ASN1UTF8String(string:))
-            hasher.combine(ASN1Any(self))
+        case .printable(let string):
+            hasher.combine(String.ASN1TaggedStringView(printable: string))
+            
         case .utf8(let string):
-            hasher.combine(String.ASN1UTF8StringView(string: string))
+            hasher.combine(String.ASN1TaggedStringView(utf8: string))
 
         case .any(let asn1Any):
             hasher.combine(asn1Any)
@@ -98,7 +99,10 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
 
 extension String {
     @usableFromInline
-    struct ASN1UTF8StringView {
+    struct ASN1TaggedStringView {
+        @usableFromInline
+        let tag: UInt8
+        
         @usableFromInline
         let string: String
 
@@ -107,9 +111,10 @@ extension String {
 
         @usableFromInline
         let count: Int
+        
         @inlinable
-
-        init(string: String) {
+        init(tag: UInt8, string: String) {
+            self.tag = tag
             self.string = string
 
             let utf8Count = self.string.utf8.count
@@ -117,10 +122,20 @@ extension String {
             // tag + utf8 bytes length + utf8 bytes
             self.count = 1 + self.length.count + utf8Count
         }
+        
+        @inlinable
+        init(utf8 string: String) {
+            self.init(tag: 0x0c, string: string)
+        }
+        
+        @inlinable
+        init(printable string: String) {
+            self.init(tag: 0x13, string: string)
+        }
     }
 }
 
-extension String.ASN1UTF8StringView: RandomAccessCollection {
+extension String.ASN1TaggedStringView: RandomAccessCollection {
     @inlinable
     var startIndex: Int {
         0
@@ -136,7 +151,7 @@ extension String.ASN1UTF8StringView: RandomAccessCollection {
         switch position {
         case 0:
             // This tag represents a UTF8STRING.
-            return 0x0c
+            return self.tag
         case 1...self.length.endIndex:
             // after the tag comes the length of the string
             return self.length[position &- 1]
@@ -148,7 +163,7 @@ extension String.ASN1UTF8StringView: RandomAccessCollection {
     }
 }
 
-extension String.ASN1UTF8StringView: Hashable {
+extension String.ASN1TaggedStringView: Hashable {
     @inlinable
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.count)
