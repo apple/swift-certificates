@@ -286,7 +286,7 @@ fileprivate struct FailIfCertInChainPolicy: VerifierPolicy {
         self.forbiddenCert = forbiddenCert
     }
 
-    mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+    func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
         if chain.contains(self.forbiddenCert) {
             return .failsToMeetPolicy(reason: "chain must not contain \(self.forbiddenCert)")
         } else {

@@ -1,19 +1,5 @@
 [
   {
-    "retainCount" : {
-
-    }
-  },
-  {
-    "relative" : [
-
-    ],
-    "absolute" : [
-      4,
-      6843
-    ]
-  },
-  {
     "mallocCountTotal" : {
 
     }
@@ -25,6 +11,20 @@
     "absolute" : [
       4,
       435
+    ]
+  },
+  {
+    "retainCount" : {
+
+    }
+  },
+  {
+    "relative" : [
+
+    ],
+    "absolute" : [
+      4,
+      6843
     ]
   }
 ]
