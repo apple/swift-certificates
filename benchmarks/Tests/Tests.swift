@@ -12,20 +12,20 @@ final class TestRunner: XCTestCase {
             await verifier()
         }
     }
-    
+
     func testPraseWebPKIRoots() {
         let runParseWebPKIRoots = parseWebPKIRoots()
         for _ in 0..<1000 {
             runParseWebPKIRoots()
         }
     }
-    
+
     func testTinyArrayNonAllocationFunctions() {
         for _ in 0..<1000 {
             tinyArrayNonAllocationFunctions()
         }
     }
-    
+
     func testTinyArrayAppend() {
         for _ in 0..<1000 {
             tinyArrayAppend()

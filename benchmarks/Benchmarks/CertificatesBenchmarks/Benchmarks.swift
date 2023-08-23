@@ -16,7 +16,6 @@ import Benchmark
 import Sources
 import Foundation
 
-
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(
         metrics: [.mallocCountTotal, .syscalls, .retainCount],
@@ -28,20 +27,20 @@ let benchmarks = {
             await verifier()
         }
     }
-    
+
     let runParseWebPKIRoots = parseWebPKIRoots()
     Benchmark("Parse WebPKI Roots") { benchmark in
         for _ in benchmark.scaledIterations {
             runParseWebPKIRoots()
         }
     }
-    
+
     Benchmark("TinyArray non-allocating functions") { benchmark in
         for _ in benchmark.scaledIterations {
             tinyArrayNonAllocationFunctions()
         }
     }
-    
+
     Benchmark("TinyArray.append(_:)") { benchmark in
         for _ in benchmark.scaledIterations {
             tinyArrayAppend()

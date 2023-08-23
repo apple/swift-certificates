@@ -18,10 +18,10 @@ import Benchmark
 public func tinyArrayNonAllocationFunctions() {
     var counts = 0
     counts += _TinyArray(CollectionOfOne(1)).count
-    
+
     var array = _TinyArray<Int>()
     array.append(contentsOf: CollectionOfOne(1))
     counts += array.count
-    
+
     blackHole(counts)
 }

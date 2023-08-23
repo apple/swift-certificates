@@ -20,10 +20,10 @@ import Benchmark
 
 public func verifier() async {
     var counts = 0
-    
+
     counts += await testAllSuccessfulValidations()
     counts += await testAllUnsuccessfulValidations()
-    
+
     blackHole(counts)
 }
 
@@ -52,7 +52,10 @@ func testTrivialChainBuilding() async -> Int {
     var verifier = Verifier(rootCertificates: roots) {
         RFC5280Policy(validationTime: TestCertificate.referenceTime)
     }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -65,7 +68,10 @@ func testExtraRootsAreIgnored() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1, TestCertificate.ca2])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -78,7 +84,10 @@ func testPuttingRootsInTheIntermediariesIsntAProblem() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1, TestCertificate.ca2])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca1, TestCertificate.ca2]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca1, TestCertificate.ca2])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -91,7 +100,10 @@ func testSupportsCrossSignedRootWithoutTrouble() async -> Int {
     let roots = CertificateStore([TestCertificate.ca2])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca1CrossSignedByCA2]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca1CrossSignedByCA2])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -104,7 +116,12 @@ func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1, TestCertificate.ca2])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca2CrossSignedByCA1, TestCertificate.ca1CrossSignedByCA2]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([
+            TestCertificate.intermediate1, TestCertificate.ca2CrossSignedByCA1, TestCertificate.ca1CrossSignedByCA2,
+        ])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -117,7 +134,10 @@ func testPrefersToUseIntermediatesWithSKIThatMatches() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.intermediate1WithoutSKIAKI]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.intermediate1WithoutSKIAKI])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -130,7 +150,12 @@ func testPrefersNoSKIToNonMatchingSKI() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1WithIncorrectSKIAKI, TestCertificate.intermediate1WithoutSKIAKI]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([
+            TestCertificate.intermediate1WithIncorrectSKIAKI, TestCertificate.intermediate1WithoutSKIAKI,
+        ])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -143,7 +168,12 @@ func testRejectsRootsThatDidNotSignTheCertBeforeThem() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1WithAlternativePrivateKey, TestCertificate.ca2])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.ca1CrossSignedByCA2, TestCertificate.ca2CrossSignedByCA1, TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([
+            TestCertificate.ca1CrossSignedByCA2, TestCertificate.ca2CrossSignedByCA1, TestCertificate.intermediate1,
+        ])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -158,7 +188,12 @@ func testPolicyFailuresCanFindLongerPaths() async -> Int {
         FailIfCertInChainPolicy(forbiddenCert: TestCertificate.ca1)
         RFC5280Policy(validationTime: TestCertificate.referenceTime)
     }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca2CrossSignedByCA1, TestCertificate.ca1CrossSignedByCA2]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([
+            TestCertificate.intermediate1, TestCertificate.ca2CrossSignedByCA1, TestCertificate.ca1CrossSignedByCA2,
+        ])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -171,7 +206,10 @@ func testSelfSignedCertsAreTrustedWhenInTrustStore() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1, TestCertificate.isolatedSelfSignedCert])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.isolatedSelfSignedCert, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.isolatedSelfSignedCert,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -185,7 +223,7 @@ func testTrustRootsCanBeNonSelfSignedLeaves() async -> Int {
     struct IgnoreBasicConstraintsPolicy: VerifierPolicy {
         let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [.X509ExtensionID.basicConstraints]
 
-func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+        func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
             return .meetsPolicy
         }
     }
@@ -193,7 +231,10 @@ func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> Po
     let roots = CertificateStore([TestCertificate.localhostLeaf])
 
     var verifier = Verifier(rootCertificates: roots) { IgnoreBasicConstraintsPolicy() }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -206,7 +247,10 @@ func testTrustRootsCanBeNonSelfSignedIntermediates() async -> Int {
     let roots = CertificateStore([TestCertificate.intermediate1])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .validCertificate(let chain) = result else {
         fatalError("Failed to validate: \(result)")
@@ -227,15 +271,20 @@ func testAllUnsuccessfulValidations() async -> Int {
 }
 
 func testWePoliceCriticalExtensionsOnLeafCerts() async -> Int {
-    let roots = CertificateStore([TestCertificate.ca1, TestCertificate.isolatedSelfSignedCertWithWeirdCriticalExtension])
+    let roots = CertificateStore([
+        TestCertificate.ca1, TestCertificate.isolatedSelfSignedCertWithWeirdCriticalExtension,
+    ])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.isolatedSelfSignedCertWithWeirdCriticalExtension, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.isolatedSelfSignedCertWithWeirdCriticalExtension,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .couldNotValidate(let policyResults) = result else {
         fatalError("Incorrectly validated: \(result)")
     }
-    
+
     return policyResults.count
 }
 
@@ -243,7 +292,10 @@ func testMissingIntermediateFailsToBuild() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([])
+    )
 
     guard case .couldNotValidate(let policyResults) = result else {
         fatalError("Accidentally validated: \(result)")
@@ -256,7 +308,10 @@ func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async -> Int {
     let roots = CertificateStore([TestCertificate.ca1])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.isolatedSelfSignedCert, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.isolatedSelfSignedCert,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .couldNotValidate(let policyResults) = result else {
         fatalError("Incorrectly validated: \(result)")
@@ -268,7 +323,10 @@ func testMissingRootFailsToBuild() async -> Int {
     let roots = CertificateStore([])
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
-    let result = await verifier.validate(leafCertificate: TestCertificate.localhostLeaf, intermediates: CertificateStore([TestCertificate.intermediate1]))
+    let result = await verifier.validate(
+        leafCertificate: TestCertificate.localhostLeaf,
+        intermediates: CertificateStore([TestCertificate.intermediate1])
+    )
 
     guard case .couldNotValidate(let policyResults) = result else {
         fatalError("Accidentally validated: \(result)")
@@ -277,7 +335,7 @@ func testMissingRootFailsToBuild() async -> Int {
     return policyResults.count
 }
 
-fileprivate struct FailIfCertInChainPolicy: VerifierPolicy {
+private struct FailIfCertInChainPolicy: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     private let forbiddenCert: Certificate
@@ -287,17 +345,16 @@ fileprivate struct FailIfCertInChainPolicy: VerifierPolicy {
     }
 
     func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-        if chain.contains(self.forbiddenCert) {
-            return .failsToMeetPolicy(reason: "chain must not contain \(self.forbiddenCert)")
-        } else {
+        guard chain.contains(self.forbiddenCert) else {
             return .meetsPolicy
         }
+        return .failsToMeetPolicy(reason: "chain must not contain \(self.forbiddenCert)")
     }
 }
 
 enum TestCertificate {
     static let referenceTime = Date()
-    
+
     static let all = [
         ca1,
         ca1CrossSignedByCA2,
@@ -311,7 +368,7 @@ enum TestCertificate {
         isolatedSelfSignedCert,
         isolatedSelfSignedCertWithWeirdCriticalExtension,
     ]
-    
+
     private static let ca1PrivateKey = P384.Signing.PrivateKey()
     private static let ca1Name = try! DistinguishedName {
         CountryName("US")
@@ -333,7 +390,9 @@ enum TestCertificate {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -354,7 +413,9 @@ enum TestCertificate {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca2PrivateKey)
         )
@@ -375,12 +436,16 @@ enum TestCertificate {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(
+                        Insecure.SHA1.hash(data: ca1AlternativePrivateKey.publicKey.derRepresentation)
+                    )
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
     }()
-    
+
     private static let ca2PrivateKey = P384.Signing.PrivateKey()
     private static let ca2Name = try! DistinguishedName {
         CountryName("US")
@@ -402,7 +467,9 @@ enum TestCertificate {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca2PrivateKey)
         )
@@ -423,12 +490,14 @@ enum TestCertificate {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca2PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
     }()
-    
+
     static let intermediate1PrivateKey = P256.Signing.PrivateKey()
     static let intermediate1Name = try! DistinguishedName {
         CountryName("US")
@@ -451,7 +520,11 @@ enum TestCertificate {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca1.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(
+                        Insecure.SHA1.hash(data: intermediate1PrivateKey.publicKey.derRepresentation)
+                    )
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
@@ -491,12 +564,14 @@ enum TestCertificate {
                 )
                 KeyUsage(keyCertSign: true)
                 AuthorityKeyIdentifier(keyIdentifier: try! ca2.extensions.subjectKeyIdentifier!.keyIdentifier)
-                SubjectKeyIdentifier(keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation)))
+                SubjectKeyIdentifier(
+                    keyIdentifier: ArraySlice(Insecure.SHA1.hash(data: ca1PrivateKey.publicKey.derRepresentation))
+                )
             },
             issuerPrivateKey: .init(ca1PrivateKey)
         )
     }()
-    
+
     private static let localhostLeafPrivateKey = P256.Signing.PrivateKey()
     static let localhostLeaf: Certificate = {
         let localhostLeafName = try! DistinguishedName {
@@ -504,7 +579,7 @@ enum TestCertificate {
             OrganizationName("Apple")
             CommonName("localhost")
         }
-        
+
         return try! Certificate(
             version: .v3,
             serialNumber: .init(),
@@ -524,7 +599,7 @@ enum TestCertificate {
             issuerPrivateKey: .init(intermediate1PrivateKey)
         )
     }()
-    
+
     private static let isolatedSelfSignedCertKey = P256.Signing.PrivateKey()
     static let isolatedSelfSignedCert: Certificate = {
         let isolatedSelfSignedCertName = try! DistinguishedName {
@@ -532,7 +607,7 @@ enum TestCertificate {
             OrganizationName("Apple")
             CommonName("Isolated Self-Signed Cert")
         }
-        
+
         return try! Certificate(
             version: .v3,
             serialNumber: .init(),
@@ -551,14 +626,14 @@ enum TestCertificate {
             issuerPrivateKey: .init(isolatedSelfSignedCertKey)
         )
     }()
-    
+
     static let isolatedSelfSignedCertWithWeirdCriticalExtension: Certificate = {
         let isolatedSelfSignedCertName = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
             CommonName("Isolated Self-Signed Cert")
         }
-        
+
         return try! Certificate(
             version: .v3,
             serialNumber: .init(),
@@ -573,7 +648,7 @@ enum TestCertificate {
                     BasicConstraints.isCertificateAuthority(maxPathLength: nil)
                 )
                 KeyUsage(keyCertSign: true)
-                
+
                 // An opaque extension that just so happens to be critical
                 Certificate.Extension(oid: [1, 2, 3, 4, 5], critical: true, value: [1, 2, 3, 4, 5])
             },
