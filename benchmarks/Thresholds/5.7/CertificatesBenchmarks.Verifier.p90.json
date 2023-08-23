@@ -1,0 +1,58 @@
+[
+  {
+    "mallocCountTotal" : {
+
+    }
+  },
+  {
+    "relative" : [
+
+    ],
+    "absolute" : [
+      4,
+      2085026
+    ]
+  },
+  {
+    "retainReleaseDelta" : {
+
+    }
+  },
+  {
+    "relative" : [
+
+    ],
+    "absolute" : [
+      4,
+      1758000
+    ]
+  },
+  {
+    "retainCount" : {
+
+    }
+  },
+  {
+    "relative" : [
+
+    ],
+    "absolute" : [
+      4,
+      25671322
+    ]
+  },
+  {
+    "releaseCount" : {
+
+    }
+  },
+  {
+    "relative" : [
+
+    ],
+    "absolute" : [
+      4,
+      27429322
+    ]
+  }
+]
