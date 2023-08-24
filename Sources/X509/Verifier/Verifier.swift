@@ -120,6 +120,9 @@ public struct Verifier<Policy: VerifierPolicy> {
                     )
                 )
 
+                // we need to reverse the order of the already sorted intermediates because
+                // we will push them on to the `partialChains` stack which in turn will
+                // consume them in the reverse order the have been pushed onto the stack
                 for parent in intermediateParents.reversed() {
                     if self.shouldSkipAddingCertificate(
                         partialChain: nextPartialCandidate,
