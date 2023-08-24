@@ -341,14 +341,17 @@ extension Certificate.PublicKey: DERImplicitlyTaggable {
     public static var defaultIdentifier: SwiftASN1.ASN1Identifier {
         SubjectPublicKeyInfo.defaultIdentifier
     }
-    
+
     @inlinable
     public init(derEncoded: SwiftASN1.ASN1Node, withIdentifier identifier: SwiftASN1.ASN1Identifier) throws {
         try self.init(spki: try SubjectPublicKeyInfo(derEncoded: derEncoded, withIdentifier: identifier))
     }
-    
+
     @inlinable
-    public func serialize(into coder: inout SwiftASN1.DER.Serializer, withIdentifier identifier: SwiftASN1.ASN1Identifier) throws {
+    public func serialize(
+        into coder: inout SwiftASN1.DER.Serializer,
+        withIdentifier identifier: SwiftASN1.ASN1Identifier
+    ) throws {
         let spki = SubjectPublicKeyInfo(self)
         try spki.serialize(into: &coder, withIdentifier: identifier)
     }
