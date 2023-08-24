@@ -163,13 +163,13 @@ extension Certificate.PublicKey: CustomStringConvertible {
     public var description: String {
         switch self.backing {
         case .p256:
-            return "P256"
+            return "P256.PublicKey"
         case .p384:
-            return "P384"
+            return "P384.PublicKey"
         case .p521:
-            return "P521"
+            return "P521.PublicKey"
         case .rsa(let publicKey):
-            return "RSA\(publicKey.keySizeInBits)"
+            return "RSA\(publicKey.keySizeInBits).PublicKey"
         }
     }
 }
