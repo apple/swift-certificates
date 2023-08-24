@@ -161,8 +161,10 @@ extension Certificate.PrivateKey: CustomStringConvertible {
             return "P521.PrivateKey"
         case .rsa(let publicKey):
             return "RSA\(publicKey.keySizeInBits).PrivateKey"
+        #if canImport(Darwin)
         case .secureEnclaveP256:
             return "SecureEnclave.P256.PrivateKey"
+        #endif
         }
     }
 }
