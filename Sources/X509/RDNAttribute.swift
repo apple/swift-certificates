@@ -76,7 +76,7 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
             return lhs == rhs
         case (.printable, .utf8), (.utf8, .printable):
             return false
-            
+
         default:
             return ASN1Any(lhs) == ASN1Any(rhs)
         }
@@ -87,7 +87,7 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
         switch self {
         case .printable(let string):
             hasher.combine(String.ASN1TaggedStringView(printable: string))
-            
+
         case .utf8(let string):
             hasher.combine(String.ASN1TaggedStringView(utf8: string))
 
@@ -102,7 +102,7 @@ extension String {
     struct ASN1TaggedStringView {
         @usableFromInline
         let tag: UInt8
-        
+
         @usableFromInline
         let string: String
 
@@ -111,7 +111,7 @@ extension String {
 
         @usableFromInline
         let count: Int
-        
+
         @inlinable
         init(tag: UInt8, string: String) {
             self.tag = tag
@@ -122,12 +122,12 @@ extension String {
             // tag + utf8 bytes length + utf8 bytes
             self.count = 1 + self.length.count + utf8Count
         }
-        
+
         @inlinable
         init(utf8 string: String) {
             self.init(tag: 0x0c, string: string)
         }
-        
+
         @inlinable
         init(printable string: String) {
             self.init(tag: 0x13, string: string)
