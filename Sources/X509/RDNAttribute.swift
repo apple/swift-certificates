@@ -125,11 +125,13 @@ extension String {
 
         @inlinable
         init(utf8 string: String) {
+            // This tag represents a UTF8STRING.
             self.init(tag: 0x0c, string: string)
         }
 
         @inlinable
         init(printable string: String) {
+            // This tag represents a PRINTABLE STRING.
             self.init(tag: 0x13, string: string)
         }
     }
@@ -150,7 +152,6 @@ extension String.ASN1TaggedStringView: RandomAccessCollection {
     subscript(position: Int) -> UInt8 {
         switch position {
         case 0:
-            // This tag represents a UTF8STRING.
             return self.tag
         case 1...self.length.endIndex:
             // after the tag comes the length of the string
