@@ -513,7 +513,7 @@ final class CertificateTests: XCTestCase {
             subject: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
             notValidBefore: 2022-08-08 14:26:14 +0000, \
             notValidAfter: 2033-08-05 14:26:14 +0000, \
-            publicKey: P384, \
+            publicKey: P384.PublicKey, \
             signature: ECDSA, \
             extensions: [\
             BasicConstraints(CA=TRUE), \
@@ -576,7 +576,7 @@ final class CertificateTests: XCTestCase {
             subject: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
             notValidBefore: 2022-08-08 14:26:14 +0000, \
             notValidAfter: 2028-08-06 14:26:14 +0000, \
-            publicKey: P256, \
+            publicKey: P256.PublicKey, \
             signature: ECDSA, \
             extensions: [\
             BasicConstraints(CA=TRUE, maxPathLength=1), \
@@ -626,7 +626,7 @@ final class CertificateTests: XCTestCase {
             subject: "STREET=Infinite Loop,CN=localhost,O=Apple,C=US", \
             notValidBefore: 2022-08-08 14:26:14 +0000, \
             notValidAfter: 2024-08-07 14:26:14 +0000, \
-            publicKey: P256, \
+            publicKey: P256.PublicKey, \
             signature: ECDSA, \
             extensions: [\
             BasicConstraints(CA=FALSE), \

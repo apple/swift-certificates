@@ -152,7 +152,20 @@ extension Certificate.PrivateKey: Sendable {}
 
 extension Certificate.PrivateKey: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        switch self.backing {
+        case .p256:
+            return "P256.PrivateKey"
+        case .p384:
+            return "P384.PrivateKey"
+        case .p521:
+            return "P521.PrivateKey"
+        case .rsa(let publicKey):
+            return "RSA\(publicKey.keySizeInBits).PrivateKey"
+        #if canImport(Darwin)
+        case .secureEnclaveP256:
+            return "SecureEnclave.P256.PrivateKey"
+        #endif
+        }
     }
 }
 
