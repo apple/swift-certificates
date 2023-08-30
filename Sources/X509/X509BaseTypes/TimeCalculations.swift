@@ -167,7 +167,7 @@ extension Int64 {
         // Same for remdays, the loop only terminates if the number is smaller than at most 31.
         //
         // Note that, unlike struct tm, we return ordinal month numbers as well as days (i.e. 1 to 12).
-        // This fits us better when working with generalized time and friends.
+        // This fits us better when working with GeneralizedTime and friends.
         return (
             year: Int(years + 2000),
             month: Int(months &+ 3),
