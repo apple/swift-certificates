@@ -33,7 +33,7 @@ public struct Verifier<Policy: VerifierPolicy> {
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
 
-        // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
+        // First check: does this leaf certificate contain critical extensions that are not satisfied by the policy set?
         // If so, reject the chain.
         if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
 

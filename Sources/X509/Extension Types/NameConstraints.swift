@@ -413,7 +413,7 @@ public struct NameConstraints {
     /// The DNS name trees that are permitted in certificates issued by this CA.
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
-    /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
+    /// constructed by adding zero or more labels to the left-hand side of the name satisfies the constraint.
     public internal(set) var permittedDNSDomains: DNSNames {
         get {
             DNSNames(subtrees: permittedSubtrees)

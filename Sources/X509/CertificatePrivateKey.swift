@@ -258,7 +258,7 @@ extension Certificate.PrivateKey {
                 let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
                 if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
                     throw ASN1Error.invalidASN1Object(
-                        reason: "algorithm missmatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
+                        reason: "algorithm mismatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
                     )
                 }
                 self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
