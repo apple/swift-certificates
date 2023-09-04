@@ -33,7 +33,7 @@ public struct Verifier<Policy: VerifierPolicy> {
 
         var policyFailures: [VerificationResult.PolicyFailure] = []
 
-        // First check: does this leaf certificate contain critical extensions that are not satisfied by the policyset?
+        // First check: does this leaf certificate contain critical extensions that are not satisfied by the PolicySet?
         // If so, reject the chain.
         if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
 
@@ -120,7 +120,10 @@ public struct Verifier<Policy: VerifierPolicy> {
                     )
                 )
 
-                for parent in intermediateParents {
+                // we need to reverse the order of the already sorted intermediates because
+                // we will push them on to the `partialChains` stack which in turn will
+                // consume them in the reverse order that they have been pushed onto the stack
+                for parent in intermediateParents.reversed() {
                     if self.shouldSkipAddingCertificate(
                         partialChain: nextPartialCandidate,
                         nextCertificate: parent,
@@ -242,7 +245,7 @@ extension Array where Element == Certificate {
             return
         }
 
-        self.sort(by: { $0.issuerPreference(subjectAKI: aki) < $1.issuerPreference(subjectAKI: aki) })
+        self.sort(by: { $0.issuerPreference(subjectAKI: aki) > $1.issuerPreference(subjectAKI: aki) })
     }
 }
 

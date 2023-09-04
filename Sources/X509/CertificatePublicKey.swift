@@ -163,13 +163,13 @@ extension Certificate.PublicKey: CustomStringConvertible {
     public var description: String {
         switch self.backing {
         case .p256:
-            return "P256"
+            return "P256.PublicKey"
         case .p384:
-            return "P384"
+            return "P384.PublicKey"
         case .p521:
-            return "P521"
+            return "P521.PublicKey"
         case .rsa(let publicKey):
-            return "RSA\(publicKey.keySizeInBits)"
+            return "RSA\(publicKey.keySizeInBits).PublicKey"
         }
     }
 }
@@ -329,30 +329,30 @@ extension _RSA.Signing.PublicKey {
     }
 }
 
-extension Certificate.PublicKey {
+extension Certificate.PublicKey: PEMParseable, PEMSerializable {
     @inlinable
-    static var pemDiscriminator: String { "PUBLIC KEY" }
+    public static var defaultPEMDiscriminator: String {
+        return "PUBLIC KEY"
+    }
+}
 
+extension Certificate.PublicKey: DERImplicitlyTaggable {
     @inlinable
-    public init(pemEncoded: String) throws {
-        try self.init(pemDocument: PEMDocument(pemString: pemEncoded))
+    public static var defaultIdentifier: SwiftASN1.ASN1Identifier {
+        SubjectPublicKeyInfo.defaultIdentifier
     }
 
     @inlinable
-    public init(pemDocument: PEMDocument) throws {
-        guard pemDocument.discriminator == Self.pemDiscriminator else {
-            throw ASN1Error.invalidPEMDocument(
-                reason:
-                    "PEMDocument has incorrect discriminator \(pemDocument.discriminator). Expected \(Self.pemDiscriminator) instead"
-            )
-        }
-
-        try self.init(spki: try SubjectPublicKeyInfo(derEncoded: pemDocument.derBytes))
+    public init(derEncoded: SwiftASN1.ASN1Node, withIdentifier identifier: SwiftASN1.ASN1Identifier) throws {
+        try self.init(spki: try SubjectPublicKeyInfo(derEncoded: derEncoded, withIdentifier: identifier))
     }
 
-    func serializeAsPEM() throws -> PEMDocument {
+    @inlinable
+    public func serialize(
+        into coder: inout SwiftASN1.DER.Serializer,
+        withIdentifier identifier: SwiftASN1.ASN1Identifier
+    ) throws {
         let spki = SubjectPublicKeyInfo(self)
-        let derBytes = try DER.Serializer.serialized(element: spki)
-        return PEMDocument(type: "PUBLIC KEY", derBytes: derBytes)
+        try spki.serialize(into: &coder, withIdentifier: identifier)
     }
 }

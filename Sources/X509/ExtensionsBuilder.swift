@@ -117,7 +117,7 @@ public struct ExtensionsBuilder {
 ///
 /// Note that for most extension types, the returned ``Certificate/Extension`` should have its
 /// ``Certificate/Extension/critical`` value set to `false`. This allows the ``Critical`` helper
-/// type to fulfil its function as expected.
+/// type to fulfill its function as expected.
 public protocol CertificateExtensionConvertible {
     /// Convert the value into a ``Certificate/Extension``.
     func makeCertificateExtension() throws -> Certificate.Extension

@@ -49,6 +49,25 @@ final class VerifierTests: XCTestCase {
             issuerPrivateKey: .init(ca1PrivateKey)
         )
     }()
+    private static let ca1WithoutSubjectKeyIdentifier: Certificate = {
+        return try! Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(ca1PrivateKey.publicKey),
+            notValidBefore: referenceTime - .days(365),
+            notValidAfter: referenceTime + .days(3650),
+            issuer: ca1Name,
+            subject: ca1Name,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+                KeyUsage(keyCertSign: true)
+            },
+            issuerPrivateKey: .init(ca1PrivateKey)
+        )
+    }()
     private static let ca1CrossSignedByCA2: Certificate = {
         return try! Certificate(
             version: .v3,
@@ -556,6 +575,42 @@ final class VerifierTests: XCTestCase {
         )
     }
 
+    func testRootsWithSKIArePreferred() async throws {
+        let roots = CertificateStore([Self.ca1WithoutSubjectKeyIdentifier, Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leafCertificate: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(chain, [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1, Self.ca1WithoutSubjectKeyIdentifier]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
     func testMissingIntermediateFailsToBuild() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
@@ -785,7 +840,7 @@ final class VerifierTests: XCTestCase {
                 .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.localhostLeaf],
-                    issuers: [Self.intermediate1WithoutSKIAKI, Self.intermediate1]
+                    issuers: [Self.intermediate1, Self.intermediate1WithoutSKIAKI]
                 ),
                 .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
                 .foundCandidateIssuersOfPartialChainInRootStore(
@@ -820,7 +875,7 @@ final class VerifierTests: XCTestCase {
                 .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.localhostLeaf],
-                    issuers: [Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]
+                    issuers: [Self.intermediate1WithoutSKIAKI, Self.intermediate1WithIncorrectSKIAKI]
                 ),
                 .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI]),
                 .foundCandidateIssuersOfPartialChainInRootStore(
@@ -938,7 +993,7 @@ final class VerifierTests: XCTestCase {
 
     func testInsanePKICanStillBuild() async throws {
         let roots = CertificateStore([Self.ca1])
-        let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x1, Self.x2])
+        let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x2, Self.x1])
         let log = DiagnosticsLog()
 
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
@@ -961,31 +1016,31 @@ final class VerifierTests: XCTestCase {
                 .searchingForIssuerOfPartialChain([Self.insaneLeaf]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.insaneLeaf],
-                    issuers: [Self.t1, Self.t2, Self.t3]
+                    issuers: [Self.t3, Self.t2, Self.t1]
                 ),
                 .issuerHasNotSignedCertificate(Self.t1, partialChain: [Self.insaneLeaf]),
                 .issuerHasNotSignedCertificate(Self.t2, partialChain: [Self.insaneLeaf]),
                 .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.insaneLeaf, Self.t3],
-                    issuers: [Self.x1, Self.x2]
+                    issuers: [Self.x2, Self.x1]
                 ),
                 .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.insaneLeaf, Self.t3, Self.x2],
-                    issuers: [Self.t1, Self.t2, Self.t3]
+                    issuers: [Self.t3, Self.t2, Self.t1]
                 ),
                 .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3),
                 .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.insaneLeaf, Self.t3, Self.x2, Self.t2],
-                    issuers: [Self.x1, Self.x2]
+                    issuers: [Self.x2, Self.x1]
                 ),
                 .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuer: Self.x2),
                 .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1]),
                 .foundCandidateIssuersOfPartialChainInIntermediateStore(
                     [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1],
-                    issuers: [Self.t1, Self.t2, Self.t3]
+                    issuers: [Self.t3, Self.t2, Self.t1]
                 ),
                 .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t2),
                 .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t3),
@@ -1247,9 +1302,9 @@ extension DiagnosticsLog: CustomDebugStringConvertible {
         \(self.diagnostics.enumerated().map {
             """
             \($0.0 + 1). ---------------------------------------------------------------------------------
-            \(String(reflecting: $0.1))
+            \($0.1.multilineDescription)
             """
-        }.joined(separator: "\n")),
+        }.joined(separator: "\n"))
         """
     }
 }

@@ -152,7 +152,20 @@ extension Certificate.PrivateKey: Sendable {}
 
 extension Certificate.PrivateKey: CustomStringConvertible {
     public var description: String {
-        return "TODO"
+        switch self.backing {
+        case .p256:
+            return "P256.PrivateKey"
+        case .p384:
+            return "P384.PrivateKey"
+        case .p521:
+            return "P521.PrivateKey"
+        case .rsa(let publicKey):
+            return "RSA\(publicKey.keySizeInBits).PrivateKey"
+        #if canImport(Darwin)
+        case .secureEnclaveP256:
+            return "SecureEnclave.P256.PrivateKey"
+        #endif
+        }
     }
 }
 
@@ -245,7 +258,7 @@ extension Certificate.PrivateKey {
                 let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
                 if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
                     throw ASN1Error.invalidASN1Object(
-                        reason: "algorithm missmatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
+                        reason: "algorithm mismatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
                     )
                 }
                 self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)

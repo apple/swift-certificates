@@ -595,8 +595,8 @@ extension OCSPSingleResponse {
     ) -> PolicyEvaluationResult {
         /// Clients MUST check for the existence of the nextUpdate field and MUST
         /// ensure the current time, expressed in GMT time as described in
-        /// Section 2.2.4, falls between the thisUpdate and nextUpdate times.  Ifhttps://www.rfc-editor.org/rfc/rfc5019#section-4
-        /// the nextUpdate field is absent, the client MUST reject the response.
+        /// Section 2.2.4, falls between the thisUpdate and nextUpdate times.
+        /// If the nextUpdate field is absent, the client MUST reject the response.
         /// https://www.rfc-editor.org/rfc/rfc5019#section-4
         guard let nextUpdateGeneralizedTime = self.nextUpdate else {
             return .failsToMeetPolicy(reason: "OCSP response `nextUpdate` is nil")
