@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 // Current recommendation for a black hole function according to:
 // https://forums.swift.org/t/compiler-swallows-blackhole/64305/10
 // https://github.com/apple/swift/commit/1fceeab71e79dc96f1b6f560bf745b016d7fcdcf
