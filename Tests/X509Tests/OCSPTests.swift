@@ -161,7 +161,7 @@ final class OCSPTests: XCTestCase {
         }
     }
 
-    func testCRLReasionSerialization() throws {
+    func testCRLReasonSerialization() throws {
         let fixtures: [(CRLReason, Int)] = [
             (.unspecified, 0),
             (.keyCompromise, 1),

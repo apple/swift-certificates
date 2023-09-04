@@ -28,12 +28,12 @@ final class TinyArrayTests: XCTestCase {
         XCTAssertEqual(Array(actual), Array(expected()), file: file, line: line)
         let expected = _TinyArray(expected())
         XCTAssertEqual(actual, expected, file: file, line: line)
-        var acutalHasher = Hasher()
-        acutalHasher.combine(actual)
+        var actualHasher = Hasher()
+        actualHasher.combine(actual)
         var expectedHasher = Hasher()
         expectedHasher.combine(expected)
         XCTAssertEqual(
-            acutalHasher.finalize(),
+            actualHasher.finalize(),
             expectedHasher.finalize(),
             "\(actual) does not have the same hash as \(expected)",
             file: file,

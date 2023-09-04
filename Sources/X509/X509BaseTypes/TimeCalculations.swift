@@ -154,7 +154,7 @@ extension Int64 {
         }
 
         // Now we normalise the months count back to starting in January.
-        // Safe to do unchecked subtraction here becuase for all numbers 10 or
+        // Safe to do unchecked subtraction here because for all numbers 10 or
         // larger we can subtract by 12.
         if months >= 10 {
             months &-= 12
@@ -167,7 +167,7 @@ extension Int64 {
         // Same for remdays, the loop only terminates if the number is smaller than at most 31.
         //
         // Note that, unlike struct tm, we return ordinal month numbers as well as days (i.e. 1 to 12).
-        // This fits us better when working with generalizedtime and friends.
+        // This fits us better when working with GeneralizedTime and friends.
         return (
             year: Int(years + 2000),
             month: Int(months &+ 3),
