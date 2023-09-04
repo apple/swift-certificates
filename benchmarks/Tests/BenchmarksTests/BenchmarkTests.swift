@@ -16,9 +16,9 @@ import Benchmarks
 import XCTest
 
 final class TestRunner: XCTestCase {
-    override func setUpWithError() throws {
+    override func setUp() {
         #if DEBUG
-        throw XCTSkip("performance tests only run in release mode")
+        fatalError("performance tests only run in release mode")
         #endif
     }
     func testVerifier() async {
