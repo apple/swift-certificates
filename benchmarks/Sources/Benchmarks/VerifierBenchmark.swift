@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+import BlackHole
 import X509
 import Foundation
 import Crypto
 import SwiftASN1
-import Benchmark
 
 public func verifier() async {
     var counts = 0

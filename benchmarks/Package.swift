@@ -28,32 +28,38 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "CertificatesBenchmarks",
+            name: "BenchmarksRunner",
             dependencies: [
-                "Sources",
+                "Benchmarks",
                 .product(name: "Benchmark", package: "package-benchmark"),
             ],
-            path: "Benchmarks/CertificatesBenchmarks",
+            path: "Benchmarks/BenchmarksRunner",
             plugins: [
                 .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
             ]
         ),
         .target(
-            name: "Sources",
+            name: "Benchmarks",
             dependencies: [
-                .product(name: "Benchmark", package: "package-benchmark"),
+                "BlackHole",
                 .product(name: "X509", package: "swift-certificates"),
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
-            ],
-            path: "Sources"
+            ]
+        ),
+        .target(
+            name: "BlackHole",
+            dependencies: [
+                .product(name: "X509", package: "swift-certificates"),
+                .product(name: "SwiftASN1", package: "swift-asn1"),
+                .product(name: "Crypto", package: "swift-crypto"),
+            ]
         ),
         .testTarget(
-            name: "Tests",
+            name: "BenchmarksTests",
             dependencies: [
-                "Sources",
-            ],
-            path: "Tests"
+                "Benchmarks",
+            ]
         )
     ]
 )

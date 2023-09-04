@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import BlackHole
 import _CertificateInternals
-import Benchmark
 
 public func tinyArrayAppend() {
     var count = 0

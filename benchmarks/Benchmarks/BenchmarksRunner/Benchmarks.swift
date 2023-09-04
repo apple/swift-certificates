@@ -13,8 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 import Benchmark
-import Sources
+import Benchmarks
 import Foundation
+
 
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(

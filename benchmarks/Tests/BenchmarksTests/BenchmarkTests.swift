@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Sources
+import Benchmarks
 import XCTest
 
 final class TestRunner: XCTestCase {
