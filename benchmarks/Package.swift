@@ -22,44 +22,23 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../"),
-        .package(url: "https://github.com/ordo-one/package-benchmark", from: "1.9.0"),
+        .package(url: "https://github.com/ordo-one/package-benchmark", branch: "support-failure-on-improvement"),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", from: "1.0.0-beta.1"),
     ],
     targets: [
         .executableTarget(
-            name: "BenchmarksRunner",
+            name: "CertificatesBenchmark",
             dependencies: [
-                "Benchmarks",
                 .product(name: "Benchmark", package: "package-benchmark"),
+                .product(name: "X509", package: "swift-certificates"),
+                .product(name: "SwiftASN1", package: "swift-asn1"),
+                .product(name: "Crypto", package: "swift-crypto"),
             ],
-            path: "Benchmarks/BenchmarksRunner",
+            path: "Benchmarks/CertificatesBenchmark",
             plugins: [
                 .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
             ]
         ),
-        .target(
-            name: "Benchmarks",
-            dependencies: [
-                "BlackHole",
-                .product(name: "X509", package: "swift-certificates"),
-                .product(name: "SwiftASN1", package: "swift-asn1"),
-                .product(name: "Crypto", package: "swift-crypto"),
-            ]
-        ),
-        .target(
-            name: "BlackHole",
-            dependencies: [
-                .product(name: "X509", package: "swift-certificates"),
-                .product(name: "SwiftASN1", package: "swift-asn1"),
-                .product(name: "Crypto", package: "swift-crypto"),
-            ]
-        ),
-        .testTarget(
-            name: "BenchmarksTests",
-            dependencies: [
-                "Benchmarks",
-            ]
-        )
     ]
 )

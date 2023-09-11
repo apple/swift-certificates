@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import BlackHole
+import Benchmark
 import X509
 import Foundation
 import Crypto

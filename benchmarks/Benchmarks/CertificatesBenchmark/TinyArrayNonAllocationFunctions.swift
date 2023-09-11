@@ -12,17 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-import BlackHole
+import Benchmark
 import _CertificateInternals
 
-public func tinyArrayAppend() {
-    var count = 0
+public func tinyArrayNonAllocationFunctions() {
+    var counts = 0
+    counts += _TinyArray(CollectionOfOne(1)).count
 
-    var tinyArray = _TinyArray<Int>()
-    for i in 0..<1000 {
-        tinyArray.append(i)
-    }
-    count += tinyArray.count
+    var array = _TinyArray<Int>()
+    array.append(contentsOf: CollectionOfOne(1))
+    counts += array.count
 
-    blackHole(count)
+    blackHole(counts)
 }

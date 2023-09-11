@@ -12,12 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-import BlackHole
+import Benchmark
 import X509
 import SwiftASN1
 import Foundation
 
-public func parseWebPKIRoots() -> () -> Void {
+public func parseWebPKIRootsSetup() -> () -> Void {
     let derEncodedCAs = WebPKI.all.map { try! PEMDocument(pemString: $0).derBytes }
     return {
         for derEncodedCA in derEncodedCAs {

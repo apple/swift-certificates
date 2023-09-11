@@ -12,8 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Current recommendation for a black hole function according to:
-// https://forums.swift.org/t/compiler-swallows-blackhole/64305/10
-// https://github.com/apple/swift/commit/1fceeab71e79dc96f1b6f560bf745b016d7fcdcf
-@_optimize(none)
-public func blackHole(_: some Any) {}
+import Benchmark
+import _CertificateInternals
+
+public func tinyArrayAppend() {
+    var count = 0
+
+    var tinyArray = _TinyArray<Int>()
+    for i in 0..<1000 {
+        tinyArray.append(i)
+    }
+    count += tinyArray.count
+
+    blackHole(count)
+}

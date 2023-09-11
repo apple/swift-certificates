@@ -13,13 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 import Benchmark
-import Benchmarks
 import Foundation
 
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(
-        metrics: [.mallocCountTotal, .syscalls] + .arc,
-        warmupIterations: 1
+        metrics: [.mallocCountTotal, .syscalls] + .arc
     )
 
     Benchmark("Verifier", configuration: .init(metrics: [.mallocCountTotal, .syscalls])) { benchmark in
@@ -28,11 +26,12 @@ let benchmarks = {
         }
     }
 
-    let runParseWebPKIRoots = parseWebPKIRoots()
-    Benchmark("Parse WebPKI Roots") { benchmark in
+    Benchmark("Parse WebPKI Roots") { benchmark, run in
         for _ in benchmark.scaledIterations {
-            runParseWebPKIRoots()
+            run()
         }
+    } setup: {
+        parseWebPKIRootsSetup()
     }
 
     Benchmark("TinyArray non-allocating functions") { benchmark in
