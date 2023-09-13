@@ -374,12 +374,15 @@ final class CMSTests: XCTestCase {
             diagnosticCallback: log.append(_:)
         ) { Self.defaultPolicies }
         XCTAssertValidSignature(isValidSignature)
-        
-        XCTAssertEqual(log, [
-            .searchingForIssuerOfPartialChain([Self.leaf1Cert]),
-            .foundCandidateIssuersOfPartialChainInRootStore([Self.leaf1Cert], issuers: [Self.rootCert]),
-            .foundValidCertificateChain([Self.leaf1Cert, Self.rootCert])
-        ])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.leaf1Cert]),
+                .foundCandidateIssuersOfPartialChainInRootStore([Self.leaf1Cert], issuers: [Self.rootCert]),
+                .foundValidCertificateChain([Self.leaf1Cert, Self.rootCert]),
+            ]
+        )
     }
 
     func testParsingSimpleSignature() async throws {
