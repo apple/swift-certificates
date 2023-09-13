@@ -20,7 +20,7 @@ let benchmarks = {
         metrics: [.mallocCountTotal, .syscalls] + .arc
     )
 
-    Benchmark("Verifier", configuration: .init(metrics: [.mallocCountTotal, .syscalls])) { benchmark in
+    Benchmark("Verifier") { benchmark in
         for _ in benchmark.scaledIterations {
             await verifier()
         }
