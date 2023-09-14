@@ -10,5 +10,3 @@ DerivedData/
 Package.resolved
 .swiftpm
 /out
-
-/benchmarks/.benchmarkBaselines
