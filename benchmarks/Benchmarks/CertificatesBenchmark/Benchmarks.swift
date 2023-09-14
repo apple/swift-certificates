@@ -17,10 +17,21 @@ import Foundation
 
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(
-        metrics: [.mallocCountTotal, .syscalls] + .arc
+        metrics: [
+            .mallocCountTotal,
+            .syscalls,
+            .readSyscalls,
+            .writeSyscalls,
+            .memoryLeaked,
+            .retainCount,
+            .retainCount,
+        ]
     )
+    
+    var configWithoutRetainRelease = Benchmark.defaultConfiguration
+    configWithoutRetainRelease.metrics.removeAll(where: { $0 == .retainCount || $0 == .releaseCount })
 
-    Benchmark("Verifier") { benchmark in
+    Benchmark("Verifier", configuration: ) { benchmark in
         for _ in benchmark.scaledIterations {
             await verifier()
         }
