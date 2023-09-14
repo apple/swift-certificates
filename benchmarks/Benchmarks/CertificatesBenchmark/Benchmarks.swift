@@ -31,7 +31,7 @@ let benchmarks = {
     var configWithoutRetainRelease = Benchmark.defaultConfiguration
     configWithoutRetainRelease.metrics.removeAll(where: { $0 == .retainCount || $0 == .releaseCount })
 
-    Benchmark("Verifier", configuration: ) { benchmark in
+    Benchmark("Verifier", configuration: configWithoutRetainRelease) { benchmark in
         for _ in benchmark.scaledIterations {
             await verifier()
         }

@@ -1,7 +1,7 @@
 {
   "mallocCountTotal" : 197,
-  "objectAllocCount" : 148,
-  "releaseCount" : 7418,
+  "memoryLeaked" : 0,
+  "readSyscalls" : 0,
   "retainCount" : 6982,
-  "retainReleaseDelta" : 288
+  "writeSyscalls" : 0
 }
