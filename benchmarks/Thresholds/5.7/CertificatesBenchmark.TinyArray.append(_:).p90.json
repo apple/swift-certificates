@@ -1,6 +1,7 @@
 {
   "mallocCountTotal" : 10,
-  "releaseCount" : 19,
-  "retainCount" : 7,
-  "retainReleaseDelta" : 12
+  "objectAllocCount" : 10,
+  "releaseCount" : 12,
+  "retainCount" : 0,
+  "retainReleaseDelta" : 2
 }
