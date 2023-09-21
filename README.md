@@ -54,7 +54,7 @@ For detailed usage and API documentation, check [the documentation](https://swif
 Benchmarks for `swift-certificates` are in a separate Swift Package in the `benchmarks` subfolder of this repository. 
 They use the [`package-benchmark`](https://github.com/ordo-one/package-benchmark) plugin.
 Benchmarks depends on the [`jemalloc`](https://jemalloc.net) memory allocation library, which is used by `package-benchmark` to capture memory allocation statistics.
-An installation guide can be found in the [Getting Started article](https://swiftpackageindex.com/ordo-one/package-benchmark/1.11.1/documentation/benchmark/gettingstarted#Installing-Prerequisites-and-Platform-Support) of `package-benchmark`. 
+An installation guide can be found in the [Getting Started article](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark/gettingstarted#Installing-Prerequisites-and-Platform-Support) of `package-benchmark`. 
 Afterwards you can run the benchmarks from CLI by going to the `benchmarks` subfolder (e.g. `cd benchmarks`) and invoking:
 ```
 swift package benchmark
@@ -67,5 +67,5 @@ BENCHMARK_DISABLE_JEMALLOC=true xed .
 ```
 
 
-For more information please refer to `swift package benchmark --help` or the [documentation of `package-benchmark`](https://swiftpackageindex.com/ordo-one/package-benchmark/1.11.1/documentation/benchmark). 
+For more information please refer to `swift package benchmark --help` or the [documentation of `package-benchmark`](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark). 
 
