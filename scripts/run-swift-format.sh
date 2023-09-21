@@ -39,7 +39,7 @@ swiftformat_bin=${swiftformat_bin:-$(command -v swift-format)} || fatal "❌ swi
 "${swiftformat_bin}" lint \
   --parallel --recursive --strict \
   "${repo_root}/Sources" "${repo_root}/Tests" \
-  "${repo_root}/benchmarks/Benchmarks" \
+  "${repo_root}/Benchmarks/Benchmarks" \
   && swift_format_rc=$? || swift_format_rc=$?
 
 if [[ "${swift_format_rc}" -ne 0 ]]; then
@@ -47,7 +47,7 @@ if [[ "${swift_format_rc}" -ne 0 ]]; then
 
   To fix, run the following command:
 
-    % swift-format format --parallel --recursive --in-place Sources Tests benchmarks/Benchmarks
+    % swift-format format --parallel --recursive --in-place Sources Tests Benchmarks/Benchmarks
   "
   exit "${swift_format_rc}"
 fi
