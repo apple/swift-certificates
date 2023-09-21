@@ -60,7 +60,7 @@ Afterwards you can run the benchmarks from CLI by going to the `benchmarks` subf
 swift package benchmark
 ```
 
-Profiling benchmarks in Xcode (or building the benchmarks in release mode) with `jemalloc` is currently not supported and requires disabling `jemalloc`. 
+Profiling benchmarks or building the benchmarks in release mode in Xcode with `jemalloc` is currently not supported and requires disabling `jemalloc`. 
 Make sure Xcode is closed and then open it from the CLI with the `BENCHMARK_DISABLE_JEMALLOC=true` environment variable set e.g.:
 ```
 BENCHMARK_DISABLE_JEMALLOC=true xed .
