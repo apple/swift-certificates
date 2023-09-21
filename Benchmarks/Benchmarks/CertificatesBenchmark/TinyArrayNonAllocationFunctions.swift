@@ -12,19 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-import X509
-import Foundation
-import SwiftASN1
+import Benchmark
+import _CertificateInternals
 
-func run(identifier: String) {
-    let derEncodedCAs = WebPKI.all.map { try! PEMDocument(pemString: $0).derBytes }
-    measure(identifier: identifier) {
-        var totalExtensionCount = 0
-        for _ in 0..<1000 {
-            for derEncodedCA in derEncodedCAs {
-                totalExtensionCount += try! Certificate(derEncoded: derEncodedCA).extensions.count
-            }
-        }
-        return totalExtensionCount
-    }
+public func tinyArrayNonAllocationFunctions() {
+    var counts = 0
+    counts += _TinyArray(CollectionOfOne(1)).count
+
+    var array = _TinyArray<Int>()
+    array.append(contentsOf: CollectionOfOne(1))
+    counts += array.count
+
+    blackHole(counts)
 }

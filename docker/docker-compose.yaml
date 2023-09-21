@@ -16,8 +16,8 @@ services:
     depends_on: [runtime-setup]
     volumes:
       - ~/.ssh:/root/.ssh
-      - ..:/code:z
-    working_dir: /code
+      - ..:/swift-certificates:z
+    working_dir: /swift-certificates
 
   soundness:
     <<: *common
@@ -25,8 +25,11 @@ services:
 
   test:
     <<: *common
-    command: /bin/bash -xcl "swift $${SWIFT_TEST_VERB-test} $${WARN_AS_ERROR_ARG-} $${SANITIZER_ARG-} $${IMPORT_CHECK_ARG-} && ./scripts/integration_tests.sh $${INTEGRATION_TESTS_ARG-}"
+    command: /bin/bash -xcl "swift $${SWIFT_TEST_VERB-test} $${WARN_AS_ERROR_ARG-} $${SANITIZER_ARG-} $${IMPORT_CHECK_ARG-} && cd Benchmarks && swift package benchmark baseline check --check-absolute-path Thresholds/$${SWIFT_VERSION-}/"
 
+  update-benchmark-baseline:
+    <<: *common
+    command: /bin/bash -xcl "cd Benchmarks && swift package --scratch-path .build/$${SWIFT_VERSION-}/ --allow-writing-to-package-directory benchmark --format metricP90AbsoluteThresholds --path Thresholds/$${SWIFT_VERSION-}/"
   # util
 
   shell:

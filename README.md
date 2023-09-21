@@ -48,3 +48,24 @@ dependencies: [
 ```
 
 For detailed usage and API documentation, check [the documentation](https://swiftpackageindex.com/apple/swift-certificates/main/documentation/x509).
+
+## Benchmarks
+
+Benchmarks for `swift-certificates` are in a separate Swift Package in the `Benchmarks` subfolder of this repository. 
+They use the [`package-benchmark`](https://github.com/ordo-one/package-benchmark) plugin.
+Benchmarks depends on the [`jemalloc`](https://jemalloc.net) memory allocation library, which is used by `package-benchmark` to capture memory allocation statistics.
+An installation guide can be found in the [Getting Started article](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark/gettingstarted#Installing-Prerequisites-and-Platform-Support) of `package-benchmark`. 
+Afterwards you can run the benchmarks from CLI by going to the `Benchmarks` subfolder (e.g. `cd Benchmarks`) and invoking:
+```
+swift package benchmark
+```
+
+Profiling benchmarks or building the benchmarks in release mode in Xcode with `jemalloc` is currently not supported and requires disabling `jemalloc`. 
+Make sure Xcode is closed and then open it from the CLI with the `BENCHMARK_DISABLE_JEMALLOC=true` environment variable set e.g.:
+```
+BENCHMARK_DISABLE_JEMALLOC=true xed .
+```
+
+
+For more information please refer to `swift package benchmark --help` or the [documentation of `package-benchmark`](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark). 
+
