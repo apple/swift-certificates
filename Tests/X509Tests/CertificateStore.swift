@@ -14,7 +14,7 @@
 
 import XCTest
 import SwiftASN1
-@_spi(Testing) @testable import X509
+@_spi(Testing)@testable import X509
 
 final class CertificateStoreTests: XCTestCase {
     #if os(Linux)
@@ -25,7 +25,7 @@ final class CertificateStoreTests: XCTestCase {
         XCTAssertEqual(log, [])
     }
     #endif
-    
+
     func testLoadingFailsGracefullyIfFilesDoNotExist() {
         let searchPaths = [
             "/some/path/that/does/not/exist/1",
@@ -38,7 +38,7 @@ final class CertificateStoreTests: XCTestCase {
             XCTAssertEqual(error.errors.map(\.path), searchPaths)
         }
     }
-    
+
     func testLoadingFailsGracefullyIfFirstFileDoesNotExist() async throws {
         let caCertificatesURL = try XCTUnwrap(Bundle.module.url(forResource: "ca-certificates", withExtension: "crt"))
         let searchPaths = [
@@ -46,7 +46,9 @@ final class CertificateStoreTests: XCTestCase {
             caCertificatesURL.path,
         ]
         let log = DiagnosticsLog()
-        let store = try await CertificateStore.loadTrustRoot(at: searchPaths).resolve(diagnosticsCallback: log.append(_:))
+        let store = try await CertificateStore.loadTrustRoot(at: searchPaths).resolve(
+            diagnosticsCallback: log.append(_:)
+        )
         XCTAssertEqual(log, [])
         XCTAssertEqual(store.totalCertificateCount, 136)
     }

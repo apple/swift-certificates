@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Foundation
 import SwiftASN1
 
@@ -44,19 +43,20 @@ extension CertificateStore {
         _ = cachedSystemTrustRootsFuture
         return CertificateStore(elements: CollectionOfOne(.trustRoots))
     }()
-    
-    static let cachedSystemTrustRootsFuture: Future<CertificateStore, any Error> = DispatchQueue.global(qos: .userInteractive).asyncFuture {
+
+    static let cachedSystemTrustRootsFuture: Future<CertificateStore, any Error> = DispatchQueue.global(
+        qos: .userInteractive
+    ).asyncFuture {
         try Self.loadTrustRoot(at: rootCAFileSearchPaths)
     }
 }
 #endif
 
-
 extension CertificateStore {
     @_spi(Testing)
     public static func loadTrustRoot(at searchPaths: [String]) throws -> CertificateStore {
         var fileLoadingError = TrustRootsLoadingError(errors: [])
-        
+
         for path in searchPaths {
             let pemEncodedData: Data
             do {
@@ -67,24 +67,28 @@ extension CertificateStore {
                 fileLoadingError.errors.append((path, error))
                 continue
             }
-            
+
             return try parseTrustRoot(from: pemEncodedData)
         }
-        
+
         throw fileLoadingError
     }
-    
+
     static func parseTrustRoot(from pemEncodedData: Data) throws -> CertificateStore {
         let pemEncodedString = String(decoding: pemEncodedData, as: UTF8.self)
         let documents = try PEMDocument.parseMultiple(pemString: pemEncodedString)
-        return CertificateStore(try documents.lazy.map {
-            try Certificate(pemDocument: $0)
-        })
+        return CertificateStore(
+            try documents.lazy.map {
+                try Certificate(pemDocument: $0)
+            }
+        )
     }
 }
 
 extension DispatchQueue {
-    func asyncFuture<Success: Sendable>(withResultOf work: @Sendable @escaping () throws -> Success) -> Future<Success, any Error> {
+    func asyncFuture<Success: Sendable>(
+        withResultOf work: @Sendable @escaping () throws -> Success
+    ) -> Future<Success, any Error> {
         let promise = Promise<Success, any Error>()
         self.async {
             promise.fulfil(with: Result { try work() })

@@ -62,7 +62,7 @@ public struct CertificateStore: Sendable, Hashable {
             self._certificates[lastIndex] = .customCertificates(certificatesIndexBySubjectName)
         #if os(Linux)
         case .trustRoots:
-            self._certificates.append(.certificates(Dictionary(grouping: certificates, by: \.subject)))
+            self._certificates.append(.customCertificates(Dictionary(grouping: certificates, by: \.subject)))
         #endif
         }
     }
@@ -97,7 +97,6 @@ public struct CertificateStore: Sendable, Hashable {
     }
     #endif
     
-    @inlinable
     func resolve(diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async -> Resolved {
         await Resolved(self, diagnosticsCallback: diagnosticsCallback)
     }
@@ -109,14 +108,16 @@ extension CertificateStore {
         @usableFromInline
         var _certificates: _TinyArray<[DistinguishedName: [Certificate]]> = .init()
         
-        @inlinable
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
             for element in store._certificates {
                 switch element {
                 #if os(Linux)
                 case .trustRoots:
                     do {
-                        _certificates.append(try CertificateStore.cachedTrustRootsFuture.value)
+                        _certificates.append(contentsOf: try await CertificateStore.cachedSystemTrustRootsFuture.value
+                            .resolve(diagnosticsCallback: diagnosticsCallback)
+                            ._certificates
+                        )
                     } catch {
                         diagnosticsCallback?(.loadingTrustRootsFailed(error))
                     }

@@ -45,7 +45,7 @@ public struct Verifier<Policy: VerifierPolicy> {
             )
             return .couldNotValidate([])
         }
-        
+
         let rootCertificates = await self.rootCertificates.resolve(diagnosticsCallback: diagnosticCallback)
         // Second check: is this leaf _already in_ the certificate store? If it is, we can just trust it directly.
         //
@@ -71,7 +71,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                 )
             }
         }
-        
+
         let intermediates = await intermediates.resolve(diagnosticsCallback: diagnosticCallback)
 
         // This is essentially a DFS of the certificate tree. We attempt to iteratively build up possible chains.

@@ -87,7 +87,7 @@ final class TinyArrayTests: XCTestCase {
             array.append(4)
         }
     }
-    
+
     func testSubscriptSetter() {
         assertEqual([2]) { array in
             array.append(1)

@@ -18,22 +18,23 @@ final class Promise<Value, Failure: Error> {
         case unfulfilled(observers: [CheckedContinuation<Result<Value, Failure>, Never>])
         case fulfilled(Result<Value, Failure>)
     }
-    
+
     private let state = LockedValueBox(State.unfulfilled(observers: []))
-    
+
     init() {}
-    
+
     fileprivate var result: Result<Value, Failure> {
         get async {
             self.state.lock()
-            
+
             switch self.state.unlockedValue {
             case .fulfilled(let result):
                 defer { self.state.unlock() }
                 return result
-            
+
             case .unfulfilled(var observers):
-                return await withCheckedContinuation { (continuation: CheckedContinuation<Result<Value, Failure>, Never>) in
+                return await withCheckedContinuation {
+                    (continuation: CheckedContinuation<Result<Value, Failure>, Never>) in
                     observers.append(continuation)
                     self.state.unlockedValue = .unfulfilled(observers: observers)
                     self.state.unlock()
@@ -41,7 +42,7 @@ final class Promise<Value, Failure: Error> {
             }
         }
     }
-    
+
     func fulfil(with result: Result<Value, Failure>) {
         self.state.withLockedValue { state in
             switch state {
@@ -55,7 +56,7 @@ final class Promise<Value, Failure: Error> {
             }
         }
     }
-    
+
     deinit {
         switch self.state.unlockedValue {
         case .fulfilled:
@@ -72,7 +73,7 @@ extension Promise {
     func succeed(with value: Value) {
         self.fulfil(with: .success(value))
     }
-    
+
     func fail(with error: Failure) {
         self.fulfil(with: .failure(error))
     }
@@ -82,11 +83,11 @@ extension Promise {
 
 struct Future<Value, Failure: Error> {
     private let promise: Promise<Value, Failure>
-    
+
     init(_ promise: Promise<Value, Failure>) {
         self.promise = promise
     }
-    
+
     var result: Result<Value, Failure> {
         get async {
             await promise.result
@@ -120,6 +121,3 @@ extension Result where Failure == Never {
         }
     }
 }
-
-
-

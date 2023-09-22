@@ -66,13 +66,13 @@ public struct VerificationDiagnostic: Sendable {
         var partialChain: [Certificate]
         var issuer: Certificate
     }
-    
+
     /// - Note: all ``LoadingTrustRootsFailed`` are considered equal,
     /// best we can because the underlying storage type ``Error`` doesn't conform to Eqautable
     struct LoadingTrustRootsFailed: Hashable, Sendable {
         var error: any Error
-        
-        static func ==(lhs: Self, rhs: Self) -> Bool {
+
+        static func == (lhs: Self, rhs: Self) -> Bool {
             true
         }
         func hash(into hasher: inout Hasher) {}
@@ -214,7 +214,8 @@ extension VerificationDiagnostic {
             )
         )
     }
-    
+
+    @usableFromInline
     static func loadingTrustRootsFailed(
         _ error: any Error
     ) -> Self {
@@ -333,7 +334,7 @@ extension VerificationDiagnostic.Storage {
     ) -> Self {
         .issuerIsAlreadyInTheChain(.init(partialChain: partialChain, issuer: issuer))
     }
-    
+
     static func loadingTrustRootsFailed(
         _ error: any Error
     ) -> Self {

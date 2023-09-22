@@ -17,24 +17,24 @@ import Foundation
 final class LockedValueBox<Value> {
     private let _lock: NSLock = .init()
     private var _value: Value
-    
+
     var unlockedValue: Value {
         get { _value }
         set { _value = newValue }
     }
-    
+
     func lock() {
         _lock.lock()
     }
-    
+
     func unlock() {
         _lock.unlock()
     }
-    
+
     init(_ value: Value) {
         self._value = value
     }
-    
+
     func withLockedValue<Result>(
         _ body: (inout Value) throws -> Result
     ) rethrows -> Result {
@@ -45,3 +45,12 @@ final class LockedValueBox<Value> {
 }
 
 extension LockedValueBox: @unchecked Sendable where Value: Sendable {}
+
+extension NSLock {
+    // this API doesn't exist on Linux and therefore we have a copy of it here
+    func withLock<Result>(_ body: () throws -> Result) rethrows -> Result {
+        self.lock()
+        defer { self.unlock() }
+        return try body()
+    }
+}
