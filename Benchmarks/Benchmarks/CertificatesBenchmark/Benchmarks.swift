@@ -38,12 +38,28 @@ let benchmarks = {
         }
     }
 
-    Benchmark("Parse WebPKI Roots") { benchmark, run in
+    Benchmark("Parse WebPKI Roots from DER") { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()
         }
     } setup: {
-        parseWebPKIRootsSetup()
+        parseWebPKIRootsFromDER()
+    }
+    
+    Benchmark("Parse WebPKI Roots from PEM files") { benchmark, run in
+        for _ in benchmark.scaledIterations {
+            run()
+        }
+    } setup: {
+        parseWebPKIRootsFromPEMFiles()
+    }
+    
+    Benchmark("Parse WebPKI Roots from multi PEM file") { benchmark, run in
+        for _ in benchmark.scaledIterations {
+            run()
+        }
+    } setup: {
+        parseWebPKIRootsFromMultiPEMFile()
     }
 
     Benchmark("TinyArray non-allocating functions") { benchmark in
