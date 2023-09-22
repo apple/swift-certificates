@@ -23,7 +23,7 @@ let package = Package(
     dependencies: [
         .package(path: "../"),
         .package(url: "https://github.com/ordo-one/package-benchmark", from: "1.11.1"),
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0" ..< "4.0.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", from: "1.0.0-beta.2"),
     ],
     targets: [
