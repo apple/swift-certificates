@@ -618,7 +618,7 @@ final class VerifierTests: XCTestCase {
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(
             leafCertificate: Self.localhostLeaf,
-            intermediates: CertificateStore([]),
+            intermediates: CertificateStore(),
             diagnosticCallback: log.append(_:)
         )
 
@@ -639,7 +639,7 @@ final class VerifierTests: XCTestCase {
     }
 
     func testMissingRootFailsToBuild() async throws {
-        let roots = CertificateStore([])
+        let roots = CertificateStore()
         let log = DiagnosticsLog()
 
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }

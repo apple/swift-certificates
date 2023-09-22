@@ -42,6 +42,9 @@ extension _TinyArray: RandomAccessCollection {
         get {
             self.storage[position]
         }
+        set {
+            self.storage[position] = newValue
+        }
     }
 
     @inlinable
@@ -145,6 +148,18 @@ extension _TinyArray.Storage: RandomAccessCollection {
                 return element
             case .arbitrary(let elements):
                 return elements[position]
+            }
+        }
+        set {
+            switch self {
+            case .one:
+                guard position == 0 else {
+                    fatalError("index \(position) out of bounds")
+                }
+                self = .one(newValue)
+            case .arbitrary(var elements):
+                elements[position] = newValue
+                self = .arbitrary(elements)
             }
         }
     }
