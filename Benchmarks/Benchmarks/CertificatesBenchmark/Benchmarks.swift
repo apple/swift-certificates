@@ -45,7 +45,7 @@ let benchmarks = {
     } setup: {
         parseWebPKIRootsFromDER()
     }
-    
+
     Benchmark("Parse WebPKI Roots from PEM files") { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()
@@ -53,7 +53,7 @@ let benchmarks = {
     } setup: {
         parseWebPKIRootsFromPEMFiles()
     }
-    
+
     Benchmark("Parse WebPKI Roots from multi PEM file") { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()

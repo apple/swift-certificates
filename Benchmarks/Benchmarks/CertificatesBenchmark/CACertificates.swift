@@ -15,7 +15,13 @@
 import Foundation
 
 let webPKICertificatesURL = {
-    guard let certURL = Bundle.module.url(forResource: "ca-certificates", withExtension: "crt", subdirectory: "ca-certificates") else {
+    guard
+        let certURL = Bundle.module.url(
+            forResource: "ca-certificates",
+            withExtension: "crt",
+            subdirectory: "ca-certificates"
+        )
+    else {
         fatalError("could not get url in bundle for ca-certificates.crt")
     }
     return certURL
@@ -37,8 +43,14 @@ func loadWebPKIAsPemStrings() throws -> [String] {
         }
         let name = certName[..<extDot]
         let ext = certName[extStart...]
-        
-        guard let certURL = Bundle.module.url(forResource: String(name), withExtension: String(ext), subdirectory: "ca-certificates/mozilla") else {
+
+        guard
+            let certURL = Bundle.module.url(
+                forResource: String(name),
+                withExtension: String(ext),
+                subdirectory: "ca-certificates/mozilla"
+            )
+        else {
             fatalError("could not get url in bundle for cert \(certName)")
         }
         return try String(decoding: Data(contentsOf: certURL), as: UTF8.self)
