@@ -14,7 +14,7 @@
 
 import XCTest
 import SwiftASN1
-@_spi(Testing)@testable import X509
+@_spi(Testing) @testable import X509
 
 final class CertificateStoreTests: XCTestCase {
     #if os(Linux)

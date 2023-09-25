@@ -24,7 +24,7 @@ public struct CertificateStore: Sendable, Hashable {
         /// Stores the certificates, indexed by subject name.
         case customCertificates([DistinguishedName: [Certificate]])
     }
-    
+
     @usableFromInline
     var _certificates: _TinyArray<Element>
 
@@ -37,7 +37,7 @@ public struct CertificateStore: Sendable, Hashable {
     public init(_ certificates: some Sequence<Certificate>) {
         self.init(elements: CollectionOfOne(.customCertificates(Dictionary(grouping: certificates, by: \.subject))))
     }
-    
+
     @inlinable
     internal init(elements: some Sequence<Element>) {
         self._certificates = .init(elements)
@@ -66,7 +66,7 @@ public struct CertificateStore: Sendable, Hashable {
         #endif
         }
     }
-    
+
     #if swift(>=5.9)
     @inlinable
     public consuming func inserting(contentsOf certificates: some Sequence<Certificate>) -> Self {
@@ -81,7 +81,7 @@ public struct CertificateStore: Sendable, Hashable {
         return copy
     }
     #endif
-    
+
     #if swift(>=5.9)
     @inlinable
     public consuming func inserting(_ certificate: Certificate) -> Self {
@@ -96,7 +96,7 @@ public struct CertificateStore: Sendable, Hashable {
         return self
     }
     #endif
-    
+
     func resolve(diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async -> Resolved {
         await Resolved(self, diagnosticsCallback: diagnosticsCallback)
     }
@@ -107,16 +107,17 @@ extension CertificateStore {
     struct Resolved {
         @usableFromInline
         var _certificates: _TinyArray<[DistinguishedName: [Certificate]]> = .init()
-        
+
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
             for element in store._certificates {
                 switch element {
                 #if os(Linux)
                 case .trustRoots:
                     do {
-                        _certificates.append(contentsOf: try await CertificateStore.cachedSystemTrustRootsFuture.value
-                            .resolve(diagnosticsCallback: diagnosticsCallback)
-                            ._certificates
+                        _certificates.append(
+                            contentsOf: try await CertificateStore.cachedSystemTrustRootsFuture.value
+                                .resolve(diagnosticsCallback: diagnosticsCallback)
+                                ._certificates
                         )
                     } catch {
                         diagnosticsCallback?(.loadingTrustRootsFailed(error))
@@ -135,11 +136,10 @@ extension CertificateStore.Resolved {
     subscript(subject: DistinguishedName) -> [Certificate]? {
         get {
             let matchingCertificates = _certificates.flatMap { $0[subject] ?? [] }
-            if matchingCertificates.isEmpty {
-                return nil
-            } else {
+            guard matchingCertificates.isEmpty else {
                 return matchingCertificates
             }
+            return nil
         }
     }
 
