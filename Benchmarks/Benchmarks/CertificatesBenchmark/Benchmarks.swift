@@ -68,7 +68,7 @@ let benchmarks = {
         }
     }
 
-    Benchmark("TinyArray.append(_:)") { benchmark in
+    Benchmark("TinyArray.append") { benchmark in
         for _ in benchmark.scaledIterations {
             tinyArrayAppend()
         }
