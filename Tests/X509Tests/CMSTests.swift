@@ -16,7 +16,7 @@ import Foundation
 import XCTest
 import Crypto
 import SwiftASN1
-@testable@_spi(CMS) import X509
+@testable @_spi(CMS) import X509
 
 final class CMSTests: XCTestCase {
     static let rootCertKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
