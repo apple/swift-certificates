@@ -18,12 +18,22 @@ import SwiftASN1
 
 final class CertificateStoreTests: XCTestCase {
     #if os(Linux)
-    func testLoadingDefaultTrustRootsOnLinux() async throws {
+    func testLoadingDefaultTrustRoots() async throws {
         let log = DiagnosticsLog()
         let store = await CertificateStore.systemTrustRoots.resolve(diagnosticsCallback: log.append(_:))
         XCTAssertGreaterThanOrEqual(store.totalCertificateCount, 100, "expected to find at least 100 certificates")
         XCTAssertEqual(log, [])
     }
+    #else
+    func testLoadingDefaultTrustRoots() async throws {
+        let log = DiagnosticsLog()
+        
+        let store = await CertificateStore.systemTrustRoots.resolve(diagnosticsCallback: log.append(_:))
+        XCTAssertEqual(store.totalCertificateCount, 0)
+        
+        XCTAssertEqual(log.count, 1)
+    }
+    
     #endif
 
     func testLoadingFailsGracefullyIfFilesDoNotExist() {
@@ -31,11 +41,11 @@ final class CertificateStoreTests: XCTestCase {
             "/some/path/that/does/not/exist/1",
             "/some/path/that/does/not/exist/2",
         ]
-        XCTAssertThrowsError(try CertificateStore.loadTrustRoot(at: searchPaths)) { error in
-            guard let error = error as? TrustRootsLoadingError else {
-                return XCTFail("could not cast \(error) to \(TrustRootsLoadingError.self)")
+        XCTAssertThrowsError(try CertificateStore.loadTrustRoots(at: searchPaths)) { error in
+            guard let error = error as? CertificateError else {
+                return XCTFail("could not cast \(error) to \(CertificateError.self)")
             }
-            XCTAssertEqual(error.errors.map(\.path), searchPaths)
+            XCTAssertEqual(error.code, .failedToLoadSystemTrustStore)
         }
     }
 
@@ -46,7 +56,7 @@ final class CertificateStoreTests: XCTestCase {
             caCertificatesURL.path,
         ]
         let log = DiagnosticsLog()
-        let store = try await CertificateStore.loadTrustRoot(at: searchPaths).resolve(
+        let store = try await CertificateStore.loadTrustRoots(at: searchPaths).resolve(
             diagnosticsCallback: log.append(_:)
         )
         XCTAssertEqual(log, [])

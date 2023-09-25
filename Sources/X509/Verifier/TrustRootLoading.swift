@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -15,11 +15,6 @@
 import Foundation
 import SwiftASN1
 
-struct TrustRootsLoadingError: Error {
-    var errors: [(path: String, error: any Error)]
-}
-
-#if os(Linux)
 /// This is a list of root CA file search paths. This list contains paths as validated against several distributions.
 /// If you are attempting to use swift-certificates on a platform that is not covered here and certificate validation is
 /// failing, please open a pull request that adds the appropriate search path.
@@ -36,26 +31,26 @@ extension CertificateStore {
     ///
     /// - Note: Access this property as early as possible. It will start loading and parsing of the certificates in the background.
     /// Accessing this property does **not** block.
-    /// - Warning: This property is only available on Linux.
+    /// - Warning: This is only supported on Linux and will not find the system trust roots on any other platform.
     /// On Darwin based platforms (e.g. macOS, iOS) use Security.framework to validate that a certificate chains up to a trusted root CA.
+    /// On other platforms (e.g. Windows) use the platform verifier.
     public static let systemTrustRoots: CertificateStore = {
         // access `cachedTrustRootsFuture` to kick off loading on a background thread
         _ = cachedSystemTrustRootsFuture
-        return CertificateStore(elements: CollectionOfOne(.trustRoots))
+        return CertificateStore(elements: CollectionOfOne(.systemTrustStore))
     }()
 
     static let cachedSystemTrustRootsFuture: Future<CertificateStore, any Error> = DispatchQueue.global(
         qos: .userInteractive
     ).asyncFuture {
-        try Self.loadTrustRoot(at: rootCAFileSearchPaths)
+        try Self.loadTrustRoots(at: rootCAFileSearchPaths)
     }
 }
-#endif
 
 extension CertificateStore {
     @_spi(Testing)
-    public static func loadTrustRoot(at searchPaths: [String]) throws -> CertificateStore {
-        var fileLoadingError = TrustRootsLoadingError(errors: [])
+    public static func loadTrustRoots(at searchPaths: [String]) throws -> CertificateStore {
+        var fileLoadingErrors = [(path: String, error: any Error)]()
 
         for path in searchPaths {
             let pemEncodedData: Data
@@ -64,14 +59,16 @@ extension CertificateStore {
             } catch {
                 // this might fail if the file doesn't exists at which point we try the next path
                 // but record the error if all fail
-                fileLoadingError.errors.append((path, error))
+                fileLoadingErrors.append((path, error))
                 continue
             }
 
             return try parseTrustRoot(from: pemEncodedData)
         }
-
-        throw fileLoadingError
+        
+        throw CertificateError.failedToLoadSystemTrustStore(reason: fileLoadingErrors.lazy.map {
+            "(\(String(reflecting: $0.path)): \(String(reflecting: $0.error)))"
+        }.joined(separator: ", "))
     }
 
     static func parseTrustRoot(from pemEncodedData: Data) throws -> CertificateStore {

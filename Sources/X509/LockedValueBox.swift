@@ -18,7 +18,7 @@ final class LockedValueBox<Value> {
     private let _lock: NSLock = .init()
     private var _value: Value
 
-    var unlockedValue: Value {
+    var unsafeUnlockedValue: Value {
         get { _value }
         set { _value = newValue }
     }

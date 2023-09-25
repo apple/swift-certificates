@@ -27,7 +27,7 @@ final class Promise<Value, Failure: Error> {
         get async {
             self.state.lock()
 
-            switch self.state.unlockedValue {
+            switch self.state.unsafeUnlockedValue {
             case .fulfilled(let result):
                 defer { self.state.unlock() }
                 return result
@@ -36,7 +36,7 @@ final class Promise<Value, Failure: Error> {
                 return await withCheckedContinuation {
                     (continuation: CheckedContinuation<Result<Value, Failure>, Never>) in
                     observers.append(continuation)
-                    self.state.unlockedValue = .unfulfilled(observers: observers)
+                    self.state.unsafeUnlockedValue = .unfulfilled(observers: observers)
                     self.state.unlock()
                 }
             }
@@ -58,7 +58,7 @@ final class Promise<Value, Failure: Error> {
     }
 
     deinit {
-        switch self.state.unlockedValue {
+        switch self.state.unsafeUnlockedValue {
         case .fulfilled:
             break
         case .unfulfilled:

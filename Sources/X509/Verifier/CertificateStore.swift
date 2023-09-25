@@ -18,9 +18,7 @@ import _CertificateInternals
 public struct CertificateStore: Sendable, Hashable {
     @usableFromInline
     enum Element: Sendable, Hashable {
-        #if os(Linux)
-        case trustRoots
-        #endif
+        case systemTrustStore
         /// Stores the certificates, indexed by subject name.
         case customCertificates([DistinguishedName: [Certificate]])
     }
@@ -52,6 +50,7 @@ public struct CertificateStore: Sendable, Hashable {
     public mutating func insert(contentsOf certificates: some Sequence<Certificate>) {
         if self._certificates.isEmpty {
             self = .init(certificates)
+            return
         }
         let lastIndex = self._certificates.index(before: self._certificates.endIndex)
         switch self._certificates[lastIndex] {
@@ -60,42 +59,26 @@ public struct CertificateStore: Sendable, Hashable {
                 certificatesIndexBySubjectName[certificate.subject, default: []].append(certificate)
             }
             self._certificates[lastIndex] = .customCertificates(certificatesIndexBySubjectName)
-        #if os(Linux)
-        case .trustRoots:
+        
+        case .systemTrustStore:
             self._certificates.append(.customCertificates(Dictionary(grouping: certificates, by: \.subject)))
-        #endif
+        
         }
     }
 
-    #if swift(>=5.9)
-    @inlinable
-    public consuming func inserting(contentsOf certificates: some Sequence<Certificate>) -> Self {
-        self.insert(contentsOf: certificates)
-        return self
-    }
-    #else
     @inlinable
     public func inserting(contentsOf certificates: some Sequence<Certificate>) -> Self {
         var copy = self
         copy.insert(contentsOf: certificates)
         return copy
     }
-    #endif
 
-    #if swift(>=5.9)
-    @inlinable
-    public consuming func inserting(_ certificate: Certificate) -> Self {
-        self.insert(certificate)
-        return self
-    }
-    #else
     @inlinable
     public func inserting(_ certificate: Certificate) -> Self {
         var copy = self
         copy.insert(certificate)
         return self
     }
-    #endif
 
     func resolve(diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async -> Resolved {
         await Resolved(self, diagnosticsCallback: diagnosticsCallback)
@@ -111,8 +94,8 @@ extension CertificateStore {
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
             for element in store._certificates {
                 switch element {
-                #if os(Linux)
-                case .trustRoots:
+                
+                case .systemTrustStore:
                     do {
                         _certificates.append(
                             contentsOf: try await CertificateStore.cachedSystemTrustRootsFuture.value
@@ -122,7 +105,7 @@ extension CertificateStore {
                     } catch {
                         diagnosticsCallback?(.loadingTrustRootsFailed(error))
                     }
-                #endif
+                
                 case .customCertificates(let certificatesIndexedBySubject):
                     _certificates.append(certificatesIndexedBySubject)
                 }
