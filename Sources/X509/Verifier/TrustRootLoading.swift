@@ -40,16 +40,17 @@ extension CertificateStore {
         return CertificateStore(elements: CollectionOfOne(.systemTrustStore))
     }()
 
-    static let cachedSystemTrustRootsFuture: Future<CertificateStore, any Error> = DispatchQueue.global(
-        qos: .userInteractive
-    ).asyncFuture {
-        try Self.loadTrustRoots(at: rootCAFileSearchPaths)
-    }
+    static let cachedSystemTrustRootsFuture: Future<[DistinguishedName: [Certificate]], any Error> =
+        DispatchQueue.global(
+            qos: .userInteractive
+        ).asyncFuture {
+            try Self.loadTrustRoots(at: rootCAFileSearchPaths)
+        }
 }
 
 extension CertificateStore {
     @_spi(Testing)
-    public static func loadTrustRoots(at searchPaths: [String]) throws -> CertificateStore {
+    public static func loadTrustRoots(at searchPaths: [String]) throws -> [DistinguishedName: [Certificate]] {
         var fileLoadingErrors = [(path: String, error: any Error)]()
 
         for path in searchPaths {
@@ -65,19 +66,22 @@ extension CertificateStore {
 
             return try parseTrustRoot(from: pemEncodedData)
         }
-        
-        throw CertificateError.failedToLoadSystemTrustStore(reason: fileLoadingErrors.lazy.map {
-            "(\(String(reflecting: $0.path)): \(String(reflecting: $0.error)))"
-        }.joined(separator: ", "))
+
+        throw CertificateError.failedToLoadSystemTrustStore(
+            reason: fileLoadingErrors.lazy.map {
+                "(\(String(reflecting: $0.path)): \(String(reflecting: $0.error)))"
+            }.joined(separator: ", ")
+        )
     }
 
-    static func parseTrustRoot(from pemEncodedData: Data) throws -> CertificateStore {
+    static func parseTrustRoot(from pemEncodedData: Data) throws -> [DistinguishedName: [Certificate]] {
         let pemEncodedString = String(decoding: pemEncodedData, as: UTF8.self)
         let documents = try PEMDocument.parseMultiple(pemString: pemEncodedString)
-        return CertificateStore(
-            try documents.lazy.map {
+        return Dictionary(
+            grouping: try documents.lazy.map {
                 try Certificate(pemDocument: $0)
-            }
+            },
+            by: \.subject
         )
     }
 }

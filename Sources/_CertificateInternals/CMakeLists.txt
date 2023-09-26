@@ -13,7 +13,8 @@
 ##===----------------------------------------------------------------------===##
 
 add_library(_CertificateInternals
-  "_TinyArray.swift")
+  "_TinyArray1.swift"
+  "_TinyArray2.swift")
 
 set_target_properties(_CertificateInternals PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})

@@ -27,13 +27,13 @@ final class CertificateStoreTests: XCTestCase {
     #else
     func testLoadingDefaultTrustRoots() async throws {
         let log = DiagnosticsLog()
-        
+
         let store = await CertificateStore.systemTrustRoots.resolve(diagnosticsCallback: log.append(_:))
         XCTAssertEqual(store.totalCertificateCount, 0)
-        
+
         XCTAssertEqual(log.count, 1)
     }
-    
+
     #endif
 
     func testLoadingFailsGracefullyIfFilesDoNotExist() {

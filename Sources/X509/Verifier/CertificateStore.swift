@@ -24,11 +24,11 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     @usableFromInline
-    var _certificates: _TinyArray<Element>
+    var _certificates: _TinyArray2<Element>
 
     @inlinable
     public init() {
-        self.init(elements: CollectionOfOne(.customCertificates([:])))
+        self.init(elements: EmptyCollection())
     }
 
     @inlinable
@@ -59,10 +59,10 @@ public struct CertificateStore: Sendable, Hashable {
                 certificatesIndexBySubjectName[certificate.subject, default: []].append(certificate)
             }
             self._certificates[lastIndex] = .customCertificates(certificatesIndexBySubjectName)
-        
+
         case .systemTrustStore:
             self._certificates.append(.customCertificates(Dictionary(grouping: certificates, by: \.subject)))
-        
+
         }
     }
 
@@ -89,23 +89,20 @@ extension CertificateStore {
     @usableFromInline
     struct Resolved {
         @usableFromInline
-        var _certificates: _TinyArray<[DistinguishedName: [Certificate]]> = .init()
+        var _certificates: _TinyArray2<[DistinguishedName: [Certificate]]> = .init()
 
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
             for element in store._certificates {
                 switch element {
-                
                 case .systemTrustStore:
                     do {
                         _certificates.append(
-                            contentsOf: try await CertificateStore.cachedSystemTrustRootsFuture.value
-                                .resolve(diagnosticsCallback: diagnosticsCallback)
-                                ._certificates
+                            try await CertificateStore.cachedSystemTrustRootsFuture.value
                         )
                     } catch {
                         diagnosticsCallback?(.loadingTrustRootsFailed(error))
                     }
-                
+
                 case .customCertificates(let certificatesIndexedBySubject):
                     _certificates.append(certificatesIndexedBySubject)
                 }

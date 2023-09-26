@@ -15,18 +15,18 @@
 import XCTest
 import _CertificateInternals
 
-final class TinyArrayTests: XCTestCase {
+final class TinyArray1Tests: XCTestCase {
     private func _assertEqual(
         _ expected: @autoclosure () -> some Sequence<Int>,
-        initial: @autoclosure () -> _TinyArray<Int>,
-        _ mutate: (inout _TinyArray<Int>) -> Void,
+        initial: @autoclosure () -> _TinyArray1<Int>,
+        _ mutate: (inout _TinyArray1<Int>) -> Void,
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
         var actual = initial()
         mutate(&actual)
         XCTAssertEqual(Array(actual), Array(expected()), file: file, line: line)
-        let expected = _TinyArray(expected())
+        let expected = _TinyArray1(expected())
         XCTAssertEqual(actual, expected, file: file, line: line)
         var actualHasher = Hasher()
         actualHasher.combine(actual)
@@ -43,8 +43,8 @@ final class TinyArrayTests: XCTestCase {
 
     private func assertEqual(
         _ expected: [Int],
-        initial: @autoclosure () -> _TinyArray<Int> = _TinyArray(),
-        _ mutate: (inout _TinyArray<Int>) -> Void,
+        initial: @autoclosure () -> _TinyArray1<Int> = _TinyArray1(),
+        _ mutate: (inout _TinyArray1<Int>) -> Void,
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
@@ -54,17 +54,17 @@ final class TinyArrayTests: XCTestCase {
     }
 
     func testInit() {
-        XCTAssertEqual(Array(_TinyArray([Int]())), [])
-        XCTAssertEqual(Array(_TinyArray<Int>()), [])
-        XCTAssertEqual(_TinyArray<Int>(), _TinyArray<Int>([]))
+        XCTAssertEqual(Array(_TinyArray1([Int]())), [])
+        XCTAssertEqual(Array(_TinyArray1<Int>()), [])
+        XCTAssertEqual(_TinyArray1<Int>(), _TinyArray1<Int>([]))
 
-        XCTAssertEqual(Array(_TinyArray<Int>(CollectionOfOne(1))), [1])
-        XCTAssertEqual(Array(_TinyArray<Int>([1])), [1])
-        XCTAssertEqual(Array(_TinyArray<Int>([1, 2])), [1, 2])
+        XCTAssertEqual(Array(_TinyArray1<Int>(CollectionOfOne(1))), [1])
+        XCTAssertEqual(Array(_TinyArray1<Int>([1])), [1])
+        XCTAssertEqual(Array(_TinyArray1<Int>([1, 2])), [1, 2])
 
-        XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3])), [1, 2, 3])
-        XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4])), [1, 2, 3, 4])
-        XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4, 5])), [1, 2, 3, 4, 5])
+        XCTAssertEqual(Array(_TinyArray1<Int>([1, 2, 3])), [1, 2, 3])
+        XCTAssertEqual(Array(_TinyArray1<Int>([1, 2, 3, 4])), [1, 2, 3, 4])
+        XCTAssertEqual(Array(_TinyArray1<Int>([1, 2, 3, 4, 5])), [1, 2, 3, 4, 5])
     }
 
     func testAppend() {
@@ -306,39 +306,41 @@ final class TinyArrayTests: XCTestCase {
     }
 
     func testThrowingInitFromResult() {
-        XCTAssertEqual(Array(try _TinyArray<Int>(CollectionOfOne(Result<_, Error>.success(1)))), [1])
-        XCTAssertEqual(Array(try _TinyArray([Result<_, Error>.success(1)])), [1])
-        XCTAssertEqual(Array(try _TinyArray([Result<_, Error>.success(1), .success(2)])), [1, 2])
-        XCTAssertEqual(Array(try _TinyArray([Result<_, Error>.success(1), .success(2), .success(3)])), [1, 2, 3])
+        XCTAssertEqual(Array(try _TinyArray1<Int>(CollectionOfOne(Result<_, Error>.success(1)))), [1])
+        XCTAssertEqual(Array(try _TinyArray1([Result<_, Error>.success(1)])), [1])
+        XCTAssertEqual(Array(try _TinyArray1([Result<_, Error>.success(1), .success(2)])), [1, 2])
+        XCTAssertEqual(Array(try _TinyArray1([Result<_, Error>.success(1), .success(2), .success(3)])), [1, 2, 3])
         XCTAssertEqual(
-            Array(try _TinyArray([Result<_, Error>.success(1), .success(2), .success(3), .success(4)])),
+            Array(try _TinyArray1([Result<_, Error>.success(1), .success(2), .success(3), .success(4)])),
             [1, 2, 3, 4]
         )
         XCTAssertEqual(
-            Array(try _TinyArray([Result<_, Error>.success(1), .success(2), .success(3), .success(4), .success(5)])),
+            Array(try _TinyArray1([Result<_, Error>.success(1), .success(2), .success(3), .success(4), .success(5)])),
             [1, 2, 3, 4, 5]
         )
 
         struct MyError: Error {}
 
-        XCTAssertThrowsError(Array(try _TinyArray<Int>([Result.failure(MyError())])))
-        XCTAssertThrowsError(Array(try _TinyArray<Int>([Result.failure(MyError()), Result.failure(MyError())])))
-        XCTAssertThrowsError(Array(try _TinyArray<Int>([.success(1), Result.failure(MyError())])))
-        XCTAssertThrowsError(Array(try _TinyArray<Int>([.success(1), Result.failure(MyError()), .success(2)])))
-        XCTAssertThrowsError(Array(try _TinyArray<Int>([.success(1), .success(2), Result.failure(MyError())])))
+        XCTAssertThrowsError(Array(try _TinyArray1<Int>([Result.failure(MyError())])))
+        XCTAssertThrowsError(Array(try _TinyArray1<Int>([Result.failure(MyError()), Result.failure(MyError())])))
+        XCTAssertThrowsError(Array(try _TinyArray1<Int>([.success(1), Result.failure(MyError())])))
+        XCTAssertThrowsError(Array(try _TinyArray1<Int>([.success(1), Result.failure(MyError()), .success(2)])))
+        XCTAssertThrowsError(Array(try _TinyArray1<Int>([.success(1), .success(2), Result.failure(MyError())])))
         XCTAssertThrowsError(
-            Array(try _TinyArray<Int>([.success(1), .success(2), Result.failure(MyError()), .success(4)]))
+            Array(try _TinyArray1<Int>([.success(1), .success(2), Result.failure(MyError()), .success(4)]))
         )
         XCTAssertThrowsError(
-            Array(try _TinyArray<Int>([.success(1), .success(2), .success(3), Result.failure(MyError())]))
+            Array(try _TinyArray1<Int>([.success(1), .success(2), .success(3), Result.failure(MyError())]))
         )
         XCTAssertThrowsError(
-            Array(try _TinyArray<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())]))
+            Array(
+                try _TinyArray1<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())])
+            )
         )
     }
 }
 
-extension _TinyArray: ExpressibleByArrayLiteral {
+extension _TinyArray1: ExpressibleByArrayLiteral {
     public typealias ArrayLiteralElement = Element
 
     public init(arrayLiteral elements: Element...) {
