@@ -49,23 +49,21 @@ final class CertificateStoreTests: XCTestCase {
         }
     }
 
-    func testLoadingFailsGracefullyIfFirstFileDoesNotExist() async throws {
+    func testLoadingFailsGracefullyIfFirstFileDoesNotExist() throws {
         let caCertificatesURL = try XCTUnwrap(Bundle.module.url(forResource: "ca-certificates", withExtension: "crt"))
         let searchPaths = [
             "/some/path/that/does/not/exist/1",
             caCertificatesURL.path,
         ]
         let log = DiagnosticsLog()
-        let store = try await CertificateStore.loadTrustRoots(at: searchPaths).resolve(
-            diagnosticsCallback: log.append(_:)
-        )
+        let store = try CertificateStore.loadTrustRoots(at: searchPaths)
         XCTAssertEqual(log, [])
-        XCTAssertEqual(store.totalCertificateCount, 136)
+        XCTAssertEqual(store.values.lazy.map(\.count).reduce(0, +), 137)
     }
 }
 
 extension CertificateStore.Resolved {
     var totalCertificateCount: Int {
-        self._certificates.lazy.map(\.count).reduce(0, +)
+        self._certificates.lazy.map { $0.values.lazy.map(\.count).reduce(0, +) }.reduce(0, +)
     }
 }

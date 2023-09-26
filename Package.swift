@@ -55,6 +55,7 @@ let package = Package(
                 .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
+                .copy("ca-certificates.crt")
             ]),
         .target(
             name: "_CertificateInternals",
