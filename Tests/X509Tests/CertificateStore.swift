@@ -64,6 +64,7 @@ final class CertificateStoreTests: XCTestCase {
 
 extension CertificateStore.Resolved {
     var totalCertificateCount: Int {
-        self._certificates.lazy.map { $0.values.lazy.map(\.count).reduce(0, +) }.reduce(0, +)
+        self.systemTrustRoots.values.lazy.map(\.count).reduce(0, +)
+            + self.additionTrustRoots.values.lazy.map(\.count).reduce(0, +)
     }
 }
