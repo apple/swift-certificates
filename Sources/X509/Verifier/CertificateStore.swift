@@ -16,7 +16,7 @@ import _CertificateInternals
 
 /// A collection of ``Certificate`` objects for use in a verifier.
 public struct CertificateStore: Sendable, Hashable {
-    
+
     @usableFromInline
     var systemTrustStore: Bool
     @usableFromInline
@@ -32,7 +32,7 @@ public struct CertificateStore: Sendable, Hashable {
         self.systemTrustStore = false
         self.additionTrustRoots = Dictionary(grouping: certificates, by: \.subject)
     }
-    
+
     init(systemTrustStore: Bool) {
         self.systemTrustStore = systemTrustStore
         self.additionTrustRoots = [:]
@@ -72,10 +72,10 @@ public struct CertificateStore: Sendable, Hashable {
 extension CertificateStore {
     @usableFromInline
     struct Resolved {
-        
+
         @usableFromInline
         var systemTrustRoots: [DistinguishedName: [Certificate]]
-        
+
         @usableFromInline
         var additionTrustRoots: [DistinguishedName: [Certificate]]
 
@@ -101,16 +101,15 @@ extension CertificateStore.Resolved {
     subscript(subject: DistinguishedName) -> [Certificate]? {
         get {
             var matchingCertificates: [Certificate] = []
-            
-            
+
             if let matchingCertificatesInSystemTrustStore = systemTrustRoots[subject] {
                 matchingCertificates.appendOrReplaceIfEmpty(withContentsOf: matchingCertificatesInSystemTrustStore)
             }
-            
+
             if let matchingCertificatesInAdditionTrustRoots = additionTrustRoots[subject] {
                 matchingCertificates.appendOrReplaceIfEmpty(withContentsOf: matchingCertificatesInAdditionTrustRoots)
             }
-            
+
             guard matchingCertificates.isEmpty else {
                 return matchingCertificates
             }
@@ -123,11 +122,11 @@ extension CertificateStore.Resolved {
         if systemTrustRoots[certificate.subject]?.contains(certificate) == true {
             return true
         }
-        
+
         if additionTrustRoots[certificate.subject]?.contains(certificate) == true {
             return true
         }
-        
+
         return false
     }
 }
@@ -143,4 +142,3 @@ extension Array {
         }
     }
 }
-
