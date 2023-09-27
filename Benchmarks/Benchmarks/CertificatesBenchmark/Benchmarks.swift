@@ -62,27 +62,15 @@ let benchmarks = {
         parseWebPKIRootsFromMultiPEMFile()
     }
 
-    Benchmark("TinyArray1 non-allocating functions") { benchmark in
+    Benchmark("TinyArray non-allocating functions") { benchmark in
         for _ in benchmark.scaledIterations {
-            tinyArray1NonAllocationFunctions()
+            tinyArrayNonAllocationFunctions()
         }
     }
 
-    Benchmark("TinyArray1.append") { benchmark in
+    Benchmark("TinyArray.append") { benchmark in
         for _ in benchmark.scaledIterations {
-            tinyArray1Append()
-        }
-    }
-
-    Benchmark("TinyArray2 non-allocating functions") { benchmark in
-        for _ in benchmark.scaledIterations {
-            tinyArray2NonAllocationFunctions()
-        }
-    }
-
-    Benchmark("TinyArray2.append") { benchmark in
-        for _ in benchmark.scaledIterations {
-            tinyArray2Append()
+            tinyArrayAppend()
         }
     }
 }
