@@ -313,9 +313,16 @@ extension _TinyArray2.Storage {
                     self = .one(firstElement)
                     return
                 }
-                elements.reserveCapacity(elements.count + newElements.underestimatedCount)
+                guard let thirdElement = iterator.next() else {
+                    // newElements just contains two elements
+                    // and we hit the fast path
+                    self = .two(firstElement, secondElement)
+                    return
+                }
+                elements.reserveCapacity(newElements.underestimatedCount)
                 elements.append(firstElement)
                 elements.append(secondElement)
+                elements.append(thirdElement)
                 elements.appendRemainingElements(from: &iterator)
                 self = .arbitrary(elements)
 

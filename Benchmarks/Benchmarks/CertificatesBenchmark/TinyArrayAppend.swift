@@ -15,10 +15,22 @@
 import Benchmark
 import _CertificateInternals
 
-public func tinyArrayAppend() {
+public func tinyArray1Append() {
     var count = 0
 
-    var tinyArray = _TinyArray<Int>()
+    var tinyArray = _TinyArray1<Int>()
+    for i in 0..<1000 {
+        tinyArray.append(i)
+    }
+    count += tinyArray.count
+
+    blackHole(count)
+}
+
+public func tinyArray2Append() {
+    var count = 0
+
+    var tinyArray = _TinyArray2<Int>()
     for i in 0..<1000 {
         tinyArray.append(i)
     }
