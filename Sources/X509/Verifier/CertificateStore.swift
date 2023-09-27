@@ -16,29 +16,26 @@ import _CertificateInternals
 
 /// A collection of ``Certificate`` objects for use in a verifier.
 public struct CertificateStore: Sendable, Hashable {
+    
     @usableFromInline
-    enum Element: Sendable, Hashable {
-        case systemTrustStore
-        /// Stores the certificates, indexed by subject name.
-        case customCertificates([DistinguishedName: [Certificate]])
-    }
-
+    var systemTrustStore: Bool
     @usableFromInline
-    var _certificates: _TinyArray2<Element>
+    var additionTrustRoots: [DistinguishedName: [Certificate]]
 
     @inlinable
     public init() {
-        self.init(elements: EmptyCollection())
+        self.init([])
     }
 
     @inlinable
     public init(_ certificates: some Sequence<Certificate>) {
-        self.init(elements: CollectionOfOne(.customCertificates(Dictionary(grouping: certificates, by: \.subject))))
+        self.systemTrustStore = false
+        self.additionTrustRoots = Dictionary(grouping: certificates, by: \.subject)
     }
-
-    @inlinable
-    internal init(elements: some Sequence<Element>) {
-        self._certificates = .init(elements)
+    
+    init(systemTrustStore: Bool) {
+        self.systemTrustStore = systemTrustStore
+        self.additionTrustRoots = [:]
     }
 
     @inlinable
@@ -48,21 +45,8 @@ public struct CertificateStore: Sendable, Hashable {
 
     @inlinable
     public mutating func insert(contentsOf certificates: some Sequence<Certificate>) {
-        if self._certificates.isEmpty {
-            self = .init(certificates)
-            return
-        }
-        let lastIndex = self._certificates.index(before: self._certificates.endIndex)
-        switch self._certificates[lastIndex] {
-        case .customCertificates(var certificatesIndexBySubjectName):
-            for certificate in certificates {
-                certificatesIndexBySubjectName[certificate.subject, default: []].append(certificate)
-            }
-            self._certificates[lastIndex] = .customCertificates(certificatesIndexBySubjectName)
-
-        case .systemTrustStore:
-            self._certificates.append(.customCertificates(Dictionary(grouping: certificates, by: \.subject)))
-
+        for certificate in certificates {
+            additionTrustRoots[certificate.subject, default: []].append(certificate)
         }
     }
 
@@ -92,20 +76,18 @@ extension CertificateStore {
         var _certificates: _TinyArray2<[DistinguishedName: [Certificate]]> = .init()
 
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
-            for element in store._certificates {
-                switch element {
-                case .systemTrustStore:
-                    do {
-                        _certificates.append(
-                            try await CertificateStore.cachedSystemTrustRootsFuture.value
-                        )
-                    } catch {
-                        diagnosticsCallback?(.loadingTrustRootsFailed(error))
-                    }
-
-                case .customCertificates(let certificatesIndexedBySubject):
-                    _certificates.append(certificatesIndexedBySubject)
+            if store.systemTrustStore {
+                do {
+                    _certificates.append(
+                        try await CertificateStore.cachedSystemTrustRootsFuture.value
+                    )
+                } catch {
+                    diagnosticsCallback?(.loadingTrustRootsFailed(error))
                 }
+            }
+
+            if !store.additionTrustRoots.isEmpty {
+                _certificates.append(store.additionTrustRoots)
             }
         }
     }

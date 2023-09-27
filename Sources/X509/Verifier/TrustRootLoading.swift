@@ -37,7 +37,7 @@ extension CertificateStore {
     public static let systemTrustRoots: CertificateStore = {
         // access `cachedTrustRootsFuture` to kick off loading on a background thread
         _ = cachedSystemTrustRootsFuture
-        return CertificateStore(elements: CollectionOfOne(.systemTrustStore))
+        return CertificateStore(systemTrustStore: true)
     }()
 
     static let cachedSystemTrustRootsFuture: Future<[DistinguishedName: [Certificate]], any Error> =
