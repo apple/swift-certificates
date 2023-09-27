@@ -31,13 +31,13 @@ struct CollectionOfTwo<Element>: Collection {
     init(_ element0: Element, _ element1: Element) {
         self.elements = (element0, element1)
     }
-    
+
     var startIndex: Int { 0 }
     var endIndex: Int { 2 }
     func index(after i: Int) -> Int {
         i + 1
     }
-    
+
     subscript(position: Int) -> Element {
         switch position {
         case 0: return elements.0

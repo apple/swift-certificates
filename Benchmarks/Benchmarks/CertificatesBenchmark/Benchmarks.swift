@@ -73,7 +73,7 @@ let benchmarks = {
             tinyArray1Append()
         }
     }
-    
+
     Benchmark("TinyArray2 non-allocating functions") { benchmark in
         for _ in benchmark.scaledIterations {
             tinyArray2NonAllocationFunctions()
