@@ -170,7 +170,7 @@ public enum CMS {
         // Ok, the signature was signed by the private key associated with this cert. Now we need to validate the certificate.
         // This force-unwrap is safe: we know there are certificates because we've located at least one certificate from this set!
         var untrustedIntermediates = CertificateStore(signedData.certificates!)
-        untrustedIntermediates.insert(contentsOf: additionalIntermediateCertificates)
+        untrustedIntermediates.append(contentsOf: additionalIntermediateCertificates)
 
         var verifier = try Verifier(rootCertificates: trustRoots, policy: policy)
         let result = await verifier.validate(

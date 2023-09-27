@@ -39,28 +39,28 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     @inlinable
-    public mutating func insert(_ certificate: Certificate) {
-        self.insert(contentsOf: CollectionOfOne(certificate))
+    public mutating func append(_ certificate: Certificate) {
+        self.append(contentsOf: CollectionOfOne(certificate))
     }
 
     @inlinable
-    public mutating func insert(contentsOf certificates: some Sequence<Certificate>) {
+    public mutating func append(contentsOf certificates: some Sequence<Certificate>) {
         for certificate in certificates {
             additionTrustRoots[certificate.subject, default: []].append(certificate)
         }
     }
 
     @inlinable
-    public func inserting(contentsOf certificates: some Sequence<Certificate>) -> Self {
+    public func appending(contentsOf certificates: some Sequence<Certificate>) -> Self {
         var copy = self
-        copy.insert(contentsOf: certificates)
+        copy.append(contentsOf: certificates)
         return copy
     }
 
     @inlinable
-    public func inserting(_ certificate: Certificate) -> Self {
+    public func appending(_ certificate: Certificate) -> Self {
         var copy = self
-        copy.insert(certificate)
+        copy.append(certificate)
         return self
     }
 
@@ -72,23 +72,26 @@ public struct CertificateStore: Sendable, Hashable {
 extension CertificateStore {
     @usableFromInline
     struct Resolved {
+        
         @usableFromInline
-        var _certificates: _TinyArray2<[DistinguishedName: [Certificate]]> = .init()
+        var systemTrustRoots: [DistinguishedName: [Certificate]]
+        
+        @usableFromInline
+        var additionTrustRoots: [DistinguishedName: [Certificate]]
 
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
             if store.systemTrustStore {
                 do {
-                    _certificates.append(
-                        try await CertificateStore.cachedSystemTrustRootsFuture.value
-                    )
+                    systemTrustRoots = try await CertificateStore.cachedSystemTrustRootsFuture.value
                 } catch {
                     diagnosticsCallback?(.loadingTrustRootsFailed(error))
+                    systemTrustRoots = [:]
                 }
+            } else {
+                systemTrustRoots = [:]
             }
 
-            if !store.additionTrustRoots.isEmpty {
-                _certificates.append(store.additionTrustRoots)
-            }
+            additionTrustRoots = store.additionTrustRoots
         }
     }
 }
@@ -97,7 +100,17 @@ extension CertificateStore.Resolved {
     @inlinable
     subscript(subject: DistinguishedName) -> [Certificate]? {
         get {
-            let matchingCertificates = _certificates.flatMap { $0[subject] ?? [] }
+            var matchingCertificates: [Certificate] = []
+            
+            
+            if let matchingCertificatesInSystemTrustStore = systemTrustRoots[subject] {
+                matchingCertificates.appendOrReplaceIfEmpty(withContentsOf: matchingCertificatesInSystemTrustStore)
+            }
+            
+            if let matchingCertificatesInAdditionTrustRoots = additionTrustRoots[subject] {
+                matchingCertificates.appendOrReplaceIfEmpty(withContentsOf: matchingCertificatesInAdditionTrustRoots)
+            }
+            
             guard matchingCertificates.isEmpty else {
                 return matchingCertificates
             }
@@ -107,33 +120,27 @@ extension CertificateStore.Resolved {
 
     @inlinable
     func contains(_ certificate: Certificate) -> Bool {
-        for certificatesIndexedBySubject in _certificates {
-            if certificatesIndexedBySubject[certificate.subject]?.contains(certificate) == true {
-                return true
-            }
+        if systemTrustRoots[certificate.subject]?.contains(certificate) == true {
+            return true
         }
+        
+        if additionTrustRoots[certificate.subject]?.contains(certificate) == true {
+            return true
+        }
+        
         return false
     }
 }
 
-extension Sequence {
-    /// Non-allocating version of `flatMap(_:)` if `transform` only returns a single `Array` with `count` > 0
+extension Array {
+    /// non-allocating version of `append(contentsOf:)` if `self` is empty
     @inlinable
-    func flatMap<ElementOfResult>(
-        _ transform: (Self.Element) throws -> [ElementOfResult]
-    ) rethrows -> [ElementOfResult] {
-        var result = [ElementOfResult]()
-        for element in self {
-            let partialResult = try transform(element)
-            if partialResult.isEmpty {
-                continue
-            }
-            if result.isEmpty {
-                result = partialResult
-            } else {
-                result.append(contentsOf: partialResult)
-            }
+    mutating func appendOrReplaceIfEmpty(withContentsOf newElements: [Element]) {
+        if self.isEmpty {
+            self = newElements
+        } else {
+            self.append(contentsOf: newElements)
         }
-        return result
     }
 }
+
