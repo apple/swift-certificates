@@ -21,7 +21,7 @@ import SwiftASN1
 ///   subjectKeyIdentifier [0] SubjectKeyIdentifier }
 ///  ```
 @usableFromInline
-enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
+enum CMSSignerIdentifier: DERParseable, BERParseable, DERSerializable, BERSerializable, Hashable, Sendable {
 
     @usableFromInline
     static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
@@ -36,9 +36,13 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
             self = try .issuerAndSerialNumber(.init(derEncoded: node))
 
         case Self.skiIdentifier:
-            self = try .subjectKeyIdentifier(
-                .init(keyIdentifier: .init(derEncoded: node, withIdentifier: Self.skiIdentifier))
-            )
+            self = try DER.explicitlyTagged(
+                node,
+                tagNumber: Self.skiIdentifier.tagNumber,
+                tagClass: Self.skiIdentifier.tagClass
+            ) { node in
+                .subjectKeyIdentifier(.init(keyIdentifier: try ASN1OctetString(derEncoded: node).bytes))
+            }
 
         default:
             throw ASN1Error.unexpectedFieldType(node.identifier)
@@ -52,7 +56,10 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
             try issuerAndSerialNumber.serialize(into: &coder)
 
         case .subjectKeyIdentifier(let subjectKeyIdentifier):
-            try subjectKeyIdentifier.keyIdentifier.serialize(into: &coder, withIdentifier: Self.skiIdentifier)
+            try coder.serialize(
+                ASN1OctetString(contentBytes: subjectKeyIdentifier.keyIdentifier),
+                explicitlyTaggedWithIdentifier: Self.skiIdentifier
+            )
 
         }
     }
