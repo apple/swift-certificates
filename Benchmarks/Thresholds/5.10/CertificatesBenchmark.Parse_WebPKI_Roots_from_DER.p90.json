@@ -2,7 +2,7 @@
   "mallocCountTotal" : 5506,
   "memoryLeaked" : 0,
   "readSyscalls" : 0,
-  "releaseCount" : 185130,
-  "retainCount" : 174552,
+  "releaseCount" : 120084,
+  "retainCount" : 108506,
   "writeSyscalls" : 0
 }
