@@ -47,7 +47,7 @@
     "UseLetInEveryBoundCaseVariable" : false,
     "UseShorthandTypeNames" : true,
     "UseSingleLinePropertyGetter" : false,
-    "UseSynthesizedInitializer" : true,
+    "UseSynthesizedInitializer" : false,
     "UseTripleSlashForDocumentationComments" : true,
     "UseWhereClausesInForLoops" : false,
     "ValidateDocumentationComments" : false
