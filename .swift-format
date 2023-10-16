@@ -29,7 +29,7 @@
     "NeverForceUnwrap" : false,
     "NeverUseForceTry" : false,
     "NeverUseImplicitlyUnwrappedOptionals" : false,
-    "NoAccessLevelOnExtensionDeclaration" : false,
+    "NoAccessLevelOnExtensionDeclaration" : true,
     "NoAssignmentInExpressions" : true,
     "NoBlockComments" : true,
     "NoCasesWithOnlyFallthrough" : true,
@@ -47,12 +47,12 @@
     "UseLetInEveryBoundCaseVariable" : false,
     "UseShorthandTypeNames" : true,
     "UseSingleLinePropertyGetter" : false,
-    "UseSynthesizedInitializer" : false,
+    "UseSynthesizedInitializer" : true,
     "UseTripleSlashForDocumentationComments" : true,
     "UseWhereClausesInForLoops" : false,
     "ValidateDocumentationComments" : false
   },
   "spacesAroundRangeFormationOperators" : false,
-  "tabWidth" : 8,
+  "tabWidth" : 4,
   "version" : 1
 }
