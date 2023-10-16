@@ -41,7 +41,8 @@ extension CertificateStore {
     }()
 
     static let cachedSystemTrustRootsFuture: Future<[DistinguishedName: [Certificate]], any Error> =
-        DispatchQueue.global(
+        DispatchQueue(
+            label: "com.apple.swift-certificates.trust-roots",
             qos: .userInteractive
         ).asyncFuture {
             try Self.loadTrustRoots(at: rootCAFileSearchPaths)

@@ -20,7 +20,7 @@ public struct CertificateStore: Sendable, Hashable {
     @usableFromInline
     var systemTrustStore: Bool
     @usableFromInline
-    var additionTrustRoots: [DistinguishedName: [Certificate]]
+    var additionalTrustRoots: [DistinguishedName: [Certificate]]
 
     @inlinable
     public init() {
@@ -30,12 +30,12 @@ public struct CertificateStore: Sendable, Hashable {
     @inlinable
     public init(_ certificates: some Sequence<Certificate>) {
         self.systemTrustStore = false
-        self.additionTrustRoots = Dictionary(grouping: certificates, by: \.subject)
+        self.additionalTrustRoots = Dictionary(grouping: certificates, by: \.subject)
     }
 
     init(systemTrustStore: Bool) {
         self.systemTrustStore = systemTrustStore
-        self.additionTrustRoots = [:]
+        self.additionalTrustRoots = [:]
     }
 
     @inlinable
@@ -46,7 +46,7 @@ public struct CertificateStore: Sendable, Hashable {
     @inlinable
     public mutating func append(contentsOf certificates: some Sequence<Certificate>) {
         for certificate in certificates {
-            additionTrustRoots[certificate.subject, default: []].append(certificate)
+            additionalTrustRoots[certificate.subject, default: []].append(certificate)
         }
     }
 
@@ -77,7 +77,7 @@ extension CertificateStore {
         var systemTrustRoots: [DistinguishedName: [Certificate]]
 
         @usableFromInline
-        var additionTrustRoots: [DistinguishedName: [Certificate]]
+        var additionalTrustRoots: [DistinguishedName: [Certificate]]
 
         init(_ store: CertificateStore, diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async {
             if store.systemTrustStore {
@@ -91,7 +91,7 @@ extension CertificateStore {
                 systemTrustRoots = [:]
             }
 
-            additionTrustRoots = store.additionTrustRoots
+            additionalTrustRoots = store.additionalTrustRoots
         }
     }
 }
@@ -106,7 +106,7 @@ extension CertificateStore.Resolved {
                 matchingCertificates.appendOrReplaceIfEmpty(withContentsOf: matchingCertificatesInSystemTrustStore)
             }
 
-            if let matchingCertificatesInAdditionTrustRoots = additionTrustRoots[subject] {
+            if let matchingCertificatesInAdditionTrustRoots = additionalTrustRoots[subject] {
                 matchingCertificates.appendOrReplaceIfEmpty(withContentsOf: matchingCertificatesInAdditionTrustRoots)
             }
 
@@ -123,7 +123,7 @@ extension CertificateStore.Resolved {
             return true
         }
 
-        if additionTrustRoots[certificate.subject]?.contains(certificate) == true {
+        if additionalTrustRoots[certificate.subject]?.contains(certificate) == true {
             return true
         }
 

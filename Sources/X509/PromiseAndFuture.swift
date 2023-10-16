@@ -58,11 +58,13 @@ final class Promise<Value, Failure: Error> {
     }
 
     deinit {
-        switch self.state.unsafeUnlockedValue {
-        case .fulfilled:
-            break
-        case .unfulfilled:
-            fatalError("unfulfilled Promise leaked")
+        self.state.withLockedValue {
+            switch $0 {
+            case .fulfilled:
+                break
+            case .unfulfilled:
+                fatalError("unfulfilled Promise leaked")
+            }
         }
     }
 }
