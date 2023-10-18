@@ -88,6 +88,27 @@ final class TinyArrayTests: XCTestCase {
         }
     }
 
+    func testSubscriptSetter() {
+        assertEqual([2]) { array in
+            array.append(1)
+            array[0] = 2
+        }
+        assertEqual([3, 4]) { array in
+            array.append(1)
+            array.append(2)
+            array[1] = 4
+            array[0] = 3
+        }
+        assertEqual([4, 5, 6]) { array in
+            array.append(1)
+            array.append(2)
+            array.append(3)
+            array[1] = 5
+            array[0] = 4
+            array[2] = 6
+        }
+    }
+
     func testAppendContentsOf() {
         assertEqual([]) { array in
             array.append(contentsOf: [])
@@ -312,7 +333,9 @@ final class TinyArrayTests: XCTestCase {
             Array(try _TinyArray<Int>([.success(1), .success(2), .success(3), Result.failure(MyError())]))
         )
         XCTAssertThrowsError(
-            Array(try _TinyArray<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())]))
+            Array(
+                try _TinyArray<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())])
+            )
         )
     }
 }

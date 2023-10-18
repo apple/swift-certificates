@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// ``TinyArray`` is a ``RandomAccessCollection`` optimised to store zero or one ``Element``.
+/// ``_TinyArray`` is a ``RandomAccessCollection`` optimised to store zero or one ``Element``.
 /// It supports arbitrary many elements but if only up to one ``Element`` is stored it does **not** allocate separate storage on the heap
 /// and instead stores the ``Element`` inline.
 public struct _TinyArray<Element> {
@@ -41,6 +41,9 @@ extension _TinyArray: RandomAccessCollection {
     public subscript(position: Int) -> Element {
         get {
             self.storage[position]
+        }
+        set {
+            self.storage[position] = newValue
         }
     }
 
@@ -145,6 +148,18 @@ extension _TinyArray.Storage: RandomAccessCollection {
                 return element
             case .arbitrary(let elements):
                 return elements[position]
+            }
+        }
+        set {
+            switch self {
+            case .one:
+                guard position == 0 else {
+                    fatalError("index \(position) out of bounds")
+                }
+                self = .one(newValue)
+            case .arbitrary(var elements):
+                elements[position] = newValue
+                self = .arbitrary(elements)
             }
         }
     }
