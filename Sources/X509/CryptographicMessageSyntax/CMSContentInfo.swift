@@ -44,7 +44,7 @@ extension ASN1ObjectIdentifier {
 /// ContentType ::= OBJECT IDENTIFIER
 /// ```
 @usableFromInline
-struct CMSContentInfo: DERImplicitlyTaggable, Hashable, Sendable {
+struct CMSContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -69,6 +69,18 @@ struct CMSContentInfo: DERImplicitlyTaggable, Hashable, Sendable {
 
             let content = try DER.explicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 ASN1Any(derEncoded: node)
+            }
+            return .init(contentType: contentType, content: content)
+        }
+    }
+
+    @inlinable
+    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try BER.sequence(rootNode, identifier: identifier) { nodes in
+            let contentType = try ASN1ObjectIdentifier(derEncoded: &nodes)
+
+            let content = try BER.explicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                ASN1Any(berEncoded: node)
             }
             return .init(contentType: contentType, content: content)
         }

@@ -24,6 +24,7 @@ add_library(X509
   "CertificatePublicKey.swift"
   "CertificateSerialNumber.swift"
   "CertificateVersion.swift"
+  "CryptographicMessageSyntax/CMSAttribute.swift"
   "CryptographicMessageSyntax/CMSContentInfo.swift"
   "CryptographicMessageSyntax/CMSEncapsulatedContentInfo.swift"
   "CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift"

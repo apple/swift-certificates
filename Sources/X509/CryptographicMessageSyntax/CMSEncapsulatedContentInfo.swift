@@ -22,7 +22,7 @@ import SwiftASN1
 /// ContentType ::= OBJECT IDENTIFIER
 /// ```
 @usableFromInline
-struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable, Sendable {
+struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -46,6 +46,18 @@ struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, Hashable, Sendable {
             let eContentType = try ASN1ObjectIdentifier(derEncoded: &nodes)
             let eContent = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
                 try ASN1OctetString(derEncoded: node)
+            }
+
+            return .init(eContentType: eContentType, eContent: eContent)
+        }
+    }
+
+    @inlinable
+    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try BER.sequence(rootNode, identifier: identifier) { nodes in
+            let eContentType = try ASN1ObjectIdentifier(derEncoded: &nodes)
+            let eContent = try BER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
+                try ASN1OctetString(berEncoded: node)
             }
 
             return .init(eContentType: eContentType, eContent: eContent)

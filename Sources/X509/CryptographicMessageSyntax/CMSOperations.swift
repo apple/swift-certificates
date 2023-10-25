@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 import Foundation
 import SwiftASN1
+import Crypto
 
 public enum CMS {
     @_spi(CMS)
@@ -85,6 +86,37 @@ public enum CMS {
 
     @_spi(CMS)
     @inlinable
+    public static func isValidAttachedSignature<SignatureBytes: DataProtocol>(
+        signatureBytes: SignatureBytes,
+        additionalIntermediateCertificates: [Certificate] = [],
+        trustRoots: CertificateStore,
+        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
+        microsoftCompatible: Bool = false,
+        @PolicyBuilder policy: () throws -> some VerifierPolicy
+    ) async rethrows -> SignatureVerificationResult {
+        do {
+            // this means we parse the blob twice, but that's probably better than repeating a lot of code.
+            let parsedSignature = try CMSContentInfo(berEncoded: ArraySlice(signatureBytes))
+            guard let attachedData = try parsedSignature.signedData?.encapContentInfo.eContent else {
+                return .failure(.init(invalidCMSBlockReason: "No attached content"))
+            }
+
+            return try await isValidSignature(
+                dataBytes: attachedData.bytes,
+                signatureBytes: signatureBytes,
+                trustRoots: trustRoots,
+                diagnosticCallback: diagnosticCallback,
+                microsoftCompatible: microsoftCompatible,
+                allowAttachedContent: true,
+                policy: policy
+            )
+        } catch {
+            return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
+        }
+    }
+
+    @_spi(CMS)
+    @inlinable
     public static func isValidSignature<
         DataBytes: DataProtocol,
         SignatureBytes: DataProtocol
@@ -94,24 +126,66 @@ public enum CMS {
         additionalIntermediateCertificates: [Certificate] = [],
         trustRoots: CertificateStore,
         diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
+        microsoftCompatible: Bool = false,
+        allowAttachedContent: Bool = false,
         @PolicyBuilder policy: () throws -> some VerifierPolicy
     ) async rethrows -> SignatureVerificationResult {
         let signedData: CMSSignedData
         let signingCert: Certificate
         do {
-            let parsedSignature = try CMSContentInfo(derEncoded: ArraySlice(signatureBytes))
+            let parsedSignature = try CMSContentInfo(berEncoded: ArraySlice(signatureBytes))
             guard let _signedData = try parsedSignature.signedData else {
                 return .failure(.init(invalidCMSBlockReason: "Unable to parse signed data"))
             }
             signedData = _signedData
 
-            // We have a bunch of very specific requirements here: in particular, we need to have only one signature. We also only want
-            // to tolerate v1 signatures and detached signatures.
-            guard signedData.version == .v1, signedData.signerInfos.count == 1,
-                signedData.encapContentInfo.eContentType == .cmsData,
-                signedData.encapContentInfo.eContent == nil
-            else {
+            guard signedData.signerInfos.count == 1 else {
+                return .failure(.init(invalidCMSBlockReason: "Too many signatures"))
+            }
+
+            switch signedData.version {
+            case .v1:
+                // If no attribute certificates are present in the certificates field, the
+                // encapsulated content type is id-data, and all of the elements of
+                // SignerInfos are version 1, then the value of version shall be 1.
+                guard signedData.encapContentInfo.eContentType == .cmsData,
+                    signedData.signerInfos.allSatisfy({ $0.version == .v1 })
+                else {
+                    return .failure(.init(invalidCMSBlockReason: "Invalid v1 signed data: \(signedData)"))
+                }
+
+            case .v3:
+                // no v2 Attribute Certificates are allowed, but we don't currently support that anyway
+                guard
+                    signedData.encapContentInfo.eContentType == .cmsData
+                        || signedData.encapContentInfo.eContentType == .cmsSignedData
+                else {
+                    return .failure(.init(invalidCMSBlockReason: "Invalid v3 signed data: \(signedData)"))
+                }
+                break
+
+            case .v4:
+                guard
+                    signedData.encapContentInfo.eContentType == .cmsData
+                        || signedData.encapContentInfo.eContentType == .cmsSignedData
+                else {
+                    return .failure(.init(invalidCMSBlockReason: "Invalid v4 signed data: \(signedData)"))
+                }
+                break
+
+            default:
+                // v2 and v5 are not for SignedData
                 return .failure(.init(invalidCMSBlockReason: "Invalid signed data: \(signedData)"))
+            }
+
+            if let attachedContent = signedData.encapContentInfo.eContent {
+                guard allowAttachedContent else {
+                    return .failure(.init(invalidCMSBlockReason: "Attached content data not allowed"))
+                }
+                // we will tolerate attached content, and simply check if what the caller provided matches the attached content.
+                guard dataBytes.elementsEqual(attachedContent.bytes) else {
+                    return .failure(.init(invalidCMSBlockReason: "Attached content data does not match provided data"))
+                }
             }
 
             // This subscript is safe, we confirmed a count of 1 above.
@@ -132,10 +206,34 @@ public enum CMS {
 
             // Convert the signature algorithm to confirm we understand it.
             // We also want to confirm the digest algorithm matches the signature algorithm.
-            let signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: signer.signatureAlgorithm)
-            let expectedDigestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-            guard expectedDigestAlgorithm == signer.digestAlgorithm else {
-                return .failure(.init(invalidCMSBlockReason: "Digest and signature algorithm mismatch"))
+            var signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: signer.signatureAlgorithm)
+
+            // For legacy reasons originating from Microsoft, some signatureAlgorithms will incorrectly be `ecPublicKey`
+            // instead of a correct Signature Algorithm Identifier. This affects macOS systems using Security.framework by default.
+            if microsoftCompatible
+                && signer.signatureAlgorithm.algorithm == ASN1ObjectIdentifier.AlgorithmIdentifier.idEcPublicKey
+            {
+                // We're under microsoft compatibility, so we can assume that the digest algorithm is ECDSA
+                let sigAlgID: AlgorithmIdentifier
+                switch signer.digestAlgorithm {
+                case .sha256:
+                    sigAlgID = .ecdsaWithSHA256
+
+                case .sha384:
+                    sigAlgID = .ecdsaWithSHA384
+
+                case .sha512:
+                    sigAlgID = .ecdsaWithSHA512
+
+                default:
+                    return .failure(.init(invalidCMSBlockReason: "Invalid digest algorithm"))
+                }
+                signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: sigAlgID)
+            } else {
+                let expectedDigestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+                guard expectedDigestAlgorithm == signer.digestAlgorithm else {
+                    return .failure(.init(invalidCMSBlockReason: "Digest and signature algorithm mismatch"))
+                }
             }
 
             // Ok, now we need to find the signer. We expect to find them in the list of certificates provided
@@ -147,22 +245,61 @@ public enum CMS {
 
             // Ok at this point we've done the cheap stuff and we're fairly confident we have the entity who should have
             // done the signing. Our next step is to confirm that they did in fact sign the data. For that we have to compute
-            // the digest and validate the signature.
+            // the digest and validate the signature. If SignedAttributes (Optional) is present, the Signature is over the DER encoding
+            // of the entire SignedAttributes, and not the immediate content data.
             let signature = try Certificate.Signature(
                 signatureAlgorithm: signatureAlgorithm,
                 signatureBytes: signer.signature
             )
-            guard
-                signingCert.publicKey.isValidSignature(
-                    signature,
-                    for: dataBytes,
-                    signatureAlgorithm: signatureAlgorithm
-                )
-            else {
-                return .failure(
-                    .init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)")
-                )
+            if let signedAttrs = signer.signedAttrs {
+                guard let messageDigest = try signedAttrs.messageDigest else {
+                    return .failure(.init(invalidCMSBlockReason: "Missing message digest from signed attributes"))
+                }
+
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+                let actualDigest = try Digest.computeDigest(for: dataBytes, using: digestAlgorithm)
+
+                let actualDigestSequence: any Sequence<UInt8>
+                switch actualDigest {
+                case .insecureSHA1(let sha1):
+                    actualDigestSequence = sha1
+                case .sha256(let sha256):
+                    actualDigestSequence = sha256
+                case .sha384(let sha384):
+                    actualDigestSequence = sha384
+                case .sha512(let sha512):
+                    actualDigestSequence = sha512
+                }
+
+                guard actualDigestSequence.elementsEqual(messageDigest) else {
+                    return .failure(.init(invalidCMSBlockReason: "Message digest mismatch"))
+                }
+
+                guard
+                    signingCert.publicKey.isValidSignature(
+                        signature,
+                        for: try signer._signedAttrsBytes(),
+                        signatureAlgorithm: signatureAlgorithm
+                    )
+                else {
+                    return .failure(
+                        .init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)")
+                    )
+                }
+            } else {
+                guard
+                    signingCert.publicKey.isValidSignature(
+                        signature,
+                        for: dataBytes,
+                        signatureAlgorithm: signatureAlgorithm
+                    )
+                else {
+                    return .failure(
+                        .init(invalidCMSBlockReason: "Invalid signature from signing certificate: \(signingCert)")
+                    )
+                }
             }
+
         } catch {
             return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
         }
@@ -242,19 +379,15 @@ extension Array where Element == Certificate {
     func certificate(signerInfo: CMSSignerInfo) throws -> Certificate? {
         switch signerInfo.signerIdentifier {
         case .issuerAndSerialNumber(let issuerAndSerialNumber):
-            for cert in self {
-                if cert.issuer == issuerAndSerialNumber.issuer
-                    && cert.serialNumber == issuerAndSerialNumber.serialNumber
-                {
-                    return cert
-                }
+            return self.first { cert in
+                cert.issuer == issuerAndSerialNumber.issuer && cert.serialNumber == issuerAndSerialNumber.serialNumber
             }
-        case .subjectKeyIdentifier:
-            // This is unsupported for now.
-            return nil
-        }
 
-        return nil
+        case .subjectKeyIdentifier(let subjectKeyIdentifier):
+            return self.first { cert in
+                (try? cert.extensions.subjectKeyIdentifier)?.keyIdentifier == subjectKeyIdentifier.keyIdentifier
+            }
+        }
     }
 }
 

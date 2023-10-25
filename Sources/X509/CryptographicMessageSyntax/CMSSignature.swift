@@ -13,6 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
+#if canImport(Darwin)
+import Foundation
+#else
+@preconcurrency import Foundation
+#endif
 
 /// A representation of a CMS signature over some data.
 ///
@@ -29,7 +34,9 @@ public struct CMSSignature: Sendable, Hashable {
     public var signers: [Signer] {
         get throws {
             try self.base.signerInfos.compactMap { signerInfo in
-                try self.base.certificates?.certificate(signerInfo: signerInfo).map { Signer(certificate: $0) }
+                try self.base.certificates?.certificate(signerInfo: signerInfo).map {
+                    Signer(certificate: $0, signingTime: try signerInfo.signedAttrs?.signingTime)
+                }
             }
         }
     }
@@ -41,7 +48,7 @@ public struct CMSSignature: Sendable, Hashable {
     }
 }
 
-extension CMSSignature: DERImplicitlyTaggable {
+extension CMSSignature: DERImplicitlyTaggable, BERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {
         CMSContentInfo.defaultIdentifier
@@ -50,7 +57,18 @@ extension CMSSignature: DERImplicitlyTaggable {
     @inlinable
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         guard let base = try CMSContentInfo(derEncoded: rootNode, withIdentifier: identifier).signedData,
-            base.version == .v1
+            base.version == .v1 || base.version == .v4
+        else {
+            throw CMS.Error.unexpectedCMSType
+        }
+
+        self.base = base
+    }
+
+    @inlinable
+    public init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        guard let base = try CMSContentInfo(berEncoded: rootNode, withIdentifier: identifier).signedData,
+            base.version == .v1 || base.version == .v4
         else {
             throw CMS.Error.unexpectedCMSType
         }
@@ -73,9 +91,12 @@ extension CMSSignature {
     public struct Signer: Sendable, Hashable {
         public let certificate: Certificate
 
+        public let signingTime: Date?
+
         @inlinable
-        init(certificate: Certificate) {
+        init(certificate: Certificate, signingTime: Date? = nil) {
             self.certificate = certificate
+            self.signingTime = signingTime
         }
     }
 }
