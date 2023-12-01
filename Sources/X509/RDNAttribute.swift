@@ -584,6 +584,22 @@ extension ASN1ObjectIdentifier {
     }
 }
 
+extension String {
+    /// Extract the textual representation of a given ``RelativeDistinguishedName/Attribute/Value-swift.struct``.
+    ///
+    /// Returns `nil` if the value is not a printable or UTF8 string.
+    public init?(_ value: RelativeDistinguishedName.Attribute.Value) {
+        switch value.storage {
+        case .printable(let printable):
+            self = printable
+        case .utf8(let utf8):
+            self = utf8
+        default:
+            return nil
+        }
+    }
+}
+
 extension RandomAccessCollection {
     @inlinable
     func suffix(while predicate: (Element) -> Bool) -> SubSequence {
