@@ -381,123 +381,11 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
             }
 
             let value: Value
-            switch type {
-            /// ```
-            /// id-at-commonName        AttributeType ::= { id-at 3 }
-            ///
-            /// -- Naming attributes of type X520CommonName:
-            /// --   X520CommonName ::= DirectoryName (SIZE (1..ub-common-name))
-            /// --
-            /// -- Expanded to avoid parameterized type:
-            /// X520CommonName ::= CHOICE {
-            ///       teletexString     TeletexString   (SIZE (1..ub-common-name)),
-            ///       printableString   PrintableString (SIZE (1..ub-common-name)),
-            ///       universalString   UniversalString (SIZE (1..ub-common-name)),
-            ///       utf8String        UTF8String      (SIZE (1..ub-common-name)),
-            ///       bmpString         BMPString       (SIZE (1..ub-common-name)) }
-            ///
-            ///
-            /// -- Naming attributes of type X520LocalityName
-            ///
-            /// id-at-localityName      AttributeType ::= { id-at 7 }
-            ///
-            /// -- Naming attributes of type X520LocalityName:
-            /// --   X520LocalityName ::= DirectoryName (SIZE (1..ub-locality-name))
-            /// --
-            /// -- Expanded to avoid parameterized type:
-            /// X520LocalityName ::= CHOICE {
-            ///       teletexString     TeletexString   (SIZE (1..ub-locality-name)),
-            ///       printableString   PrintableString (SIZE (1..ub-locality-name)),
-            ///       universalString   UniversalString (SIZE (1..ub-locality-name)),
-            ///       utf8String        UTF8String      (SIZE (1..ub-locality-name)),
-            ///       bmpString         BMPString       (SIZE (1..ub-locality-
-            ///
-            /// id-at-stateOrProvinceName AttributeType ::= { id-at 8 }
-            ///
-            ///
-            /// -- Naming attributes of type X520StateOrProvinceName:
-            /// --   X520StateOrProvinceName ::= DirectoryName (SIZE (1..ub-state-name))
-            /// --
-            /// -- Expanded to avoid parameterized type:
-            /// X520StateOrProvinceName ::= CHOICE {
-            ///       teletexString     TeletexString   (SIZE (1..ub-state-name)),
-            ///       printableString   PrintableString (SIZE (1..ub-state-name)),
-            ///       universalString   UniversalString (SIZE (1..ub-state-name)),
-            ///       utf8String        UTF8String      (SIZE (1..ub-state-name)),
-            ///       bmpString         BMPString       (SIZE (1..ub-state-name)) }
-            ///
-            ///
-            /// -- Naming attributes of type X520OrganizationName
-            ///
-            /// id-at-organizationName  AttributeType ::= { id-at 10 }
-            ///
-            /// -- Naming attributes of type X520OrganizationName:
-            /// --   X520OrganizationName ::=
-            /// --          DirectoryName (SIZE (1..ub-organization-name))
-            /// --
-            /// -- Expanded to avoid parameterized type:
-            /// X520OrganizationName ::= CHOICE {
-            ///       teletexString     TeletexString
-            ///                           (SIZE (1..ub-organization-name)),
-            ///       printableString   PrintableString
-            ///                           (SIZE (1..ub-organization-name)),
-            ///       universalString   UniversalString
-            ///                           (SIZE (1..ub-organization-name)),
-            ///       utf8String        UTF8String
-            ///                           (SIZE (1..ub-organization-name)),
-            ///       bmpString         BMPString
-            ///                           (SIZE (1..ub-organization-name))  }
-            ///
-            ///
-            /// id-at-organizationalUnitName AttributeType ::= { id-at 11 }
-            ///
-            /// -- Naming attributes of type X520OrganizationalUnitName:
-            /// --   X520OrganizationalUnitName ::=
-            /// --          DirectoryName (SIZE (1..ub-organizational-unit-name))
-            /// --
-            /// -- Expanded to avoid parameterized type:
-            /// X520OrganizationalUnitName ::= CHOICE {
-            ///       teletexString     TeletexString
-            ///                           (SIZE (1..ub-organizational-unit-name)),
-            ///       printableString   PrintableString
-            ///                           (SIZE (1..ub-organizational-unit-name)),
-            ///       universalString   UniversalString
-            ///                           (SIZE (1..ub-organizational-unit-name)),
-            ///       utf8String        UTF8String
-            ///                           (SIZE (1..ub-organizational-unit-name)),
-            ///       bmpString         BMPString
-            ///                           (SIZE (1..ub-organizational-unit-name)) }
-            /// ```
-            case .RDNAttributeType.commonName,
-                .RDNAttributeType.localityName,
-                .RDNAttributeType.stateOrProvinceName,
-                .RDNAttributeType.organizationName,
-                .RDNAttributeType.organizationalUnitName:
-
-                switch valueNode.identifier {
-                case ASN1UTF8String.defaultIdentifier:
-                    value = try .init(utf8String: String(ASN1UTF8String(derEncoded: valueNode)))
-                case ASN1PrintableString.defaultIdentifier:
-                    value = try .init(printableString: String(ASN1PrintableString(derEncoded: valueNode)))
-                default:
-                    value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
-                }
-
-            /// ```
-            /// -- Naming attributes of type X520countryName (digraph from IS 3166)
-            ///
-            /// id-at-countryName       AttributeType ::= { id-at 6 }
-            ///
-            /// X520countryName ::=     PrintableString (SIZE (2))
-            /// ```
-            case .RDNAttributeType.countryName:
-                switch valueNode.identifier {
-                case ASN1PrintableString.defaultIdentifier:
-                    value = try .init(printableString: String(ASN1PrintableString(derEncoded: valueNode)))
-                default:
-                    value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
-                }
-
+            switch valueNode.identifier {
+            case ASN1UTF8String.defaultIdentifier:
+                value = try .init(utf8String: String(ASN1UTF8String(derEncoded: valueNode)))
+            case ASN1PrintableString.defaultIdentifier:
+                value = try .init(printableString: String(ASN1PrintableString(derEncoded: valueNode)))
             default:
                 value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
             }
@@ -594,8 +482,14 @@ extension String {
             self = printable
         case .utf8(let utf8):
             self = utf8
-        default:
-            return nil
+        case .any(let value):
+            if let printable = try? ASN1PrintableString(asn1Any: value) {
+                self = String(printable)
+            } else if let utf8 = try? ASN1UTF8String(asn1Any: value) {
+                self = String(utf8)
+            } else {
+                return nil
+            }
         }
     }
 }
