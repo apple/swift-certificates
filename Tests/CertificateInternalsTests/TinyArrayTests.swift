@@ -66,6 +66,15 @@ final class TinyArrayTests: XCTestCase {
         XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4])), [1, 2, 3, 4])
         XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4, 5])), [1, 2, 3, 4, 5])
     }
+    
+    func testExpressibleByArrayLiteral() {
+        XCTAssertEqual(Array([] as _TinyArray<Int>), [])
+        XCTAssertEqual(Array([1] as _TinyArray<Int>), [1])
+        XCTAssertEqual(Array([1, 2] as _TinyArray<Int>), [1, 2])
+        XCTAssertEqual(Array([1, 2, 3] as _TinyArray<Int>), [1, 2, 3])
+        XCTAssertEqual(Array([1, 2, 3, 4] as _TinyArray<Int>), [1, 2, 3, 4])
+        XCTAssertEqual(Array([1, 2, 3, 4, 5] as _TinyArray<Int>), [1, 2, 3, 4, 5])
+    }
 
     func testAppend() {
         assertEqual([1]) { array in
@@ -337,13 +346,5 @@ final class TinyArrayTests: XCTestCase {
                 try _TinyArray<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())])
             )
         )
-    }
-}
-
-extension _TinyArray: ExpressibleByArrayLiteral {
-    public typealias ArrayLiteralElement = Element
-
-    public init(arrayLiteral elements: Element...) {
-        self.init(elements)
     }
 }
