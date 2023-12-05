@@ -28,13 +28,13 @@ extension RelativeDistinguishedName {
     public struct Attribute {
         public struct Value: Hashable, Sendable {
             @usableFromInline
-            enum Storage: Sendable {
+            enum Storage: Hashable, Sendable {
                 /// ``ASN1PrintableString``
                 case printable(String)
                 /// ``ASN1UTF8String``
                 case utf8(String)
-                /// `.any` can still contain bytes which are equal to the DER representation of `.printable` or `.utf8`
-                /// the custom `Hashable` conformance takes care of this and treats them as equal.
+                /// `.any` can never contain bytes which are equal to the DER representation of `.printable` or `.utf8`.
+                /// This invariant must not be violated or otherwise the synthesised `Hashable` would be wrong.
                 case any(ASN1Any)
             }
 
@@ -63,172 +63,6 @@ extension RelativeDistinguishedName {
             self.type = type
             self.value = value
         }
-    }
-}
-
-extension RelativeDistinguishedName.Attribute.Value.Storage: Hashable {
-    @inlinable
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        switch (lhs, rhs) {
-        case let (.printable(lhs), .printable(rhs)):
-            return lhs == rhs
-        case let (.utf8(lhs), .utf8(rhs)):
-            return lhs == rhs
-        case (.printable, .utf8), (.utf8, .printable):
-            return false
-
-        default:
-            return ASN1Any(lhs) == ASN1Any(rhs)
-        }
-    }
-
-    @inlinable
-    func hash(into hasher: inout Hasher) {
-        switch self {
-        case .printable(let string):
-            hasher.combine(String.ASN1TaggedStringView(printable: string))
-
-        case .utf8(let string):
-            hasher.combine(String.ASN1TaggedStringView(utf8: string))
-
-        case .any(let asn1Any):
-            hasher.combine(asn1Any)
-        }
-    }
-}
-
-extension String {
-    @usableFromInline
-    struct ASN1TaggedStringView {
-        @usableFromInline
-        let tag: UInt8
-
-        @usableFromInline
-        let string: String
-
-        @usableFromInline
-        let length: ASN1Length
-
-        @usableFromInline
-        let count: Int
-
-        @inlinable
-        init(tag: UInt8, string: String) {
-            self.tag = tag
-            self.string = string
-
-            let utf8Count = self.string.utf8.count
-            self.length = ASN1Length(length: utf8Count)
-            // tag + utf8 bytes length + utf8 bytes
-            self.count = 1 + self.length.count + utf8Count
-        }
-
-        @inlinable
-        init(utf8 string: String) {
-            // This tag represents a UTF8STRING.
-            self.init(tag: 0x0c, string: string)
-        }
-
-        @inlinable
-        init(printable string: String) {
-            // This tag represents a PRINTABLE STRING.
-            self.init(tag: 0x13, string: string)
-        }
-    }
-}
-
-extension String.ASN1TaggedStringView: RandomAccessCollection {
-    @inlinable
-    var startIndex: Int {
-        0
-    }
-
-    @inlinable
-    var endIndex: Int {
-        count
-    }
-
-    @inlinable
-    subscript(position: Int) -> UInt8 {
-        switch position {
-        case 0:
-            return self.tag
-        case 1...self.length.endIndex:
-            // after the tag comes the length of the string
-            return self.length[position &- 1]
-        default:
-            // and at the end the utf8 encoded string
-            let index = self.string.utf8.index(self.string.utf8.startIndex, offsetBy: position - 1 - length.endIndex)
-            return self.string.utf8[index]
-        }
-    }
-}
-
-extension String.ASN1TaggedStringView: Hashable {
-    @inlinable
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(self.count)
-        for byte in self {
-            hasher.combine(byte)
-        }
-    }
-}
-
-@usableFromInline
-struct ASN1Length: Hashable {
-    @usableFromInline
-    var length: Int
-
-    @usableFromInline
-    var count: Int
-
-    @inlinable
-    init(length: Int) {
-        self.length = length
-
-        // ASN.1 lengths are in two forms. If we can store the length in 7 bits, we should:
-        // that requires only one byte. Otherwise, we need multiple bytes: work out how many,
-        // plus one for the length of the length bytes.
-        if self.length <= 0x7F {
-            self.count = 1
-        } else {
-            // We need to work out how many bytes we need. There are many fancy bit-twiddling
-            // ways of doing this, but honestly we don't do this enough to need them, so we'll
-            // do it the easy way. This math is done on UInt because it makes the shift semantics clean.
-            // We save a branch here because we can never overflow this addition.
-            let neededBits = self.length.bitWidth - self.length.leadingZeroBitCount
-            let neededBytes = (neededBits &+ 7) / 8
-            self.count = neededBytes &+ 1
-        }
-    }
-}
-
-extension ASN1Length: RandomAccessCollection {
-    @inlinable
-    var startIndex: Int {
-        0
-    }
-
-    @inlinable
-    var endIndex: Int {
-        count
-    }
-
-    @inlinable
-    subscript(position: Int) -> UInt8 {
-        precondition(position >= 0 && position < self.count)
-        guard self.length <= 0x7F else {
-            guard position == 0 else {
-                //Then we write the bytes of the length.
-                let integerBytesCollection = IntegerBytesCollection(self.length)
-                let index = integerBytesCollection.index(integerBytesCollection.startIndex, offsetBy: position &- 1)
-                return integerBytesCollection[index]
-            }
-            // We first write the number of length bytes
-            // we needed, setting the high bit.
-            return 0b1000_0000 | UInt8(self.count &- 1)
-        }
-        return UInt8(truncatingIfNeeded: self.length)
     }
 }
 
@@ -274,7 +108,40 @@ extension RelativeDistinguishedName.Attribute.Value {
 
     @inlinable
     public init(asn1Any: ASN1Any) {
-        self.storage = .any(asn1Any)
+        do {
+            self.storage = try .init(asn1Any: asn1Any)
+        } catch {
+            self.storage = .any(asn1Any)
+        }
+    }
+}
+
+extension RelativeDistinguishedName.Attribute.Value.Storage: DERParseable, DERSerializable {
+    @inlinable
+    init(derEncoded node: SwiftASN1.ASN1Node) throws {
+        switch node.identifier {
+        case ASN1UTF8String.defaultIdentifier:
+            self = .utf8(String(try ASN1UTF8String(derEncoded: node)))
+        case ASN1PrintableString.defaultIdentifier:
+            self = .printable(String(try ASN1PrintableString(derEncoded: node)))
+        default:
+            self = .any(ASN1Any(derEncoded: node))
+        }
+    }
+    
+    @inlinable
+    func serialize(into coder: inout SwiftASN1.DER.Serializer) throws {
+        switch self {
+        case .printable(let printableString):
+            // force try is safe because we verify in the initialiser that it is valid
+            let printableString = try! ASN1PrintableString(printableString)
+            try printableString.serialize(into: &coder)
+        case .utf8(let utf8String):
+            let string = ASN1UTF8String(utf8String)
+            try string.serialize(into: &coder)
+        case .any(let any):
+            try any.serialize(into: &coder)
+        }
     }
 }
 
@@ -376,20 +243,7 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let type = try ASN1ObjectIdentifier(derEncoded: &nodes)
-            guard let valueNode = nodes.next() else {
-                throw ASN1Error.invalidASN1Object(reason: "RelativeDistinguishedName.Attribute.Value is missing")
-            }
-
-            let value: Value
-            switch valueNode.identifier {
-            case ASN1UTF8String.defaultIdentifier:
-                value = try .init(utf8String: String(ASN1UTF8String(derEncoded: valueNode)))
-            case ASN1PrintableString.defaultIdentifier:
-                value = try .init(printableString: String(ASN1PrintableString(derEncoded: valueNode)))
-            default:
-                value = .init(storage: .any(ASN1Any(derEncoded: valueNode)))
-            }
-
+            let value = try Value(storage: .init(derEncoded: &nodes))
             return .init(type: type, value: value)
         }
     }
@@ -398,7 +252,7 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
     public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.type)
-            try coder.serialize(ASN1Any(self.value))
+            try coder.serialize(self.value.storage)
         }
     }
 }
@@ -482,14 +336,8 @@ extension String {
             self = printable
         case .utf8(let utf8):
             self = utf8
-        case .any(let value):
-            if let printable = try? ASN1PrintableString(asn1Any: value) {
-                self = String(printable)
-            } else if let utf8 = try? ASN1UTF8String(asn1Any: value) {
-                self = String(utf8)
-            } else {
-                return nil
-            }
+        case .any:
+            return nil
         }
     }
 }
