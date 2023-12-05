@@ -66,7 +66,7 @@ final class TinyArrayTests: XCTestCase {
         XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4])), [1, 2, 3, 4])
         XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4, 5])), [1, 2, 3, 4, 5])
     }
-    
+
     func testExpressibleByArrayLiteral() {
         XCTAssertEqual(Array([] as _TinyArray<Int>), [])
         XCTAssertEqual(Array([1] as _TinyArray<Int>), [1])
