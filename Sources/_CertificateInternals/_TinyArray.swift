@@ -32,6 +32,20 @@ extension _TinyArray: Equatable where Element: Equatable {}
 extension _TinyArray: Hashable where Element: Hashable {}
 extension _TinyArray: Sendable where Element: Sendable {}
 
+extension _TinyArray: ExpressibleByArrayLiteral {
+    @inlinable
+    public init(arrayLiteral elements: Element...) {
+        switch elements.count {
+        case 0:
+            self = .init()
+        case 1:
+            self = .init(CollectionOfOne(elements[0]))
+        default:
+            self = .init(elements)
+        }
+    }
+}
+
 extension _TinyArray: RandomAccessCollection {
     public typealias Element = Element
 
