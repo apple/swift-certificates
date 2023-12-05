@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import SwiftASN1
-#if canImport(Darwin)
+#if canImport(Darwin) || swift(>=5.9.1)
 import Foundation
 #else
 @preconcurrency import Foundation
