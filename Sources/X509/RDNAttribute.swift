@@ -128,7 +128,7 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: DERParseable, DERSe
             self = .any(ASN1Any(derEncoded: node))
         }
     }
-    
+
     @inlinable
     func serialize(into coder: inout SwiftASN1.DER.Serializer) throws {
         switch self {
