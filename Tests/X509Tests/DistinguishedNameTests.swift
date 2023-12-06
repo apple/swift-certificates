@@ -427,4 +427,22 @@ final class DistinguishedNameTests: XCTestCase {
             XCTAssertEqual(String(example.value), result)
         }
     }
+
+    func testRDNAttributeValuesCanBeConvertedToStringsInSomeOfTheAnyCasesToo() throws {
+        let weirdOID: ASN1ObjectIdentifier = [1, 2, 3, 4, 5]
+
+        let examplesAndResults: [(RelativeDistinguishedName.Attribute, String?)] = try [
+            (.init(type: weirdOID, printableString: "foo"), "foo"),
+            (.init(type: weirdOID, utf8String: "bar"), "bar"),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1UTF8String("foo"))), "foo"),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1PrintableString("baz"))), "baz"),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+            (.init(type: weirdOID, value: ASN1Any(erasing: 5)), nil),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1OctetString(contentBytes: [1, 2, 3, 4]))), nil),
+        ]
+
+        for (example, result) in examplesAndResults {
+            XCTAssertEqual(String(example.value), result)
+        }
+    }
 }
