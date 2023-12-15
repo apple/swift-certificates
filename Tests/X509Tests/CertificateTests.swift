@@ -474,6 +474,7 @@ final class CertificateTests: XCTestCase {
 
     private static let referenceTime = Date(timeIntervalSince1970: 1_691_504_774)
 
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
     func testCertificateDescription() throws {
         let caPrivateKey = P384.Signing.PrivateKey()
         let certificateName1 = try! DistinguishedName {
