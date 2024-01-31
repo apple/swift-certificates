@@ -12,6 +12,10 @@
 ##
 ##===----------------------------------------------------------------------===##
 
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
+endif()
+
 if(POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW)
 endif()
@@ -37,11 +41,35 @@ set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
 set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 set(CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
+# Toolchain vended dependencies
 find_package(dispatch CONFIG)
 find_package(Foundation CONFIG)
 
-find_package(SwiftASN1 CONFIG REQUIRED)
-find_package(SwiftCrypto CONFIG REQUIRED)
+include(FetchContent)
+
+set(_CERT_SAVED_BUILD_EXAMPLES ${BUILD_EXAMPLES})
+set(_CERT_SAVED_BUILD_TESTING ${BUILD_TESTING})
+
+find_package(SwiftASN1 CONFIG)
+if(NOT SwiftASN1_FOUND)
+  message("-- Vending swift-asn1")
+  FetchContent_Declare(ASN1
+    GIT_REPOSITORY https://github.com/apple/swift-asn1
+    GIT_TAG 1.1.0)
+  FetchContent_MakeAvailable(ASN1)
+endif()
+
+find_package(SwiftCrypto CONFIG)
+if(NOT SwiftCrypto_FOUND)
+  message("-- Vending swift-crypto")
+  FetchContent_Declare(Crypto
+    GIT_REPOSITORY https://github.com/apple/swift-crypto
+    GIT_TAG 3.2.0)
+  FetchContent_MakeAvailable(Crypto)
+endif()
+
+set(BUILD_TESTING ${_CERT_SAVED_BUILD_TESTING})
+set(BUILD_EXAMPLES ${_CERT_SAVED_BUILD_EXAMPLES})
 
 add_subdirectory(Sources)
 add_subdirectory(cmake/modules)
