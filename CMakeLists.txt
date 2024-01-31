@@ -64,7 +64,7 @@ if(NOT SwiftCrypto_FOUND)
   message("-- Vending swift-crypto")
   FetchContent_Declare(Crypto
     GIT_REPOSITORY https://github.com/apple/swift-crypto
-    GIT_TAG 3.0.0)
+    GIT_TAG 3.2.0)
   FetchContent_MakeAvailable(Crypto)
 endif()
 
