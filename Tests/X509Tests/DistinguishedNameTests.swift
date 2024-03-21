@@ -215,7 +215,7 @@ final class DistinguishedNameTests: XCTestCase {
         XCTAssertEqual(
             name,
             try DistinguishedName([
-                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, printableString: "US"),
                 RelativeDistinguishedName.Attribute(
                     type: .RDNAttributeType.organizationName,
                     utf8String: "DigiCert Inc"
@@ -260,7 +260,7 @@ final class DistinguishedNameTests: XCTestCase {
         XCTAssertEqual(
             name,
             try DistinguishedName([
-                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, printableString: "US"),
                 RelativeDistinguishedName.Attribute(
                     type: .RDNAttributeType.organizationName,
                     utf8String: "DigiCert Inc"
