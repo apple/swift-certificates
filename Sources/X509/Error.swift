@@ -22,7 +22,7 @@
 /// This type is `Equatable` and `Hashable`, but only the ``code`` field is considered in the
 /// implementation of that behaviour. This makes it relatively easy to test code that throws
 /// a specific error by creating the error type directly in your own code.
-public struct CertificateError: Error, Hashable, CustomStringConvertible {
+public struct CertificateError: Error, Hashable, CustomStringConvertible, @unchecked Sendable /* CoW */ {
     private var backing: Backing
 
     /// Represents the kind of error that was encountered.

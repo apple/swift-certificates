@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 // MARK: - Promise
-final class Promise<Value, Failure: Error> {
+final class Promise<Value: Sendable, Failure: Error> {
     private enum State {
         case unfulfilled(observers: [CheckedContinuation<Result<Value, Failure>, Never>])
         case fulfilled(Result<Value, Failure>)
@@ -83,7 +83,7 @@ extension Promise {
 
 // MARK: - Future
 
-struct Future<Value, Failure: Error> {
+struct Future<Value: Sendable, Failure: Error> {
     private let promise: Promise<Value, Failure>
 
     init(_ promise: Promise<Value, Failure>) {
