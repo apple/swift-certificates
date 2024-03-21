@@ -249,6 +249,9 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
     }
 }
 
+// `CertificateError` is `Sendable` because it uses CoW
+extension CertificateError: @unchecked Sendable {}
+
 extension CertificateError {
     /// Represents the kind of an error.
     ///

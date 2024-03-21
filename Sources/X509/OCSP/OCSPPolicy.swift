@@ -320,6 +320,7 @@ extension OCSPVerifierPolicy.Storage {
             return responderURI
         }.first
         guard let responderURI else {
+            let ocspAccessDescriptions = Array(ocspAccessDescriptions)
             return self.softFailure(
                 reason: .init("expected OCSP location to be a URI but got \(ocspAccessDescriptions)")
             )

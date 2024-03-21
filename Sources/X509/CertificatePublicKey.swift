@@ -14,7 +14,7 @@
 
 import SwiftASN1
 @preconcurrency import Crypto
-@preconcurrency import _CryptoExtras
+import _CryptoExtras
 import Foundation
 
 extension Certificate {
