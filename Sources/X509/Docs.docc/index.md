@@ -76,6 +76,29 @@ certificate authorities, authenticating peers, and more.
 - ``StateOrProvinceName``
 - ``StreetAddress``
 
+### Verifying Certificates
+
+- ``Verifier``
+- ``VerifierPolicy``
+- ``PolicyBuilder``
+- ``PolicyFailureReason``
+- ``AnyPolicy``
+- ``CertificateStore``
+- ``UnverifiedCertificateChain``
+- ``VerificationDiagnostic``
+
+### Pre-implemented Verifier Policies
+
+- ``RFC5280Policy``
+- ``ServerIdentityPolicy``
+- ``OCSPVerifierPolicy``
+
+### OCSP Policy Helpers
+
+- ``OCSPRequester``
+- ``OCSPFailureMode``
+- ``OCSPRequesterQueryResult``
+
 ### Errors
 
 - ``CertificateError``
