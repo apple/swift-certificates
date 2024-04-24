@@ -142,6 +142,86 @@ final class PolicyBuilderTests: XCTestCase {
         )
     }
 
+    func testVerifyingCriticalExtensions_oneOf() {
+        // When both policies specify the same exts, then the overall policy also has those exts
+        XCTAssertEqual(
+            Set(
+                OneOfPolicies {
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1, 1]
+            ]
+        )
+        // When both policies specify the different exts, the overall has the intersection
+        XCTAssertEqual(
+            Set(
+                OneOfPolicies {
+                    Policy(verifyingCriticalExtensions: [[1, 1], [1, 2]])
+                    Policy(verifyingCriticalExtensions: [[1, 2], [1, 3]])
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1, 2]
+            ]
+        )
+        // Here the sets are disjoint so the overall is empty
+        XCTAssertEqual(
+            Set(
+                OneOfPolicies {
+                    Policy(verifyingCriticalExtensions: [[1, 1], [1, 2]])
+                    Policy(verifyingCriticalExtensions: [[1, 3], [1, 4]])
+                }.verifyingCriticalExtensions
+            ),
+            []
+        )
+    }
+
+    func testVerifyingCriticalExtensions_oneOf_allOf() {
+        // All of means we get all the exts
+        XCTAssertEqual(
+            Set(
+                OneOfPolicies {
+                    AllOfPolicies {
+                        Policy(verifyingCriticalExtensions: [[1, 1]])
+                        Policy(verifyingCriticalExtensions: [[1, 2]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1, 1], [1, 2],
+            ]
+        )
+        XCTAssertEqual(
+            Set(
+                OneOfPolicies {
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
+                    AllOfPolicies {
+                        Policy(verifyingCriticalExtensions: [[1, 1]])
+                        Policy(verifyingCriticalExtensions: [[1, 2]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            [
+                [1, 1]
+            ]
+        )
+        XCTAssertEqual(
+            Set(
+                OneOfPolicies {
+                    Policy(verifyingCriticalExtensions: [[1, 1]])
+                    AllOfPolicies {
+                        Policy(verifyingCriticalExtensions: [[1, 2]])
+                        Policy(verifyingCriticalExtensions: [[1, 3]])
+                    }
+                }.verifyingCriticalExtensions
+            ),
+            []
+        )
+    }
+
     private static let privateKey = P384.Signing.PrivateKey()
 
     private static let certificate = try! Certificate(
@@ -325,6 +405,99 @@ final class PolicyBuilderTests: XCTestCase {
         let _: Verifier<AnyPolicy> = Verifier(rootCertificates: CertificateStore()) {
             AnyPolicy {
                 RFC5280Policy(validationTime: Date())
+            }
+        }
+    }
+
+    func testChainFailsPolicy_OneOf_empty() async {
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {}
+        }
+    }
+
+    func testChainMeetsPolicy_OneOf_concatenation_both_valid() async {
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                Policy(result: .meetsPolicy)
+                Policy(result: .meetsPolicy)
+            }
+        }
+    }
+
+    func testChainMeetsPolicy_OneOf_concatenation_first_valid() async {
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                Policy(result: .meetsPolicy)
+                Policy(result: .failsToMeetPolicy(reason: ""))
+            }
+        }
+    }
+
+    func testChainMeetsPolicy_OneOf_concatenation_second_valid() async {
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                Policy(result: .meetsPolicy)
+            }
+        }
+    }
+
+    func testChainFailsToMeetPolicy_OneOf_concatenation_both_invalid() async {
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                Policy(result: .failsToMeetPolicy(reason: ""))
+            }
+        }
+    }
+
+    func testChainMeetsPolicy_allOf() async {
+        await assertMeetsPolicy {
+            AllOfPolicies {
+                Policy(result: .meetsPolicy)
+                Policy(result: .meetsPolicy)
+            }
+        }
+        await assertFailsToMeetPolicy {
+            AllOfPolicies {
+                Policy(result: .meetsPolicy)
+                Policy(result: .failsToMeetPolicy(reason: ""))
+            }
+        }
+    }
+
+    func testChainMeetsPolicy_allOf_oneOf() async {
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                AllOfPolicies {
+                    Policy(result: .meetsPolicy)
+                }
+            }
+        }
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                AllOfPolicies {
+                    Policy(result: .failsToMeetPolicy(reason: ""))
+                }
+            }
+        }
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                Policy(result: .meetsPolicy)
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                AllOfPolicies {
+                    Policy(result: .meetsPolicy)
+                    Policy(result: .meetsPolicy)
+                }
+            }
+        }
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                AllOfPolicies {
+                    Policy(result: .meetsPolicy)
+                    Policy(result: .failsToMeetPolicy(reason: ""))
+                }
             }
         }
     }
