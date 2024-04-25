@@ -413,6 +413,25 @@ final class PolicyBuilderTests: XCTestCase {
         await assertFailsToMeetPolicy {
             OneOfPolicies {}
         }
+        let `false` = false
+        // This is effectively empty because the branch is never true
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                if `false` {
+                    Policy(result: .meetsPolicy)
+                }
+            }
+        }
+
+        let policy: Policy? = nil
+        // This is effectively empty because the optional is always nil
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                if let policy {
+                    policy
+                }
+            }
+        }
     }
 
     func testChainMeetsPolicy_OneOf_concatenation_both_valid() async {
@@ -447,6 +466,43 @@ final class PolicyBuilderTests: XCTestCase {
             OneOfPolicies {
                 Policy(result: .failsToMeetPolicy(reason: ""))
                 Policy(result: .failsToMeetPolicy(reason: ""))
+            }
+        }
+    }
+
+    func testChainMeetsPolicyRequirements_oneOf_ifElse() async {
+        let `true` = true
+        let `false` = false
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                if `true` {
+                    Policy(result: .meetsPolicy)
+                } else {
+                    Policy(result: .failsToMeetPolicy(reason: ""))
+                }
+            }
+        }
+
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                if `false` {
+                    Policy(result: .failsToMeetPolicy(reason: ""))
+                } else {
+                    Policy(result: .meetsPolicy)
+                }
+            }
+        }
+
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                Policy(result: .failsToMeetPolicy(reason: ""))
+                if `true` {
+                    Policy(result: .failsToMeetPolicy(reason: ""))
+                } else {
+                    Policy(result: .meetsPolicy)
+                }
             }
         }
     }

@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2024 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -14,10 +14,18 @@
 
 import SwiftASN1
 
-/// Provides a result-builder style DSL for constructing a ``VerifierPolicy`` in which one of the specified policies must match
+/// Provides a result-builder style DSL for constructing a ``VerifierPolicy`` in which one of the specified policies must match.
 ///
-/// This DSL allows us to construct dynamic ``VerifierPolicy`` at runtime without using type erasure.
-/// The resulting ``VerifierPolicy`` will use the listed policy in the order of declaration to check if a chain meets any one policy
+/// This DSL allows us to construct ``OneOfPolicies`` within a ``PolicyBuilder``.
+/// ```swift
+/// let verifier = Verifier(rootCertificates: CertificateStore()) {
+///     RFC5280Policy(validationTime: Date())
+///     OneOfPolicies {
+///         PolicyA()
+///         PolicyB()
+///     }
+/// }
+/// ```
 @resultBuilder
 public struct OneOfPolicyBuilder {}
 
@@ -109,7 +117,10 @@ extension OneOfPolicyBuilder {
 extension OneOfPolicyBuilder {
     @inlinable
     public static func buildOptional(_ component: (some VerifierPolicy)?) -> some VerifierPolicy {
-        PolicyBuilder.WrappedOptional(component)
+        PolicyBuilder.WrappedOptional(
+            component,
+            defaultResult: .failsToMeetPolicy(reason: "No policies specified in OneOfPolicies block")
+        )
     }
 }
 
@@ -130,25 +141,10 @@ extension OneOfPolicyBuilder {
     }
 }
 
-extension OneOfPolicyBuilder {
-    @inlinable
-    public static func buildFinalResult(_ component: some VerifierPolicy) -> some VerifierPolicy {
-        PolicyBuilder.CachedVerifyingCriticalExtensions(wrapped: component)
-    }
-
-    @inlinable
-    public static func buildFinalResult(_ component: AnyPolicy) -> AnyPolicy {
-        func unwrapExistentialAndCache(policy: some VerifierPolicy) -> some VerifierPolicy {
-            PolicyBuilder.CachedVerifyingCriticalExtensions(wrapped: policy)
-        }
-        let cachedPolicy = unwrapExistentialAndCache(policy: component.policy)
-        return AnyPolicy(cachedPolicy)
-    }
-}
-
-/// Use this to build a policy where any one of the sub-policies must be met for the overall policy to be met
-/// For example, the following policy requires that RFC5280Policy is always met, and either PolicyA or PolicyB is met
-/// It does not require that both PolicyA and PolicyB are met
+/// Use this to build a policy where any one of the sub-policies must be met for the overall policy to be met.
+/// For example, the following policy requires that RFC5280Policy is always met, and either PolicyA or PolicyB is met.
+/// It does not require that both PolicyA and PolicyB are met.
+/// ```swift
 /// let verifier = Verifier(rootCertificates: CertificateStore()) {
 ///     RFC5280Policy(validationTime: Date())
 ///     OneOfPolicies {
@@ -156,50 +152,22 @@ extension OneOfPolicyBuilder {
 ///         PolicyB()
 ///     }
 /// }
+/// ```
 public struct OneOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
-    private var policy: Policy
+    @usableFromInline
+    var policy: Policy
 
+    @inlinable
     public init(@OneOfPolicyBuilder policy: () -> Policy) {
         self.policy = policy()
     }
 
+    @inlinable
     public var verifyingCriticalExtensions: [ASN1ObjectIdentifier] {
         policy.verifyingCriticalExtensions
     }
 
-    public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
-    {
-        await self.policy.chainMeetsPolicyRequirements(chain: chain)
-    }
-}
-
-/// Use this to build a policy where all of the sub-policies must be met for the overall policy to be met
-/// This is only useful within a OneOfPolicies block, because at the top-level, it is already required for all policies
-/// to be met, so adding this at the top-level is redundant
-/// For example, the following policy requires that RFC5280Policy is always met, and then either policy C is met, or
-/// A and B are both met. If A and B are both met, then C does not have to be met. If C is met, then neither A nor B
-/// need to be met
-/// let verifier = Verifier(rootCertificates: CertificateStore()) {
-///     RFC5280Policy(validationTime: Date())
-///     OneOfPolicies {
-///         AllOfPolicies {
-///             PolicyA()
-///             PolicyB()
-///         }
-///         PolicyC()
-///     }
-/// }
-public struct AllOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
-    private var policy: Policy
-
-    public init(@PolicyBuilder policy: () -> Policy) {
-        self.policy = policy()
-    }
-
-    public var verifyingCriticalExtensions: [ASN1ObjectIdentifier] {
-        policy.verifyingCriticalExtensions
-    }
-
+    @inlinable
     public mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
     {
         await self.policy.chainMeetsPolicyRequirements(chain: chain)
