@@ -111,13 +111,10 @@ extension PolicyBuilder {
     struct WrappedOptional<Wrapped>: VerifierPolicy where Wrapped: VerifierPolicy {
         @usableFromInline
         var wrapped: Wrapped?
-        @usableFromInline
-        var defaultResult: PolicyEvaluationResult
 
         @inlinable
-        init(_ wrapped: Wrapped?, defaultResult: PolicyEvaluationResult) {
+        init(_ wrapped: Wrapped?) {
             self.wrapped = wrapped
-            self.defaultResult = defaultResult
         }
 
         @inlinable
@@ -127,13 +124,13 @@ extension PolicyBuilder {
 
         @inlinable
         mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
-            await self.wrapped?.chainMeetsPolicyRequirements(chain: chain) ?? self.defaultResult
+            await self.wrapped?.chainMeetsPolicyRequirements(chain: chain) ?? .meetsPolicy
         }
     }
 
     @inlinable
     public static func buildOptional(_ component: (some VerifierPolicy)?) -> some VerifierPolicy {
-        WrappedOptional(component, defaultResult: .meetsPolicy)
+        WrappedOptional(component)
     }
 }
 

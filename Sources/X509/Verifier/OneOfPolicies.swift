@@ -115,12 +115,31 @@ extension OneOfPolicyBuilder {
 
 // MARK: if
 extension OneOfPolicyBuilder {
+    @usableFromInline
+    struct WrappedOptional<Wrapped>: VerifierPolicy where Wrapped: VerifierPolicy {
+        @usableFromInline
+        var wrapped: Wrapped?
+
+        @inlinable
+        init(_ wrapped: Wrapped?) {
+            self.wrapped = wrapped
+        }
+
+        @inlinable
+        var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] {
+            self.wrapped?.verifyingCriticalExtensions ?? []
+        }
+
+        @inlinable
+        mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+            await self.wrapped?.chainMeetsPolicyRequirements(chain: chain)
+                ?? .failsToMeetPolicy(reason: "No policies specified in OneOfPolicies block")
+        }
+    }
+
     @inlinable
     public static func buildOptional(_ component: (some VerifierPolicy)?) -> some VerifierPolicy {
-        PolicyBuilder.WrappedOptional(
-            component,
-            defaultResult: .failsToMeetPolicy(reason: "No policies specified in OneOfPolicies block")
-        )
+        WrappedOptional(component)
     }
 }
 
