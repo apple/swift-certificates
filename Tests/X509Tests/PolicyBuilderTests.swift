@@ -507,6 +507,25 @@ final class PolicyBuilderTests: XCTestCase {
         }
     }
 
+    func testChainMeetsPolicyRequirements_oneOf_optional() async {
+        let meeting: Policy? = Policy(result: .meetsPolicy)
+        let failing: Policy? = Policy(result: .failsToMeetPolicy(reason: ""))
+        await assertMeetsPolicy {
+            OneOfPolicies {
+                if let meeting {
+                    meeting
+                }
+            }
+        }
+        await assertFailsToMeetPolicy {
+            OneOfPolicies {
+                if let failing {
+                    failing
+                }
+            }
+        }
+    }
+
     func testChainMeetsPolicy_allOf() async {
         await assertMeetsPolicy {
             AllOfPolicies {

@@ -133,7 +133,7 @@ extension OneOfPolicyBuilder {
         @inlinable
         mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
             await self.wrapped?.chainMeetsPolicyRequirements(chain: chain)
-                ?? .failsToMeetPolicy(reason: "No policies specified in OneOfPolicies block")
+                ?? .failsToMeetPolicy(reason: "\(Wrapped.self) in OneOfPolicy is disabled")
         }
     }
 
