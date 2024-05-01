@@ -83,6 +83,9 @@ certificate authorities, authenticating peers, and more.
 - ``PolicyBuilder``
 - ``PolicyFailureReason``
 - ``AnyPolicy``
+- ``OneOfPolicyBuilder``
+- ``OneOfPolicies``
+- ``AllOfPolicies``
 - ``CertificateStore``
 - ``UnverifiedCertificateChain``
 - ``VerificationDiagnostic``
