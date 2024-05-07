@@ -177,8 +177,8 @@ public struct OneOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
     var policy: Policy
 
     @inlinable
-    public init(@OneOfPolicyBuilder policy: () -> Policy) {
-        self.policy = policy()
+    public init(@OneOfPolicyBuilder policy: () throws -> Policy) rethrows {
+        self.policy = try policy()
     }
 
     @inlinable

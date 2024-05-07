@@ -37,8 +37,8 @@ public struct AllOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
     var policy: Policy
 
     @inlinable
-    public init(@PolicyBuilder policy: () -> Policy) {
-        self.policy = policy()
+    public init(@PolicyBuilder policy: () throws -> Policy) rethrows {
+        self.policy = try policy()
     }
 
     @inlinable
