@@ -40,16 +40,16 @@ private let unicodeCNName = try! DistinguishedName {
 }
 
 /// This cert contains the following SAN fields:
-/// DNS:*.wildcard.example.com - A straightforward wildcard, should be accepted
-/// DNS:fo*.example.com - A suffix wildcard, should be accepted
-/// DNS:*ar.example.com - A prefix wildcard, should be accepted
-/// DNS:b*z.example.com - An infix wildcard
-/// DNS:trailing.period.example.com. - A domain with a trailing period, should match
-/// DNS:xn--strae-oqa.unicode.example.com. - An IDN A-label, should match.
-/// DNS:xn--x*-gia.unicode.example.com. - An IDN A-label with a wildcard, invalid.
-/// DNS:weirdwildcard.*.example.com. - A wildcard not in the leftmost label, invalid.
-/// DNS:*.*.double.example.com. - Two wildcards, invalid.
-/// DNS:*.xn--strae-oqa.example.com. - A wildcard followed by a new IDN A-label, this is fine.
+/// DNS:*.WILDCARD.EXAMPLE.com - A straightforward wildcard, should be accepted
+/// DNS:FO*.EXAMPLE.com - A suffix wildcard, should be accepted
+/// DNS:*AR.EXAMPLE.com - A prefix wildcard, should be accepted
+/// DNS:B*Z.EXAMPLE.com - An infix wildcard
+/// DNS:TRAILING.PERIOD.EXAMPLE.com. - A domain with a trailing period, should match
+/// DNS:XN--STRAE-OQA.UNICODE.EXAMPLE.com. - An IDN A-label, should match.
+/// DNS:XN--X*-GIA.UNICODE.EXAMPLE.com. - An IDN A-label with a wildcard, invalid.
+/// DNS:WEIRDWILDCARD.*.EXAMPLE.com. - A wildcard not in the leftmost label, invalid.
+/// DNS:*.*.DOUBLE.EXAMPLE.com. - Two wildcards, invalid.
+/// DNS:*.XN--STRAE-OQA.EXAMPLE.com. - A wildcard followed by a new IDN A-label, this is fine.
 /// A SAN with a null in it, should be ignored.
 ///
 /// This also contains a commonName of httpbin.org.
@@ -67,34 +67,34 @@ private let weirdoSANCert = try! Certificate(
 
         SubjectAlternativeNames([
             // A straightforward wildcard, should be accepted
-            .dnsName("*.wildcard.example.com"),
+            .dnsName("*.WILDCARD.EXAMPLE.com"),
 
             // A suffix wildcard, should be accepted
-            .dnsName("fo*.example.com"),
+            .dnsName("FO*.EXAMPLE.com"),
 
             /// A prefix wildcard, should be accepted
-            .dnsName("*ar.example.com"),
+            .dnsName("*AR.EXAMPLE.com"),
 
             /// An infix wildcard
-            .dnsName("b*z.example.com"),
+            .dnsName("B*Z.EXAMPLE.com"),
 
             /// A domain with a trailing period, should match
-            .dnsName("trailing.period.example.com."),
+            .dnsName("TRAILING.PERIOD.EXAMPLE.com."),
 
             /// An IDN A-label, should match.
-            .dnsName("xn--strae-oqa.unicode.example.com."),
+            .dnsName("XN--STRAE-OQA.UNICODE.EXAMPLE.com."),
 
             /// An IDN A-label with a wildcard, invalid.
-            .dnsName("xn--x*-gia.unicode.example.com."),
+            .dnsName("XN--X*-GIA.UNICODE.EXAMPLE.com."),
 
             /// A wildcard not in the leftmost label, invalid.
-            .dnsName("weirdwildcard.*.example.com."),
+            .dnsName("WEIRDWILDCARD.*.EXAMPLE.com."),
 
             /// Two wildcards, invalid.
-            .dnsName("*.*.double.example.com."),
+            .dnsName("*.*.DOUBLE.EXAMPLE.com."),
 
             /// A wildcard followed by a new IDN A-label, this is fine.
-            .dnsName("*.xn--strae-oqa.example.com."),
+            .dnsName("*.XN--STRAE-OQA.EXAMPLE.com."),
 
             /// A SAN with a null in it, should be ignored.
             .dnsName("\u{0000}"),
