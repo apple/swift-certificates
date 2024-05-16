@@ -584,9 +584,11 @@ final class PolicyBuilderTests: XCTestCase {
             throw TestError()
         }
 
-        XCTAssertThrowsError(try AllOfPolicies {
-            try throwingPolicyBuilder()
-        }) { error in
+        XCTAssertThrowsError(
+            try AllOfPolicies {
+                try throwingPolicyBuilder()
+            }
+        ) { error in
             XCTAssertTrue(error is TestError)
         }
     }
@@ -606,9 +608,11 @@ final class PolicyBuilderTests: XCTestCase {
             throw TestError()
         }
 
-        XCTAssertThrowsError(try OneOfPolicies {
-            try throwingPolicyBuilder()
-        }) { error in
+        XCTAssertThrowsError(
+            try OneOfPolicies {
+                try throwingPolicyBuilder()
+            }
+        ) { error in
             XCTAssertTrue(error is TestError)
         }
     }
