@@ -383,6 +383,12 @@ extension Collection {
     }
 }
 
+extension Sequence<UInt8> {
+    fileprivate func caseInsensitiveElementsEqual(_ other: some Sequence<UInt8>) -> Bool {
+        self.elementsEqual(other) { $0.lowercased() == $1.lowercased() }
+    }
+}
+
 extension UInt8 {
     /// Whether this character is a valid DNS character, which is the ASCII
     /// letters, digits, the hypen, and the period.
@@ -393,6 +399,10 @@ extension UInt8 {
         default:
             return false
         }
+    }
+
+    fileprivate func lowercased() -> UInt8 {
+        asciiCapitals.contains(self) ? self | 0x20 : self
     }
 }
 
@@ -457,7 +467,7 @@ private struct AnalysedCertificateHostname<
         // Now we can finally initialize ourself.
         if let asteriskIndex = asteriskIndex {
             // One final check: if we found a wildcard, we need to confirm that the first label isn't an IDNA A label.
-            if baseName.prefix(4).elementsEqual(asciiIDNAIdentifier) {
+            if baseName.prefix(4).caseInsensitiveElementsEqual(asciiIDNAIdentifier) {
                 return nil
             }
 
@@ -474,7 +484,7 @@ private struct AnalysedCertificateHostname<
         switch self.name {
         case .singleName(let baseName):
             // For non-wildcard names, we just do a straightforward comparison.
-            return baseName.elementsEqual(target.bytes)
+            return baseName.caseInsensitiveElementsEqual(target.bytes)
 
         case .wildcard(let baseName, asteriskIndex: let asteriskIndex, firstPeriodIndex: let firstPeriodIndex):
             // The wildcard can appear more-or-less anywhere in the first label. The wildcard
@@ -490,7 +500,7 @@ private struct AnalysedCertificateHostname<
             let (wildcardLabel, remainingComponents) = baseName.splitAroundIndex(firstPeriodIndex)
             let (targetFirstLabel, targetRemainingComponents) = target.bytes.splitAroundIndex(target.firstPeriodIndex)
 
-            guard remainingComponents.elementsEqual(targetRemainingComponents) else {
+            guard remainingComponents.caseInsensitiveElementsEqual(targetRemainingComponents) else {
                 // Wildcard is irrelevant, the remaining components don't match.
                 return false
             }
@@ -504,8 +514,8 @@ private struct AnalysedCertificateHostname<
             let targetBeforeWildcard = targetFirstLabel.prefix(wildcardLabelPrefix.count)
             let targetAfterWildcard = targetFirstLabel.suffix(wildcardLabelSuffix.count)
 
-            let leadingBytesMatch = targetBeforeWildcard.elementsEqual(wildcardLabelPrefix)
-            let trailingBytesMatch = targetAfterWildcard.elementsEqual(wildcardLabelSuffix)
+            let leadingBytesMatch = targetBeforeWildcard.caseInsensitiveElementsEqual(wildcardLabelPrefix)
+            let trailingBytesMatch = targetAfterWildcard.caseInsensitiveElementsEqual(wildcardLabelSuffix)
 
             return leadingBytesMatch && trailingBytesMatch
         }
