@@ -576,4 +576,52 @@ final class PolicyBuilderTests: XCTestCase {
             }
         }
     }
+
+    func testAllOfPoliciesThrowing() {
+        // Creating a AllOfPolicies which throws an error inside will itself throw
+        struct TestError: Error {}
+        func throwingPolicyBuilder() throws -> Policy {
+            throw TestError()
+        }
+
+        XCTAssertThrowsError(
+            try AllOfPolicies {
+                try throwingPolicyBuilder()
+            }
+        ) { error in
+            XCTAssertTrue(error is TestError)
+        }
+    }
+
+    func testAllOfPoliciesNonThrowing() {
+        // creating a AllOfPolicies with a non-throwing closure can't throw
+        // This is tested at compile time (lack of `try` keyword)
+        _ = AllOfPolicies {
+            Policy(result: .meetsPolicy)
+        }
+    }
+
+    func testOneOfPoliciesThrowing() {
+        // Creating a OneOfPolicies which throws an error inside will itself throw
+        struct TestError: Error {}
+        func throwingPolicyBuilder() throws -> Policy {
+            throw TestError()
+        }
+
+        XCTAssertThrowsError(
+            try OneOfPolicies {
+                try throwingPolicyBuilder()
+            }
+        ) { error in
+            XCTAssertTrue(error is TestError)
+        }
+    }
+
+    func testOneOfPoliciesNonThrowing() {
+        // creating a OneOfPolicies with a non-throwing closure can't throw
+        // This is tested at compile time (lack of `try` keyword)
+        _ = OneOfPolicies {
+            Policy(result: .meetsPolicy)
+        }
+    }
 }
