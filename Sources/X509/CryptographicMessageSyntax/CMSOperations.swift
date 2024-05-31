@@ -15,11 +15,6 @@ import Foundation
 import SwiftASN1
 import Crypto
 
-public enum CMSSigningError: Error {
-    case noTimeZone
-    case invalidSigningDateComponent(dateComponents: DateComponents, requiredComponents: Set<Calendar.Component>)
-}
-
 public enum CMS {
     @_spi(CMS)
     @inlinable
@@ -29,80 +24,75 @@ public enum CMS {
         additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey,
-        includeSigningTime: Bool = false
+        signingTime: Date? = nil
     ) throws -> [UInt8] {
-        var signature: Certificate.Signature
-        var completeSignedAttrs: [CMSAttribute]? = nil
-        if includeSigningTime {
-            var signedAttrs: [CMSAttribute] = []
-            // As specified in RFC 5652 section 11 when including signedAttrs we need to include a minimum of:
-            // 1. content-type
-            // 2. message-digest
-
-            // add content-type signedAttr cms data
-            let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
-            let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
-            signedAttrs.append(contentTypeAttribute)
-
-            // add message-digest sha256 of provided content bytes
-            try SHA256.hash(data: bytes).withUnsafeBytes { bufferPointer in
-                let messageDigest = ASN1OctetString(contentBytes: ArraySlice(bufferPointer))
-                let messageDigestVal = try ASN1Any(erasing: messageDigest)
-                let messageDigestAttribute = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
-                signedAttrs.append(messageDigestAttribute)
-            }
-
-            // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
-            let desiredComponents: Set = [
-                Calendar.Component.year,
-                Calendar.Component.month,
-                Calendar.Component.day,
-                Calendar.Component.hour,
-                Calendar.Component.minute,
-                Calendar.Component.second,
-            ]
-            guard let timeZone = TimeZone(identifier: "UTC") else {
-                throw CMSSigningError.noTimeZone
-            }
-            var calendar = Calendar(identifier: .gregorian)
-            calendar.timeZone = timeZone
-            let nowComponents = calendar.dateComponents(desiredComponents, from: Date())
-            guard let year = nowComponents.year,
-                let month = nowComponents.month,
-                let day = nowComponents.day,
-                let hour = nowComponents.hour,
-                let min = nowComponents.minute,
-                let sec = nowComponents.second
-            else {
-                throw CMSSigningError.invalidSigningDateComponent(
-                    dateComponents: nowComponents,
-                    requiredComponents: desiredComponents
-                )
-            }
-            let utcTime = try UTCTime((year: year, month: month, day: day, hours: hour, minutes: min, seconds: sec))
-            let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
-            let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
-            signedAttrs.append(signingTimeAttribute)
-
-            // As specified in RFC 5652 section 5.4:
-            // When the [signedAttrs] field is present, however, the result is the message digest of the complete DER encoding of the SignedAttrs value contained in the signedAttrs field.
-            var coder = DER.Serializer()
-            try coder.serializeSetOf(signedAttrs)
-            let signedAttrBytes = coder.serializedBytes[...]
-            signature = try privateKey.sign(bytes: signedAttrBytes, signatureAlgorithm: signatureAlgorithm)
-            completeSignedAttrs = signedAttrs
-        } else {
-            signature = try privateKey.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+        if let signingTime = signingTime {
+            return try signWithSigningTime(
+                bytes,
+                signatureAlgorithm: signatureAlgorithm,
+                certificate: certificate,
+                privateKey: privateKey,
+                signingTime: signingTime
+            )
         }
 
+        // no signing time provided, sign regularly (without signedAttrs)
+        let signature = try privateKey.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+        let signedData = try self.generateSignedData(
+            signatureBytes: ASN1OctetString(signature),
+            signatureAlgorithm: signatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate
+        )
+
+        return try serializeSignedData(signedData)
+    }
+
+    @inlinable
+    static func signWithSigningTime<Bytes: DataProtocol>(
+        _ bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalIntermediateCertificates: [Certificate] = [],
+        certificate: Certificate,
+        privateKey: Certificate.PrivateKey,
+        signingTime: Date
+    ) throws -> [UInt8] {
+        var signedAttrs: [CMSAttribute] = []
+        // As specified in RFC 5652 section 11 when including signedAttrs we need to include a minimum of:
+        // 1. content-type
+        // 2. message-digest
+
+        // add content-type signedAttr cms data
+        let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
+        let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
+        signedAttrs.append(contentTypeAttribute)
+
+        // add message-digest sha256 of provided content bytes
+        let computedDigest = SHA256.hash(data: bytes)
+        let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
+        let messageDigestVal = try ASN1Any(erasing: messageDigest)
+        let messageDigestAttr = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
+        signedAttrs.append(messageDigestAttr)
+
+        // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
+        let utcTime = try UTCTime(signingTime.utcDate)
+        let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
+        let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
+        signedAttrs.append(signingTimeAttribute)
+
+        // As specified in RFC 5652 section 5.4:
+        // When the [signedAttrs] field is present, however, the result is the message digest of the complete DER encoding of the SignedAttrs value contained in the signedAttrs field.
+        var coder = DER.Serializer()
+        try coder.serializeSetOf(signedAttrs)
+        let signedAttrBytes = coder.serializedBytes[...]
+        let signature = try privateKey.sign(bytes: signedAttrBytes, signatureAlgorithm: signatureAlgorithm)
         let signedData = try self.generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate,
-            signedAttrs: completeSignedAttrs
+            signedAttrs: signedAttrs
         )
-
         return try serializeSignedData(signedData)
     }
 
@@ -479,29 +469,5 @@ extension Certificate.Signature {
             signatureAlgorithm: signatureAlgorithm,
             signatureBytes: ASN1BitString(bytes: signatureBytes.bytes)
         )
-    }
-}
-
-extension CMSSigningError: LocalizedError {
-    public var errorDescription: String? {
-        switch self {
-        case .noTimeZone:
-            return NSLocalizedString("Unable to use UTC Time Zone", comment: "Unable to use UTC Time Zone")
-        case .invalidSigningDateComponent:
-            return NSLocalizedString("Missing date components", comment: "Missing date components")
-        }
-    }
-
-    public var failureReason: String? {
-        switch self {
-        case .noTimeZone:
-            return nil
-        case .invalidSigningDateComponent(let dateComponents, let requiredComponents):
-            return NSLocalizedString(
-                "Expected date components:\(requiredComponents). Received date components:\(dateComponents)",
-                comment:
-                    "Expected Date Components:[list of required calendar components]. Received date components:[provided date components]"
-            )
-        }
     }
 }

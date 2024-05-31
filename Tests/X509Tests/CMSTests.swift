@@ -961,7 +961,7 @@ final class CMSTests: XCTestCase {
             signatureAlgorithm: .ecdsaWithSHA256,
             certificate: Self.leaf1Cert,
             privateKey: Self.leaf1Key,
-            includeSigningTime: true
+            signingTime: Date()
         )
         let isValidSignature = await CMS.isValidSignature(
             dataBytes: data,
@@ -1080,41 +1080,14 @@ extension CMS {
         signedAttrs.append(contentTypeAttribute)
 
         // add message-digest sha256 of provided content bytes
-        try SHA256.hash(data: bytes).withUnsafeBytes { bufferPointer in
-            let messageDigest = ASN1OctetString(contentBytes: ArraySlice(bufferPointer))
-            let messageDigestVal = try ASN1Any(erasing: messageDigest)
-            let messageDigestAttribute = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
-            signedAttrs.append(messageDigestAttribute)
-        }
+        let computedDigest = SHA256.hash(data: bytes)
+        let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
+        let messageDigestVal = try ASN1Any(erasing: messageDigest)
+        let messageDigestAttr = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
+        signedAttrs.append(messageDigestAttr)
 
         // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
-        let desiredComponents: Set = [
-            Calendar.Component.year,
-            Calendar.Component.month,
-            Calendar.Component.day,
-            Calendar.Component.hour,
-            Calendar.Component.minute,
-            Calendar.Component.second,
-        ]
-        guard let timeZone = TimeZone(identifier: "UTC") else {
-            throw CMSSigningError.noTimeZone
-        }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-        let nowComponents = calendar.dateComponents(desiredComponents, from: Date())
-        guard let year = nowComponents.year,
-            let month = nowComponents.month,
-            let day = nowComponents.day,
-            let hour = nowComponents.hour,
-            let min = nowComponents.minute,
-            let sec = nowComponents.second
-        else {
-            throw CMSSigningError.invalidSigningDateComponent(
-                dateComponents: nowComponents,
-                requiredComponents: desiredComponents
-            )
-        }
-        let utcTime = try UTCTime((year: year, month: month, day: day, hours: hour, minutes: min, seconds: sec))
+        let utcTime = try UTCTime(Date().utcDate)
         let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
         let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
         signedAttrs.append(signingTimeAttribute)
