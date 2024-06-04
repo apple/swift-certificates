@@ -27,7 +27,7 @@ public enum CMS {
         signingTime: Date? = nil
     ) throws -> [UInt8] {
         if let signingTime = signingTime {
-            return try signWithSigningTime(
+            return try self.signWithSigningTime(
                 bytes,
                 signatureAlgorithm: signatureAlgorithm,
                 certificate: certificate,
@@ -45,7 +45,7 @@ public enum CMS {
             certificate: certificate
         )
 
-        return try serializeSignedData(signedData)
+        return try self.serializeSignedData(signedData)
     }
 
     @inlinable
@@ -93,7 +93,7 @@ public enum CMS {
             certificate: certificate,
             signedAttrs: signedAttrs
         )
-        return try serializeSignedData(signedData)
+        return try self.serializeSignedData(signedData)
     }
 
     @_spi(CMS)
