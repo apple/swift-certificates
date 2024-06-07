@@ -1,5 +1,5 @@
 {
-  "mallocCountTotal" : 1233,
+  "mallocCountTotal" : 1249,
   "memoryLeaked" : 0,
   "readSyscalls" : 0,
   "writeSyscalls" : 0
