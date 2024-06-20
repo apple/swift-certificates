@@ -14,6 +14,9 @@
 
 import Foundation
 import SwiftASN1
+#if os(Windows)
+import WinSDK
+#endif
 
 /// A ``VerifierPolicy`` that validates that the leaf certificate is authoritative
 /// for a given hostname or IP address.
