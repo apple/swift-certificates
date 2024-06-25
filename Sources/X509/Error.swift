@@ -228,7 +228,29 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
             )
         )
     }
+
+    /// The system trust store could not be found or failed to load from disk.
+    /// - Parameter reason: A detailed reason included which locations were tried and which error got thrown.
+    /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/failedToLoadSystemTrustStore``.
+    @inline(never)
+    public static func failedToLoadSystemTrustStore(
+        reason: String,
+        file: String = #fileID,
+        line: UInt = #line
+    ) -> CertificateError {
+        return CertificateError(
+            backing: .init(
+                code: .failedToLoadSystemTrustStore,
+                reason: reason,
+                file: file,
+                line: line
+            )
+        )
+    }
 }
+
+// `CertificateError` is `Sendable` because it uses CoW
+extension CertificateError: @unchecked Sendable {}
 
 extension CertificateError {
     /// Represents the kind of an error.
@@ -247,6 +269,7 @@ extension CertificateError {
             case incorrectOIDForAttribute
             case invalidCSRAttribute
             case duplicateOID
+            case failedToLoadSystemTrustStore
         }
 
         fileprivate var backingCode: BackingCode
@@ -281,6 +304,9 @@ extension CertificateError {
 
         /// An OID is present twice.
         public static let duplicateOID = ErrorCode(.duplicateOID)
+
+        /// The system trust store could not be located or failed to load from disk.
+        public static let failedToLoadSystemTrustStore = ErrorCode(.failedToLoadSystemTrustStore)
 
         public var description: String {
             return String(describing: self.backingCode)

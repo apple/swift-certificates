@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.8
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftCertificates open source project
@@ -55,6 +55,7 @@ let package = Package(
                 .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
+                .copy("ca-certificates.crt")
             ]),
         .target(
             name: "_CertificateInternals",
@@ -75,7 +76,7 @@ let package = Package(
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
     package.dependencies += [
         .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0" ..< "4.0.0"),
-        .package(url: "https://github.com/apple/swift-asn1.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-asn1.git", from: "1.1.0"),
         .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.0.0"),
     ]
 } else {

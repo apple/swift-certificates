@@ -14,7 +14,7 @@
 
 import SwiftASN1
 import Crypto
-#if canImport(Darwin)
+#if canImport(Darwin) || swift(>=5.9.1)
 import Foundation
 #else
 @preconcurrency import Foundation
@@ -320,6 +320,7 @@ extension OCSPVerifierPolicy.Storage {
             return responderURI
         }.first
         guard let responderURI else {
+            let ocspAccessDescriptions = Array(ocspAccessDescriptions)
             return self.softFailure(
                 reason: .init("expected OCSP location to be a URI but got \(ocspAccessDescriptions)")
             )

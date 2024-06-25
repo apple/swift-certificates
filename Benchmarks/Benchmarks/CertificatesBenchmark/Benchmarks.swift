@@ -23,16 +23,10 @@ let benchmarks = {
             .readSyscalls,
             .writeSyscalls,
             .memoryLeaked,
-            .retainCount,
-            .releaseCount,
         ]
     )
 
-    var configWithoutRetainRelease = Benchmark.defaultConfiguration
-    configWithoutRetainRelease.metrics.removeAll(where: { $0 == .retainCount || $0 == .releaseCount })
-
-    // async code is currently still quite flaky in the number of retain/release it does so we don't measure them today
-    Benchmark("Verifier", configuration: configWithoutRetainRelease) { benchmark in
+    Benchmark("Verifier") { benchmark in
         for _ in benchmark.scaledIterations {
             await verifier()
         }

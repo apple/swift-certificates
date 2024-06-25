@@ -67,6 +67,15 @@ final class TinyArrayTests: XCTestCase {
         XCTAssertEqual(Array(_TinyArray<Int>([1, 2, 3, 4, 5])), [1, 2, 3, 4, 5])
     }
 
+    func testExpressibleByArrayLiteral() {
+        XCTAssertEqual(Array([] as _TinyArray<Int>), [])
+        XCTAssertEqual(Array([1] as _TinyArray<Int>), [1])
+        XCTAssertEqual(Array([1, 2] as _TinyArray<Int>), [1, 2])
+        XCTAssertEqual(Array([1, 2, 3] as _TinyArray<Int>), [1, 2, 3])
+        XCTAssertEqual(Array([1, 2, 3, 4] as _TinyArray<Int>), [1, 2, 3, 4])
+        XCTAssertEqual(Array([1, 2, 3, 4, 5] as _TinyArray<Int>), [1, 2, 3, 4, 5])
+    }
+
     func testAppend() {
         assertEqual([1]) { array in
             array.append(1)
@@ -85,6 +94,27 @@ final class TinyArrayTests: XCTestCase {
             array.append(2)
             array.append(3)
             array.append(4)
+        }
+    }
+
+    func testSubscriptSetter() {
+        assertEqual([2]) { array in
+            array.append(1)
+            array[0] = 2
+        }
+        assertEqual([3, 4]) { array in
+            array.append(1)
+            array.append(2)
+            array[1] = 4
+            array[0] = 3
+        }
+        assertEqual([4, 5, 6]) { array in
+            array.append(1)
+            array.append(2)
+            array.append(3)
+            array[1] = 5
+            array[0] = 4
+            array[2] = 6
         }
     }
 
@@ -312,15 +342,9 @@ final class TinyArrayTests: XCTestCase {
             Array(try _TinyArray<Int>([.success(1), .success(2), .success(3), Result.failure(MyError())]))
         )
         XCTAssertThrowsError(
-            Array(try _TinyArray<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())]))
+            Array(
+                try _TinyArray<Int>([.success(1), .success(2), .success(3), .success(4), Result.failure(MyError())])
+            )
         )
-    }
-}
-
-extension _TinyArray: ExpressibleByArrayLiteral {
-    public typealias ArrayLiteralElement = Element
-
-    public init(arrayLiteral elements: Element...) {
-        self.init(elements)
     }
 }

@@ -32,7 +32,7 @@ public struct CountryName: RelativeDistinguishedNameConvertible {
     @inlinable
     public func makeRDN() throws -> RelativeDistinguishedName {
         return RelativeDistinguishedName(
-            .init(type: .RDNAttributeType.countryName, utf8String: name)
+            try .init(type: .RDNAttributeType.countryName, printableString: name)
         )
     }
 }

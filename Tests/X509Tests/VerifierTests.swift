@@ -18,6 +18,7 @@ import SwiftASN1
 @testable import X509
 import Crypto
 
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 final class VerifierTests: XCTestCase {
     private static let referenceTime = Date()
 
@@ -618,7 +619,7 @@ final class VerifierTests: XCTestCase {
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(
             leafCertificate: Self.localhostLeaf,
-            intermediates: CertificateStore([]),
+            intermediates: CertificateStore(),
             diagnosticCallback: log.append(_:)
         )
 
@@ -639,7 +640,7 @@ final class VerifierTests: XCTestCase {
     }
 
     func testMissingRootFailsToBuild() async throws {
-        let roots = CertificateStore([])
+        let roots = CertificateStore()
         let log = DiagnosticsLog()
 
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }

@@ -42,7 +42,7 @@ import SwiftASN1
 /// ```
 /// - Note: At the moment we don't support `crls` (`RevocationInfoChoices`)
 @usableFromInline
-struct CMSSignedData: DERImplicitlyTaggable, Hashable, Sendable {
+struct CMSSignedData: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -89,6 +89,38 @@ struct CMSSignedData: DERImplicitlyTaggable, Hashable, Sendable {
             _ = DER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
 
             let signerInfos = try DER.set(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
+
+            return .init(
+                version: version,
+                digestAlgorithms: digestAlgorithms,
+                encapContentInfo: encapContentInfo,
+                certificates: certificates,
+                signerInfos: signerInfos
+            )
+        }
+    }
+
+    @inlinable
+    init(berEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try BER.sequence(berEncoded, identifier: identifier) { nodes in
+            let version = try CMSVersion(rawValue: Int.init(derEncoded: &nodes))
+            let digestAlgorithms = try BER.set(of: AlgorithmIdentifier.self, identifier: .set, nodes: &nodes)
+
+            let encapContentInfo = try CMSEncapsulatedContentInfo(berEncoded: &nodes)
+            let certificates = try BER.optionalImplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) {
+                node in
+                // Certificates should be DER encoded. Technically they can be in BER, but requires round-tripping for verification.
+                try DER.set(
+                    of: Certificate.self,
+                    identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
+                    rootNode: node
+                )
+            }
+
+            // we need to skip this node even though we don't support it
+            _ = BER.optionalImplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) { _ in }
+
+            let signerInfos = try BER.set(of: CMSSignerInfo.self, identifier: .set, nodes: &nodes)
 
             return .init(
                 version: version,

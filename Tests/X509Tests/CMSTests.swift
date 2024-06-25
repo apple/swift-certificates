@@ -453,7 +453,7 @@ final class CMSTests: XCTestCase {
             privateKey: Self.leaf1Key
         )
 
-        // Change the version number to v3 in both places.
+        // Change the version number to v3
         var signedData = try CMSSignedData(asn1Any: cmsData.content)
         signedData.version = .v3
         cmsData.content = try ASN1Any(erasing: signedData)
@@ -526,7 +526,7 @@ final class CMSTests: XCTestCase {
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
-    func testRequireCMSV1Signature() async throws {
+    func testRequireCMSV1SignatureWhenInvalidV3SignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
             data,
@@ -535,7 +535,7 @@ final class CMSTests: XCTestCase {
             privateKey: Self.leaf1Key
         )
 
-        // Change the version number to v3 in both places.
+        // Change the version number to v3 in both places, but not the signerIdentifier
         var signedData = try CMSSignedData(asn1Any: cmsData.content)
         signedData.version = .v3
         signedData.signerInfos[0].version = .v3
@@ -594,6 +594,126 @@ final class CMSTests: XCTestCase {
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
         XCTAssertInvalidCMSBlock(isValidSignature)
+    }
+
+    func testCMSV3Signature() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // Change the version number to v3 everywhere
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.version = .v3
+        signedData.signerInfos[0].version = .v3
+        signedData.signerInfos[0].signerIdentifier = try .subjectKeyIdentifier(
+            Self.leaf1Cert.extensions.subjectKeyIdentifier!
+        )
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        XCTAssertUnableToValidateSigner(isValidSignature)
+    }
+
+    func testCMSV4SignatureWithV1SignerInfo() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // Change the version number to v4
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.version = .v4
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        XCTAssertUnableToValidateSigner(isValidSignature)
+    }
+
+    func testCMSV4SignatureWithV3SignerInfo() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // Change the version number to v4
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.version = .v4
+        // change the signerInfo to v3
+        signedData.signerInfos[0].version = .v3
+        signedData.signerInfos[0].signerIdentifier = try .subjectKeyIdentifier(
+            Self.leaf1Cert.extensions.subjectKeyIdentifier!
+        )
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        XCTAssertUnableToValidateSigner(isValidSignature)
+    }
+
+    func testCMSV4SignatureWithInvalidV3SignerInfo() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // Change the version number to v4
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.version = .v4
+        // change the signerInfo to invalid v3
+        signedData.signerInfos[0].version = .v3
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        XCTAssertInvalidCMSBlock(isValidSignature)
+    }
+
+    func testCMSAttachedSignature() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // Let's add the signed data in here!
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.encapContentInfo.eContent = ASN1OctetString(contentBytes: data[...])
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidAttachedSignature(
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     func testForbidsAdditionalSignerInfos() async throws {
@@ -658,6 +778,29 @@ final class CMSTests: XCTestCase {
             dataBytes: data,
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        XCTAssertInvalidCMSBlock(isValidSignature)
+    }
+
+    func testRequireValidDetachedSignatureWhenTolerated() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // Let's add the signed data in here!
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.encapContentInfo.eContent = ASN1OctetString(contentBytes: [0xba, 0xd])
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert]),
+            allowAttachedContent: true
         ) {}
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
@@ -810,6 +953,47 @@ final class CMSTests: XCTestCase {
         }
         XCTAssertValidSignature(isValidSignature)
     }
+
+    func testSigningWithSigningTimeSignedAttr() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key,
+            signingTime: Date()
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertValidSignature(isValidSignature)
+    }
+
+    func testSigningContentBytesWithSigningTimeSignedAttrsIsInvalidSignature() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let contentInfo = try CMS.generateInvalidSignedTestDataWithSignedAttrs(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        let signature = try contentInfo.signedData!.encodedBytes
+
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertInvalidCMSBlock(isValidSignature)
+    }
 }
 
 extension DERSerializable {
@@ -869,6 +1053,51 @@ extension CMS {
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate
+        )
+    }
+    static func generateInvalidSignedTestDataWithSignedAttrs<Bytes: DataProtocol>(
+        _ bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalIntermediateCertificates: [Certificate] = [],
+        certificate: Certificate,
+        privateKey: Certificate.PrivateKey
+    ) throws -> CMSContentInfo {
+        // Sign the content bytes but include signedAttrs for the signerInfo. This should be invalid accorindg to RFC 5652 section 5.4 which specifies:
+
+        // When the [signedAttrs] field is present, however, the result is the message
+        // digest of the complete DER encoding of the SignedAttrs value
+        // contained in the signedAttrs field.
+        let signature = try privateKey.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+
+        var signedAttrs: [CMSAttribute] = []
+        // As specified in RFC 5652 section 11 when including signedAttrs we need to include a minimum of:
+        // 1. content-type
+        // 2. message-digest
+
+        // add content-type signedAttr cms data
+        let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
+        let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
+        signedAttrs.append(contentTypeAttribute)
+
+        // add message-digest sha256 of provided content bytes
+        let computedDigest = SHA256.hash(data: bytes)
+        let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
+        let messageDigestVal = try ASN1Any(erasing: messageDigest)
+        let messageDigestAttr = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
+        signedAttrs.append(messageDigestAttr)
+
+        // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
+        let utcTime = try UTCTime(Date().utcDate)
+        let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
+        let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
+        signedAttrs.append(signingTimeAttribute)
+
+        return try generateSignedData(
+            signatureBytes: ASN1OctetString(signature),
+            signatureAlgorithm: signatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate,
+            signedAttrs: signedAttrs
         )
     }
 }

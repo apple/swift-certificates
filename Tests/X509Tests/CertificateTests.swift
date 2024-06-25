@@ -474,6 +474,7 @@ final class CertificateTests: XCTestCase {
 
     private static let referenceTime = Date(timeIntervalSince1970: 1_691_504_774)
 
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
     func testCertificateDescription() throws {
         let caPrivateKey = P384.Signing.PrivateKey()
         let certificateName1 = try! DistinguishedName {
@@ -481,13 +482,15 @@ final class CertificateTests: XCTestCase {
             OrganizationName("Apple")
             CommonName("Swift Certificate Test CA 1")
         }
+        let caNotValidBefore = Self.referenceTime - .days(365)
+        let caNotValidAfter = Self.referenceTime + .days(3650)
 
         let ca = try Certificate(
             version: .v3,
             serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
             publicKey: .init(caPrivateKey.publicKey),
-            notValidBefore: Self.referenceTime - .days(365),
-            notValidAfter: Self.referenceTime + .days(3650),
+            notValidBefore: caNotValidBefore,
+            notValidAfter: caNotValidAfter,
             issuer: certificateName1,
             subject: certificateName1,
             signatureAlgorithm: .ecdsaWithSHA384,
@@ -511,8 +514,8 @@ final class CertificateTests: XCTestCase {
             serialNumber: 1:2:3:4:5:6:7:8:9:a, \
             issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
             subject: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
-            notValidBefore: 2022-08-08 14:26:14 +0000, \
-            notValidAfter: 2033-08-05 14:26:14 +0000, \
+            notValidBefore: \(String(reflecting: caNotValidBefore)), \
+            notValidAfter: \(String(reflecting: caNotValidAfter)), \
             publicKey: P384.PublicKey, \
             signature: ECDSA, \
             extensions: [\

@@ -15,7 +15,7 @@
 import SwiftASN1
 
 @usableFromInline
-struct AlgorithmIdentifier: DERImplicitlyTaggable, Hashable, Sendable {
+struct AlgorithmIdentifier: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -48,6 +48,11 @@ struct AlgorithmIdentifier: DERImplicitlyTaggable, Hashable, Sendable {
 
             return .init(algorithm: algorithmOID, parameters: parameters)
         }
+    }
+
+    @inlinable
+    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try .init(derEncoded: rootNode, withIdentifier: identifier)
     }
 
     @inlinable

@@ -29,7 +29,7 @@
     "NeverForceUnwrap" : false,
     "NeverUseForceTry" : false,
     "NeverUseImplicitlyUnwrappedOptionals" : false,
-    "NoAccessLevelOnExtensionDeclaration" : false,
+    "NoAccessLevelOnExtensionDeclaration" : true,
     "NoAssignmentInExpressions" : true,
     "NoBlockComments" : true,
     "NoCasesWithOnlyFallthrough" : true,
@@ -53,6 +53,6 @@
     "ValidateDocumentationComments" : false
   },
   "spacesAroundRangeFormationOperators" : false,
-  "tabWidth" : 8,
+  "tabWidth" : 4,
   "version" : 1
 }

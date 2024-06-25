@@ -67,6 +67,17 @@ public struct VerificationDiagnostic: Sendable {
         var issuer: Certificate
     }
 
+    /// - Note: all ``LoadingTrustRootsFailed`` are considered equal,
+    /// best we can because the underlying storage type ``Error`` doesn't conform to Eqautable
+    struct LoadingTrustRootsFailed: Hashable, Sendable {
+        var error: any Error
+
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            true
+        }
+        func hash(into hasher: inout Hasher) {}
+    }
+
     enum Storage: Hashable, Sendable {
         case leafCertificateHasUnhandledCriticalExtension(LeafCertificateHasUnhandledCriticalExtensions)
         case leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy)
@@ -81,6 +92,7 @@ public struct VerificationDiagnostic: Sendable {
         case foundValidCertificateChain(FoundValidCertificateChain)
         case couldNotValidateLeafCertificate(CouldNotValidateLeafCertificate)
         case issuerIsAlreadyInTheChain(IssuerIsAlreadyInTheChain)
+        case loadingTrustRootsFailed(LoadingTrustRootsFailed)
     }
 
     var storage: Storage
@@ -202,6 +214,13 @@ extension VerificationDiagnostic {
             )
         )
     }
+
+    @usableFromInline
+    static func loadingTrustRootsFailed(
+        _ error: any Error
+    ) -> Self {
+        .init(storage: .loadingTrustRootsFailed(error))
+    }
 }
 
 extension VerificationDiagnostic.Storage {
@@ -315,6 +334,12 @@ extension VerificationDiagnostic.Storage {
     ) -> Self {
         .issuerIsAlreadyInTheChain(.init(partialChain: partialChain, issuer: issuer))
     }
+
+    static func loadingTrustRootsFailed(
+        _ error: any Error
+    ) -> Self {
+        .loadingTrustRootsFailed(.init(error: error))
+    }
 }
 
 extension Certificate.Extensions {
@@ -352,6 +377,7 @@ extension VerificationDiagnostic.Storage: CustomStringConvertible {
         case .foundValidCertificateChain(let diagnostic): return String(describing: diagnostic)
         case .couldNotValidateLeafCertificate(let diagnostic): return String(describing: diagnostic)
         case .issuerIsAlreadyInTheChain(let diagnostic): return String(describing: diagnostic)
+        case .loadingTrustRootsFailed(let diagnostic): return String(describing: diagnostic)
         }
     }
 }
@@ -485,6 +511,14 @@ extension VerificationDiagnostic.IssuerIsAlreadyInTheChain: CustomStringConverti
     }
 }
 
+extension VerificationDiagnostic.LoadingTrustRootsFailed: CustomStringConvertible {
+    var description: String {
+        """
+        Loading system trust roots has failed: \(String(reflecting: self.error))
+        """
+    }
+}
+
 // MARK: CustomDebugStringConvertible
 
 extension VerificationDiagnostic: CustomDebugStringConvertible {
@@ -520,6 +554,7 @@ extension VerificationDiagnostic.Storage {
         case .foundValidCertificateChain(let diagnostic): return diagnostic.multilineDescription
         case .couldNotValidateLeafCertificate(let diagnostic): return diagnostic.multilineDescription
         case .issuerIsAlreadyInTheChain(let diagnostic): return diagnostic.multilineDescription
+        case .loadingTrustRootsFailed(let diagnostic): return diagnostic.multilineDescription
         }
     }
 }
@@ -658,6 +693,15 @@ extension VerificationDiagnostic.IssuerIsAlreadyInTheChain {
         \(self.partialChain.lazy.map { String(reflecting: $0) }.joined(separator: "\n"))
         Candidate issuer which is already in the chain above:
         \(String(reflecting: self.issuer))
+        """
+    }
+}
+
+extension VerificationDiagnostic.LoadingTrustRootsFailed {
+    var multilineDescription: String {
+        """
+        Loading system trust roots has failed: 
+        \(String(reflecting: self.error))
         """
     }
 }

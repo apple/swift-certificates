@@ -215,7 +215,7 @@ final class DistinguishedNameTests: XCTestCase {
         XCTAssertEqual(
             name,
             try DistinguishedName([
-                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, printableString: "US"),
                 RelativeDistinguishedName.Attribute(
                     type: .RDNAttributeType.organizationName,
                     utf8String: "DigiCert Inc"
@@ -260,7 +260,7 @@ final class DistinguishedNameTests: XCTestCase {
         XCTAssertEqual(
             name,
             try DistinguishedName([
-                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, printableString: "US"),
                 RelativeDistinguishedName.Attribute(
                     type: .RDNAttributeType.organizationName,
                     utf8String: "DigiCert Inc"
@@ -414,5 +414,35 @@ final class DistinguishedNameTests: XCTestCase {
             ),
             RelativeDistinguishedName.Attribute.Value(utf8String: String(repeating: "A", count: Int(UInt16.max) + 1))
         )
+    }
+
+    func testRDNAttributeValuesCanBeConvertedToStrings() throws {
+        let examplesAndResults: [(RelativeDistinguishedName.Attribute, String?)] = try [
+            (.init(type: .RDNAttributeType.commonName, printableString: "foo"), "foo"),
+            (.init(type: .RDNAttributeType.commonName, utf8String: "bar"), "bar"),
+            (.init(type: .RDNAttributeType.commonName, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+        ]
+
+        for (example, result) in examplesAndResults {
+            XCTAssertEqual(String(example.value), result)
+        }
+    }
+
+    func testRDNAttributeValuesCanBeConvertedToStringsInSomeOfTheAnyCasesToo() throws {
+        let weirdOID: ASN1ObjectIdentifier = [1, 2, 3, 4, 5]
+
+        let examplesAndResults: [(RelativeDistinguishedName.Attribute, String?)] = try [
+            (.init(type: weirdOID, printableString: "foo"), "foo"),
+            (.init(type: weirdOID, utf8String: "bar"), "bar"),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1UTF8String("foo"))), "foo"),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1PrintableString("baz"))), "baz"),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+            (.init(type: weirdOID, value: ASN1Any(erasing: 5)), nil),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1OctetString(contentBytes: [1, 2, 3, 4]))), nil),
+        ]
+
+        for (example, result) in examplesAndResults {
+            XCTAssertEqual(String(example.value), result)
+        }
     }
 }
