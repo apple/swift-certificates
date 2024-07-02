@@ -58,6 +58,11 @@ import SwiftASN1
 /// across the rest of the data. Allowing users to change this data makes it easy to accidentally modify
 /// a ``Certificate`` in one part of your code and not realise that the signature has inevitably
 /// been invalidated.
+///
+/// ### Creating Certificates from SecCertificate and vice versa
+///
+/// An instance of ``Certificate`` can be created from ``Security/SecCertificate`` (from the ``Security`` framework) with ``Certificate/init(_:)``.
+/// The opposite, that is, creating an instance of ``Security/SecCertificate`` from ``Certificate``, can be achieved with ``Security/SecCertificate/makeWithCertificate(_:)``.
 public struct Certificate {
     /// The X.509 version of this certificate.
     ///
@@ -295,3 +300,30 @@ extension Certificate: PEMRepresentable {
     @inlinable
     public static var defaultPEMDiscriminator: String { "CERTIFICATE" }
 }
+
+#if canImport(Security)
+import Security
+extension Certificate {
+    /// Creates an instance of ``Certificate`` from ``Security/SecCertificate``.
+    /// To create an instance of ``Security/SecCertificate``, use ``Security/SecCertificate/makeWithCertificate(_:)`` instead.
+    /// - Parameter certificate: The `SecCertificate` instance used to initialize this new `Certificate` instance
+    public init(_ certificate: SecCertificate) throws {
+        try self.init(derEncoded: Array(SecCertificateCopyData(certificate) as Data))
+    }
+}
+
+extension SecCertificate {
+    /// Creates an instance of ``Security/SecCertificate`` from ``Certificate``.
+    /// To create an instance of ``Certificate``, use ``Certificate/init(_:)`` instead.
+    /// - Parameter certificate: The `Certificate` instance used to initialize this new `SecCertificate` instance
+    /// - Returns: A new `SecCertificate` instance based on the provided `Certificate` instance
+    public static func makeWithCertificate(_ certificate: Certificate) throws -> SecCertificate {
+        var coder = DER.Serializer()
+        try certificate.serialize(into: &coder)
+
+        let derData = Data(coder.serializedBytes)
+
+        return SecCertificateCreateWithData(nil, derData as CFData)!
+    }
+}
+#endif
