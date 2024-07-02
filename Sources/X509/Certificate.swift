@@ -295,3 +295,28 @@ extension Certificate: PEMRepresentable {
     @inlinable
     public static var defaultPEMDiscriminator: String { "CERTIFICATE" }
 }
+
+#if canImport(Security)
+import Security
+extension Certificate {
+    /// Creates an instance of `Certifcate` from `SecCertificate`
+    /// - Parameter certificate: The `SecCertificate` instance used to initialize this new `Certificate` instance
+    public init(_ certificate: SecCertificate) throws {
+        try self.init(derEncoded: Array(SecCertificateCopyData(certificate) as Data))
+    }
+}
+
+extension SecCertificate {
+    /// Creates an instance of `SecCertificate` from `Certificate`
+    /// - Parameter certificate: The `Certificate` instance used to initialize this new `SecCertificate` instance
+    /// - Returns: A new `SecCertificate` instance based on the provided `Certificate` instance
+    public static func createWithCertificate(_ certificate: Certificate) throws -> SecCertificate {
+        var coder = DER.Serializer()
+        try certificate.serialize(into: &coder)
+
+        let derData = Data(coder.serializedBytes)
+
+        return SecCertificateCreateWithData(nil, derData as CFData)!
+    }
+}
+#endif

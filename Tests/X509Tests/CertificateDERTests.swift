@@ -19,6 +19,10 @@ import SwiftASN1
 import Crypto
 import _CryptoExtras
 
+#if canImport(Security)
+import Security
+#endif
+
 final class CertificateDERTests: XCTestCase {
     static let base64EncodedSampleCert = """
         MIIDsjCCAzigAwIBAgIQDKuq0c7E6XzCZliB0CE49zAKBggqhkjOPQQDAzBhMQsw
@@ -163,6 +167,20 @@ final class CertificateDERTests: XCTestCase {
         UKqK1drk/NAJBzewdXUh
         """,
     ]
+
+    #if canImport(Security)
+    func testSecCertificateBridge() throws {
+        let certificateData = Data(base64Encoded: Self.base64EncodedSampleCert, options: .ignoreUnknownCharacters)!
+        let binary = Array(certificateData)
+
+        let cert = try Certificate(derEncoded: binary)
+
+        let certConvertedToSecCert = try SecCertificate.createWithCertificate(cert)
+        let secCertConvertedToCert = try Certificate(certConvertedToSecCert)
+
+        XCTAssertEqual(cert, secCertConvertedToCert)
+    }
+    #endif
 
     func testSimpleDecode() throws {
         let binary = Array(Data(base64Encoded: Self.base64EncodedSampleCert, options: .ignoreUnknownCharacters)!)
