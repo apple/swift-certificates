@@ -175,7 +175,7 @@ final class CertificateDERTests: XCTestCase {
 
         let cert = try Certificate(derEncoded: binary)
 
-        let certConvertedToSecCert = try SecCertificate.createWithCertificate(cert)
+        let certConvertedToSecCert = try SecCertificate.makeWithCertificate(cert)
         let secCertConvertedToCert = try Certificate(certConvertedToSecCert)
 
         XCTAssertEqual(cert, secCertConvertedToCert)
