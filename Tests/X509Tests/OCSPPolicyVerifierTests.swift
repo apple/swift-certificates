@@ -274,7 +274,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         requester: @autoclosure () -> some OCSPRequester,
         validationTime: Date? = nil,
         expectedQueryCount: Int = 1,
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) async {
         switch soft {
@@ -328,7 +328,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
         validationTime: Date? = nil,
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
@@ -370,7 +370,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         expectedQueryCount: Int = 1,
         validationTime: Date? = nil,
 
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
