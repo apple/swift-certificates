@@ -23,7 +23,8 @@ let benchmarks = {
             .readSyscalls,
             .writeSyscalls,
             .memoryLeaked,
-        ]
+        ],
+        scalingFactor: .kilo
     )
 
     Benchmark("Verifier") { benchmark in
