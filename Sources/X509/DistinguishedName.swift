@@ -197,7 +197,9 @@ extension DistinguishedName: DERParseable {
     static func derEncoded(_ sequenceNodeIterator: inout ASN1NodeCollection.Iterator) throws -> DistinguishedName {
         // This is a workaround for the fact that, even though the conformance to DERImplicitlyTaggable is
         // deprecated, Swift still prefers calling init(derEncoded:withIdentifier:) instead of this one.
-        let dnFactory: (inout ASN1NodeCollection.Iterator) throws -> DistinguishedName = DistinguishedName.init(derEncoded:)
+        let dnFactory: (
+            inout ASN1NodeCollection.Iterator
+        ) throws -> DistinguishedName = DistinguishedName.init(derEncoded:)
         return try dnFactory(&sequenceNodeIterator)
     }
 }
