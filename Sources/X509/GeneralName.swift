@@ -59,7 +59,9 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
             self = .x400Address(ASN1Any(derEncoded: rootNode))
         case Self.directoryNameTag:
             self = try DER.explicitlyTagged(
-                rootNode, tagNumber: Self.directoryNameTag.tagNumber, tagClass: Self.directoryNameTag.tagClass
+                rootNode,
+                tagNumber: Self.directoryNameTag.tagNumber,
+                tagClass: Self.directoryNameTag.tagClass
             ) { node in
                 return try .directoryName(DistinguishedName(derEncoded: node))
             }

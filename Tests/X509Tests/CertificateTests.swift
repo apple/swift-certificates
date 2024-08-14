@@ -643,11 +643,13 @@ final class CertificateTests: XCTestCase {
     }
 
     func testAKISerialization() throws {
-        let t = GeneralName.directoryName(try DistinguishedName {
-            CommonName("CA")
-            OrganizationName("Some Org")
-            CountryName("Some Country")
-        })
+        let t = GeneralName.directoryName(
+            try DistinguishedName {
+                CommonName("CA")
+                OrganizationName("Some Org")
+                CountryName("Some Country")
+            }
+        )
         let aki = AuthorityKeyIdentifierValue(AuthorityKeyIdentifier(authorityCertIssuer: [t]))
         var serializer = DER.Serializer()
         try serializer.serialize(aki)
@@ -659,21 +661,21 @@ final class CertificateTests: XCTestCase {
         XCTAssertEqual(
             bytes,
             [
-                0x30, 0x3d, // SEQUENCE, length 61 bytes
-                0xa1, 0x3b, // [1], length 59 bytes
-                0xa4, 0x39, // [4], length 57 bytes
-                0x30, 0x37, // SEQUENCE, length 55 bytes
+                0x30, 0x3d,  // SEQUENCE, length 61 bytes
+                0xa1, 0x3b,  // [1], length 59 bytes
+                0xa4, 0x39,  // [4], length 57 bytes
+                0x30, 0x37,  // SEQUENCE, length 55 bytes
                 0x31, 0xb,  // SET, length 11 bytes
                 0x30, 0x9,  // SEQUENCE, length 9 bytes
-                0x6, 0x3, 0x55, 0x4, 0x3, // OID, common name
-                0xc, 0x2, 0x43, 0x41,     // UTF-8 string, "CA"
-                0x31, 0x11, // SET, length 17 bytes
-                0x30, 0xf, // SEQUENCE, length 15 bytes
-                0x6, 0x3, 0x55, 0x4, 0xa, // OID, organizationName
-                0xc, 0x8, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x4f, 0x72, 0x67, // UTF-8 string, "Some Org"
-                0x31, 0x15, // SET, length 21 bytes
-                0x30, 0x13, // SEQUENCE, length 19 bytes
-                0x6, 0x3, 0x55, 0x4, 0x6, // OID, countryName
+                0x6, 0x3, 0x55, 0x4, 0x3,  // OID, common name
+                0xc, 0x2, 0x43, 0x41,  // UTF-8 string, "CA"
+                0x31, 0x11,  // SET, length 17 bytes
+                0x30, 0xf,  // SEQUENCE, length 15 bytes
+                0x6, 0x3, 0x55, 0x4, 0xa,  // OID, organizationName
+                0xc, 0x8, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x4f, 0x72, 0x67,  // UTF-8 string, "Some Org"
+                0x31, 0x15,  // SET, length 21 bytes
+                0x30, 0x13,  // SEQUENCE, length 19 bytes
+                0x6, 0x3, 0x55, 0x4, 0x6,  // OID, countryName
                 0x13, 0xc, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x72, 0x79,
                 // Printable string, "Some Country"
             ]
