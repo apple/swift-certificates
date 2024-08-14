@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import XCTest
-import Crypto
+@preconcurrency import Crypto
 import SwiftASN1
 @testable import X509
 #if canImport(Darwin) || swift(>=5.9.1)
