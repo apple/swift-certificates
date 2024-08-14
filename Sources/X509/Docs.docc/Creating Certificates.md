@@ -178,3 +178,8 @@ try serializer.serialize(certificate)
 let derEncodedCertificate = serializer.serializedBytes
 let derEncodedPrivateKey = swiftCryptoKey.derRepresentation
 ```
+
+### Creating Certificates from SecCertificate and vice versa
+
+An instance of ``Certificate`` can be created from ``Security/SecCertificate`` (from the ``Security`` framework) with ``Certificate/init(_:)``.
+The opposite, that is, creating an instance of ``Security/SecCertificate`` from ``Certificate``, can be achieved with ``Security/SecCertificate/makeWithCertificate(_:)``.

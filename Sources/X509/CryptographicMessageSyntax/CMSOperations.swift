@@ -23,15 +23,77 @@ public enum CMS {
         signatureAlgorithm: Certificate.SignatureAlgorithm,
         additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate,
-        privateKey: Certificate.PrivateKey
+        privateKey: Certificate.PrivateKey,
+        signingTime: Date? = nil
     ) throws -> [UInt8] {
+        if let signingTime = signingTime {
+            return try self.signWithSigningTime(
+                bytes,
+                signatureAlgorithm: signatureAlgorithm,
+                certificate: certificate,
+                privateKey: privateKey,
+                signingTime: signingTime
+            )
+        }
+
+        // no signing time provided, sign regularly (without signedAttrs)
         let signature = try privateKey.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
-        return try sign(
+        let signedData = try self.generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate
         )
+
+        return try self.serializeSignedData(signedData)
+    }
+
+    @inlinable
+    static func signWithSigningTime<Bytes: DataProtocol>(
+        _ bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalIntermediateCertificates: [Certificate] = [],
+        certificate: Certificate,
+        privateKey: Certificate.PrivateKey,
+        signingTime: Date
+    ) throws -> [UInt8] {
+        var signedAttrs: [CMSAttribute] = []
+        // As specified in RFC 5652 section 11 when including signedAttrs we need to include a minimum of:
+        // 1. content-type
+        // 2. message-digest
+
+        // add content-type signedAttr cms data
+        let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
+        let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
+        signedAttrs.append(contentTypeAttribute)
+
+        // add message-digest sha256 of provided content bytes
+        let computedDigest = SHA256.hash(data: bytes)
+        let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
+        let messageDigestVal = try ASN1Any(erasing: messageDigest)
+        let messageDigestAttr = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
+        signedAttrs.append(messageDigestAttr)
+
+        // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
+        let utcTime = try UTCTime(signingTime.utcDate)
+        let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
+        let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
+        signedAttrs.append(signingTimeAttribute)
+
+        // As specified in RFC 5652 section 5.4:
+        // When the [signedAttrs] field is present, however, the result is the message digest of the complete DER encoding of the SignedAttrs value contained in the signedAttrs field.
+        var coder = DER.Serializer()
+        try coder.serializeSetOf(signedAttrs)
+        let signedAttrBytes = coder.serializedBytes[...]
+        let signature = try privateKey.sign(bytes: signedAttrBytes, signatureAlgorithm: signatureAlgorithm)
+        let signedData = try self.generateSignedData(
+            signatureBytes: ASN1OctetString(signature),
+            signatureAlgorithm: signatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate,
+            signedAttrs: signedAttrs
+        )
+        return try self.serializeSignedData(signedData)
     }
 
     @_spi(CMS)
@@ -49,8 +111,15 @@ public enum CMS {
             certificate: certificate
         )
 
+        return try serializeSignedData(signedData)
+    }
+
+    @inlinable
+    static func serializeSignedData(
+        _ contentInfo: CMSContentInfo
+    ) throws -> [UInt8] {
         var serializer = DER.Serializer()
-        try serializer.serialize(signedData)
+        try serializer.serialize(contentInfo)
         return serializer.serializedBytes
     }
 
@@ -59,7 +128,8 @@ public enum CMS {
         signatureBytes: ASN1OctetString,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
         additionalIntermediateCertificates: [Certificate],
-        certificate: Certificate
+        certificate: Certificate,
+        signedAttrs: [CMSAttribute]? = nil
     ) throws -> CMSContentInfo {
         let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
         let contentInfo = CMSEncapsulatedContentInfo(eContentType: .cmsData)
@@ -67,6 +137,7 @@ public enum CMS {
         let signerInfo = CMSSignerInfo(
             signerIdentifier: .init(issuerAndSerialNumber: certificate),
             digestAlgorithm: digestAlgorithm,
+            signedAttrs: signedAttrs,
             signatureAlgorithm: AlgorithmIdentifier(signatureAlgorithm),
             signature: signatureBytes
         )

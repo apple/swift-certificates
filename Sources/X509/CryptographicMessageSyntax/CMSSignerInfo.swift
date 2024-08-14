@@ -283,4 +283,7 @@ extension ASN1ObjectIdentifier {
 
     @usableFromInline
     static let signingTime: Self = [1, 2, 840, 113549, 1, 9, 5]
+
+    @usableFromInline
+    static let contentType: Self = [1, 2, 840, 113549, 1, 9, 3]
 }
