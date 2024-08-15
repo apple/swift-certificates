@@ -1008,7 +1008,7 @@ extension DERSerializable {
 
 private func XCTAssertValidSignature(
     _ result: CMS.SignatureVerificationResult,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) {
     guard case .success = result else {
@@ -1019,7 +1019,7 @@ private func XCTAssertValidSignature(
 
 private func XCTAssertInvalidCMSBlock(
     _ result: CMS.SignatureVerificationResult,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) {
     guard case .failure(.invalidCMSBlock) = result else {
@@ -1030,7 +1030,7 @@ private func XCTAssertInvalidCMSBlock(
 
 private func XCTAssertUnableToValidateSigner(
     _ result: CMS.SignatureVerificationResult,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) {
     guard case .failure(.unableToValidateSigner) = result else {

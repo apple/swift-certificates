@@ -636,7 +636,7 @@ extension ASN1OctetString {
 
 private func XCTAssertValidCertificate(
     _ verifier: @autoclosure () async throws -> VerificationResult,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) async rethrows {
     let result = try await verifier()
@@ -647,7 +647,7 @@ private func XCTAssertValidCertificate(
 
 private func XCTAssertInvalidCertificate(
     _ verifier: @autoclosure () async throws -> VerificationResult,
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) async rethrows {
     let result = try await verifier()
