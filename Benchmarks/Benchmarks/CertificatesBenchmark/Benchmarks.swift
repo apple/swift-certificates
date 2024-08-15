@@ -18,7 +18,7 @@ import Foundation
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(
         metrics: [
-            .mallocCountTotal,
+            .mallocCountTotal
         ],
         scalingFactor: .kilo,
         maxDuration: .seconds(10_000_000),
