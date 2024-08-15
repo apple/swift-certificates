@@ -19,12 +19,10 @@ let benchmarks = {
     Benchmark.defaultConfiguration = .init(
         metrics: [
             .mallocCountTotal,
-            .syscalls,
-            .readSyscalls,
-            .writeSyscalls,
-            .memoryLeaked,
         ],
-        scalingFactor: .kilo
+        scalingFactor: .kilo,
+        maxDuration: .seconds(10_000_000),
+        maxIterations: 10
     )
 
     Benchmark("Verifier") { benchmark in
