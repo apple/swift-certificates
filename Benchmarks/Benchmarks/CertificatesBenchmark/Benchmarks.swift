@@ -22,7 +22,10 @@ let benchmarks = {
         ],
         scalingFactor: .kilo,
         maxDuration: .seconds(10_000_000),
-        maxIterations: 10
+        maxIterations: 10,
+        thresholds: [
+            .mallocCountTotal: .init(relative: [.p90: 1.0])
+        ]
     )
 
     Benchmark("Verifier") { benchmark in
