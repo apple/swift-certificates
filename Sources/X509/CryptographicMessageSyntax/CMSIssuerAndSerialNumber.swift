@@ -44,7 +44,7 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
-            let issuer = try DistinguishedName(derEncoded: &nodes)
+            let issuer = try DistinguishedName.derEncoded(&nodes)
             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
             return .init(issuer: issuer, serialNumber: .init(bytes: serialNumber))
         }

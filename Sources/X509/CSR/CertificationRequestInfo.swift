@@ -61,7 +61,7 @@ extension CertificationRequestInfo: DERImplicitlyTaggable {
     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let version = try CertificateSigningRequest.Version(rawValue: Int(derEncoded: &nodes))
-            let subject = try DistinguishedName(derEncoded: &nodes)
+            let subject = try DistinguishedName.derEncoded(&nodes)
             let spki = try Certificate.PublicKey(spki: SubjectPublicKeyInfo(derEncoded: &nodes))
             let attributes = try CertificateSigningRequest.Attributes(
                 DER.set(
