@@ -16,7 +16,7 @@ import Foundation
 import XCTest
 import SwiftASN1
 @testable @_spi(DisableValidityCheck) import X509
-import Crypto
+@preconcurrency import Crypto
 
 class RFC5280PolicyBase: XCTestCase {
     enum PolicyFactory {

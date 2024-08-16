@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import XCTest
-import Crypto
+@preconcurrency import Crypto
 import _CryptoExtras
 import SwiftASN1
 @testable import X509

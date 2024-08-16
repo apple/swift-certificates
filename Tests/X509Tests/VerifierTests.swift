@@ -16,7 +16,7 @@ import Foundation
 import XCTest
 import SwiftASN1
 @testable import X509
-import Crypto
+@preconcurrency import Crypto
 
 @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 final class VerifierTests: XCTestCase {

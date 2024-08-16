@@ -16,7 +16,7 @@ import Foundation
 import XCTest
 import SwiftASN1
 @testable import X509
-import Crypto
+@preconcurrency import Crypto
 
 private struct Policy: VerifierPolicy {
     var result: PolicyEvaluationResult = .meetsPolicy
