@@ -176,6 +176,34 @@ extension DistinguishedName: CustomDebugStringConvertible {
     }
 }
 
+extension DistinguishedName: DERSerializable {
+    @inlinable
+    public func serialize(into coder: inout DER.Serializer) throws {
+        try coder.appendConstructedNode(identifier: .sequence) { rootCoder in
+            for element in self.rdns {
+                try element.serialize(into: &rootCoder)
+            }
+        }
+    }
+}
+
+extension DistinguishedName: DERParseable {
+    @inlinable
+    public init(derEncoded rootNode: ASN1Node) throws {
+        self.rdns = try DER.sequence(of: RelativeDistinguishedName.self, identifier: .sequence, rootNode: rootNode)
+    }
+
+    @inlinable
+    static func derEncoded(_ sequenceNodeIterator: inout ASN1NodeCollection.Iterator) throws -> DistinguishedName {
+        // This is a workaround for the fact that, even though the conformance to DERImplicitlyTaggable is
+        // deprecated, Swift still prefers calling init(derEncoded:withIdentifier:) instead of this one.
+        let dnFactory: (inout ASN1NodeCollection.Iterator) throws -> DistinguishedName =
+            DistinguishedName.init(derEncoded:)
+        return try dnFactory(&sequenceNodeIterator)
+    }
+}
+
+@available(*, deprecated, message: "Distinguished names may not be implicitly tagged")
 extension DistinguishedName: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {
