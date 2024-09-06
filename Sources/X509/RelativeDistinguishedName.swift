@@ -49,7 +49,7 @@ public struct RelativeDistinguishedName {
 
     /// Construct a ``RelativeDistinguishedName`` from a sequence of ``Attribute``.
     ///
-    /// - Parameter attributes: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
+    /// - Parameter attribute: The sequence of ``Attribute``s that make up the ``DistinguishedName``.
     @inlinable
     public init(_ attribute: Attribute) {
         self.init(CollectionOfOne(attribute))

@@ -20,7 +20,7 @@ import SwiftASN1
 /// regardless of policy, we use the same chain building algorithm. This will generate a sequence of candidate chains in
 /// the form of ``UnverifiedCertificateChain``.
 ///
-/// Each of these candidate chains is then handed to a ``PolicySet`` to be checked against the certificate policy.
+/// Each of these candidate chains is then handed to a ``VerifierPolicy`` to be checked against the certificate policy.
 /// The reason for this is to allow different use-cases to share the same chain building code, but to enforce
 /// different requirements on the chain.
 ///
@@ -35,7 +35,7 @@ public protocol VerifierPolicy {
     /// verifier. If they aren't understood or processed, then verifying the chain must fail.
     ///
     /// ``Verifier`` uses the ``VerifierPolicy/verifyingCriticalExtensions`` field to determine what extensions are understood by a given
-    /// ``PolicySet``. A ``PolicySet`` understands the union of all the understood extensions of its contained ``VerifierPolicy``
+    /// ``VerifierPolicy``. A ``VerifierPolicy`` understands the union of all the understood extensions of its contained ``VerifierPolicy``
     /// objects.
     ///
     /// This may be an empty array, if the policy does not concern itself with any particular extensions. Users must only put
@@ -48,7 +48,7 @@ public protocol VerifierPolicy {
     /// regardless of policy, we use the same chain building algorithm. This will generate a sequence of candidate chains in
     /// the form of ``UnverifiedCertificateChain``.
     ///
-    /// Each of these candidate chains is then handed to a ``PolicySet`` to be checked against the certificate policy.
+    /// Each of these candidate chains is then handed to a ``VerifierPolicy`` to be checked against the certificate policy.
     /// The checking is done in this method.
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
 }

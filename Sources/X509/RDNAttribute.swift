@@ -283,7 +283,7 @@ extension RelativeDistinguishedName.Attribute {
     /// Create a new attribute from a given type and value.
     ///
     /// - Parameter type: The type of the attribute.
-    /// - Parameter value: The value of the attribute, wrapped in ``ASN1Any``.
+    /// - Parameter value: The value of the attribute, wrapped in `ASN1Any`.
     @inlinable
     public init(type: ASN1ObjectIdentifier, value: ASN1Any) {
         self.type = type
