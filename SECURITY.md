@@ -39,6 +39,6 @@ with all the required detail.
   forums][swift-forums-sec].
 
 [sswg]: https://github.com/swift-server/sswg
-[sswg-security]: https://github.com/swift-server/sswg/blob/main/process/incubation.md#security-best-practices
+[sswg-security]: https://www.swift.org/sswg/incubation-process.html#security
 [swift-forums-sec]: https://forums.swift.org/c/server/security-updates/
 [mitre]: https://cveform.mitre.org/
