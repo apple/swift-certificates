@@ -34,8 +34,16 @@ final class SignatureTests: XCTestCase {
     static let secKeyEC384 = try? generateSecKey(keyType: kSecAttrKeyTypeECSECPrimeRandom, keySize: 384, useSEP: false)
     static let secKeyEC521 = try? generateSecKey(keyType: kSecAttrKeyTypeECSECPrimeRandom, keySize: 521, useSEP: false)
     // SEP currently supports 256 and 384 bit EC keys
-    static let secKeyEnclaveEC256 = try? generateSecKey(keyType: kSecAttrKeyTypeECSECPrimeRandom, keySize: 256, useSEP: true)
-    static let secKeyEnclaveEC384 = try? generateSecKey(keyType: kSecAttrKeyTypeECSECPrimeRandom, keySize: 384, useSEP: true)
+    static let secKeyEnclaveEC256 = try? generateSecKey(
+        keyType: kSecAttrKeyTypeECSECPrimeRandom,
+        keySize: 256,
+        useSEP: true
+    )
+    static let secKeyEnclaveEC384 = try? generateSecKey(
+        keyType: kSecAttrKeyTypeECSECPrimeRandom,
+        keySize: 384,
+        useSEP: true
+    )
     #endif
 
     func testP384Signature() throws {
@@ -394,29 +402,30 @@ final class SignatureTests: XCTestCase {
             kCFAllocatorDefault,
             kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
             .privateKeyUsage,
-            nil)!
-        
+            nil
+        )!
+
         let attributes: NSMutableDictionary = [
             kSecAttrKeyType: keyType,
             kSecAttrKeySizeInBits: keySize,
             kSecPrivateKeyAttrs: [
                 kSecAttrIsPermanent: false,
-                kSecAttrAccessControl: access
-            ]
+                kSecAttrAccessControl: access,
+            ],
         ]
-        
+
         if useSEP {
             attributes[kSecAttrTokenID] = kSecAttrTokenIDSecureEnclave
         }
-        
-        var error : Unmanaged<CFError>? = nil
+
+        var error: Unmanaged<CFError>? = nil
         guard let secKey = SecKeyCreateRandomKey(attributes, &error) else {
             throw error!.takeRetainedValue() as Error
         }
-        
+
         return secKey
     }
-    
+
     func testHashFunctionMismatch_secKeyRSA_sha1WithRSAEncryption() throws {
         guard let secKeyRSA = Self.secKeyRSA else {
             throw XCTSkip("Key Error")
@@ -427,7 +436,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyRSA_sha256WithRSAEncryption() throws {
         guard let secKeyRSA = Self.secKeyRSA else {
             throw XCTSkip("Key Error")
@@ -438,7 +447,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyRSA_sha384WithRSAEncryption() throws {
         guard let secKeyRSA = Self.secKeyRSA else {
             throw XCTSkip("Key Error")
@@ -449,7 +458,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyRSA_sha512WithRSAEncryption() throws {
         guard let secKeyRSA = Self.secKeyRSA else {
             throw XCTSkip("Key Error")
@@ -460,7 +469,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyRSA_ecdsaWithSHA256() throws {
         guard let secKeyRSA = Self.secKeyRSA else {
             throw XCTSkip("Key Error")
@@ -471,7 +480,7 @@ final class SignatureTests: XCTestCase {
             validCombination: false
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC256_ecdsaWithSHA256() throws {
         guard let secKeyEC256 = Self.secKeyEC256 else {
             throw XCTSkip("Key Error")
@@ -482,7 +491,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC256_ecdsaWithSHA384() throws {
         guard let secKeyEC256 = Self.secKeyEC256 else {
             throw XCTSkip("Key Error")
@@ -493,7 +502,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC256_ecdsaWithSHA512() throws {
         guard let secKeyEC256 = Self.secKeyEC256 else {
             throw XCTSkip("Key Error")
@@ -504,7 +513,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC384_ecdsaWithSHA256() throws {
         guard let secKeyEC384 = Self.secKeyEC384 else {
             throw XCTSkip("Key Error")
@@ -515,7 +524,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC384_ecdsaWithSHA384() throws {
         guard let secKeyEC384 = Self.secKeyEC384 else {
             throw XCTSkip("Key Error")
@@ -526,7 +535,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC384_ecdsaWithSHA512() throws {
         guard let secKeyEC384 = Self.secKeyEC384 else {
             throw XCTSkip("Key Error")
@@ -537,7 +546,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC521_ecdsaWithSHA256() throws {
         guard let secKeyEC521 = Self.secKeyEC521 else {
             throw XCTSkip("Key Error")
@@ -548,7 +557,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC521_ecdsaWithSHA384() throws {
         guard let secKeyEC521 = Self.secKeyEC521 else {
             throw XCTSkip("Key Error")
@@ -559,7 +568,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC521_ecdsaWithSHA512() throws {
         guard let secKeyEC521 = Self.secKeyEC521 else {
             throw XCTSkip("Key Error")
@@ -570,7 +579,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEC521_sha512WithRSAEncryption() throws {
         guard let secKeyEC521 = Self.secKeyEC521 else {
             throw XCTSkip("Key Error")
@@ -581,7 +590,7 @@ final class SignatureTests: XCTestCase {
             validCombination: false
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC256_ecdsaWithSHA256() throws {
         guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
             throw XCTSkip("No SEP")
@@ -592,7 +601,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC256_ecdsaWithSHA384() throws {
         guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
             throw XCTSkip("No SEP")
@@ -603,7 +612,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC256_ecdsaWithSHA512() throws {
         guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
             throw XCTSkip("No SEP")
@@ -614,7 +623,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC384_ecdsaWithSHA256() throws {
         guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
             throw XCTSkip("No SEP")
@@ -625,7 +634,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC384_ecdsaWithSHA384() throws {
         guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
             throw XCTSkip("No SEP")
@@ -636,7 +645,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC384_ecdsaWithSHA512() throws {
         guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
             throw XCTSkip("No SEP")
@@ -647,7 +656,7 @@ final class SignatureTests: XCTestCase {
             validCombination: true
         )
     }
-    
+
     func testHashFunctionMismatch_secKeyEnclaveEC384_sha512WithRSAEncryption() throws {
         guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
             throw XCTSkip("No SEP")
@@ -658,7 +667,7 @@ final class SignatureTests: XCTestCase {
             validCombination: false
         )
     }
-    
+
     func testHashFunctionMismatch_secureEnclaveP256_ecdsaWithSHA256() throws {
         guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
             throw XCTSkip("No SEP")

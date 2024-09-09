@@ -23,29 +23,43 @@ final class SecKeyWrapperTests: XCTestCase {
         let keySize: Int
         let sep: Bool
     }
-    
+
     func generateCandidateKeys() throws -> [CandidateKey] {
-        var keys : [CandidateKey] = []
-        
+        var keys: [CandidateKey] = []
+
         // RSA
-        keys.append(CandidateKey(key: try SignatureTests.generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false), type: "RSA", keySize: 2048, sep: false))
-        
+        keys.append(
+            CandidateKey(
+                key: try SignatureTests.generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false),
+                type: "RSA",
+                keySize: 2048,
+                sep: false
+            )
+        )
+
         // eliptic curves
         for keyType in [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC, kSecAttrKeyTypeECDSA] {
             for keySize in [256, 384] {
                 for useSEP in [true, false] {
-                    keys.append(CandidateKey(key: try SignatureTests.generateSecKey(keyType: keyType, keySize: keySize, useSEP: useSEP), type: "EC-\(keyType)", keySize: keySize, sep: useSEP))
+                    keys.append(
+                        CandidateKey(
+                            key: try SignatureTests.generateSecKey(keyType: keyType, keySize: keySize, useSEP: useSEP),
+                            type: "EC-\(keyType)",
+                            keySize: keySize,
+                            sep: useSEP
+                        )
+                    )
                 }
             }
         }
         return keys
     }
-    
+
     func testPEMExport() throws {
         for candidate in try generateCandidateKeys() {
             try XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
                 let secKeyWrapper = try Certificate.PrivateKey.SecKeyWrapper(key: candidate.key)
-                
+
                 if !candidate.sep {
                     let pemString = try secKeyWrapper.pemDocument()
                     XCTAssertNotNil(pemString)

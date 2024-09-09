@@ -70,7 +70,7 @@ extension Certificate {
         public init(_ secureEnclaveP256: SecureEnclave.P256.Signing.PrivateKey) {
             self.backing = .secureEnclaveP256(secureEnclaveP256)
         }
-        
+
         /// Construct a private key wrapping a SecKey private key.
         /// - Parameter secKey: The SecKey private key to wrap.
         @inlinable
