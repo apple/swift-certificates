@@ -62,7 +62,7 @@ extension Certificate {
         /// This value represents an RSA signature with PKCS1v1.5 padding and SHA384 as the hash function.
         public static let sha384WithRSAEncryption = Self(algorithmIdentifier: .sha384WithRSAEncryption)
 
-        /// This value represents an RSA signature with PKCS1v1.5 padding and SHA521 as the hash function.
+        /// This value represents an RSA signature with PKCS1v1.5 padding and SHA512 as the hash function.
         public static let sha512WithRSAEncryption = Self(algorithmIdentifier: .sha512WithRSAEncryption)
 
         /// Whether this algorithm represents an ECDSA signature.
