@@ -27,7 +27,7 @@ extension CertificateStore {
     /// A ``CertificateStore`` that includes all root Certificate Authorities (CAs) that
     /// are installed in the systems trust store.
     ///
-    /// You can add additional trust roots by ``CertificateStore/inserting(_:)-5sc2d`` them into the returned ``CertificateStore``.
+    /// You can add additional trust roots by ``CertificateStore/appending(_:)`` them into the returned ``CertificateStore``.
     ///
     /// - Note: Access this property as early as possible. It will start loading and parsing of the certificates in the background.
     /// Accessing this property does **not** block.
