@@ -33,7 +33,7 @@ function update_cmakelists_source() {
     # Build an array with the rest of the arguments
     shift
     src_exts=("$@")
-    echo "Finding source files (${src_exts[@]}) under $src_root"
+    echo "Finding source files (" "${src_exts[@]}" ") under $src_root"
 
     num_exts=${#src_exts[@]}
 

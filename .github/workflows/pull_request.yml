@@ -10,13 +10,14 @@ jobs:
     uses: apple/swift-nio/.github/workflows/soundness.yml@main
     with:
       license_header_check_project_name: "SwiftCertificates"
+      docs_check_container_image: "swiftlang/swift:nightly-6.0-jammy"
 
   cmake-lists:
     name: Check cmake lists
     uses: apple/swift-nio/.github/workflows/swift_matrix.yml@main
     with:
       name: "Check cmake lists"
-      matrix_linux_command: ./scripts/check-cmake-lists.sh"
+      matrix_linux_command: ./scripts/check-cmake-lists.sh
 
   unit-tests:
     name: Unit tests
