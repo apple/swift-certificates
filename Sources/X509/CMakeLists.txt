@@ -82,6 +82,7 @@ add_library(X509
   "RandomNumberGenerator+bytes.swift"
   "RelativeDistinguishedName.swift"
   "SEC1PrivateKey.swift"
+  "SecKeyWrapper.swift"
   "Signature.swift"
   "SignatureAlgorithm.swift"
   "Verifier/AllOfPolicies.swift"
