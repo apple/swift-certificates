@@ -23,6 +23,9 @@ import Musl
 import CoreFoundation
 #elseif canImport(Darwin)
 import Darwin
+#elseif canImport(Android)
+import Android
+import CoreFoundation
 #endif
 
 extension NameConstraintsPolicy {

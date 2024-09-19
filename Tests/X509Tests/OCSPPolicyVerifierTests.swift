@@ -35,7 +35,7 @@ actor TestRequester: OCSPRequester {
 
     init(
         query: @escaping @Sendable (OCSPRequest, String) async -> QueryResult,
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) {
         self.queryClosure = query
@@ -72,7 +72,7 @@ actor TestRequester: OCSPRequester {
 
 extension OCSPRequester {
     func assertNoThrow(
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) -> some OCSPRequester {
         AssertNoThrowRequester(wrapped: self, file: file, line: line)
@@ -83,7 +83,7 @@ extension OCSPRequester where Self == TestRequester {
     /// makes sure that the given ``query`` closure does **not** throw by failing the test if it does throw.
     static func noThrow(
         query: @escaping @Sendable (OCSPRequest, String) async throws -> OCSPResponse,
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) -> some OCSPRequester {
         TestRequester(query: { request, url in
