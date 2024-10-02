@@ -21,7 +21,7 @@ extension Certificate {
     /// A private key that can be used with a certificate.
     ///
     /// This type provides an opaque wrapper around the various private key types
-    /// provided by `swift-crypto`. Users are expected to construct this key from
+    /// provided by `swift-crypto` and `Security`. Users are expected to construct this key from
     /// one of those types.
     ///
     /// As private keys are never sent over the wire, this type does not offer
@@ -70,6 +70,13 @@ extension Certificate {
         public init(_ secureEnclaveP256: SecureEnclave.P256.Signing.PrivateKey) {
             self.backing = .secureEnclaveP256(secureEnclaveP256)
         }
+
+        /// Construct a private key wrapping a SecKey private key.
+        /// - Parameter secKey: The SecKey private key to wrap.
+        @inlinable
+        public init(_ secKey: SecKey) throws {
+            self.backing = .secKey(try SecKeyWrapper(key: secKey))
+        }
         #endif
 
         @inlinable
@@ -93,6 +100,8 @@ extension Certificate {
             #if canImport(Darwin)
             case .secureEnclaveP256(let secureEnclaveP256):
                 return try secureEnclaveP256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+            case .secKey(let secKeyWrapper):
+                return try secKeyWrapper.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             #endif
             }
         }
@@ -113,6 +122,8 @@ extension Certificate {
             #if canImport(Darwin)
             case .secureEnclaveP256(let secureEnclaveP256):
                 return PublicKey(secureEnclaveP256.publicKey)
+            case .secKey(let secKeyWrapper):
+                return secKeyWrapper.publicKey
             #endif
             }
         }
@@ -139,6 +150,21 @@ extension Certificate {
                         reason: "Cannot use \(algorithm) with ECDSA key \(self)"
                     )
                 }
+            case .secKey(let key):
+                switch key.type {
+                case .ECDSA:
+                    if !algorithm.isECDSA {
+                        throw CertificateError.unsupportedSignatureAlgorithm(
+                            reason: "Cannot use \(algorithm) with ECDSA key \(self)"
+                        )
+                    }
+                case .RSA:
+                    if !algorithm.isRSA {
+                        throw CertificateError.unsupportedSignatureAlgorithm(
+                            reason: "Cannot use \(algorithm) with RSA key \(self)"
+                        )
+                    }
+                }
             #endif
             }
 
@@ -164,6 +190,8 @@ extension Certificate.PrivateKey: CustomStringConvertible {
         #if canImport(Darwin)
         case .secureEnclaveP256:
             return "SecureEnclave.P256.PrivateKey"
+        case .secKey:
+            return "SecKey"
         #endif
         }
     }
@@ -178,6 +206,7 @@ extension Certificate.PrivateKey {
         case rsa(_CryptoExtras._RSA.Signing.PrivateKey)
         #if canImport(Darwin)
         case secureEnclaveP256(SecureEnclave.P256.Signing.PrivateKey)
+        case secKey(SecKeyWrapper)
         #endif
 
         @inlinable
@@ -194,6 +223,8 @@ extension Certificate.PrivateKey {
             #if canImport(Darwin)
             case (.secureEnclaveP256(let l), .secureEnclaveP256(let r)):
                 return l.dataRepresentation == r.dataRepresentation
+            case (.secKey(let l), .secKey(let r)):
+                return l.publicKey.backing == r.publicKey.backing
             #endif
             default:
                 return false
@@ -219,6 +250,10 @@ extension Certificate.PrivateKey {
             case .secureEnclaveP256(let digest):
                 hasher.combine(4)
                 hasher.combine(digest.dataRepresentation)
+            case .secKey(let secKeyWrapper):
+                hasher.combine(5)
+                hasher.combine(secKeyWrapper.privateKey.hashValue)
+                hasher.combine(secKeyWrapper.publicKey.hashValue)
             #endif
             }
         }
@@ -305,6 +340,7 @@ extension Certificate.PrivateKey {
             throw CertificateError.unsupportedPrivateKey(
                 reason: "secure enclave private keys can not be serialised as PEM"
             )
+        case .secKey(let key): return try key.pemDocument()
         #endif
         }
     }
