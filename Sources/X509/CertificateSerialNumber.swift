@@ -56,7 +56,7 @@ extension Certificate {
         /// Prefer using ``Certificate/SerialNumber-swift.struct/init(integerLiteral:)``
         /// with a `StaticBigInt` which enables arbitrary-precision.
         ///
-        /// - Parameter bytes: The raw big-endian bytes of the serial number.
+        /// - Parameter number: The raw big-endian bytes of the serial number.
         @inlinable
         public init<Number: FixedWidthInteger>(_ number: Number) {
             // `IntegerBytesCollection` already trims leading zeros
@@ -101,7 +101,7 @@ extension Certificate.SerialNumber: CustomStringConvertible {
 extension Certificate.SerialNumber: ExpressibleByIntegerLiteral {
     /// Constructs a serial number from an integer.
     ///
-    /// - Parameter integerLiteral: The raw big-endian bytes of the serial number.
+    /// - Parameter number: The raw big-endian bytes of the serial number.
     @inlinable
     public init(integerLiteral number: StaticBigInt) {
         var bytes = [UInt8]()

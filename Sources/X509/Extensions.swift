@@ -177,7 +177,7 @@ extension Certificate.Extensions {
 
     /// Append a new ``Certificate/Extension`` into this set of ``Certificate/Extensions-swift.struct``.
     ///
-    /// - Parameter ext: The ``Certificate/Extension`` to insert.
+    /// - Parameter extension: The ``Certificate/Extension`` to insert.
     /// - Throws: If an ``Certificate/Extension`` with the same ``Certificate/Extension/oid`` is already present
     @inlinable
     public mutating func append(_ extension: Certificate.Extension) throws {

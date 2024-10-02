@@ -16,7 +16,7 @@ import SwiftASN1
 
 /// A ``VerifierPolicy`` that implements the core chain verifying policies from RFC 5280.
 ///
-/// Almost all verifiers should use this policy as the initial component of their ``PolicySet``. The policy checks the
+/// Almost all verifiers should use this policy as the initial component of their policy set. The policy checks the
 /// following things:
 ///
 /// 1. Version. ``Certificate/Version-swift.struct/v1`` ``Certificate``s with ``Certificate/Extensions-swift.struct`` are rejected.

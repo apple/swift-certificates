@@ -163,7 +163,7 @@ The bytes to be signed are also present in the ``Certificate/tbsCertificateBytes
 the raw certificate bytes as parsed from the wire, which guarantees that there is no encode/decode misrepresentation in these bytes.
 
 Together these objects make it possible to validate that a signature was correctly signed, using
-``Certificate/PublicKey-swift.struct/isValidSignature(_:for:)``.
+``Certificate/PublicKey-swift.struct/isValidSignature(_:for:)-3cbor``.
 
 > Warning: While this is a necessary condition for determining the issuer of a certificate, it is not a sufficient one.
 > Users are strongly discouraged from hand-rolling their own verification logic, and should instead prefer using an

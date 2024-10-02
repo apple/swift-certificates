@@ -606,9 +606,9 @@ public struct NameConstraints {
     ///   - permittedIPRanges: The IP address ranges that are permitted in certificates issued by this CA.
     ///   - excludedIPRanges: The IP address ranges that are forbidden in certificates issued by this CA.
     ///   - permittedEmailAddresses: The email address trees that are permitted in certificates issued by this CA.
-    ///   - excludedEmailAddress: The email address trees that are forbidden in certificates issued by this CA.
+    ///   - excludedEmailAddresses: The email address trees that are forbidden in certificates issued by this CA.
     ///   - permittedURIDomains: The URI domains that are permitted in certificates issued by this CA.
-    ///   - excludedURIDomains: The URI domains that are forbidden in certificates issued by this CA.
+    ///   - forbiddenURIDomains: The URI domains that are forbidden in certificates issued by this CA.
     @inlinable
     public init(
         permittedDNSDomains: some Sequence<String> = [],
