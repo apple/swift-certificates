@@ -119,7 +119,7 @@ extension Certificate.PrivateKey {
                 )
             }
 
-            if privateKeyType == (kSecAttrKeyTypeECDSA as String) {
+            if privateKeyType == (kSecAttrKeyTypeECSECPrimeRandom as String) {
                 let keySize = attributes[kSecAttrKeySizeInBits as String] as? Int ?? -1
 
                 if keySize == 256 {
