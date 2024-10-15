@@ -38,7 +38,12 @@ final class SecKeyWrapperTests: XCTestCase {
         )
 
         // eliptic curves
-        for keyType in [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC, kSecAttrKeyTypeECDSA] {
+        var keyTypes = [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC]
+        #if os(macOS)
+        keyTypes.append(kSecAttrKeyTypeECDSA)
+        #endif
+
+        for keyType in keyTypes {
             for keySize in [256, 384] {
                 for useSEP in [true, false] {
                     keys.append(
@@ -52,9 +57,11 @@ final class SecKeyWrapperTests: XCTestCase {
                 }
             }
         }
+
         return keys
     }
 
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
     func testPEMExport() throws {
         for candidate in try generateCandidateKeys() {
             try XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
