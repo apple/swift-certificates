@@ -60,6 +60,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// The signature algorithm used in a ``Certificate`` is not supported by this library.
     /// - Parameter reason: A detailed reason explaining what signature algorithm was not supported.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedSignatureAlgorithm``.
     @inline(never)
     public static func unsupportedSignatureAlgorithm(
@@ -79,6 +81,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// The private key algorithm used in a ``Certificate`` is not supported by this library.
     /// - Parameter reason: A detailed reason explaining what private key algorithm was not supported.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedPublicKeyAlgorithm``.
     @inline(never)
     public static func unsupportedPublicKeyAlgorithm(
@@ -98,6 +102,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// The signature was not valid for the provided ``Certificate``.
     /// - Parameter reason: A detailed reason detailing the signature and certificate that did not match.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/invalidSignatureForCertificate``.
     @inline(never)
     public static func invalidSignatureForCertificate(
@@ -117,6 +123,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// An extension has the wrong OID.
     /// - Parameter reason: A detailed reason detailing the extension and OID that didn't match.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/incorrectOIDForExtension``.
     @inline(never)
     public static func incorrectOIDForExtension(
@@ -136,6 +144,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// A digest algorithm isn't supported
     /// - Parameter reason: A detailed reason indicating the algorithm identifier for the unsupported digest.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedDigestAlgorithm``.
     @inline(never)
     public static func unsupportedDigestAlgorithm(
@@ -155,6 +165,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// A digest private key isn't supported
     /// - Parameter reason: A detailed reason indicating the unsupported private key.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedPrivateKey``.
     @inline(never)
     public static func unsupportedPrivateKey(
@@ -174,6 +186,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// A CSR attribute has the wrong OID.
     /// - Parameter reason: A detailed reason detailing the attribute and OID that didn't match.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/incorrectOIDForAttribute``.
     @inline(never)
     public static func incorrectOIDForAttribute(
@@ -193,6 +207,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// A CSR attribute is invalid.
     /// - Parameter reason: A detailed reason detailing the attribute that is invalid.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/invalidCSRAttribute``.
     @inline(never)
     public static func invalidCSRAttribute(
@@ -212,6 +228,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// An OID is present twice.
     /// - Parameter reason: A detailed reason detailing which OID is duplicate.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/duplicateOID``.
     @inline(never)
     public static func duplicateOID(
@@ -231,6 +249,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
 
     /// The system trust store could not be found or failed to load from disk.
     /// - Parameter reason: A detailed reason included which locations were tried and which error got thrown.
+    /// - Parameter file: The file where the error occurs.
+    /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/failedToLoadSystemTrustStore``.
     @inline(never)
     public static func failedToLoadSystemTrustStore(

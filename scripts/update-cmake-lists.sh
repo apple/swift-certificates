@@ -22,6 +22,7 @@ case "$(uname -s)" in
         find=gfind # brew install findutils
         ;;
     *)
+        # shellcheck disable=SC2209
         find=find
         ;;
 esac
@@ -32,14 +33,14 @@ function update_cmakelists_source() {
     # Build an array with the rest of the arguments
     shift
     src_exts=("$@")
-    echo "Finding source files (${src_exts[@]}) under $src_root"
+    echo "Finding source files (" "${src_exts[@]}" ") under $src_root"
 
     num_exts=${#src_exts[@]}
 
     # Build file extensions argument for `find`
     declare -a exts_arg
     exts_arg+=(-name "${src_exts[0]}")
-    for (( i=1; i<$num_exts; i++ ));
+    for (( i=1; i<num_exts; i++ ));
     do
         exts_arg+=(-o -name "${src_exts[$i]}")
     done
