@@ -34,6 +34,7 @@ add_library(X509
   "CryptographicMessageSyntax/CMSSignerIdentifier.swift"
   "CryptographicMessageSyntax/CMSSignerInfo.swift"
   "CryptographicMessageSyntax/CMSVersion.swift"
+  "Curve25519+DER.swift"
   "Digests.swift"
   "DistinguishedName.swift"
   "DistinguishedNameBuilder/CommonName.swift"
