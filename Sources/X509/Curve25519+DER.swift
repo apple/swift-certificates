@@ -30,7 +30,8 @@ extension Curve25519.Signing.PrivateKey {
         // for us, we have to wrap the key bytes in an extra layer of ASN1OctetString
         // which we encode separately.
         let pkcs8Key = PKCS8PrivateKey(
-            algorithm: .ed25519, privateKey: ASN1OctetString(contentBytes: ArraySlice(self.rawRepresentation))
+            algorithm: .ed25519,
+            privateKey: ASN1OctetString(contentBytes: ArraySlice(self.rawRepresentation))
         )
         var serializer = DER.Serializer()
         try! serializer.serialize(pkcs8Key)

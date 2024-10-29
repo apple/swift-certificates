@@ -50,7 +50,9 @@ extension Certificate {
                 self.backing = .rsa(signature)
             case .ed25519:
                 guard signatureBytes.paddingBits == 0 else {
-                    throw CertificateError.invalidSignatureForCertificate(reason: "No padding bits are allowed on Ed25519 signatures")
+                    throw CertificateError.invalidSignatureForCertificate(
+                        reason: "No padding bits are allowed on Ed25519 signatures"
+                    )
                 }
                 let signature = Data(signatureBytes.bytes)
                 self.backing = .ed25519(signature)
