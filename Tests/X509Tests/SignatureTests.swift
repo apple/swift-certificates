@@ -27,6 +27,7 @@ final class SignatureTests: XCTestCase {
     static let p384Key = P384.Signing.PrivateKey()
     static let p521Key = P521.Signing.PrivateKey()
     static let rsaKey = try! _RSA.Signing.PrivateKey(keySize: .bits2048)
+    static let ed25519Key = Curve25519.Signing.PrivateKey()
     #if canImport(Darwin)
     static let secureEnclaveP256 = try? SecureEnclave.P256.Signing.PrivateKey()
     static let secKeyRSA = try? generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false)
@@ -228,6 +229,14 @@ final class SignatureTests: XCTestCase {
         )
     }
 
+    func testHashFunctionMismatch_p256_ed25519() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.p256Key),
+            signatureAlgorithm: .ed25519,
+            validCombination: false
+        )
+    }
+
     func testHashFunctionMismatch_p384_ecdsaWithSHA256() throws {
         try self.hashFunctionMismatchTest(
             privateKey: .init(Self.p384Key),
@@ -280,6 +289,14 @@ final class SignatureTests: XCTestCase {
         try self.hashFunctionMismatchTest(
             privateKey: .init(Self.p384Key),
             signatureAlgorithm: .sha512WithRSAEncryption,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_p384_ed25519() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.p384Key),
+            signatureAlgorithm: .ed25519,
             validCombination: false
         )
     }
@@ -340,6 +357,14 @@ final class SignatureTests: XCTestCase {
         )
     }
 
+    func testHashFunctionMismatch_p521_ed25519() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.p521Key),
+            signatureAlgorithm: .ed25519,
+            validCombination: false
+        )
+    }
+
     func testHashFunctionMismatch_rsa_ecdsaWithSHA256() throws {
         try self.hashFunctionMismatchTest(
             privateKey: .init(Self.rsaKey),
@@ -360,6 +385,14 @@ final class SignatureTests: XCTestCase {
         try self.hashFunctionMismatchTest(
             privateKey: .init(Self.rsaKey),
             signatureAlgorithm: .ecdsaWithSHA512,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_rsa_ed25519() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.rsaKey),
+            signatureAlgorithm: .ed25519,
             validCombination: false
         )
     }
@@ -591,6 +624,17 @@ final class SignatureTests: XCTestCase {
         )
     }
 
+    func testHashFunctionMismatch_secKeyEC521_ed25519() throws {
+        guard let secKeyEC521 = Self.secKeyEC521 else {
+            throw XCTSkip("Key Error")
+        }
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(secKeyEC521),
+            signatureAlgorithm: .ed25519,
+            validCombination: false
+        )
+    }
+
     func testHashFunctionMismatch_secKeyEnclaveEC256_ecdsaWithSHA256() throws {
         guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
             throw XCTSkip("No SEP")
@@ -664,6 +708,17 @@ final class SignatureTests: XCTestCase {
         try self.hashFunctionMismatchTest(
             privateKey: .init(secKeyEnclaveEC384),
             signatureAlgorithm: .sha512WithRSAEncryption,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_secKeyEnclaveEC384_ed25519() throws {
+        guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
+            throw XCTSkip("No SEP")
+        }
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(secKeyEnclaveEC384),
+            signatureAlgorithm: .ed25519,
             validCombination: false
         )
     }
@@ -744,7 +799,82 @@ final class SignatureTests: XCTestCase {
             validCombination: false
         )
     }
+
+    func testHashFunctionMismatch_secureEnclaveP256_ed25519() throws {
+        guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
+            throw XCTSkip("No SEP")
+        }
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(secureEnclaveP256),
+            signatureAlgorithm: .ed25519,
+            validCombination: false
+        )
+    }
     #endif
+
+    func testHashFunctionMismatch_ped25519_ecdsaWithSHA256() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .ecdsaWithSHA256,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_ecdsaWithSHA384() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .ecdsaWithSHA384,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_ecdsaWithSHA512() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .ecdsaWithSHA512,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_sha1WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .sha1WithRSAEncryption,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_sha256WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .sha256WithRSAEncryption,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_sha384WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .sha384WithRSAEncryption,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_sha512WithRSAEncryption() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .sha512WithRSAEncryption,
+            validCombination: false
+        )
+    }
+
+    func testHashFunctionMismatch_ed25519_ed25519() throws {
+        try self.hashFunctionMismatchTest(
+            privateKey: .init(Self.ed25519Key),
+            signatureAlgorithm: .ed25519,
+            validCombination: true
+        )
+    }
 
     func testECDSASignatureCorrectlyStripsLeadingZerosFromRawByteRepresentation() throws {
         // We're testing a round-trip logic here, ensuring that the ECDSA signature correctly round-trips.

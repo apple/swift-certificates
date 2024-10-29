@@ -136,6 +136,18 @@ extension _RSA.Signing.PublicKey {
     }
 }
 
+extension Curve25519.Signing.PublicKey {
+    @inlinable
+    func isValidSignature<Bytes: DataProtocol>(_ signature: Certificate.Signature, for bytes: Bytes) -> Bool {
+        guard case .ed25519(let rawInnerSignature) = signature.backing else {
+            // Signature mismatch
+            return false
+        }
+
+        return self.isValidSignature(rawInnerSignature, for: bytes)
+    }
+}
+
 // MARK: Private key operations
 
 extension P256.Signing.PrivateKey {
@@ -253,5 +265,15 @@ extension _RSA.Signing.PrivateKey {
         }
 
         return Certificate.Signature(backing: .rsa(signature))
+    }
+}
+
+extension Curve25519.Signing.PrivateKey {
+    @inlinable
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes
+    ) throws -> Certificate.Signature {
+        let signature: Data = try self.signature(for: bytes)
+        return Certificate.Signature(backing: .ed25519(.init(signature)))
     }
 }
