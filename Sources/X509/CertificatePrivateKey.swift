@@ -63,6 +63,13 @@ extension Certificate {
             self.backing = .rsa(rsa)
         }
 
+        /// Construct a private key wrapping an Ed25519 private key.
+        /// - Parameter ed25519: The Ed25519 private key to wrap.
+        @inlinable
+        public init(_ ed25519: Curve25519.Signing.PrivateKey) {
+            self.backing = .ed25519(ed25519)
+        }
+
         #if canImport(Darwin)
         /// Construct a private key wrapping a SecureEnclave.P256 private key.
         /// - Parameter secureEnclaveP256: The SecureEnclave.P256 private key to wrap.
@@ -85,24 +92,31 @@ extension Certificate {
             signatureAlgorithm: SignatureAlgorithm
         ) throws -> Signature {
             try self.validateAlgorithmForKey(algorithm: signatureAlgorithm)
-            let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
 
             switch self.backing {
             case .p256(let p256):
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 return try p256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             case .p384(let p384):
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 return try p384.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             case .p521(let p521):
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 return try p521.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             case .rsa(let rsa):
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
                 return try rsa.signature(for: bytes, digestAlgorithm: digestAlgorithm, padding: padding)
             #if canImport(Darwin)
             case .secureEnclaveP256(let secureEnclaveP256):
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 return try secureEnclaveP256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             case .secKey(let secKeyWrapper):
+                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 return try secKeyWrapper.signature(for: bytes, digestAlgorithm: digestAlgorithm)
             #endif
+            case .ed25519(let ed25519):
+                return try ed25519.signature(for: bytes)
             }
         }
 
@@ -125,6 +139,8 @@ extension Certificate {
             case .secKey(let secKeyWrapper):
                 return secKeyWrapper.publicKey
             #endif
+            case .ed25519(let ed25519):
+                return PublicKey(ed25519.publicKey)
             }
         }
 
@@ -166,6 +182,12 @@ extension Certificate {
                     }
                 }
             #endif
+            case .ed25519:
+                if algorithm != .ed25519 {
+                    throw CertificateError.unsupportedSignatureAlgorithm(
+                        reason: "Cannot use \(algorithm) with Ed25519 key \(self)"
+                    )
+                }
             }
 
         }
@@ -193,6 +215,8 @@ extension Certificate.PrivateKey: CustomStringConvertible {
         case .secKey:
             return "SecKey"
         #endif
+        case .ed25519:
+            return "Ed25519.PrivateKey"
         }
     }
 }
@@ -208,6 +232,7 @@ extension Certificate.PrivateKey {
         case secureEnclaveP256(SecureEnclave.P256.Signing.PrivateKey)
         case secKey(SecKeyWrapper)
         #endif
+        case ed25519(Crypto.Curve25519.Signing.PrivateKey)
 
         @inlinable
         static func == (lhs: BackingPrivateKey, rhs: BackingPrivateKey) -> Bool {
@@ -226,6 +251,8 @@ extension Certificate.PrivateKey {
             case (.secKey(let l), .secKey(let r)):
                 return l.publicKey.backing == r.publicKey.backing
             #endif
+            case (.ed25519(let l), .ed25519(let r)):
+                return l.rawRepresentation == r.rawRepresentation
             default:
                 return false
             }
@@ -255,6 +282,9 @@ extension Certificate.PrivateKey {
                 hasher.combine(secKeyWrapper.privateKey.hashValue)
                 hasher.combine(secKeyWrapper.publicKey.hashValue)
             #endif
+            case .ed25519(let digest):
+                hasher.combine(6)
+                hasher.combine(digest.rawRepresentation)
             }
         }
     }
@@ -300,6 +330,8 @@ extension Certificate.PrivateKey {
 
             case .rsaKey:
                 self = try .init(_CryptoExtras._RSA.Signing.PrivateKey(derRepresentation: pkcs8.privateKey.bytes))
+            case .ed25519:
+                self = try .init(Curve25519.Signing.PrivateKey(pkcs8Key: pkcs8))
             default:
                 throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm)")
             }
@@ -342,6 +374,7 @@ extension Certificate.PrivateKey {
             )
         case .secKey(let key): return try key.pemDocument()
         #endif
+        case .ed25519(let key): return key.pemRepresentation
         }
     }
 }

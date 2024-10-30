@@ -681,4 +681,46 @@ final class CertificateTests: XCTestCase {
             ]
         )
     }
+
+    func testRFC8410Ed25519PublicKey() throws {
+        let pemKey = """
+            -----BEGIN PUBLIC KEY-----
+            MCowBQYDK2VwAyEAGb9ECWmEzf6FQbrBZ9w7lshQhqowtrbLDFw4rXAxZuE=
+            -----END PUBLIC KEY-----
+            """
+        let resultingKey = try Certificate.PublicKey(pemEncoded: pemKey)
+        let unwrappedKey = Curve25519.Signing.PublicKey(resultingKey)
+        let reWrappedKey = Certificate.PublicKey(unwrappedKey!)
+        XCTAssertEqual(reWrappedKey, resultingKey)
+        XCTAssertEqual(try reWrappedKey.serializeAsPEM().pemString, pemKey)
+    }
+
+    func testRFC8410Ed25519PrivateKey() throws {
+        let pemKey = """
+            -----BEGIN PRIVATE KEY-----
+            MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
+            -----END PRIVATE KEY-----
+            """
+        let resultingKey = try Certificate.PrivateKey(pemEncoded: pemKey)
+        XCTAssertEqual(try resultingKey.serializeAsPEM().pemString, pemKey)
+    }
+
+    func testExampleEd25519SelfIssuedSelfSignedCert() throws {
+        let cert = """
+            -----BEGIN CERTIFICATE-----
+            MIIBCDCBuwIUGW78zw0OL0GptJi++a91dBa7DsQwBQYDK2VwMCcxCzAJBgNVBAYT
+            AkRFMRgwFgYDVQQDDA93d3cuZXhhbXBsZS5jb20wHhcNMTkwMzMxMTc1MTIyWhcN
+            MjEwMjI4MTc1MTIyWjAnMQswCQYDVQQGEwJERTEYMBYGA1UEAwwPd3d3LmV4YW1w
+            bGUuY29tMCowBQYDK2VwAyEAK87g0b8CC1eA5mvKXt9uezZwJYWEyg74Y0xTZEkq
+            CcwwBQYDK2VwA0EAIIu/aa3Qtr3IE5to/nvWVY9y3ciwG5DnA70X3ALUhFs+U5aL
+            tfY8sNT1Ng72ht+UBwByuze20UsL9qMsmknQCA==
+            -----END CERTIFICATE-----
+            """
+        let parsedCert = try Certificate(pemEncoded: cert)
+        XCTAssertTrue(parsedCert.publicKey.isValidSignature(parsedCert.signature, for: parsedCert))
+        XCTAssertNotNil(Curve25519.Signing.PublicKey(parsedCert.publicKey))
+
+        let reEncoded = try parsedCert.serializeAsPEM().pemString
+        XCTAssertEqual(cert, reEncoded)
+    }
 }

@@ -48,6 +48,14 @@ extension Certificate {
             case .sha1WithRSAEncryption, .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption:
                 let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
                 self.backing = .rsa(signature)
+            case .ed25519:
+                guard signatureBytes.paddingBits == 0 else {
+                    throw CertificateError.invalidSignatureForCertificate(
+                        reason: "No padding bits are allowed on Ed25519 signatures"
+                    )
+                }
+                let signature = Data(signatureBytes.bytes)
+                self.backing = .ed25519(signature)
             default:
                 throw CertificateError.unsupportedSignatureAlgorithm(reason: "\(signatureAlgorithm)")
             }
@@ -66,6 +74,8 @@ extension Certificate.Signature: CustomStringConvertible {
             return "ECDSA"
         case .rsa:
             return "RSA"
+        case .ed25519:
+            return "Ed25519"
         }
     }
 }
@@ -75,6 +85,7 @@ extension Certificate.Signature {
     enum BackingSignature: Hashable, Sendable {
         case ecdsa(ECDSASignature)
         case rsa(_CryptoExtras._RSA.Signing.RSASignature)
+        case ed25519(Data)
 
         @inlinable
         static func == (lhs: BackingSignature, rhs: BackingSignature) -> Bool {
@@ -83,6 +94,8 @@ extension Certificate.Signature {
                 return l == r
             case (.rsa(let l), .rsa(let r)):
                 return l.rawRepresentation == r.rawRepresentation
+            case (.ed25519(let l), .ed25519(let r)):
+                return l == r
             default:
                 return false
             }
@@ -97,6 +110,9 @@ extension Certificate.Signature {
             case .rsa(let digest):
                 hasher.combine(1)
                 hasher.combine(digest.rawRepresentation)
+            case .ed25519(let sig):
+                hasher.combine(2)
+                hasher.combine(sig)
             }
         }
     }
@@ -112,6 +128,8 @@ extension ASN1BitString {
             self = ASN1BitString(bytes: serializer.serializedBytes[...])
         case .rsa(let sig):
             self = ASN1BitString(bytes: ArraySlice(sig.rawRepresentation))
+        case .ed25519(let sig):
+            self = ASN1BitString(bytes: ArraySlice(sig))
         }
     }
 }
@@ -126,6 +144,8 @@ extension ASN1OctetString {
             self = ASN1OctetString(contentBytes: serializer.serializedBytes[...])
         case .rsa(let sig):
             self = ASN1OctetString(contentBytes: ArraySlice(sig.rawRepresentation))
+        case .ed25519(let sig):
+            self = ASN1OctetString(contentBytes: ArraySlice(sig))
         }
     }
 }

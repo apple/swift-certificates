@@ -207,6 +207,12 @@ extension AlgorithmIdentifier {
         algorithm: .AlgorithmIdentifier.sha512,
         parameters: try! ASN1Any(erasing: ASN1Null())
     )
+
+    @usableFromInline
+    static let ed25519 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.ed25519,
+        parameters: nil
+    )
 }
 
 extension AlgorithmIdentifier: CustomStringConvertible {
@@ -264,6 +270,8 @@ extension ASN1ObjectIdentifier.AlgorithmIdentifier {
     static let sha384: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 2]
 
     static let sha512: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 3]
+
+    static let ed25519: ASN1ObjectIdentifier = [1, 3, 101, 112]
 }
 
 extension AlgorithmIdentifier {
