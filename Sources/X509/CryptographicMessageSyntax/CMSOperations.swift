@@ -33,7 +33,8 @@ public enum CMS {
                 signatureAlgorithm: signatureAlgorithm,
                 certificate: certificate,
                 privateKey: privateKey,
-                signingTime: signingTime
+                signingTime: signingTime,
+                detached: detached
             )
         }
 
