@@ -24,7 +24,8 @@ public enum CMS {
         additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey,
-        signingTime: Date? = nil
+        signingTime: Date? = nil,
+        detached: Bool = true
     ) throws -> [UInt8] {
         if let signingTime = signingTime {
             return try self.signWithSigningTime(
@@ -38,12 +39,17 @@ public enum CMS {
 
         // no signing time provided, sign regularly (without signedAttrs)
         let signature = try privateKey.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
-        let signedData = try self.generateSignedData(
+        var signedData = try self.generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate
         )
+        if !detached {
+            var signed = try CMSSignedData(asn1Any: signedData.content)
+            signed.encapContentInfo.eContent = ASN1OctetString(contentBytes: Array(bytes)[...])
+            signedData.content = try ASN1Any(erasing: signed)
+        }
 
         return try self.serializeSignedData(signedData)
     }
@@ -55,7 +61,8 @@ public enum CMS {
         additionalIntermediateCertificates: [Certificate] = [],
         certificate: Certificate,
         privateKey: Certificate.PrivateKey,
-        signingTime: Date
+        signingTime: Date,
+        detached: Bool = true
     ) throws -> [UInt8] {
         var signedAttrs: [CMSAttribute] = []
         // As specified in RFC 5652 section 11 when including signedAttrs we need to include a minimum of:
@@ -86,13 +93,18 @@ public enum CMS {
         try coder.serializeSetOf(signedAttrs)
         let signedAttrBytes = coder.serializedBytes[...]
         let signature = try privateKey.sign(bytes: signedAttrBytes, signatureAlgorithm: signatureAlgorithm)
-        let signedData = try self.generateSignedData(
+        var signedData = try self.generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate,
             signedAttrs: signedAttrs
         )
+        if !detached {
+            var signed = try CMSSignedData(asn1Any: signedData.content)
+            signed.encapContentInfo.eContent = ASN1OctetString(contentBytes: Array(bytes)[...])
+            signedData.content = try ASN1Any(erasing: signed)
+        }
         return try self.serializeSignedData(signedData)
     }
 
