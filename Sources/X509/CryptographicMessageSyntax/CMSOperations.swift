@@ -40,17 +40,13 @@ public enum CMS {
 
         // no signing time provided, sign regularly (without signedAttrs)
         let signature = try privateKey.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
-        var signedData = try self.generateSignedData(
+        let signedData = try self.generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
-            certificate: certificate
+            certificate: certificate,
+            withContent: detached ? nil : bytes
         )
-        if !detached {
-            var signed = try CMSSignedData(asn1Any: signedData.content)
-            signed.encapContentInfo.eContent = ASN1OctetString(contentBytes: Array(bytes)[...])
-            signedData.content = try ASN1Any(erasing: signed)
-        }
 
         return try self.serializeSignedData(signedData)
     }
@@ -94,18 +90,14 @@ public enum CMS {
         try coder.serializeSetOf(signedAttrs)
         let signedAttrBytes = coder.serializedBytes[...]
         let signature = try privateKey.sign(bytes: signedAttrBytes, signatureAlgorithm: signatureAlgorithm)
-        var signedData = try self.generateSignedData(
+        let signedData = try self.generateSignedData(
             signatureBytes: ASN1OctetString(signature),
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
             certificate: certificate,
-            signedAttrs: signedAttrs
+            signedAttrs: signedAttrs,
+            withContent: detached ? nil : bytes
         )
-        if !detached {
-            var signed = try CMSSignedData(asn1Any: signedData.content)
-            signed.encapContentInfo.eContent = ASN1OctetString(contentBytes: Array(bytes)[...])
-            signedData.content = try ASN1Any(erasing: signed)
-        }
         return try self.serializeSignedData(signedData)
     }
 
@@ -121,7 +113,8 @@ public enum CMS {
             signatureBytes: signatureBytes,
             signatureAlgorithm: signatureAlgorithm,
             additionalIntermediateCertificates: additionalIntermediateCertificates,
-            certificate: certificate
+            certificate: certificate,
+            withContent: nil as Data?
         )
 
         return try serializeSignedData(signedData)
@@ -144,8 +137,30 @@ public enum CMS {
         certificate: Certificate,
         signedAttrs: [CMSAttribute]? = nil
     ) throws -> CMSContentInfo {
+        return try generateSignedData(
+            signatureBytes: signatureBytes,
+            signatureAlgorithm: signatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate,
+            signedAttrs: signedAttrs,
+            withContent: nil as Data?
+        )
+    }
+
+    @inlinable
+    static func generateSignedData<Bytes: DataProtocol>(
+        signatureBytes: ASN1OctetString,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalIntermediateCertificates: [Certificate],
+        certificate: Certificate,
+        signedAttrs: [CMSAttribute]? = nil,
+        withContent content: Bytes? = nil
+    ) throws -> CMSContentInfo {
         let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-        let contentInfo = CMSEncapsulatedContentInfo(eContentType: .cmsData)
+        var contentInfo = CMSEncapsulatedContentInfo(eContentType: .cmsData)
+        if let content {
+            contentInfo.eContent = ASN1OctetString(contentBytes: Array(content)[...])
+        }
 
         let signerInfo = CMSSignerInfo(
             signerIdentifier: .init(issuerAndSerialNumber: certificate),
