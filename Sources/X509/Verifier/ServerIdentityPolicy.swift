@@ -16,6 +16,8 @@ import Foundation
 import SwiftASN1
 #if os(Windows)
 import WinSDK
+#elseif canImport(Android)
+import Android
 #endif
 
 /// A ``VerifierPolicy`` that validates that the leaf certificate is authoritative
