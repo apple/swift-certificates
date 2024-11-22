@@ -385,6 +385,36 @@ final class CMSTests: XCTestCase {
         )
     }
 
+    func testAttachedSigningVerifying() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key,
+            detached: false
+        )
+        let log = DiagnosticsLog()
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rootCert]),
+            diagnosticCallback: log.append(_:),
+            allowAttachedContent: true
+        ) { Self.defaultPolicies }
+        XCTAssertValidSignature(isValidSignature)
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.leaf1Cert]),
+                .foundCandidateIssuersOfPartialChainInRootStore([Self.leaf1Cert], issuers: [Self.rootCert]),
+                .foundValidCertificateChain([Self.leaf1Cert, Self.rootCert]),
+            ]
+        )
+    }
+
     func testParsingSimpleSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
