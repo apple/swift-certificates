@@ -1052,6 +1052,25 @@ final class CMSTests: XCTestCase {
         XCTAssertValidSignature(isValidSignature)
     }
 
+    func testForbidsDetachedSignatureWithSigningTimeSignedAttrVerifyingAsAttached() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key,
+            signingTime: Date(),
+            detached: true
+        )
+        let isValidAttachedSignature = await CMS.isValidAttachedSignature(
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertInvalidCMSBlock(isValidAttachedSignature)
+    }
+
     func testSigningContentBytesWithSigningTimeSignedAttrsIsInvalidSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
