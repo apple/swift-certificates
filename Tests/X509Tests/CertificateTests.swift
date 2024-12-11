@@ -533,13 +533,16 @@ final class CertificateTests: XCTestCase {
             OrganizationName("Apple")
             CommonName("Swift Certificate Test Intermediate CA 1")
         }
+        let intermediateNotValidBefore = Self.referenceTime - .days(365)
+        let intermediateNotValidAfter = Self.referenceTime + .days(5 * 365)
+
         let intermediate: Certificate = {
             return try! Certificate(
                 version: .v3,
                 serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
                 publicKey: .init(intermediatePrivateKey.publicKey),
-                notValidBefore: Self.referenceTime - .days(365),
-                notValidAfter: Self.referenceTime + .days(5 * 365),
+                notValidBefore: intermediateNotValidBefore,
+                notValidAfter: intermediateNotValidAfter,
                 issuer: ca.subject,
                 subject: intermediateName,
                 signatureAlgorithm: .ecdsaWithSHA384,
@@ -577,8 +580,8 @@ final class CertificateTests: XCTestCase {
             serialNumber: 1:2:3:4:5:6:7:8:9:a:b, \
             issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
             subject: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
-            notValidBefore: 2022-08-08 14:26:14 +0000, \
-            notValidAfter: 2028-08-06 14:26:14 +0000, \
+            notValidBefore: \(String(reflecting: intermediateNotValidBefore)), \
+            notValidAfter: \(String(reflecting: intermediateNotValidAfter)), \
             publicKey: P256.PublicKey, \
             signature: ECDSA, \
             extensions: [\
@@ -595,12 +598,15 @@ final class CertificateTests: XCTestCase {
         )
 
         let localhostPrivateKey = P256.Signing.PrivateKey()
+        let leafNotValidBefore = Self.referenceTime - .days(365)
+        let leafNotValidAfter = Self.referenceTime + .days(365)
+
         let leaf = try Certificate(
             version: .v3,
             serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
             publicKey: .init(localhostPrivateKey.publicKey),
-            notValidBefore: Self.referenceTime - .days(365),
-            notValidAfter: Self.referenceTime + .days(365),
+            notValidBefore: leafNotValidBefore,
+            notValidAfter: leafNotValidAfter,
             issuer: intermediateName,
             subject: try DistinguishedName {
                 CountryName("US")
@@ -627,8 +633,8 @@ final class CertificateTests: XCTestCase {
             serialNumber: 1:2:3:4:5:6:7:8:9:a:b:c, \
             issuer: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
             subject: "STREET=Infinite Loop,CN=localhost,O=Apple,C=US", \
-            notValidBefore: 2022-08-08 14:26:14 +0000, \
-            notValidAfter: 2024-08-07 14:26:14 +0000, \
+            notValidBefore: \(String(reflecting: leafNotValidBefore)), \
+            notValidAfter: \(String(reflecting: leafNotValidAfter)), \
             publicKey: P256.PublicKey, \
             signature: ECDSA, \
             extensions: [\
