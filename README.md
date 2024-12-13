@@ -24,8 +24,7 @@ a default verifier and a number of built-in verifier policies.
 
 ## Supported Swift Versions
 
-This library was introduced with support for Swift 5.7 or later. This library will
-support the latest stable Swift version and the two versions prior.
+This library will support the latest stable Swift version and the two versions prior.
 
 ## Getting Started
 

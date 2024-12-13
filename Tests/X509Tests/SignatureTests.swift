@@ -17,6 +17,9 @@ import XCTest
 import _CryptoExtras
 import SwiftASN1
 @testable import X509
+#if canImport(Darwin)
+@preconcurrency import Security
+#endif
 
 final class SignatureTests: XCTestCase {
     static let now = Date()
