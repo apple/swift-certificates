@@ -12,8 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-@preconcurrency import XCTest
+import XCTest
 @_spi(Testing) @testable import X509
+#if canImport(Darwin)
+@preconcurrency import Security
+#endif
 
 #if canImport(Darwin)
 final class SecKeyWrapperTests: XCTestCase {
