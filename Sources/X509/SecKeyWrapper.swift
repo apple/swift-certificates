@@ -66,7 +66,7 @@ extension Certificate.PrivateKey {
 
         @usableFromInline
         static func keyAttributes(key: SecKey) throws -> [String: any Sendable] {
-            guard let attributes = SecKeyCopyAttributes(key) as? [CFString: Any] else {
+            guard let attributes = SecKeyCopyAttributes(key) as? [CFString: any Sendable] else {
                 throw CertificateError.unsupportedPrivateKey(
                     reason: "cannot copy SecKey attributes"
                 )

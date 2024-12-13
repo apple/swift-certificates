@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
+@preconcurrency import XCTest
 @_spi(Testing) @testable import X509
 
 #if canImport(Darwin)
@@ -62,9 +62,9 @@ final class SecKeyWrapperTests: XCTestCase {
     }
 
     @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
-    func testPEMExport() throws {
+    func testPEMExport() async throws {
         for candidate in try generateCandidateKeys() {
-            try XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
+            try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
                 let secKeyWrapper = try Certificate.PrivateKey.SecKeyWrapper(key: candidate.key)
 
                 if !candidate.sep {

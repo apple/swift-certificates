@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
+@preconcurrency import XCTest
 @preconcurrency import Crypto
 import _CryptoExtras
 import SwiftASN1
