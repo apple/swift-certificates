@@ -119,12 +119,16 @@ extension RelativeDistinguishedName.Attribute.Value {
 extension RelativeDistinguishedName.Attribute.Value.Storage: DERParseable, DERSerializable {
     @inlinable
     init(derEncoded node: SwiftASN1.ASN1Node) throws {
-        switch node.identifier {
-        case ASN1UTF8String.defaultIdentifier:
-            self = .utf8(String(try ASN1UTF8String(derEncoded: node)))
-        case ASN1PrintableString.defaultIdentifier:
-            self = .printable(String(try ASN1PrintableString(derEncoded: node)))
-        default:
+        do {
+            switch node.identifier {
+            case ASN1UTF8String.defaultIdentifier:
+                self = .utf8(String(try ASN1UTF8String(derEncoded: node)))
+            case ASN1PrintableString.defaultIdentifier:
+                self = .printable(String(try ASN1PrintableString(derEncoded: node)))
+            default:
+                self = .any(ASN1Any(derEncoded: node))
+            }
+        } catch {
             self = .any(ASN1Any(derEncoded: node))
         }
     }
@@ -149,19 +153,10 @@ extension RelativeDistinguishedName.Attribute.Value: CustomStringConvertible {
     @inlinable
     public var description: String {
         let text: String
-        switch storage {
-        case .printable(let string), .utf8(let string):
+        if let string = String(self) {
             text = string
-        case .any(let any):
-            do {
-                text = try String(ASN1PrintableString(asn1Any: any))
-            } catch {
-                do {
-                    text = try String(ASN1UTF8String(asn1Any: any))
-                } catch {
-                    text = String(describing: any)
-                }
-            }
+        } else {
+            text = String(describing: ASN1Any(self))
         }
 
         // This is a very slow way to do this, but until we have any evidence that
