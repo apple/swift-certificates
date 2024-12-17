@@ -445,4 +445,18 @@ final class DistinguishedNameTests: XCTestCase {
             XCTAssertEqual(String(example.value), result)
         }
     }
+
+    func testRDNAttributeValuesCanBeParsedWhenPrintableStringIsInvalid() throws {
+        // '&' is not allowed in PrintableString.
+        let value = try ASN1Any(erasing: ASN1UTF8String("Wells Fargo & Company"), withIdentifier: .printableString)
+
+        let attribute = try RelativeDistinguishedName.Attribute(derEncoded: [
+            0x30, 0x1c, 0x06, 0x03, 0x55, 0x04, 0x0a, 0x13, 0x15, 0x57, 0x65, 0x6c, 0x6c, 0x73, 0x20,
+            0x46, 0x61, 0x72, 0x67, 0x6f, 0x20, 0x26, 0x20, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x6e, 0x79,
+        ])
+
+        XCTAssertEqual(attribute.type, .RDNAttributeType.organizationName)
+        XCTAssertEqual(attribute.value, RelativeDistinguishedName.Attribute.Value(asn1Any: value))
+        XCTAssertNil(String(attribute.value))
+    }
 }
