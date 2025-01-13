@@ -43,6 +43,22 @@ enum Digest {
     }
 }
 
+extension Digest: Sequence {
+    @usableFromInline
+    func makeIterator() -> Array<UInt8>.Iterator {
+        switch self {
+        case .insecureSHA1(let sha1):
+            return sha1.makeIterator()
+        case .sha256(let sha256):
+            return sha256.makeIterator()
+        case .sha384(let sha384):
+            return sha384.makeIterator()
+        case .sha512(let sha512):
+            return sha512.makeIterator()
+        }
+    }
+}
+
 // MARK: Public key operations
 
 extension P256.Signing.PublicKey {
