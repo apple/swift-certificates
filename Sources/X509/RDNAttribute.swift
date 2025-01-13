@@ -84,7 +84,7 @@ extension ASN1Any {
 
 extension ASN1Any {
     @inlinable
-    init(_ value: RelativeDistinguishedName.Attribute.Value) {
+    public init(_ value: RelativeDistinguishedName.Attribute.Value) {
         self = ASN1Any(value.storage)
     }
 }
