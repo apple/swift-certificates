@@ -1134,6 +1134,19 @@ final class CMSTests: XCTestCase {
         }
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
+
+    func testSubjectKeyIdentifierIsCorrectlyImplicitylyTagged() throws {
+        let implicitlyTaggedSki: [UInt8] = [
+            0x80,  // Context-specific tag [0]
+            0x04,  // Length
+            0x0a, 0x14, 0x1e, 0x28,
+        ]
+
+        XCTAssertEqual(
+            try CMSSignerIdentifier(derEncoded: implicitlyTaggedSki),
+            CMSSignerIdentifier.subjectKeyIdentifier(.init(keyIdentifier: [10, 20, 30, 40]))
+        )
+    }
 }
 
 extension DERSerializable {
