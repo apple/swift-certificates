@@ -1139,7 +1139,7 @@ final class CMSTests: XCTestCase {
         let implicitlyTaggedSki: [UInt8] = [
             0x80,  // Context-specific tag [0]
             0x04,  // Length
-            0x0a, 0x14, 0x1e, 0x28
+            0x0a, 0x14, 0x1e, 0x28,
         ]
 
         XCTAssertEqual(
