@@ -134,7 +134,7 @@ extension AlgorithmIdentifier {
             self = .sha256UsingNil
         case .ecdsaWithSHA384, .sha384WithRSAEncryption:
             self = .sha384UsingNil
-        case .ecdsaWithSHA512, .sha512WithRSAEncryption:
+        case .ecdsaWithSHA512, .sha512WithRSAEncryption, .ed25519:
             self = .sha512UsingNil
         case .sha1WithRSAEncryption:
             self = .sha1
