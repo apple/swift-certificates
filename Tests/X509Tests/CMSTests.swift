@@ -1094,7 +1094,7 @@ final class CMSTests: XCTestCase {
         XCTAssertValidSignature(isValidSignature)
     }
 
-    func testSigningWithED25519() async throws {
+    func testSigningWithEd25519() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
             data,
