@@ -729,4 +729,49 @@ final class CertificateTests: XCTestCase {
         let reEncoded = try parsedCert.serializeAsPEM().pemString
         XCTAssertEqual(cert, reEncoded)
     }
+
+    func testDefaultRSASignatureAlgorithm() throws {
+        let privateKey = try Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+        let certificate = try self.issueSelfSignedCertificate(privateKey: privateKey)
+        XCTAssertEqual(certificate.signatureAlgorithm.description, "SignatureAlgorithm.sha256WithRSAEncryption")
+    }
+
+    func testDefaultP256SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
+        let certificate = try self.issueSelfSignedCertificate(privateKey: privateKey)
+        XCTAssertEqual(certificate.signatureAlgorithm.description, "SignatureAlgorithm.ecdsaWithSHA256")
+    }
+
+    func testDefaultP384SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P384.Signing.PrivateKey())
+        let certificate = try self.issueSelfSignedCertificate(privateKey: privateKey)
+        XCTAssertEqual(certificate.signatureAlgorithm.description, "SignatureAlgorithm.ecdsaWithSHA384")
+    }
+
+    func testDefaultP521SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P521.Signing.PrivateKey())
+        let certificate = try self.issueSelfSignedCertificate(privateKey: privateKey)
+        XCTAssertEqual(certificate.signatureAlgorithm.description, "SignatureAlgorithm.ecdsaWithSHA512")
+    }
+
+    func testDefaultEd25519SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+        let certificate = try self.issueSelfSignedCertificate(privateKey: privateKey)
+        XCTAssertEqual(certificate.signatureAlgorithm.description, "SignatureAlgorithm.ed25519")
+    }
+
+    private func issueSelfSignedCertificate(privateKey: Certificate.PrivateKey) throws -> Certificate {
+        let name = try DistinguishedName { CommonName("test") }
+        return try Certificate(
+            version: .v3,
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            publicKey: privateKey.publicKey,
+            notValidBefore: Date(),
+            notValidAfter: Date() + 3600,
+            issuer: name,
+            subject: name,
+            extensions: Certificate.Extensions {},
+            issuerPrivateKey: privateKey
+        )
+    }
 }
