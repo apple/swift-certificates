@@ -45,7 +45,7 @@ enum Digest {
 
 extension Digest: Sequence {
     @usableFromInline
-    func makeIterator() -> Array<UInt8>.Iterator {
+    func makeIterator() -> some IteratorProtocol<UInt8> {
         switch self {
         case .insecureSHA1(let sha1):
             return sha1.makeIterator()
