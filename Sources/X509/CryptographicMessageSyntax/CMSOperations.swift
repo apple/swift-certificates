@@ -51,6 +51,27 @@ public enum CMS {
         return try self.serializeSignedData(signedData)
     }
 
+    @_spi(CMS)
+    @inlinable
+    public static func sign<Bytes: DataProtocol>(
+        _ bytes: Bytes,
+        additionalIntermediateCertificates: [Certificate] = [],
+        certificate: Certificate,
+        privateKey: Certificate.PrivateKey,
+        signingTime: Date? = nil,
+        detached: Bool = true
+    ) throws -> [UInt8] {
+        return try self.sign(
+            bytes,
+            signatureAlgorithm: privateKey.defaultSignatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate,
+            privateKey: privateKey,
+            signingTime: signingTime,
+            detached: detached
+        )
+    }
+
     @inlinable
     static func signWithSigningTime<Bytes: DataProtocol>(
         _ bytes: Bytes,

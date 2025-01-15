@@ -1245,6 +1245,55 @@ final class CMSTests: XCTestCase {
             CMSSignerIdentifier.subjectKeyIdentifier(.init(keyIdentifier: [10, 20, 30, 40]))
         )
     }
+
+    func testDefaultRSASignatureAlgorithm() throws {
+        let privateKey = try Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "sha256WithRSAEncryption")
+    }
+
+    func testDefaultP256SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA256")
+    }
+
+    func testDefaultP384SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P384.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA384")
+    }
+
+    func testDefaultP521SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P521.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA512")
+    }
+
+    func testDefaultEd25519SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ed25519")
+    }
+
+    private func signAndExtractSignerInfo(privateKey: Certificate.PrivateKey) throws -> CMSSignerInfo? {
+        let name = try DistinguishedName { CommonName("test") }
+        let certificate = try Certificate(
+            version: .v3,
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            publicKey: privateKey.publicKey,
+            notValidBefore: Date(),
+            notValidAfter: Date() + 3600,
+            issuer: name,
+            subject: name,
+            extensions: Certificate.Extensions {},
+            issuerPrivateKey: privateKey
+        )
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signatureBytes = try CMS.sign(data, certificate: certificate, privateKey: privateKey)
+        let contentInfo = try CMSContentInfo(derEncoded: signatureBytes)
+        return try contentInfo.signedData?.signerInfos.first
+    }
 }
 
 extension DERSerializable {

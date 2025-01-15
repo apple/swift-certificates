@@ -134,6 +134,40 @@ extension Certificate {
                 return PublicKey(ed25519.publicKey)
             }
         }
+
+        @inlinable
+        var defaultSignatureAlgorithm: SignatureAlgorithm {
+            switch backing {
+            case .p256:
+                return .ecdsaWithSHA256
+            case .p384:
+                return .ecdsaWithSHA384
+            case .p521:
+                return .ecdsaWithSHA512
+            case .rsa:
+                return .sha256WithRSAEncryption
+            #if canImport(Darwin)
+            case .secureEnclaveP256:
+                return .ecdsaWithSHA256
+            case .secKey(let key):
+                switch key.type {
+                case .RSA:
+                    return .sha256WithRSAEncryption
+                case .ECDSA(let keySize):
+                    switch keySize {
+                    case .P256:
+                        return .ecdsaWithSHA256
+                    case .P384:
+                        return .ecdsaWithSHA384
+                    case .P521:
+                        return .ecdsaWithSHA512
+                    }
+                }
+            #endif
+            case .ed25519:
+                return .ed25519
+            }
+        }
     }
 }
 
