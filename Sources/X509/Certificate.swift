@@ -209,6 +209,54 @@ public struct Certificate {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
+    /// Construct a certificate from constituent parts, signed by an issuer key.
+    ///
+    /// This API can be used to construct a ``Certificate`` directly, without an intermediary
+    /// Certificate Signing Request. The ``signature-swift.property`` for this certificate will be produced
+    /// automatically, using `issuerPrivateKey`.
+    ///
+    /// A default signature algorithm to use for the signature of this certificate is automatically chosen based
+    /// on the type of the issuer's private key.
+    ///
+    /// This API can be used to construct a self-signed key by passing the private key for `publicKey` as the
+    /// `issuerPrivateKey` argument.
+    ///
+    /// - Parameters:
+    ///   - version: The X.509 specification version for this certificate.
+    ///   - serialNumber: The serial number of this certificate.
+    ///   - publicKey: The public key associated with this certificate.
+    ///   - notValidBefore: The date before which this certificate is not valid.
+    ///   - notValidAfter: The date after which this certificate is not valid.
+    ///   - issuer: The ``DistinguishedName`` of the issuer of this certificate.
+    ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
+    ///   - extensions: The extensions on this certificate.
+    ///   - issuerPrivateKey: The private key to use to sign this certificate.
+    @inlinable
+    public init(
+        version: Version,
+        serialNumber: SerialNumber,
+        publicKey: PublicKey,
+        notValidBefore: Date,
+        notValidAfter: Date,
+        issuer: DistinguishedName,
+        subject: DistinguishedName,
+        extensions: Extensions,
+        issuerPrivateKey: PrivateKey
+    ) throws {
+        try self.init(
+            version: version,
+            serialNumber: serialNumber,
+            publicKey: publicKey,
+            notValidBefore: notValidBefore,
+            notValidAfter: notValidAfter,
+            issuer: issuer,
+            subject: subject,
+            signatureAlgorithm: issuerPrivateKey.defaultSignatureAlgorithm,
+            extensions: extensions,
+            issuerPrivateKey: issuerPrivateKey
+        )
+    }
+
     @inlinable
     init(
         tbsCertificate: TBSCertificate,
