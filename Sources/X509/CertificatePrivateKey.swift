@@ -91,32 +91,23 @@ extension Certificate {
             bytes: Bytes,
             signatureAlgorithm: SignatureAlgorithm
         ) throws -> Signature {
-            try self.validateAlgorithmForKey(algorithm: signatureAlgorithm)
-
             switch self.backing {
             case .p256(let p256):
-                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                return try p256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+                return try p256.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .p384(let p384):
-                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                return try p384.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+                return try p384.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .p521(let p521):
-                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                return try p521.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+                return try p521.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .rsa(let rsa):
-                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
-                return try rsa.signature(for: bytes, digestAlgorithm: digestAlgorithm, padding: padding)
+                return try rsa.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             #if canImport(Darwin)
             case .secureEnclaveP256(let secureEnclaveP256):
-                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                return try secureEnclaveP256.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+                return try secureEnclaveP256.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .secKey(let secKeyWrapper):
-                let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                return try secKeyWrapper.signature(for: bytes, digestAlgorithm: digestAlgorithm)
+                return try secKeyWrapper.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             #endif
             case .ed25519(let ed25519):
-                return try ed25519.signature(for: bytes)
+                return try ed25519.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             }
         }
 
@@ -142,54 +133,6 @@ extension Certificate {
             case .ed25519(let ed25519):
                 return PublicKey(ed25519.publicKey)
             }
-        }
-
-        @inlinable
-        func validateAlgorithmForKey(algorithm: SignatureAlgorithm) throws {
-            switch self.backing {
-            case .p256, .p384, .p521:
-                if !algorithm.isECDSA {
-                    throw CertificateError.unsupportedSignatureAlgorithm(
-                        reason: "Cannot use \(algorithm) with ECDSA key \(self)"
-                    )
-                }
-            case .rsa:
-                if !algorithm.isRSA {
-                    throw CertificateError.unsupportedSignatureAlgorithm(
-                        reason: "Cannot use \(algorithm) with RSA key \(self)"
-                    )
-                }
-            #if canImport(Darwin)
-            case .secureEnclaveP256:
-                if !algorithm.isECDSA {
-                    throw CertificateError.unsupportedSignatureAlgorithm(
-                        reason: "Cannot use \(algorithm) with ECDSA key \(self)"
-                    )
-                }
-            case .secKey(let key):
-                switch key.type {
-                case .ECDSA:
-                    if !algorithm.isECDSA {
-                        throw CertificateError.unsupportedSignatureAlgorithm(
-                            reason: "Cannot use \(algorithm) with ECDSA key \(self)"
-                        )
-                    }
-                case .RSA:
-                    if !algorithm.isRSA {
-                        throw CertificateError.unsupportedSignatureAlgorithm(
-                            reason: "Cannot use \(algorithm) with RSA key \(self)"
-                        )
-                    }
-                }
-            #endif
-            case .ed25519:
-                if algorithm != .ed25519 {
-                    throw CertificateError.unsupportedSignatureAlgorithm(
-                        reason: "Cannot use \(algorithm) with Ed25519 key \(self)"
-                    )
-                }
-            }
-
         }
     }
 }

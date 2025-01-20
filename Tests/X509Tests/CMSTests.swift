@@ -15,6 +15,7 @@
 import Foundation
 import XCTest
 import Crypto
+import _CryptoExtras
 import SwiftASN1
 @testable @_spi(CMS) import X509
 
@@ -126,6 +127,48 @@ final class CMSTests: XCTestCase {
             SubjectKeyIdentifier(keyIdentifier: [1, 2, 3, 4, 5])
         },
         issuerPrivateKey: intermediateKey
+    )
+
+    static let rsaCertKey = try! Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+    static let rsaCertName = try! DistinguishedName {
+        CommonName("CMS RSA")
+    }
+    static let rsaCert = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: rsaCertKey.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: rsaCertName,
+        subject: rsaCertName,
+        signatureAlgorithm: .sha1WithRSAEncryption,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        },
+        issuerPrivateKey: rsaCertKey
+    )
+
+    static let ed25519CertKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+    static let ed25519CertName = try! DistinguishedName {
+        CommonName("CMS ED25519")
+    }
+    static let ed25519Cert = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: ed25519CertKey.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: ed25519CertName,
+        subject: ed25519CertName,
+        signatureAlgorithm: .ed25519,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        },
+        issuerPrivateKey: ed25519CertKey
     )
 
     @PolicyBuilder static var defaultPolicies: some VerifierPolicy {
@@ -1027,6 +1070,42 @@ final class CMSTests: XCTestCase {
             signatureBytes: signature,
             additionalIntermediateCertificates: [Self.intermediateCert],
             trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertValidSignature(isValidSignature)
+    }
+
+    func testSigningWithRSA() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .sha256WithRSAEncryption,
+            certificate: Self.rsaCert,
+            privateKey: Self.rsaCertKey
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rsaCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertValidSignature(isValidSignature)
+    }
+
+    func testSigningWithEd25519() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ed25519,
+            certificate: Self.ed25519Cert,
+            privateKey: Self.ed25519CertKey
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.ed25519Cert])
         ) {
             Self.defaultPolicies
         }

@@ -137,32 +137,17 @@ extension Certificate.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-        var digest: Digest?
-
-        if let digestAlgorithm = try? AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm) {
-            digest = try? Digest.computeDigest(for: bytes, using: digestAlgorithm)
-        }
-
-        switch (self.backing, digest) {
-        case (.p256(let p256), .some(let digest)):
-            return p256.isValidSignature(signature, for: digest)
-        case (.p384(let p384), .some(let digest)):
-            return p384.isValidSignature(signature, for: digest)
-        case (.p521(let p521), .some(let digest)):
-            return p521.isValidSignature(signature, for: digest)
-        case (.rsa(let rsa), .some(let digest)):
-            // For now we don't support RSA PSS, as it's not deployed in the WebPKI.
-            // We could, if there are sufficient user needs.
-            do {
-                let padding = try _RSA.Signing.Padding(forSignatureAlgorithm: signatureAlgorithm)
-                return rsa.isValidSignature(signature, for: digest, padding: padding)
-            } catch {
-                return false
-            }
-        case (.ed25519(let ed25519), .none):
-            return ed25519.isValidSignature(signature, for: bytes)
-        default:
-            return false
+        switch self.backing {
+        case .p256(let p256):
+            return p256.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .p384(let p384):
+            return p384.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .p521(let p521):
+            return p521.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .rsa(let rsa):
+            return rsa.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .ed25519(let ed25519):
+            return ed25519.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
         }
     }
 }
@@ -274,21 +259,6 @@ extension Certificate.PublicKey {
     @inlinable
     public var subjectPublicKeyInfoBytes: ArraySlice<UInt8> {
         SubjectPublicKeyInfo(self).key.bytes
-    }
-}
-
-extension _RSA.Signing.Padding {
-    @inlinable
-    init(forSignatureAlgorithm signatureAlgorithm: Certificate.SignatureAlgorithm) throws {
-        switch signatureAlgorithm {
-        case .sha1WithRSAEncryption, .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption:
-            self = .insecurePKCS1v1_5
-        default:
-            // Either this is RSA PSS, or we hit a bug. Either way, unsupported.
-            throw CertificateError.unsupportedSignatureAlgorithm(
-                reason: "Unable to determine RSA padding mode for \(signatureAlgorithm)"
-            )
-        }
     }
 }
 
