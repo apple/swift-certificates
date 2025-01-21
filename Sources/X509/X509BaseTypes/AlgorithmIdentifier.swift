@@ -231,11 +231,13 @@ extension AlgorithmIdentifier: CustomStringConvertible {
             return "ecdsaWithSHA384"
         case .ecdsaWithSHA512:
             return "ecdsaWithSHA512"
+        case .sha1WithRSAEncryption, .sha1WithRSAEncryptionUsingNil:
+            return "sha1WithRSAEncryption"
         case .sha256WithRSAEncryption, .sha256WithRSAEncryptionUsingNil:
             return "sha256WithRSAEncryption"
         case .sha384WithRSAEncryption, .sha384WithRSAEncryptionUsingNil:
             return "sha384WithRSAEncryption"
-        case .p521PublicKey, .sha512WithRSAEncryptionUsingNil:
+        case .sha512WithRSAEncryption, .sha512WithRSAEncryptionUsingNil:
             return "sha512WithRSAEncryption"
         case .sha1, .sha1UsingNil:
             return "sha1"
@@ -245,6 +247,8 @@ extension AlgorithmIdentifier: CustomStringConvertible {
             return "sha384"
         case .sha512, .sha512UsingNil:
             return "sha512"
+        case .ed25519:
+            return "ed25519"
         default:
             return "AlgorithmIdentifier(\(self.algorithm) - \(String(reflecting: self.parameters)))"
         }
