@@ -161,7 +161,7 @@ extension P256.Signing.PublicKey {
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
-              let innerSignature = P256.Signing.ECDSASignature(rawInnerSignature)
+            let innerSignature = P256.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
             return false
@@ -188,7 +188,7 @@ extension P384.Signing.PublicKey {
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
-              let innerSignature = P384.Signing.ECDSASignature(rawInnerSignature)
+            let innerSignature = P384.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
             return false
@@ -215,7 +215,7 @@ extension P521.Signing.PublicKey {
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
-              let innerSignature = P521.Signing.ECDSASignature(rawInnerSignature)
+            let innerSignature = P521.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
             return false

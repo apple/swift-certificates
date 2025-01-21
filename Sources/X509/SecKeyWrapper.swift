@@ -200,7 +200,10 @@ extension Certificate.PrivateKey {
             return signatureData
         }
 
-        static func keyAlgorithm(signatureAlgorithm: Certificate.SignatureAlgorithm, type: KeyType) throws -> SecKeyAlgorithm {
+        static func keyAlgorithm(
+            signatureAlgorithm: Certificate.SignatureAlgorithm,
+            type: KeyType
+        ) throws -> SecKeyAlgorithm {
             let algorithm: SecKeyAlgorithm
             switch type {
             case .RSA:
