@@ -24,8 +24,7 @@ a default verifier and a number of built-in verifier policies.
 
 ## Supported Swift Versions
 
-This library was introduced with support for Swift 5.7 or later. This library will
-support the latest stable Swift version and the two versions prior.
+This library will support the latest stable Swift version and the two versions prior.
 
 ## Getting Started
 
@@ -33,11 +32,9 @@ To use swift-certificates, add the following dependency to your Package.swift:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/apple/swift-certificates.git", .upToNextMinor(from: "0.6.0"))
+    .package(url: "https://github.com/apple/swift-certificates.git", .upToNextMajor(from: "1.0.0"))
 ]
 ```
-
-Note that this repository does not have a 1.0 tag yet, so the API is not stable.
 
 You can then add the specific product dependency to your target:
 

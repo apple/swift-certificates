@@ -116,9 +116,9 @@ struct TBSCertificate: DERImplicitlyTaggable, Hashable, Sendable {
 
             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
             let signature = try AlgorithmIdentifier(derEncoded: &nodes)
-            let issuer = try DistinguishedName(derEncoded: &nodes)
+            let issuer = try DistinguishedName.derEncoded(&nodes)
             let validity = try Validity(derEncoded: &nodes)
-            let subject = try DistinguishedName(derEncoded: &nodes)
+            let subject = try DistinguishedName.derEncoded(&nodes)
             let subjectPublicKeyInfo = try SubjectPublicKeyInfo(derEncoded: &nodes)
             let issuerUniqueID = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
                 try UniqueIdentifier(derEncoded: $0)

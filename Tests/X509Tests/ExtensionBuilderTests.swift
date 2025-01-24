@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import XCTest
+import SwiftASN1
 import X509
 
 final class ExtensionBuilderTests: XCTestCase {

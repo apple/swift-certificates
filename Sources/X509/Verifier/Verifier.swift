@@ -46,13 +46,14 @@ public struct Verifier<Policy: VerifierPolicy> {
             return .couldNotValidate([])
         }
 
+        let rootCertificates = await self.rootCertificates.resolve(diagnosticsCallback: diagnosticCallback)
         // Second check: is this leaf _already in_ the certificate store? If it is, we can just trust it directly.
         //
         // Note that this requires an _exact match_: if there isn't an exact match, we'll fall back to chain building,
         // which may let us chain through another variant of this certificate and build a valid chain. This is a very
         // deliberate choice: certificates that assert the same combination of (subject, public key, SAN) but different
         // extensions or policies should not be tolerated by this check, and will be ignored.
-        if self.rootCertificates.contains(leafCertificate) {
+        if rootCertificates.contains(leafCertificate) {
             let unverifiedChain = UnverifiedCertificateChain([leafCertificate])
 
             switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
@@ -70,6 +71,8 @@ public struct Verifier<Policy: VerifierPolicy> {
                 )
             }
         }
+
+        let intermediates = await intermediates.resolve(diagnosticsCallback: diagnosticCallback)
 
         // This is essentially a DFS of the certificate tree. We attempt to iteratively build up possible chains.
         while let nextPartialCandidate = partialChains.popLast() {

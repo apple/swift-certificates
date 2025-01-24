@@ -21,8 +21,7 @@ import SwiftASN1
 ///   subjectKeyIdentifier [0] SubjectKeyIdentifier }
 ///  ```
 @usableFromInline
-enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
-
+enum CMSSignerIdentifier: DERParseable, BERParseable, DERSerializable, BERSerializable, Hashable, Sendable {
     @usableFromInline
     static let skiIdentifier = ASN1Identifier(tagWithNumber: 0, tagClass: .contextSpecific)
 
@@ -37,7 +36,12 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
 
         case Self.skiIdentifier:
             self = try .subjectKeyIdentifier(
-                .init(keyIdentifier: .init(derEncoded: node, withIdentifier: Self.skiIdentifier))
+                .init(
+                    keyIdentifier: ASN1OctetString(
+                        derEncoded: node,
+                        withIdentifier: Self.skiIdentifier
+                    ).bytes
+                )
             )
 
         default:
@@ -52,8 +56,8 @@ enum CMSSignerIdentifier: DERParseable, DERSerializable, Hashable, Sendable {
             try issuerAndSerialNumber.serialize(into: &coder)
 
         case .subjectKeyIdentifier(let subjectKeyIdentifier):
-            try subjectKeyIdentifier.keyIdentifier.serialize(into: &coder, withIdentifier: Self.skiIdentifier)
-
+            try ASN1OctetString(contentBytes: subjectKeyIdentifier.keyIdentifier)
+                .serialize(into: &coder, withIdentifier: Self.skiIdentifier)
         }
     }
 

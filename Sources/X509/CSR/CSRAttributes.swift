@@ -114,7 +114,7 @@ extension CertificateSigningRequest.Attributes: RandomAccessCollection {
     ///
     /// If an attribute already exists with this OID, it will be replaced by the new value.
     ///
-    /// - Parameter attribute: The ``CertificateSigningRequest/Attribute`` to insert.
+    /// - Parameter ext: The ``CertificateSigningRequest/Attribute`` to insert.
     @inlinable
     public mutating func insert(_ ext: CertificateSigningRequest.Attribute) {
         self[oid: ext.oid] = ext
@@ -126,7 +126,7 @@ extension CertificateSigningRequest.Attributes: RandomAccessCollection {
     /// present in this element, the new value will replace it. If `extensions` contains multiple attributes with the same
     /// ``CertificateSigningRequest/Attribute/oid``, the last element will win.
     ///
-    /// - Parameter extensions: The sequence of new ``Certificate/Attribute``s to insert.
+    /// - Parameter extensions: The sequence of new ``CertificateSigningRequest/Attribute``s to insert.
     @inlinable
     public mutating func insert<Extensions: Sequence>(contentsOf extensions: Extensions)
     where Extensions.Element == CertificateSigningRequest.Attribute {

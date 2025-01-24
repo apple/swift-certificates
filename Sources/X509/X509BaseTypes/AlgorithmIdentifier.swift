@@ -15,7 +15,7 @@
 import SwiftASN1
 
 @usableFromInline
-struct AlgorithmIdentifier: DERImplicitlyTaggable, Hashable, Sendable {
+struct AlgorithmIdentifier: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -48,6 +48,11 @@ struct AlgorithmIdentifier: DERImplicitlyTaggable, Hashable, Sendable {
 
             return .init(algorithm: algorithmOID, parameters: parameters)
         }
+    }
+
+    @inlinable
+    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try .init(derEncoded: rootNode, withIdentifier: identifier)
     }
 
     @inlinable
@@ -202,6 +207,12 @@ extension AlgorithmIdentifier {
         algorithm: .AlgorithmIdentifier.sha512,
         parameters: try! ASN1Any(erasing: ASN1Null())
     )
+
+    @usableFromInline
+    static let ed25519 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.ed25519,
+        parameters: nil
+    )
 }
 
 extension AlgorithmIdentifier: CustomStringConvertible {
@@ -220,11 +231,13 @@ extension AlgorithmIdentifier: CustomStringConvertible {
             return "ecdsaWithSHA384"
         case .ecdsaWithSHA512:
             return "ecdsaWithSHA512"
+        case .sha1WithRSAEncryption, .sha1WithRSAEncryptionUsingNil:
+            return "sha1WithRSAEncryption"
         case .sha256WithRSAEncryption, .sha256WithRSAEncryptionUsingNil:
             return "sha256WithRSAEncryption"
         case .sha384WithRSAEncryption, .sha384WithRSAEncryptionUsingNil:
             return "sha384WithRSAEncryption"
-        case .p521PublicKey, .sha512WithRSAEncryptionUsingNil:
+        case .sha512WithRSAEncryption, .sha512WithRSAEncryptionUsingNil:
             return "sha512WithRSAEncryption"
         case .sha1, .sha1UsingNil:
             return "sha1"
@@ -234,6 +247,8 @@ extension AlgorithmIdentifier: CustomStringConvertible {
             return "sha384"
         case .sha512, .sha512UsingNil:
             return "sha512"
+        case .ed25519:
+            return "ed25519"
         default:
             return "AlgorithmIdentifier(\(self.algorithm) - \(String(reflecting: self.parameters)))"
         }
@@ -259,6 +274,8 @@ extension ASN1ObjectIdentifier.AlgorithmIdentifier {
     static let sha384: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 2]
 
     static let sha512: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 3]
+
+    static let ed25519: ASN1ObjectIdentifier = [1, 3, 101, 112]
 }
 
 extension AlgorithmIdentifier {

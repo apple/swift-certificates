@@ -14,7 +14,7 @@
 
 import SwiftASN1
 import Crypto
-#if canImport(Darwin)
+#if canImport(Darwin) || swift(>=5.9.1)
 import Foundation
 #else
 @preconcurrency import Foundation
@@ -69,7 +69,7 @@ extension OCSPRequesterQueryResult {
     }
 
     /// The OCSP query is considered unsuccessful and will fail verification in both ``OCSPFailureMode/soft`` and ``OCSPFailureMode/hard`` failure mode.
-    /// The certificate is then considered to not meet the ``OCSPVerifierPolicy`` and ``OCSPVerifierPolicy/chainMeetsPolicyRequirements(chain:)`` will return ``PolicyEvaluationResult/failsToMeetPolicy(reason:)`` with the given ``reason``.
+    /// The certificate is then considered to not meet the ``OCSPVerifierPolicy`` and ``OCSPVerifierPolicy/chainMeetsPolicyRequirements(chain:)`` will return ``PolicyEvaluationResult/failsToMeetPolicy(reason:)-3tp9a`` with the given reason.
     /// - Parameter reason: the reason why the OCSP query failed
     @inlinable
     public static func terminalError(_ reason: Error) -> Self {
@@ -320,6 +320,7 @@ extension OCSPVerifierPolicy.Storage {
             return responderURI
         }.first
         guard let responderURI else {
+            let ocspAccessDescriptions = Array(ocspAccessDescriptions)
             return self.softFailure(
                 reason: .init("expected OCSP location to be a URI but got \(ocspAccessDescriptions)")
             )

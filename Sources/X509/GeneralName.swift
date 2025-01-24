@@ -58,7 +58,13 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case Self.x400AddressTag:
             self = .x400Address(ASN1Any(derEncoded: rootNode))
         case Self.directoryNameTag:
-            self = try .directoryName(DistinguishedName(derEncoded: rootNode, withIdentifier: Self.directoryNameTag))
+            self = try DER.explicitlyTagged(
+                rootNode,
+                tagNumber: Self.directoryNameTag.tagNumber,
+                tagClass: Self.directoryNameTag.tagClass
+            ) { node in
+                return try .directoryName(DistinguishedName(derEncoded: node))
+            }
         case Self.ediPartyNameTag:
             self = .ediPartyName(ASN1Any(derEncoded: rootNode))
         case Self.uriTag:
@@ -87,7 +93,7 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
         case .x400Address(let orAddress):
             try orAddress.serialize(into: &coder)
         case .directoryName(let name):
-            try name.serialize(into: &coder, withIdentifier: Self.directoryNameTag)
+            try coder.serialize(name, explicitlyTaggedWithIdentifier: Self.directoryNameTag)
         case .ediPartyName(let name):
             try name.serialize(into: &coder)
         case .uniformResourceIdentifier(let name):

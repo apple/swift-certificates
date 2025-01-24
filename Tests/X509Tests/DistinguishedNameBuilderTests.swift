@@ -44,7 +44,7 @@ final class DistinguishedNameBuilderTests: XCTestCase {
 
         let expectedExtensions = DistinguishedName([
             RelativeDistinguishedName(.init(type: .RDNAttributeType.commonName, utf8String: "1")),
-            RelativeDistinguishedName(.init(type: .RDNAttributeType.countryName, utf8String: "2")),
+            try RelativeDistinguishedName(.init(type: .RDNAttributeType.countryName, printableString: "2")),
             RelativeDistinguishedName(.init(type: .RDNAttributeType.localityName, utf8String: "3")),
             RelativeDistinguishedName(.init(type: .RDNAttributeType.organizationName, utf8String: "5")),
             RelativeDistinguishedName(.init(type: .RDNAttributeType.streetAddress, utf8String: "7")),

@@ -43,6 +43,22 @@ enum Digest {
     }
 }
 
+extension Digest: Sequence {
+    @usableFromInline
+    func makeIterator() -> some IteratorProtocol<UInt8> {
+        switch self {
+        case .insecureSHA1(let sha1):
+            return sha1.makeIterator()
+        case .sha256(let sha256):
+            return sha256.makeIterator()
+        case .sha384(let sha384):
+            return sha384.makeIterator()
+        case .sha512(let sha512):
+            return sha512.makeIterator()
+        }
+    }
+}
+
 // MARK: Public key operations
 
 extension P256.Signing.PublicKey {
@@ -133,6 +149,18 @@ extension _RSA.Signing.PublicKey {
         case .sha512(let sha512):
             return self.isValidSignature(innerSignature, for: sha512, padding: padding)
         }
+    }
+}
+
+extension Curve25519.Signing.PublicKey {
+    @inlinable
+    func isValidSignature<Bytes: DataProtocol>(_ signature: Certificate.Signature, for bytes: Bytes) -> Bool {
+        guard case .ed25519(let rawInnerSignature) = signature.backing else {
+            // Signature mismatch
+            return false
+        }
+
+        return self.isValidSignature(rawInnerSignature, for: bytes)
     }
 }
 
@@ -253,5 +281,15 @@ extension _RSA.Signing.PrivateKey {
         }
 
         return Certificate.Signature(backing: .rsa(signature))
+    }
+}
+
+extension Curve25519.Signing.PrivateKey {
+    @inlinable
+    func signature<Bytes: DataProtocol>(
+        for bytes: Bytes
+    ) throws -> Certificate.Signature {
+        let signature: Data = try self.signature(for: bytes)
+        return Certificate.Signature(backing: .ed25519(.init(signature)))
     }
 }

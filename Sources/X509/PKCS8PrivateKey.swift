@@ -73,12 +73,12 @@ struct PKCS8PrivateKey: DERImplicitlyTaggable {
             // We ignore the attributes
             _ = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { _ in }
 
-            return try .init(algorithm: algorithm, privateKey: privateKeyBytes)
+            return .init(algorithm: algorithm, privateKey: privateKeyBytes)
         }
     }
 
     @inlinable
-    init(algorithm: AlgorithmIdentifier, privateKey: ASN1OctetString) throws {
+    init(algorithm: AlgorithmIdentifier, privateKey: ASN1OctetString) {
         self.privateKey = privateKey
         self.algorithm = algorithm
     }

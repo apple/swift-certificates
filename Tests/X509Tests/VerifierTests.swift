@@ -16,8 +16,9 @@ import Foundation
 import XCTest
 import SwiftASN1
 @testable import X509
-import Crypto
+@preconcurrency import Crypto
 
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
 final class VerifierTests: XCTestCase {
     private static let referenceTime = Date()
 
@@ -327,9 +328,9 @@ final class VerifierTests: XCTestCase {
         )
     }()
 
-    // MARK: Deeply insane PKI
+    // MARK: Deeply crazy PKI
     //
-    // This section defines a deeply insane PKI. The PKI has one root CA and two intermediate CAs, and looks roughly like this:
+    // This section defines a deeply crazy PKI. The PKI has one root CA and two intermediate CAs, and looks roughly like this:
     //
     //                       ┌────────────────┐
     //                       │                │
@@ -382,7 +383,7 @@ final class VerifierTests: XCTestCase {
     //
     // Finally, we need two Xs that are considered "different" so that chain building doesn't fail. We differ them by using SAN.
     //
-    // The following section builds this absolutely insane PKI. We re-use `ca1` defined above as our root CA.
+    // The following section builds this absolutely crazy PKI. We re-use `ca1` defined above as our root CA.
     private static let t1t2Key = P256.Signing.PrivateKey()
     private static let t3Key = P256.Signing.PrivateKey()
     private static let xKey = P256.Signing.PrivateKey()
@@ -618,7 +619,7 @@ final class VerifierTests: XCTestCase {
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(
             leafCertificate: Self.localhostLeaf,
-            intermediates: CertificateStore([]),
+            intermediates: CertificateStore(),
             diagnosticCallback: log.append(_:)
         )
 
@@ -639,7 +640,7 @@ final class VerifierTests: XCTestCase {
     }
 
     func testMissingRootFailsToBuild() async throws {
-        let roots = CertificateStore([])
+        let roots = CertificateStore()
         let log = DiagnosticsLog()
 
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }

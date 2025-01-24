@@ -14,7 +14,7 @@
 
 import SwiftASN1
 @preconcurrency import Crypto
-@preconcurrency import _CryptoExtras
+import _CryptoExtras
 import Foundation
 
 extension Certificate {
@@ -46,6 +46,9 @@ extension Certificate {
                 _ = try RSAPKCS1PublicKey(derEncoded: spki.key.bytes)
                 let key = try _RSA.Signing.PublicKey(derRepresentation: spki.key.bytes)
                 self.backing = .rsa(key)
+            case .ed25519:
+                let key = try Curve25519.Signing.PublicKey(rawRepresentation: spki.key.bytes)
+                self.backing = .ed25519(key)
             default:
                 throw CertificateError.unsupportedPublicKeyAlgorithm(reason: "\(spki.algorithmIdentifier)")
             }
@@ -82,6 +85,13 @@ extension Certificate {
         @inlinable
         public init(_ rsa: _RSA.Signing.PublicKey) {
             self.backing = .rsa(rsa)
+        }
+
+        /// Construct a public key wrapping an Ed25519 public key.
+        /// - Parameter ed25519: The Ed25519 public key to wrap.
+        @inlinable
+        public init(_ ed25519: Curve25519.Signing.PublicKey) {
+            self.backing = .ed25519(ed25519)
         }
     }
 }
@@ -127,22 +137,20 @@ extension Certificate.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-        let digest: Digest
-        do {
-            let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-            digest = try Digest.computeDigest(for: bytes, using: digestAlgorithm)
-        } catch {
-            return false
+        var digest: Digest?
+
+        if let digestAlgorithm = try? AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm) {
+            digest = try? Digest.computeDigest(for: bytes, using: digestAlgorithm)
         }
 
-        switch self.backing {
-        case .p256(let p256):
+        switch (self.backing, digest) {
+        case (.p256(let p256), .some(let digest)):
             return p256.isValidSignature(signature, for: digest)
-        case .p384(let p384):
+        case (.p384(let p384), .some(let digest)):
             return p384.isValidSignature(signature, for: digest)
-        case .p521(let p521):
+        case (.p521(let p521), .some(let digest)):
             return p521.isValidSignature(signature, for: digest)
-        case .rsa(let rsa):
+        case (.rsa(let rsa), .some(let digest)):
             // For now we don't support RSA PSS, as it's not deployed in the WebPKI.
             // We could, if there are sufficient user needs.
             do {
@@ -151,6 +159,10 @@ extension Certificate.PublicKey {
             } catch {
                 return false
             }
+        case (.ed25519(let ed25519), .none):
+            return ed25519.isValidSignature(signature, for: bytes)
+        default:
+            return false
         }
     }
 }
@@ -170,6 +182,8 @@ extension Certificate.PublicKey: CustomStringConvertible {
             return "P521.PublicKey"
         case .rsa(let publicKey):
             return "RSA\(publicKey.keySizeInBits).PublicKey"
+        case .ed25519:
+            return "Ed25519.PublicKey"
         }
     }
 }
@@ -181,6 +195,7 @@ extension Certificate.PublicKey {
         case p384(Crypto.P384.Signing.PublicKey)
         case p521(Crypto.P521.Signing.PublicKey)
         case rsa(_CryptoExtras._RSA.Signing.PublicKey)
+        case ed25519(Curve25519.Signing.PublicKey)
 
         @inlinable
         static func == (lhs: BackingPublicKey, rhs: BackingPublicKey) -> Bool {
@@ -193,6 +208,8 @@ extension Certificate.PublicKey {
                 return l.rawRepresentation == r.rawRepresentation
             case (.rsa(let l), .rsa(let r)):
                 return l.derRepresentation == r.derRepresentation
+            case (.ed25519(let l), .ed25519(let r)):
+                return l.rawRepresentation == r.rawRepresentation
             default:
                 return false
             }
@@ -213,6 +230,9 @@ extension Certificate.PublicKey {
             case .rsa(let digest):
                 hasher.combine(3)
                 hasher.combine(digest.derRepresentation)
+            case .ed25519(let digest):
+                hasher.combine(4)
+                hasher.combine(digest.rawRepresentation)
             }
         }
     }
@@ -237,6 +257,9 @@ extension SubjectPublicKeyInfo {
         case .rsa(let rsa):
             algorithmIdentifier = .rsaKey
             key = .init(bytes: ArraySlice(rsa.pkcs1DERRepresentation))
+        case .ed25519(let ed25519):
+            algorithmIdentifier = .ed25519
+            key = .init(bytes: ArraySlice(ed25519.rawRepresentation))
         }
 
         self.algorithmIdentifier = algorithmIdentifier
@@ -323,6 +346,21 @@ extension _RSA.Signing.PublicKey {
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .rsa(let inner) = key.backing else {
+            return nil
+        }
+        self = inner
+    }
+}
+
+extension Curve25519.Signing.PublicKey {
+    /// Create a Curve25519 Public Key from a given ``Certificate/PublicKey-swift.struct``.
+    ///
+    /// Fails if the key is not a Curve25519 key.
+    ///
+    /// - parameters:
+    ///     - key: The key to unwrap.
+    public init?(_ key: Certificate.PublicKey) {
+        guard case .ed25519(let inner) = key.backing else {
             return nil
         }
         self = inner

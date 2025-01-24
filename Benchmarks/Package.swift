@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.8
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftCertificates open source project
@@ -18,12 +18,12 @@ import PackageDescription
 let package = Package(
     name: "benchmarks",
     platforms: [
-        .macOS(.v13),
+        .macOS(.v13)
     ],
     dependencies: [
         .package(path: "../"),
         .package(url: "https://github.com/ordo-one/package-benchmark.git", from: "1.11.1"),
-        .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0" ..< "4.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0"..<"4.0.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", from: "1.0.0"),
     ],
     targets: [
@@ -37,11 +37,11 @@ let package = Package(
             ],
             path: "Benchmarks/CertificatesBenchmark",
             resources: [
-                .copy("ca-certificates/"),
+                .copy("ca-certificates/")
             ],
             plugins: [
                 .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
             ]
-        ),
+        )
     ]
 )

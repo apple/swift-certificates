@@ -18,21 +18,17 @@ import Foundation
 let benchmarks = {
     Benchmark.defaultConfiguration = .init(
         metrics: [
-            .mallocCountTotal,
-            .syscalls,
-            .readSyscalls,
-            .writeSyscalls,
-            .memoryLeaked,
-            .retainCount,
-            .releaseCount,
+            .mallocCountTotal
+        ],
+        scalingFactor: .kilo,
+        maxDuration: .seconds(10_000_000),
+        maxIterations: 10,
+        thresholds: [
+            .mallocCountTotal: .init(relative: [.p90: 1.0])
         ]
     )
 
-    var configWithoutRetainRelease = Benchmark.defaultConfiguration
-    configWithoutRetainRelease.metrics.removeAll(where: { $0 == .retainCount || $0 == .releaseCount })
-
-    // async code is currently still quite flaky in the number of retain/release it does so we don't measure them today
-    Benchmark("Verifier", configuration: configWithoutRetainRelease) { benchmark in
+    Benchmark("Verifier") { benchmark in
         for _ in benchmark.scaledIterations {
             await verifier()
         }

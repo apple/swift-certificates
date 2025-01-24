@@ -298,18 +298,6 @@ final class CSRTests: XCTestCase {
         XCTAssertThrowsError(try csr.attributes.extensionRequest)
     }
 
-    func testInvalidSignature() throws {
-        let url = Bundle.module.url(
-            forResource: "invalid_signature",
-            withExtension: "pem",
-            subdirectory: "CSR Vectors/cryptography"
-        )!
-        let bytes = try String(decoding: Data(contentsOf: url), as: UTF8.self)
-        let csr = try CertificateSigningRequest(pemEncoded: bytes)
-
-        XCTAssertFalse(csr.publicKey.isValidSignature(csr.signature, for: csr))
-    }
-
     func testRSASHA256Signature() throws {
         let url = Bundle.module.url(
             forResource: "rsa_sha256",

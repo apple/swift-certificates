@@ -37,7 +37,7 @@ public struct AnyPolicy: VerifierPolicy {
     }
 
     /// Erases the type of some ``VerifierPolicy`` to ``AnyPolicy``.
-    /// - Parameter policy: the ``VerifierPolicy`` constructed using the ``PolicyBuilder`` DSL.
+    /// - Parameter makePolicy: the ``VerifierPolicy`` constructed using the ``PolicyBuilder`` DSL.
     @inlinable
     public init(@PolicyBuilder makePolicy: () throws -> some VerifierPolicy) rethrows {
         self.init(try makePolicy())

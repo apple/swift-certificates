@@ -12,7 +12,15 @@
 ##
 ##===----------------------------------------------------------------------===##
 
-cmake_minimum_required(VERSION 3.15.1)
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
+endif()
+
+if(POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW)
+endif()
+
+cmake_minimum_required(VERSION 3.19)
 
 project(SwiftCertificates
   LANGUAGES Swift)
@@ -21,29 +29,47 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 include(SwiftSupport)
 
-if(CMAKE_VERSION VERSION_LESS 3.16 AND CMAKE_SYSTEM_NAME STREQUAL Windows)
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-else()
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-endif()
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
-
 option(BUILD_SHARED_LIBS "Build shared libraries by default" YES)
 
-if(BUILD_SHARED_LIBS)
-  set(CMAKE_POSITION_INDEPENDENT_CODE YES)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+set(CMAKE_Swift_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
+set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+
+# Toolchain vended dependencies
+find_package(dispatch CONFIG)
+find_package(Foundation CONFIG)
+
+include(FetchContent)
+
+set(_CERT_SAVED_BUILD_EXAMPLES ${BUILD_EXAMPLES})
+set(_CERT_SAVED_BUILD_TESTING ${BUILD_TESTING})
+
+find_package(SwiftASN1 CONFIG)
+if(NOT SwiftASN1_FOUND)
+  message("-- Vending swift-asn1")
+  FetchContent_Declare(ASN1
+    GIT_REPOSITORY https://github.com/apple/swift-asn1
+    GIT_TAG 1.1.0)
+  FetchContent_MakeAvailable(ASN1)
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
-  find_package(dispatch CONFIG)
-  find_package(Foundation CONFIG)
+find_package(SwiftCrypto CONFIG)
+if(NOT SwiftCrypto_FOUND)
+  message("-- Vending swift-crypto")
+  FetchContent_Declare(Crypto
+    GIT_REPOSITORY https://github.com/apple/swift-crypto
+    GIT_TAG 3.2.0)
+  FetchContent_MakeAvailable(Crypto)
 endif()
-                        
-find_package(SwiftASN1 CONFIG REQUIRED)
-find_package(SwiftCrypto CONFIG REQUIRED)
+
+set(BUILD_TESTING ${_CERT_SAVED_BUILD_TESTING})
+set(BUILD_EXAMPLES ${_CERT_SAVED_BUILD_EXAMPLES})
 
 add_subdirectory(Sources)
 add_subdirectory(cmake/modules)

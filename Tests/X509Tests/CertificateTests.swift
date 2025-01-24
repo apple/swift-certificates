@@ -474,6 +474,7 @@ final class CertificateTests: XCTestCase {
 
     private static let referenceTime = Date(timeIntervalSince1970: 1_691_504_774)
 
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
     func testCertificateDescription() throws {
         let caPrivateKey = P384.Signing.PrivateKey()
         let certificateName1 = try! DistinguishedName {
@@ -481,13 +482,15 @@ final class CertificateTests: XCTestCase {
             OrganizationName("Apple")
             CommonName("Swift Certificate Test CA 1")
         }
+        let caNotValidBefore = Self.referenceTime - .days(365)
+        let caNotValidAfter = Self.referenceTime + .days(3650)
 
         let ca = try Certificate(
             version: .v3,
             serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
             publicKey: .init(caPrivateKey.publicKey),
-            notValidBefore: Self.referenceTime - .days(365),
-            notValidAfter: Self.referenceTime + .days(3650),
+            notValidBefore: caNotValidBefore,
+            notValidAfter: caNotValidAfter,
             issuer: certificateName1,
             subject: certificateName1,
             signatureAlgorithm: .ecdsaWithSHA384,
@@ -511,8 +514,8 @@ final class CertificateTests: XCTestCase {
             serialNumber: 1:2:3:4:5:6:7:8:9:a, \
             issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
             subject: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
-            notValidBefore: 2022-08-08 14:26:14 +0000, \
-            notValidAfter: 2033-08-05 14:26:14 +0000, \
+            notValidBefore: \(String(reflecting: caNotValidBefore)), \
+            notValidAfter: \(String(reflecting: caNotValidAfter)), \
             publicKey: P384.PublicKey, \
             signature: ECDSA, \
             extensions: [\
@@ -530,13 +533,16 @@ final class CertificateTests: XCTestCase {
             OrganizationName("Apple")
             CommonName("Swift Certificate Test Intermediate CA 1")
         }
+        let intermediateNotValidBefore = Self.referenceTime - .days(365)
+        let intermediateNotValidAfter = Self.referenceTime + .days(5 * 365)
+
         let intermediate: Certificate = {
             return try! Certificate(
                 version: .v3,
                 serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
                 publicKey: .init(intermediatePrivateKey.publicKey),
-                notValidBefore: Self.referenceTime - .days(365),
-                notValidAfter: Self.referenceTime + .days(5 * 365),
+                notValidBefore: intermediateNotValidBefore,
+                notValidAfter: intermediateNotValidAfter,
                 issuer: ca.subject,
                 subject: intermediateName,
                 signatureAlgorithm: .ecdsaWithSHA384,
@@ -574,8 +580,8 @@ final class CertificateTests: XCTestCase {
             serialNumber: 1:2:3:4:5:6:7:8:9:a:b, \
             issuer: "CN=Swift Certificate Test CA 1,O=Apple,C=US", \
             subject: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
-            notValidBefore: 2022-08-08 14:26:14 +0000, \
-            notValidAfter: 2028-08-06 14:26:14 +0000, \
+            notValidBefore: \(String(reflecting: intermediateNotValidBefore)), \
+            notValidAfter: \(String(reflecting: intermediateNotValidAfter)), \
             publicKey: P256.PublicKey, \
             signature: ECDSA, \
             extensions: [\
@@ -592,12 +598,15 @@ final class CertificateTests: XCTestCase {
         )
 
         let localhostPrivateKey = P256.Signing.PrivateKey()
+        let leafNotValidBefore = Self.referenceTime - .days(365)
+        let leafNotValidAfter = Self.referenceTime + .days(365)
+
         let leaf = try Certificate(
             version: .v3,
             serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
             publicKey: .init(localhostPrivateKey.publicKey),
-            notValidBefore: Self.referenceTime - .days(365),
-            notValidAfter: Self.referenceTime + .days(365),
+            notValidBefore: leafNotValidBefore,
+            notValidAfter: leafNotValidAfter,
             issuer: intermediateName,
             subject: try DistinguishedName {
                 CountryName("US")
@@ -624,8 +633,8 @@ final class CertificateTests: XCTestCase {
             serialNumber: 1:2:3:4:5:6:7:8:9:a:b:c, \
             issuer: "CN=Swift Certificate Test Intermediate CA 1,O=Apple,C=US", \
             subject: "STREET=Infinite Loop,CN=localhost,O=Apple,C=US", \
-            notValidBefore: 2022-08-08 14:26:14 +0000, \
-            notValidAfter: 2024-08-07 14:26:14 +0000, \
+            notValidBefore: \(String(reflecting: leafNotValidBefore)), \
+            notValidAfter: \(String(reflecting: leafNotValidAfter)), \
             publicKey: P256.PublicKey, \
             signature: ECDSA, \
             extensions: [\
@@ -637,5 +646,87 @@ final class CertificateTests: XCTestCase {
             """
         )
         print(intermediate)
+    }
+
+    func testAKISerialization() throws {
+        let t = GeneralName.directoryName(
+            try DistinguishedName {
+                CommonName("CA")
+                OrganizationName("Some Org")
+                CountryName("Some Country")
+            }
+        )
+        let aki = AuthorityKeyIdentifierValue(AuthorityKeyIdentifier(authorityCertIssuer: [t]))
+        var serializer = DER.Serializer()
+        try serializer.serialize(aki)
+        let bytes = serializer.serializedBytes
+
+        let decoded = try AuthorityKeyIdentifierValue(derEncoded: bytes)
+        XCTAssertEqual(decoded.authorityCertIssuer, aki.authorityCertIssuer)
+
+        XCTAssertEqual(
+            bytes,
+            [
+                0x30, 0x3d,  // SEQUENCE, length 61 bytes
+                0xa1, 0x3b,  // [1], length 59 bytes
+                0xa4, 0x39,  // [4], length 57 bytes
+                0x30, 0x37,  // SEQUENCE, length 55 bytes
+                0x31, 0xb,  // SET, length 11 bytes
+                0x30, 0x9,  // SEQUENCE, length 9 bytes
+                0x6, 0x3, 0x55, 0x4, 0x3,  // OID, common name
+                0xc, 0x2, 0x43, 0x41,  // UTF-8 string, "CA"
+                0x31, 0x11,  // SET, length 17 bytes
+                0x30, 0xf,  // SEQUENCE, length 15 bytes
+                0x6, 0x3, 0x55, 0x4, 0xa,  // OID, organizationName
+                0xc, 0x8, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x4f, 0x72, 0x67,  // UTF-8 string, "Some Org"
+                0x31, 0x15,  // SET, length 21 bytes
+                0x30, 0x13,  // SEQUENCE, length 19 bytes
+                0x6, 0x3, 0x55, 0x4, 0x6,  // OID, countryName
+                0x13, 0xc, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x72, 0x79,
+                // Printable string, "Some Country"
+            ]
+        )
+    }
+
+    func testRFC8410Ed25519PublicKey() throws {
+        let pemKey = """
+            -----BEGIN PUBLIC KEY-----
+            MCowBQYDK2VwAyEAGb9ECWmEzf6FQbrBZ9w7lshQhqowtrbLDFw4rXAxZuE=
+            -----END PUBLIC KEY-----
+            """
+        let resultingKey = try Certificate.PublicKey(pemEncoded: pemKey)
+        let unwrappedKey = Curve25519.Signing.PublicKey(resultingKey)
+        let reWrappedKey = Certificate.PublicKey(unwrappedKey!)
+        XCTAssertEqual(reWrappedKey, resultingKey)
+        XCTAssertEqual(try reWrappedKey.serializeAsPEM().pemString, pemKey)
+    }
+
+    func testRFC8410Ed25519PrivateKey() throws {
+        let pemKey = """
+            -----BEGIN PRIVATE KEY-----
+            MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
+            -----END PRIVATE KEY-----
+            """
+        let resultingKey = try Certificate.PrivateKey(pemEncoded: pemKey)
+        XCTAssertEqual(try resultingKey.serializeAsPEM().pemString, pemKey)
+    }
+
+    func testExampleEd25519SelfIssuedSelfSignedCert() throws {
+        let cert = """
+            -----BEGIN CERTIFICATE-----
+            MIIBCDCBuwIUGW78zw0OL0GptJi++a91dBa7DsQwBQYDK2VwMCcxCzAJBgNVBAYT
+            AkRFMRgwFgYDVQQDDA93d3cuZXhhbXBsZS5jb20wHhcNMTkwMzMxMTc1MTIyWhcN
+            MjEwMjI4MTc1MTIyWjAnMQswCQYDVQQGEwJERTEYMBYGA1UEAwwPd3d3LmV4YW1w
+            bGUuY29tMCowBQYDK2VwAyEAK87g0b8CC1eA5mvKXt9uezZwJYWEyg74Y0xTZEkq
+            CcwwBQYDK2VwA0EAIIu/aa3Qtr3IE5to/nvWVY9y3ciwG5DnA70X3ALUhFs+U5aL
+            tfY8sNT1Ng72ht+UBwByuze20UsL9qMsmknQCA==
+            -----END CERTIFICATE-----
+            """
+        let parsedCert = try Certificate(pemEncoded: cert)
+        XCTAssertTrue(parsedCert.publicKey.isValidSignature(parsedCert.signature, for: parsedCert))
+        XCTAssertNotNil(Curve25519.Signing.PublicKey(parsedCert.publicKey))
+
+        let reEncoded = try parsedCert.serializeAsPEM().pemString
+        XCTAssertEqual(cert, reEncoded)
     }
 }

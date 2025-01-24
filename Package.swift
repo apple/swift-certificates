@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.9
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftCertificates open source project
@@ -27,7 +27,8 @@ let package = Package(
     products: [
         .library(
             name: "X509",
-            targets: ["X509"]),
+            targets: ["X509"]
+        )
     ],
     targets: [
         .target(
@@ -39,15 +40,17 @@ let package = Package(
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
             ],
             exclude: [
-                "CMakeLists.txt",
-            ]),
+                "CMakeLists.txt"
+            ]
+        ),
         .testTarget(
             name: "X509Tests",
             dependencies: [
                 "X509",
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
-            ], resources: [
+            ],
+            resources: [
                 .copy("OCSP Test Resources/www.apple.com.root.der"),
                 .copy("OCSP Test Resources/www.apple.com.intermediate.der"),
                 .copy("OCSP Test Resources/www.apple.com.der"),
@@ -55,17 +58,21 @@ let package = Package(
                 .copy("OCSP Test Resources/www.apple.com.intermediate.ocsp-response.der"),
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
-            ]),
+                .copy("ca-certificates.crt"),
+            ]
+        ),
         .target(
             name: "_CertificateInternals",
             exclude: [
-                "CMakeLists.txt",
-            ]),
+                "CMakeLists.txt"
+            ]
+        ),
         .testTarget(
             name: "CertificateInternalsTests",
             dependencies: [
-                "_CertificateInternals",
-            ]),
+                "_CertificateInternals"
+            ]
+        ),
     ]
 )
 
@@ -74,9 +81,8 @@ let package = Package(
 // we can depend on local versions of our dependencies instead of fetching them remotely.
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
     package.dependencies += [
-        .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0" ..< "4.0.0"),
-        .package(url: "https://github.com/apple/swift-asn1.git", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0"..<"4.0.0"),
+        .package(url: "https://github.com/apple/swift-asn1.git", from: "1.1.0"),
     ]
 } else {
     package.dependencies += [
@@ -84,3 +90,20 @@ if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
         .package(path: "../swift-asn1"),
     ]
 }
+
+for target in package.targets {
+    var settings = target.swiftSettings ?? []
+    settings.append(.enableExperimentalFeature("StrictConcurrency=complete"))
+    target.swiftSettings = settings
+}
+
+// ---    STANDARD CROSS-REPO SETTINGS DO NOT EDIT   --- //
+for target in package.targets {
+    if target.type != .plugin {
+        var settings = target.swiftSettings ?? []
+        // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0444-member-import-visibility.md
+        settings.append(.enableUpcomingFeature("MemberImportVisibility"))
+        target.swiftSettings = settings
+    }
+}
+// --- END: STANDARD CROSS-REPO SETTINGS DO NOT EDIT --- //
