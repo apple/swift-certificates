@@ -173,11 +173,11 @@ extension Certificate.PrivateKey {
         static func signatureData<Bytes: DataProtocol>(
             key: SecKey,
             type: KeyType,
-            digestAlgorithm: AlgorithmIdentifier,
+            signatureAlgorithm: Certificate.SignatureAlgorithm,
             bytes: Bytes
         ) throws -> Data {
 
-            let signatureAlgorithm = try Self.signatureAlgorithm(digestAlgorithm: digestAlgorithm, type: type)
+            let signatureAlgorithm = try Self.keyAlgorithm(signatureAlgorithm: signatureAlgorithm, type: type)
 
             var error: Unmanaged<CFError>?
             guard
@@ -200,37 +200,38 @@ extension Certificate.PrivateKey {
             return signatureData
         }
 
-        static func signatureAlgorithm(digestAlgorithm: AlgorithmIdentifier, type: KeyType) throws -> SecKeyAlgorithm {
+        static func keyAlgorithm(
+            signatureAlgorithm: Certificate.SignatureAlgorithm,
+            type: KeyType
+        ) throws -> SecKeyAlgorithm {
             let algorithm: SecKeyAlgorithm
             switch type {
             case .RSA:
-                switch digestAlgorithm {
-                case .sha1, .sha1UsingNil:
+                switch signatureAlgorithm {
+                case .sha1WithRSAEncryption:
                     algorithm = .rsaSignatureMessagePKCS1v15SHA1
-                case .sha256, .sha256UsingNil:
+                case .sha256WithRSAEncryption:
                     algorithm = .rsaSignatureMessagePKCS1v15SHA256
-                case .sha384, .sha384UsingNil:
+                case .sha384WithRSAEncryption:
                     algorithm = .rsaSignatureMessagePKCS1v15SHA384
-                case .sha512, .sha512UsingNil:
+                case .sha512WithRSAEncryption:
                     algorithm = .rsaSignatureMessagePKCS1v15SHA512
                 default:
-                    throw CertificateError.unsupportedPrivateKey(
-                        reason: "unsupported SecKey RSA digest algorithm: \(digestAlgorithm)"
+                    throw CertificateError.unsupportedSignatureAlgorithm(
+                        reason: "Cannot use \(signatureAlgorithm) with RSA key"
                     )
                 }
             case .ECDSA:
-                switch digestAlgorithm {
-                case .sha1, .sha1UsingNil:
-                    algorithm = .ecdsaSignatureMessageX962SHA1
-                case .sha256, .sha256UsingNil:
+                switch signatureAlgorithm {
+                case .ecdsaWithSHA256:
                     algorithm = .ecdsaSignatureMessageX962SHA256
-                case .sha384, .sha384UsingNil:
+                case .ecdsaWithSHA384:
                     algorithm = .ecdsaSignatureMessageX962SHA384
-                case .sha512, .sha512UsingNil:
+                case .ecdsaWithSHA512:
                     algorithm = .ecdsaSignatureMessageX962SHA512
                 default:
-                    throw CertificateError.unsupportedPrivateKey(
-                        reason: "unsupported SecKey ECDSA digest algorithm: \(digestAlgorithm)"
+                    throw CertificateError.unsupportedSignatureAlgorithm(
+                        reason: "Cannot use \(signatureAlgorithm) with ECDSA key"
                     )
                 }
             }
@@ -241,13 +242,13 @@ extension Certificate.PrivateKey {
         @usableFromInline
         func signature<Bytes: DataProtocol>(
             for bytes: Bytes,
-            digestAlgorithm: AlgorithmIdentifier
+            signatureAlgorithm: Certificate.SignatureAlgorithm
         ) throws -> Certificate.Signature {
 
             let signatureData = try Self.signatureData(
                 key: self.privateKey,
                 type: self.type,
-                digestAlgorithm: digestAlgorithm,
+                signatureAlgorithm: signatureAlgorithm,
                 bytes: bytes
             )
 
