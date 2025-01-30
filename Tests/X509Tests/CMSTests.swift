@@ -15,6 +15,7 @@
 import Foundation
 import XCTest
 import Crypto
+import _CryptoExtras
 import SwiftASN1
 @testable @_spi(CMS) import X509
 
@@ -126,6 +127,48 @@ final class CMSTests: XCTestCase {
             SubjectKeyIdentifier(keyIdentifier: [1, 2, 3, 4, 5])
         },
         issuerPrivateKey: intermediateKey
+    )
+
+    static let rsaCertKey = try! Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+    static let rsaCertName = try! DistinguishedName {
+        CommonName("CMS RSA")
+    }
+    static let rsaCert = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: rsaCertKey.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: rsaCertName,
+        subject: rsaCertName,
+        signatureAlgorithm: .sha1WithRSAEncryption,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        },
+        issuerPrivateKey: rsaCertKey
+    )
+
+    static let ed25519CertKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+    static let ed25519CertName = try! DistinguishedName {
+        CommonName("CMS ED25519")
+    }
+    static let ed25519Cert = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: ed25519CertKey.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: ed25519CertName,
+        subject: ed25519CertName,
+        signatureAlgorithm: .ed25519,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        },
+        issuerPrivateKey: ed25519CertKey
     )
 
     @PolicyBuilder static var defaultPolicies: some VerifierPolicy {
@@ -1033,6 +1076,42 @@ final class CMSTests: XCTestCase {
         XCTAssertValidSignature(isValidSignature)
     }
 
+    func testSigningWithRSA() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .sha256WithRSAEncryption,
+            certificate: Self.rsaCert,
+            privateKey: Self.rsaCertKey
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.rsaCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertValidSignature(isValidSignature)
+    }
+
+    func testSigningWithEd25519() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ed25519,
+            certificate: Self.ed25519Cert,
+            privateKey: Self.ed25519CertKey
+        )
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: signature,
+            trustRoots: CertificateStore([Self.ed25519Cert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertValidSignature(isValidSignature)
+    }
+
     func testSigningWithSigningTimeSignedAttr() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1165,6 +1244,55 @@ final class CMSTests: XCTestCase {
             try CMSSignerIdentifier(derEncoded: implicitlyTaggedSki),
             CMSSignerIdentifier.subjectKeyIdentifier(.init(keyIdentifier: [10, 20, 30, 40]))
         )
+    }
+
+    func testDefaultRSASignatureAlgorithm() throws {
+        let privateKey = try Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "sha256WithRSAEncryption")
+    }
+
+    func testDefaultP256SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA256")
+    }
+
+    func testDefaultP384SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P384.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA384")
+    }
+
+    func testDefaultP521SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P521.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA512")
+    }
+
+    func testDefaultEd25519SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+        let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
+        XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ed25519")
+    }
+
+    private func signAndExtractSignerInfo(privateKey: Certificate.PrivateKey) throws -> CMSSignerInfo? {
+        let name = try DistinguishedName { CommonName("test") }
+        let certificate = try Certificate(
+            version: .v3,
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            publicKey: privateKey.publicKey,
+            notValidBefore: Date(),
+            notValidAfter: Date() + 3600,
+            issuer: name,
+            subject: name,
+            extensions: Certificate.Extensions {},
+            issuerPrivateKey: privateKey
+        )
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signatureBytes = try CMS.sign(data, certificate: certificate, privateKey: privateKey)
+        let contentInfo = try CMSContentInfo(derEncoded: signatureBytes)
+        return try contentInfo.signedData?.signerInfos.first
     }
 }
 

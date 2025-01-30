@@ -524,6 +524,47 @@ final class CSRTests: XCTestCase {
             CertificateSigningRequest.Attributes(attributes.prefix(2))
         )
     }
+
+    func testDefaultRSASignatureAlgorithm() throws {
+        let privateKey = try Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+        let csr = try self.generateCertificateSigningRequest(privateKey: privateKey)
+        XCTAssertEqual(csr.signatureAlgorithm.description, "SignatureAlgorithm.sha256WithRSAEncryption")
+    }
+
+    func testDefaultP256SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
+        let csr = try self.generateCertificateSigningRequest(privateKey: privateKey)
+        XCTAssertEqual(csr.signatureAlgorithm.description, "SignatureAlgorithm.ecdsaWithSHA256")
+    }
+
+    func testDefaultP384SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P384.Signing.PrivateKey())
+        let csr = try self.generateCertificateSigningRequest(privateKey: privateKey)
+        XCTAssertEqual(csr.signatureAlgorithm.description, "SignatureAlgorithm.ecdsaWithSHA384")
+    }
+
+    func testDefaultP521SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(P521.Signing.PrivateKey())
+        let csr = try self.generateCertificateSigningRequest(privateKey: privateKey)
+        XCTAssertEqual(csr.signatureAlgorithm.description, "SignatureAlgorithm.ecdsaWithSHA512")
+    }
+
+    func testDefaultEd25519SignatureAlgorithm() throws {
+        let privateKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+        let csr = try self.generateCertificateSigningRequest(privateKey: privateKey)
+        XCTAssertEqual(csr.signatureAlgorithm.description, "SignatureAlgorithm.ed25519")
+    }
+
+    private func generateCertificateSigningRequest(
+        privateKey: Certificate.PrivateKey
+    ) throws -> CertificateSigningRequest {
+        try CertificateSigningRequest(
+            version: .v1,
+            subject: DistinguishedName { CommonName("test") },
+            privateKey: privateKey,
+            attributes: CertificateSigningRequest.Attributes()
+        )
+    }
 }
 
 extension RandomAccessCollection {
