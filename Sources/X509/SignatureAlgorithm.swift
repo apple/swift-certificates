@@ -112,6 +112,8 @@ extension Certificate.SignatureAlgorithm: CustomStringConvertible {
             return "SignatureAlgorithm.sha384WithRSAEncryption"
         case .sha512WithRSAEncryption:
             return "SignatureAlgorithm.sha512WithRSAEncryption"
+        case .ed25519:
+            return "SignatureAlgorithm.ed25519"
         default:
             return "SignatureAlgorithm(\(self._algorithmIdentifier))"
         }
@@ -134,7 +136,7 @@ extension AlgorithmIdentifier {
             self = .sha256UsingNil
         case .ecdsaWithSHA384, .sha384WithRSAEncryption:
             self = .sha384UsingNil
-        case .ecdsaWithSHA512, .sha512WithRSAEncryption:
+        case .ecdsaWithSHA512, .sha512WithRSAEncryption, .ed25519:
             self = .sha512UsingNil
         case .sha1WithRSAEncryption:
             self = .sha1

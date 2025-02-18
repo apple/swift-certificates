@@ -15,6 +15,9 @@
 import XCTest
 import SwiftASN1
 @testable import X509
+#if canImport(Android)
+import Android
+#endif
 
 final class IPAddressNameTests: XCTestCase {
     static let fixtures: [(ASN1OctetString, ASN1OctetString, Bool)] = [

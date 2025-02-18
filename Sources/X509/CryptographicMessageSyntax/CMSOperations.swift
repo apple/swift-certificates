@@ -51,6 +51,27 @@ public enum CMS {
         return try self.serializeSignedData(signedData)
     }
 
+    @_spi(CMS)
+    @inlinable
+    public static func sign<Bytes: DataProtocol>(
+        _ bytes: Bytes,
+        additionalIntermediateCertificates: [Certificate] = [],
+        certificate: Certificate,
+        privateKey: Certificate.PrivateKey,
+        signingTime: Date? = nil,
+        detached: Bool = true
+    ) throws -> [UInt8] {
+        return try self.sign(
+            bytes,
+            signatureAlgorithm: privateKey.defaultSignatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate,
+            privateKey: privateKey,
+            signingTime: signingTime,
+            detached: detached
+        )
+    }
+
     @inlinable
     static func signWithSigningTime<Bytes: DataProtocol>(
         _ bytes: Bytes,
@@ -71,8 +92,9 @@ public enum CMS {
         let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
         signedAttrs.append(contentTypeAttribute)
 
-        // add message-digest sha256 of provided content bytes
-        let computedDigest = SHA256.hash(data: bytes)
+        // add message-digest of provided content bytes
+        let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+        let computedDigest = try Digest.computeDigest(for: bytes, using: digestAlgorithm)
         let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
         let messageDigestVal = try ASN1Any(erasing: messageDigest)
         let messageDigestAttr = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
@@ -358,19 +380,7 @@ public enum CMS {
                 let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
                 let actualDigest = try Digest.computeDigest(for: dataBytes, using: digestAlgorithm)
 
-                let actualDigestSequence: any Sequence<UInt8>
-                switch actualDigest {
-                case .insecureSHA1(let sha1):
-                    actualDigestSequence = sha1
-                case .sha256(let sha256):
-                    actualDigestSequence = sha256
-                case .sha384(let sha384):
-                    actualDigestSequence = sha384
-                case .sha512(let sha512):
-                    actualDigestSequence = sha512
-                }
-
-                guard actualDigestSequence.elementsEqual(messageDigest) else {
+                guard actualDigest.elementsEqual(messageDigest) else {
                     return .failure(.init(invalidCMSBlockReason: "Message digest mismatch"))
                 }
 
