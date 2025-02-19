@@ -15,7 +15,11 @@
 import SwiftASN1
 @preconcurrency import Crypto
 import _CryptoExtras
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 extension Certificate {
     /// A public key that can be used with a certificate.
