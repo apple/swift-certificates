@@ -25,19 +25,20 @@ final class Promise<Value: Sendable, Failure: Error> {
 
     fileprivate var result: Result<Value, Failure> {
         get async {
-            self.state.lock()
-
-            switch self.state.unsafeUnlockedValue {
+            self.state.unsafe.lock()
+            
+            switch self.state.unsafe.withValueAssumingLockIsAcquired({ $0 }) {
             case .fulfilled(let result):
-                defer { self.state.unlock() }
+                defer { self.state.unsafe.unlock() }
                 return result
-
             case .unfulfilled(var observers):
                 return await withCheckedContinuation {
                     (continuation: CheckedContinuation<Result<Value, Failure>, Never>) in
                     observers.append(continuation)
-                    self.state.unsafeUnlockedValue = .unfulfilled(observers: observers)
-                    self.state.unlock()
+                    self.state.unsafe.withValueAssumingLockIsAcquired { value in
+                        value = .unfulfilled(observers: observers)
+                    }
+                    self.state.unsafe.unlock()
                 }
             }
         }
