@@ -14,6 +14,7 @@
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
+import Glibc
 #else
 import Foundation
 #endif
