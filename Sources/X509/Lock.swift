@@ -48,9 +48,9 @@ extension LockOperations {
     static func create(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
+        #if os(Windows)
         InitializeSRWLock(mutex)
-#elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
         var attr = pthread_mutexattr_t()
         pthread_mutexattr_init(&attr)
         debugOnly {
@@ -59,43 +59,43 @@ extension LockOperations {
 
         let err = pthread_mutex_init(mutex, &attr)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #endif
     }
 
     @inlinable
     static func destroy(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
+        #if os(Windows)
         // SRWLOCK does not need to be free'd
-#elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
         let err = pthread_mutex_destroy(mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #endif
     }
 
     @inlinable
     static func lock(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
+        #if os(Windows)
         AcquireSRWLockExclusive(mutex)
-#elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
         let err = pthread_mutex_lock(mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #endif
     }
 
     @inlinable
     static func unlock(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
+        #if os(Windows)
         ReleaseSRWLockExclusive(mutex)
-#elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
         let err = pthread_mutex_unlock(mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #endif
     }
 }
 

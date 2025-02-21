@@ -26,7 +26,7 @@ final class Promise<Value: Sendable, Failure: Error> {
     fileprivate var result: Result<Value, Failure> {
         get async {
             self.state.unsafe.lock()
-            
+
             switch self.state.unsafe.withValueAssumingLockIsAcquired({ $0 }) {
             case .fulfilled(let result):
                 defer { self.state.unsafe.unlock() }
