@@ -14,7 +14,11 @@
 
 #if canImport(Darwin)
 import SwiftASN1
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 @preconcurrency import Crypto
 @preconcurrency import _CryptoExtras
 @preconcurrency import Security

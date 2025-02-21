@@ -15,7 +15,11 @@
 import SwiftASN1
 import Crypto
 import _CryptoExtras
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 extension Certificate {
     /// An abstract representation of the cryptographic signature on a certificate.
