@@ -12,7 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 import SwiftASN1
 
 /// A representation of a PKCS#10 Certificate Signing Request (CSR).

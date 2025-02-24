@@ -12,7 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+import Glibc
+#else
 import Foundation
+#endif
 import SwiftASN1
 #if os(Windows)
 import WinSDK
