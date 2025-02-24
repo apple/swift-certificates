@@ -59,6 +59,7 @@ add_library(X509
   "Extensions.swift"
   "ExtensionsBuilder.swift"
   "GeneralName.swift"
+  "Lock.swift"
   "LockedValueBox.swift"
   "OCSP/BasicOCSPResponse.swift"
   "OCSP/DirectoryString.swift"
