@@ -29,6 +29,7 @@ import SwiftASN1
 @resultBuilder
 public struct OneOfPolicyBuilder {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension OneOfPolicyBuilder {
     @inlinable
     public static func buildLimitedAvailability<Policy: VerifierPolicy>(_ component: Policy) -> Policy {
@@ -37,6 +38,7 @@ extension OneOfPolicyBuilder {
 }
 
 // MARK: empty policy
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension OneOfPolicyBuilder {
     @usableFromInline
     struct Empty: VerifierPolicy {
@@ -59,6 +61,7 @@ extension OneOfPolicyBuilder {
 }
 
 // MARK: concatenated policies
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension OneOfPolicyBuilder {
     @usableFromInline
     struct Tuple2<First: VerifierPolicy, Second: VerifierPolicy>: VerifierPolicy {
@@ -114,6 +117,7 @@ extension OneOfPolicyBuilder {
 }
 
 // MARK: if
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension OneOfPolicyBuilder {
     @usableFromInline
     struct WrappedOptional<Wrapped>: VerifierPolicy where Wrapped: VerifierPolicy {
@@ -144,6 +148,7 @@ extension OneOfPolicyBuilder {
 }
 
 // MARK: if/else and switch
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension OneOfPolicyBuilder {
     @inlinable
     public static func buildEither<First: VerifierPolicy, Second: VerifierPolicy>(
@@ -172,6 +177,7 @@ extension OneOfPolicyBuilder {
 ///     }
 /// }
 /// ```
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct OneOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
     @usableFromInline
     var policy: Policy

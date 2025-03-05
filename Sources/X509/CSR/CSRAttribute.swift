@@ -14,6 +14,7 @@
 
 import SwiftASN1
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest {
     /// A general-purpose representation of a ``CertificateSigningRequest`` attribute.
     ///
@@ -47,6 +48,7 @@ extension CertificateSigningRequest {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attribute: Hashable {
     @inlinable
     public static func == (lhs: CertificateSigningRequest.Attribute, rhs: CertificateSigningRequest.Attribute) -> Bool {
@@ -78,8 +80,10 @@ extension CertificateSigningRequest.Attribute: Hashable {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attribute: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attribute: CustomStringConvertible {
     public var description: String {
         return "Attribute(oid: \(self.oid), values: \(self.values))"
@@ -90,6 +94,7 @@ extension CertificateSigningRequest.Attribute: CustomStringConvertible {
 //      type   ATTRIBUTE.&id({IOSet}),
 //      values SET SIZE(1..MAX) OF ATTRIBUTE.&Type({IOSet}{@type})
 // }
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attribute: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {

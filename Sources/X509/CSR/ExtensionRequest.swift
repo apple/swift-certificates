@@ -18,6 +18,7 @@ import SwiftASN1
 ///
 /// X.509 certificates contain a number of extensions. This attribute includes the extensions that the
 /// subscriber wishes the CA to embed into the certificate.
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct ExtensionRequest: Hashable, Sendable {
     /// The underlying extensions.
     public var extensions: Certificate.Extensions
@@ -55,6 +56,7 @@ public struct ExtensionRequest: Hashable, Sendable {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attribute {
     /// Wrap an ``ExtensionRequest`` into a ``CertificateSigningRequest/Attribute``.
     ///
@@ -70,6 +72,7 @@ extension CertificateSigningRequest.Attribute {
 }
 
 @usableFromInline
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 struct ExtensionRequestAttribute: Hashable, Sendable, DERImplicitlyTaggable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {

@@ -32,6 +32,7 @@ import Android
 import CoreFoundation
 #endif
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension NameConstraintsPolicy {
     /// Validates that a URI name matches a name constraint.
     ///

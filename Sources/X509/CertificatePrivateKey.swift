@@ -21,6 +21,7 @@ import Foundation
 @preconcurrency import Crypto
 import _CryptoExtras
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate {
     /// A private key that can be used with a certificate.
     ///
@@ -175,10 +176,13 @@ extension Certificate {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.PrivateKey: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.PrivateKey: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.PrivateKey: CustomStringConvertible {
     public var description: String {
         switch self.backing {
@@ -202,6 +206,7 @@ extension Certificate.PrivateKey: CustomStringConvertible {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.PrivateKey {
     @usableFromInline
     enum BackingPrivateKey: Hashable, Sendable {

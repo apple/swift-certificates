@@ -18,12 +18,6 @@ import class Foundation.ProcessInfo
 
 let package = Package(
     name: "swift-certificates",
-    platforms: [
-        .macOS(.v10_15),
-        .iOS(.v13),
-        .watchOS(.v6),
-        .tvOS(.v13),
-    ],
     products: [
         .library(
             name: "X509",

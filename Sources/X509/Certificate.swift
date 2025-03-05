@@ -69,6 +69,7 @@ import SwiftASN1
 /// An instance of ``Certificate`` can be created from ``Security/SecCertificate`` (from the ``Security`` framework) with ``Certificate/init(_:)``.
 /// The opposite, that is, creating an instance of ``Security/SecCertificate`` from ``Certificate``, can be achieved with ``Security/SecCertificate/makeWithCertificate(_:)``.
 #endif
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct Certificate {
     /// The X.509 version of this certificate.
     ///
@@ -279,10 +280,13 @@ public struct Certificate {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate: CustomStringConvertible {
     public var description: String {
         """
@@ -301,6 +305,7 @@ extension Certificate: CustomStringConvertible {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {
@@ -350,6 +355,7 @@ extension DER.Serializer {
 
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate: PEMRepresentable {
     @inlinable
     public static var defaultPEMDiscriminator: String { "CERTIFICATE" }
@@ -357,6 +363,8 @@ extension Certificate: PEMRepresentable {
 
 #if canImport(Security)
 import Security
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate {
     /// Creates an instance of ``Certificate`` from ``Security/SecCertificate``.
     /// To create an instance of ``Security/SecCertificate``, use ``Security/SecCertificate/makeWithCertificate(_:)`` instead.
@@ -366,6 +374,7 @@ extension Certificate {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension SecCertificate {
     /// Creates an instance of ``Security/SecCertificate`` from ``Certificate``.
     /// To create an instance of ``Certificate``, use ``Certificate/init(_:)`` instead.

@@ -23,6 +23,7 @@ import SwiftASN1
 ///
 /// ```
 ///
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 enum OCSPResponse: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -96,6 +97,7 @@ enum OCSPResponse: DERImplicitlyTaggable, Hashable {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension OCSPResponseStatus {
     init(_ response: OCSPResponse) {
         switch response {

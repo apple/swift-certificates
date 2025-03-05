@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest {
     /// The version of the CSR format.
     ///
@@ -30,10 +31,13 @@ extension CertificateSigningRequest {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Version: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Version: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Version: Comparable {
     @inlinable
     public static func < (lhs: CertificateSigningRequest.Version, rhs: CertificateSigningRequest.Version) -> Bool {
@@ -41,6 +45,7 @@ extension CertificateSigningRequest.Version: Comparable {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Version: CustomStringConvertible {
     public var description: String {
         switch self {

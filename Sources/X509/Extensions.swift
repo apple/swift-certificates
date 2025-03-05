@@ -14,6 +14,7 @@
 
 import SwiftASN1
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate {
     /// A representation of a collection of X.509 extensions.
     ///
@@ -143,10 +144,13 @@ extension Certificate {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions: RandomAccessCollection {
     /// Produce a new empty Extensions container.
     @inlinable
@@ -173,6 +177,7 @@ extension Certificate.Extensions: RandomAccessCollection {
 }
 
 // MARK: Modifying methods
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions {
 
     /// Append a new ``Certificate/Extension`` into this set of ``Certificate/Extensions-swift.struct``.
@@ -222,6 +227,7 @@ extension Certificate.Extensions {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions: CustomStringConvertible {
     @inlinable
     public var description: String {
@@ -232,6 +238,7 @@ extension Certificate.Extensions: CustomStringConvertible {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions: CustomDebugStringConvertible {
     public var debugDescription: String {
         "[\(String(describing: self))]"
@@ -239,6 +246,7 @@ extension Certificate.Extensions: CustomDebugStringConvertible {
 }
 
 // MARK: Helpers for specific extensions
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extensions {
     /// Look up a specific extension by its OID.
     ///
