@@ -14,6 +14,7 @@
 import SwiftASN1
 
 @usableFromInline
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 struct CertificationRequestInfo {
     @usableFromInline
     var version: CertificateSigningRequest.Version
@@ -41,8 +42,10 @@ struct CertificationRequestInfo {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificationRequestInfo: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificationRequestInfo: Sendable {}
 
 // CertificationRequestInfo ::= SEQUENCE {
@@ -51,6 +54,7 @@ extension CertificationRequestInfo: Sendable {}
 //      subjectPKInfo SubjectPublicKeyInfo{{ PKInfoAlgorithms }},
 //      attributes    [0] Attributes{{ CRIAttributes }}
 // }
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificationRequestInfo: DERImplicitlyTaggable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {

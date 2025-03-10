@@ -14,6 +14,7 @@
 
 import SwiftASN1
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest {
     /// A representation of the additional attributes on a certificate signing request.
     ///
@@ -57,6 +58,7 @@ extension CertificateSigningRequest {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attributes: Hashable {
     @inlinable
     public static func == (lhs: CertificateSigningRequest.Attributes, rhs: CertificateSigningRequest.Attributes) -> Bool
@@ -85,8 +87,10 @@ extension CertificateSigningRequest.Attributes: Hashable {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attributes: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attributes: RandomAccessCollection {
     @inlinable
     public init() {
@@ -136,6 +140,7 @@ extension CertificateSigningRequest.Attributes: RandomAccessCollection {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attributes: CustomStringConvertible {
     @inlinable
     public var description: String {
@@ -144,6 +149,7 @@ extension CertificateSigningRequest.Attributes: CustomStringConvertible {
 }
 
 // MARK: Helpers for specific extensions
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest.Attributes {
     /// Look up a specific attribute by its OID.
     ///

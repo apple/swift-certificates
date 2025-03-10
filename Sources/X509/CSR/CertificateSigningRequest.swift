@@ -24,6 +24,7 @@ import SwiftASN1
 /// Certificate Signing Requests are used to encapsulate information that an end-entity would like
 /// encapsulated in a certificate. They are typically processed by Certificate Authorities and turned
 /// into certificates signed by that CA.
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct CertificateSigningRequest {
     /// The version of this CSR.
     ///
@@ -199,10 +200,13 @@ public struct CertificateSigningRequest {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest: CustomStringConvertible {
     @inlinable
     public var description: String {
@@ -211,6 +215,7 @@ extension CertificateSigningRequest: CustomStringConvertible {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {
@@ -250,6 +255,7 @@ extension CertificateSigningRequest: DERImplicitlyTaggable {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension CertificateSigningRequest: PEMRepresentable {
     @inlinable
     public static var defaultPEMDiscriminator: String {

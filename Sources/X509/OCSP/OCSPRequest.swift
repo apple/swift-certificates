@@ -20,6 +20,7 @@ import SwiftASN1
 ///    tbsRequest              TBSRequest,
 ///    optionalSignature   [0] EXPLICIT Signature OPTIONAL }
 /// ```
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 struct OCSPRequest: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence

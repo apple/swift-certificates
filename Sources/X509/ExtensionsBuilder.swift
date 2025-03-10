@@ -39,6 +39,7 @@
 ///
 /// Users are also able to mark specific extensions as critical by using the ``Critical`` helper type.
 @resultBuilder
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct ExtensionsBuilder {
     @inlinable
     public static func buildExpression<Extension: CertificateExtensionConvertible>(
@@ -118,6 +119,7 @@ public struct ExtensionsBuilder {
 /// Note that for most extension types, the returned ``Certificate/Extension`` should have its
 /// ``Certificate/Extension/critical`` value set to `false`. This allows the ``Critical`` helper
 /// type to fulfill its function as expected.
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public protocol CertificateExtensionConvertible {
     /// Convert the value into a ``Certificate/Extension``.
     func makeCertificateExtension() throws -> Certificate.Extension
@@ -127,6 +129,7 @@ public protocol CertificateExtensionConvertible {
 ///
 /// This type is used only within the ``ExtensionsBuilder`` DSL to mark extensions as critical.
 @frozen
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct Critical<BaseExtension: CertificateExtensionConvertible>: CertificateExtensionConvertible {
     /// The ``CertificateExtensionConvertible`` backing this value.
     public var base: BaseExtension

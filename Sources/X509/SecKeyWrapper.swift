@@ -23,6 +23,7 @@ import Foundation
 @preconcurrency import _CryptoExtras
 @preconcurrency import Security
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.PrivateKey {
     /// A wrapper around ``Security.SecKey`` to allow the use of `SecKey` with certificates.
     @usableFromInline

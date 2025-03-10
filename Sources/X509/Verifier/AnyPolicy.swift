@@ -25,6 +25,7 @@ import SwiftASN1
 ///     }
 /// }
 /// ```
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct AnyPolicy: VerifierPolicy {
     @usableFromInline
     var policy: any VerifierPolicy
@@ -55,6 +56,7 @@ public struct AnyPolicy: VerifierPolicy {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 struct LegacyPolicySet: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier]
 

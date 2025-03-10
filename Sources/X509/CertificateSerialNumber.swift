@@ -14,6 +14,7 @@
 
 import SwiftASN1
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate {
     /// A number that uniquely identifies a certificate issued by a specific
     /// certificate authority.
@@ -86,10 +87,13 @@ extension Certificate {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.SerialNumber: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.SerialNumber: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.SerialNumber: CustomStringConvertible {
     public var description: String {
         return self.bytes.lazy.map { String($0, radix: 16) }.joined(separator: ":")

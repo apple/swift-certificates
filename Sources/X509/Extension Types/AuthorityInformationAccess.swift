@@ -45,6 +45,7 @@ public struct AuthorityInformationAccess {
     /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
     ///     `ASN1ObjectIdentifier.X509ExtensionID.authorityInformationAccess`.
     @inlinable
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.authorityInformationAccess else {
             throw CertificateError.incorrectOIDForExtension(
@@ -218,6 +219,7 @@ extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Has
 
 extension AuthorityInformationAccess.AccessDescription.AccessMethod.Backing: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this AIA extension.
     ///
@@ -237,6 +239,7 @@ extension Certificate.Extension {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension AuthorityInformationAccess: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
