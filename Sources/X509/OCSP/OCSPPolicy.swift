@@ -25,6 +25,7 @@ import Foundation
 // Swift CI has implicit concurrency disabled
 import _Concurrency
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public protocol OCSPRequester: Sendable {
     /// Called with an OCSP Request.
     ///
