@@ -23,6 +23,7 @@ import SwiftASN1
 /// Restrictions are defined in terms of both permitted and forbidden subtrees. The forbidden trees
 /// are consulted first, and if a name is matched in a forbidden tree then it does not matter whether
 /// the same name is also matched in a permitted tree.
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 public struct NameConstraints {
     public struct DNSNames: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         public typealias Element = String
@@ -689,10 +690,13 @@ extension Hasher {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension NameConstraints: Hashable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension NameConstraints: Sendable {}
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension NameConstraints: CustomStringConvertible {
     public var description: String {
         var elements: [String] = []
@@ -712,6 +716,7 @@ extension NameConstraints: CustomStringConvertible {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 extension NameConstraints: CustomDebugStringConvertible {
     public var debugDescription: String {
         return "NameConstraints(\(String(describing: self)))"
@@ -743,6 +748,7 @@ extension NameConstraints: CertificateExtensionConvertible {
 
 // MARK: ASN1 Helpers
 @usableFromInline
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
 struct NameConstraintsValue: DERImplicitlyTaggable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
