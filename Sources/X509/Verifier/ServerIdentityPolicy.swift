@@ -14,7 +14,6 @@
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
-import Glibc
 #else
 import Foundation
 #endif
@@ -23,6 +22,10 @@ import SwiftASN1
 import WinSDK
 #elseif canImport(Android)
 import Android
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
 #endif
 
 /// A ``VerifierPolicy`` that validates that the leaf certificate is authoritative
