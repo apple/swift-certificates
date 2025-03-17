@@ -60,6 +60,24 @@ We require that your commit messages match our template. The easiest way to do t
 
     git config commit.template dev/git.commit.template
 
+### Run CI checks locally
+
+You can run the Github Actions workflows locally using
+[act](https://github.com/nektos/act). For detailed steps on how to do this please see [https://github.com/swiftlang/github-workflows?tab=readme-ov-file#running-workflows-locally](https://github.com/swiftlang/github-workflows?tab=readme-ov-file#running-workflows-locally).
+
+### How to update CMakeLists files
+
+If you wish to update the CMakeLists files you can either do this by using [act](https://github.com/nektos/act) or calling the remotely hosted CI script.
+
+Issuing a command such as the following to `act` causes it to run the `cmake-lists` job locally which updates the CMakeLists files and if it finds no changes performs a build. The `--bind` flag means that the VM be acts on your local filesystem so be aware that this could delete/change files (including your git setup/branches).
+```
+act --container-architecture linux/amd64 pull_request -j cmake-lists -W ./.github/workflows/pull_request.yml  --bind
+```
+
+You can find the underlying script at https://github.com/apple/swift-nio/blob/main/scripts/update-cmake-lists.sh . Using the script directly is less straightforwards because it requires you to pass the JSON config from the `pull_request.yml` file into the script, such as:
+```
+curl -s https://raw.githubusercontent.com/apple/swift-nio/main/scripts/update-cmake-lists.sh | CONFIG_JSON='{"targets":[{"name":"X509","type":"source","exceptions":[]},{"name":"_CertificateInternals","type":"source","exceptions":[]}]}' bash
+
 ## How to contribute your work
 
 Please open a pull request at https://github.com/apple/swift-certificates. Make sure the CI passes, and then wait for code review.

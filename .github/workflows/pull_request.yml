@@ -11,13 +11,6 @@ jobs:
     with:
       license_header_check_project_name: "SwiftCertificates"
 
-  cmake-lists:
-    name: Check cmake lists
-    uses: apple/swift-nio/.github/workflows/swift_matrix.yml@main
-    with:
-      name: "Check cmake lists"
-      matrix_linux_command: ./scripts/check-cmake-lists.sh
-
   unit-tests:
     name: Unit tests
     uses: apple/swift-nio/.github/workflows/unit_tests.yml@main
@@ -42,3 +35,15 @@ jobs:
     name: Static SDK
     # Workaround https://github.com/nektos/act/issues/1875
     uses: apple/swift-nio/.github/workflows/static_sdk.yml@main
+
+  cmake-lists:
+    name: Check cmake lists
+    uses: apple/swift-nio/.github/workflows/cmake_tests.yml@main
+    with:
+      update_cmake_lists_config: >-
+        {
+          "targets": [
+            { "name": "X509", "type": "source", "exceptions": [] },
+            { "name": "_CertificateInternals", "type": "source", "exceptions": [] }
+          ]
+        }
