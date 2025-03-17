@@ -114,7 +114,8 @@ add_library(X509
   "X509BaseTypes/TBSCertificate.swift"
   "X509BaseTypes/Time.swift"
   "X509BaseTypes/TimeCalculations.swift"
-  "X509BaseTypes/Validity.swift")
+  "X509BaseTypes/Validity.swift"
+)
 
 target_link_libraries(X509 PUBLIC
   $<$<NOT:$<PLATFORM_ID:Darwin>>:dispatch>
