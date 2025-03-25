@@ -239,6 +239,10 @@ extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
             attributeKey = "OU"
         case .RDNAttributeType.streetAddress:
             attributeKey = "STREET"
+        case .RDNAttributeType.domainComponent:
+            attributeKey = "DC"
+        case .RDNAttributeType.emailAddress:
+            attributeKey = "E"
         case let type:
             attributeKey = String(describing: type)
         }
@@ -343,6 +347,13 @@ extension ASN1ObjectIdentifier {
         /// information from a postal address (i.e., the street name, place,
         /// avenue, and the house number).
         public static let streetAddress: ASN1ObjectIdentifier = [2, 5, 4, 9]
+
+        /// The `domainComponent` attribute type contains parts (labels) of a DNS domain name
+        public static let domainComponent: ASN1ObjectIdentifier = [0, 9, 2342, 19200300, 100, 1, 25]
+
+        /// The `emailAddress` attribute type contains email address defined in PCKS#9 (RFC2985).
+        /// Be aware that, modern best practices (e.g., RFC 5280) discourage embedding email addresses in the `Subject DN` instead it should be in  `Subject Alternative Name (SAN)
+        public static let emailAddress: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 9, 1]
     }
 }
 
