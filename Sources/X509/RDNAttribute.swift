@@ -35,7 +35,7 @@ extension RelativeDistinguishedName {
                 case utf8(String)
                 /// ``ASN1IA5String``
                 case ia5(String)
-                /// `.any` can never contain bytes which are equal to the DER representation of `.printable` or `.utf8`.
+                /// `.any` can never contain bytes which are equal to the DER representation of `.printable`, `.utf8` or `.ia5`.
                 /// This invariant must not be violated or otherwise the synthesised `Hashable` would be wrong.
                 case any(ASN1Any)
             }
