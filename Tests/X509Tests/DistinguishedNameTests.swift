@@ -420,7 +420,7 @@ final class DistinguishedNameTests: XCTestCase {
         let examplesAndResults: [(RelativeDistinguishedName.Attribute, String?)] = try [
             (.init(type: .RDNAttributeType.commonName, printableString: "foo"), "foo"),
             (.init(type: .RDNAttributeType.commonName, utf8String: "bar"), "bar"),
-            (.init(type: .RDNAttributeType.commonName, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+            (.init(type: .RDNAttributeType.commonName, value: ASN1Any(erasing: ASN1IA5String("foo"))), "foo"),
         ]
 
         for (example, result) in examplesAndResults {
@@ -436,7 +436,7 @@ final class DistinguishedNameTests: XCTestCase {
             (.init(type: weirdOID, utf8String: "bar"), "bar"),
             (.init(type: weirdOID, value: ASN1Any(erasing: ASN1UTF8String("foo"))), "foo"),
             (.init(type: weirdOID, value: ASN1Any(erasing: ASN1PrintableString("baz"))), "baz"),
-            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1IA5String("foo"))), "foo"),
             (.init(type: weirdOID, value: ASN1Any(erasing: 5)), nil),
             (.init(type: weirdOID, value: ASN1Any(erasing: ASN1OctetString(contentBytes: [1, 2, 3, 4]))), nil),
         ]
