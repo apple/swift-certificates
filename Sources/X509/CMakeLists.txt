@@ -40,6 +40,8 @@ add_library(X509
   "DistinguishedNameBuilder/CommonName.swift"
   "DistinguishedNameBuilder/CountryName.swift"
   "DistinguishedNameBuilder/DNBuilder.swift"
+  "DistinguishedNameBuilder/DomainComponent.swift"
+  "DistinguishedNameBuilder/EmailAddress.swift"
   "DistinguishedNameBuilder/LocalityName.swift"
   "DistinguishedNameBuilder/OrganizationName.swift"
   "DistinguishedNameBuilder/OrganizationalUnitName.swift"
