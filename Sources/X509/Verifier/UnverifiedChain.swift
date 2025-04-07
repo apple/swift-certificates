@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct UnverifiedCertificateChain: Sendable, Hashable {
     @usableFromInline
     var certificates: [Certificate]
@@ -28,7 +28,7 @@ public struct UnverifiedCertificateChain: Sendable, Hashable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension UnverifiedCertificateChain: RandomAccessCollection {
     @inlinable
     public var startIndex: Int {

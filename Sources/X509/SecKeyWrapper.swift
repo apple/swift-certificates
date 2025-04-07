@@ -23,7 +23,7 @@ import Foundation
 @preconcurrency import _CryptoExtras
 @preconcurrency import Security
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PrivateKey {
     /// A wrapper around ``Security.SecKey`` to allow the use of `SecKey` with certificates.
     @usableFromInline
@@ -285,7 +285,7 @@ extension Certificate.PrivateKey {
             return false
         }
 
-        @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+        @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
         @inlinable
         func pemDocument() throws -> PEMDocument {
             if !self.isSerializable {

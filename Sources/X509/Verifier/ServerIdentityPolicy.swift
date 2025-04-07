@@ -61,7 +61,7 @@ public struct ServerIdentityPolicy {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension ServerIdentityPolicy: VerifierPolicy {
     @inlinable
     public var verifyingCriticalExtensions: [ASN1ObjectIdentifier] {
@@ -253,7 +253,7 @@ extension ServerIdentityPolicy.IPAddress {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
     /// Validates that a given leaf certificate is valid for a service.
     ///
