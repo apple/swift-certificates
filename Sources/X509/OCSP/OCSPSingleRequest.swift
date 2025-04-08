@@ -21,7 +21,7 @@ import SwiftASN1
 ///    singleRequestExtensions [0] EXPLICIT Extensions OPTIONAL }
 /// ```
 /// - note: originally named just `Request` in RFC 6960 but prefix `Single` added to avoid naming conflicts with ``OCSPRequest``
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct OCSPSingleRequest: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence

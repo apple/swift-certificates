@@ -27,7 +27,7 @@ import Foundation
 /// view over a CMS signed-data payload. It also abstracts the specific ASN.1 layout of the
 /// signature.
 @_spi(CMS)
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct CMSSignature: Sendable, Hashable {
     @usableFromInline
     let base: CMSSignedData
@@ -51,7 +51,7 @@ public struct CMSSignature: Sendable, Hashable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CMSSignature: DERImplicitlyTaggable, BERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: ASN1Identifier {
@@ -86,7 +86,7 @@ extension CMSSignature: DERImplicitlyTaggable, BERImplicitlyTaggable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CMSSignature {
     /// One of the "signers" that produced a given CMS block.
     ///

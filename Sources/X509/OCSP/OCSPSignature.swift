@@ -21,7 +21,7 @@ import SwiftASN1
 ///    signature               BIT STRING,
 ///    certs               [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL }
 /// ```
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct OCSPSignature: DERImplicitlyTaggable, Hashable {
     static var defaultIdentifier: ASN1Identifier {
         .sequence

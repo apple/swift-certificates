@@ -42,7 +42,7 @@ let ASCII_NINE = UInt8(ascii: "9")
 @usableFromInline
 let ASCII_UNDERSCORE = UInt8(ascii: "_")
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension NameConstraintsPolicy {
     /// Validates that a dnsName matches a name constraint.
     ///

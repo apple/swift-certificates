@@ -21,7 +21,7 @@ import FoundationEssentials
 import Foundation
 #endif
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
     /// A public key that can be used with a certificate.
     ///
@@ -101,7 +101,7 @@ extension Certificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey {
     /// Confirms that `signature` is a valid signature for `certificate`, created by the
     /// private key associated with this public key.
@@ -158,13 +158,13 @@ extension Certificate.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey: Hashable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey: CustomStringConvertible {
     public var description: String {
         switch self.backing {
@@ -182,7 +182,7 @@ extension Certificate.PublicKey: CustomStringConvertible {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey {
     @usableFromInline
     enum BackingPublicKey: Hashable, Sendable {
@@ -233,7 +233,7 @@ extension Certificate.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension SubjectPublicKeyInfo {
     @inlinable
     init(_ publicKey: Certificate.PublicKey) {
@@ -263,7 +263,7 @@ extension SubjectPublicKeyInfo {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey {
     /// The byte array of the public key used in the certificate.
     ///
@@ -274,7 +274,7 @@ extension Certificate.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension P256.Signing.PublicKey {
     /// Create a P256 Public Key from a given ``Certificate/PublicKey-swift.struct``.
     ///
@@ -290,7 +290,7 @@ extension P256.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension P384.Signing.PublicKey {
     /// Create a P384 Public Key from a given ``Certificate/PublicKey-swift.struct``.
     ///
@@ -306,7 +306,7 @@ extension P384.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension P521.Signing.PublicKey {
     /// Create a P521 Public Key from a given ``Certificate/PublicKey-swift.struct``.
     ///
@@ -322,7 +322,7 @@ extension P521.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension _RSA.Signing.PublicKey {
     /// Create an RSA Public Key from a given ``Certificate/PublicKey-swift.struct``.
     ///
@@ -338,7 +338,7 @@ extension _RSA.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Curve25519.Signing.PublicKey {
     /// Create a Curve25519 Public Key from a given ``Certificate/PublicKey-swift.struct``.
     ///
@@ -354,7 +354,7 @@ extension Curve25519.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey: PEMParseable, PEMSerializable {
     @inlinable
     public static var defaultPEMDiscriminator: String {
@@ -362,7 +362,7 @@ extension Certificate.PublicKey: PEMParseable, PEMSerializable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PublicKey: DERImplicitlyTaggable {
     @inlinable
     public static var defaultIdentifier: SwiftASN1.ASN1Identifier {
