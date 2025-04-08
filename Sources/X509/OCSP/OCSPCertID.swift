@@ -26,7 +26,7 @@ import SwiftASN1
 /// CertificateSerialNumber ::= INTEGER
 /// ```
 ///
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct OCSPCertID: DERImplicitlyTaggable, Hashable {
     var hashAlgorithm: AlgorithmIdentifier
 
