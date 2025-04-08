@@ -125,7 +125,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
     }
     private static let ca1PrivateKey = P384.Signing.PrivateKey()
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     private static func ca(ocspServer: String? = nil) -> Certificate {
         try! Certificate(
             version: .v3,
@@ -156,7 +156,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             issuerPrivateKey: .init(ca1PrivateKey)
         )
     }
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     private static let ca1: Certificate = ca()
 
     fileprivate static let intermediatePrivateKey = P384.Signing.PrivateKey()
@@ -248,7 +248,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         CommonName("Swift Certificate Test Responder Intermediate 1")
     }
     private static let responderIntermediate1PrivateKey = P384.Signing.PrivateKey()
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     private static let invalidResponderIntermediate1 = try! Certificate(
         version: .v3,
         serialNumber: .init(),
@@ -496,7 +496,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     func testInvalidResponderCertChain() async {
         let now = self.validationTime
         await self.assertChain(
@@ -615,7 +615,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     func testShouldNotQueryResponderIfNoOCSPServerIsDefined() async {
         await self.assertChain(
             soft: .meetsPolicy,
@@ -633,7 +633,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     func testLastCertificateIsNotAllowedToHaveOCSP() async {
         await self.assertChain(
             soft: .failsToMeetPolicy,

@@ -15,7 +15,7 @@
 import _CertificateInternals
 
 /// A collection of ``Certificate`` objects for use in a verifier.
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct CertificateStore: Sendable, Hashable {
 
     @usableFromInline
@@ -70,7 +70,7 @@ public struct CertificateStore: Sendable, Hashable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     @usableFromInline
     struct Resolved {
@@ -98,7 +98,7 @@ extension CertificateStore {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore.Resolved {
     @inlinable
     subscript(subject: DistinguishedName) -> [Certificate]? {

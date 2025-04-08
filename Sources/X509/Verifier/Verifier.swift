@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct Verifier<Policy: VerifierPolicy> {
     public var rootCertificates: CertificateStore
 
@@ -25,7 +25,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         self.policy = try policy()
     }
 
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
     public mutating func validate(
         leafCertificate: Certificate,
         intermediates: CertificateStore,
@@ -147,7 +147,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         return .couldNotValidate(policyFailures)
     }
 
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
     private func shouldSkipAddingCertificate(
         partialChain: CandidatePartialChain,
         nextCertificate: Certificate,
@@ -184,13 +184,13 @@ public struct Verifier<Policy: VerifierPolicy> {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public enum VerificationResult: Hashable, Sendable {
     case validCertificate([Certificate])
     case couldNotValidate([PolicyFailure])
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension VerificationResult {
     public struct PolicyFailure: Hashable, Sendable {
         public var chain: UnverifiedCertificateChain
@@ -204,7 +204,7 @@ extension VerificationResult {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct CandidatePartialChain: Hashable {
     var chain: [Certificate]
 
@@ -216,7 +216,7 @@ struct CandidatePartialChain: Hashable {
     }
 
     /// Whether this partial chain already contains this certificate.
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
     func contains(certificate: Certificate) -> Bool {
         // We don't do direct equality, as RFC 4158 § 2.4.1 notes that even certs that aren't
         // bytewise equal can cause arbitrarily long trust paths and weird loops. In particular, we're
@@ -247,7 +247,7 @@ struct CandidatePartialChain: Hashable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Array where Element == Certificate {
     fileprivate mutating func sortBySuitabilityForIssuing(certificate: Certificate) {
         // First, an early exit. If the subject doesn't have an AKI extension, we don't need
@@ -260,7 +260,7 @@ extension Array where Element == Certificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
     func issuerPreference(subjectAKI: AuthorityKeyIdentifier) -> Int {
         guard let ski = try? self.extensions.subjectKeyIdentifier else {
@@ -283,7 +283,7 @@ extension Certificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension UnverifiedCertificateChain {
     fileprivate init(chain: CandidatePartialChain, root: Certificate) {
         var certificates = chain.chain
@@ -293,7 +293,7 @@ extension UnverifiedCertificateChain {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.Extensions {
     fileprivate var subjectAlternativeNameBytes: ArraySlice<UInt8>? {
         return self[oid: .X509ExtensionID.subjectAlternativeName].map { $0.value }
