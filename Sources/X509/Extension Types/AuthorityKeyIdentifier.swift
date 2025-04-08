@@ -16,7 +16,7 @@ import SwiftASN1
 
 /// Provides information about the public key corresponding to the private key that was
 /// used to sign a specific certificate.
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 public struct AuthorityKeyIdentifier {
     /// An opaque sequence of bytes uniquely derived from the public key of the issuing
     /// CA.
@@ -70,13 +70,13 @@ public struct AuthorityKeyIdentifier {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension AuthorityKeyIdentifier: Hashable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension AuthorityKeyIdentifier: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension AuthorityKeyIdentifier: CustomStringConvertible {
     public var description: String {
         var elements: [String] = []
@@ -97,14 +97,14 @@ extension AuthorityKeyIdentifier: CustomStringConvertible {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension AuthorityKeyIdentifier: CustomDebugStringConvertible {
     public var debugDescription: String {
         "AuthorityKeyIdentifier(\(String(describing: self)))"
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this AKI extension.
     ///
@@ -124,7 +124,7 @@ extension Certificate.Extension {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension AuthorityKeyIdentifier: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
@@ -160,7 +160,7 @@ struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable {
     }
 
     @inlinable
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
     init(_ aki: AuthorityKeyIdentifier) {
         self.keyIdentifier = aki.keyIdentifier.map { ASN1OctetString(contentBytes: $0) }
         self.authorityCertIssuer = aki.authorityCertIssuer

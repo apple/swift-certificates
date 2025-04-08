@@ -19,7 +19,7 @@ import Foundation
 import SwiftASN1
 import Crypto
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 public enum CMS {
     @_spi(CMS)
     @inlinable
@@ -488,7 +488,7 @@ public enum CMS {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Array where Element == Certificate {
     @usableFromInline
     func certificate(signerInfo: CMSSignerInfo) throws -> Certificate? {
@@ -506,7 +506,7 @@ extension Array where Element == Certificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Signature {
     @inlinable
     init(signatureAlgorithm: Certificate.SignatureAlgorithm, signatureBytes: ASN1OctetString) throws {

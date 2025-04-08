@@ -20,7 +20,7 @@ import SwiftASN1
 
 /// A sub-policy of the ``RFC5280Policy`` that polices the nameConstraints extension.
 @usableFromInline
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 struct NameConstraintsPolicy: VerifierPolicy {
     @usableFromInline
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
@@ -227,7 +227,7 @@ struct NameConstraintsPolicy: VerifierPolicy {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate {
     @inlinable
     var names: NameSequence {

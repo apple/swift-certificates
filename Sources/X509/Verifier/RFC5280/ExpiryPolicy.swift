@@ -21,7 +21,7 @@ import SwiftASN1
 
 /// A sub-policy of the ``RFC5280Policy`` that polices expiry.
 @usableFromInline
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 struct ExpiryPolicy: VerifierPolicy {
     @usableFromInline
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []

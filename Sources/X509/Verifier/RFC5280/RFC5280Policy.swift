@@ -27,7 +27,7 @@ import SwiftASN1
 /// 2. Expiry. Expired certificates are rejected.
 /// 3. Basic Constraints. Police the constraints contained in the ``BasicConstraints`` extension.
 /// 4. Name Constraints. Police the constraints contained in the ``NameConstraints`` extension.
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 public struct RFC5280Policy: VerifierPolicy {
     public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.basicConstraints,

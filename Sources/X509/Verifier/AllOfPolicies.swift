@@ -32,7 +32,7 @@ import SwiftASN1
 ///     }
 /// }
 /// ```
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 public struct AllOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
     @usableFromInline
     var policy: Policy
