@@ -20,7 +20,7 @@ import Foundation
 import Crypto
 
 @usableFromInline
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 enum Digest {
     case insecureSHA1(Insecure.SHA1Digest)
     case sha256(SHA256Digest)
@@ -47,7 +47,7 @@ enum Digest {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Digest: Sequence {
     @usableFromInline
     func makeIterator() -> some IteratorProtocol<UInt8> {

@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 public struct VerificationDiagnostic: Sendable {
     struct LeafCertificateHasUnhandledCriticalExtensions: Hashable, Sendable {
         var leafCertificate: Certificate
@@ -99,7 +99,7 @@ public struct VerificationDiagnostic: Sendable {
     var storage: Storage
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic {
     static func leafCertificateHasUnhandledCriticalExtension(
         _ leafCertificate: Certificate,
@@ -225,7 +225,7 @@ extension VerificationDiagnostic {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.Storage {
     static func leafCertificateHasUnhandledCriticalExtension(
         _ leafCertificate: Certificate,
@@ -345,7 +345,7 @@ extension VerificationDiagnostic.Storage {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Extensions {
     @inlinable
     func unhandledCriticalExtensions(
@@ -359,7 +359,7 @@ extension Certificate.Extensions {
 
 // MARK: CustomStringConvertible
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic: CustomStringConvertible {
     /// Produces a human readable description of this ``VerificationDiagnostic`` that is potentially expensive to compute.
     public var description: String {
@@ -367,7 +367,7 @@ extension VerificationDiagnostic: CustomStringConvertible {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.Storage: CustomStringConvertible {
     var description: String {
         switch self {
@@ -388,7 +388,7 @@ extension VerificationDiagnostic.Storage: CustomStringConvertible {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: CustomStringConvertible {
     var description: String {
         """
@@ -403,7 +403,7 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions: 
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy: CustomStringConvertible {
     var description: String {
         """
@@ -416,7 +416,7 @@ extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPo
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible {
     var description: String {
         """
@@ -429,7 +429,7 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy: CustomStringConvertible
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStringConvertible {
     var description: String {
         """
@@ -445,7 +445,7 @@ extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension: CustomStri
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConvertible {
     var description: String {
         """
@@ -457,7 +457,7 @@ extension VerificationDiagnostic.IssuerHasNotSignedCertificate: CustomStringConv
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.SearchingForIssuerOfPartialChain: CustomStringConvertible {
     var description: String {
         """
@@ -468,7 +468,7 @@ extension VerificationDiagnostic.SearchingForIssuerOfPartialChain: CustomStringC
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore: CustomStringConvertible {
     var description: String {
         """
@@ -481,7 +481,7 @@ extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore:
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermediateStore: CustomStringConvertible {
     var description: String {
         """
@@ -494,7 +494,7 @@ extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermedia
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.FoundValidCertificateChain: CustomStringConvertible {
     var description: String {
         """
@@ -505,7 +505,7 @@ extension VerificationDiagnostic.FoundValidCertificateChain: CustomStringConvert
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringConvertible {
     var description: String {
         """
@@ -515,7 +515,7 @@ extension VerificationDiagnostic.CouldNotValidateLeafCertificate: CustomStringCo
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.IssuerIsAlreadyInTheChain: CustomStringConvertible {
     var description: String {
         """
@@ -528,7 +528,7 @@ extension VerificationDiagnostic.IssuerIsAlreadyInTheChain: CustomStringConverti
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.LoadingTrustRootsFailed: CustomStringConvertible {
     var description: String {
         """
@@ -539,7 +539,7 @@ extension VerificationDiagnostic.LoadingTrustRootsFailed: CustomStringConvertibl
 
 // MARK: CustomDebugStringConvertible
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic: CustomDebugStringConvertible {
     public var debugDescription: String {
         // this just adds quotes around the string and escapes any characters not suitable for displaying in a structural display.
@@ -549,7 +549,7 @@ extension VerificationDiagnostic: CustomDebugStringConvertible {
 
 // MARK: Multiline Description
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic {
     /// Produces a human readable description of this ``VerificationDiagnostic`` over multiple lines for better readability
     /// but includes otherwise the same information as ``description``.
@@ -558,7 +558,7 @@ extension VerificationDiagnostic {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.Storage {
     var multilineDescription: String {
         switch self {
@@ -580,7 +580,7 @@ extension VerificationDiagnostic.Storage {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions {
     var multilineDescription: String {
         """
@@ -597,7 +597,7 @@ extension VerificationDiagnostic.LeafCertificateHasUnhandledCriticalExtensions {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPolicy {
     var multilineDescription: String {
         """
@@ -612,7 +612,7 @@ extension VerificationDiagnostic.LeafCertificateIsInTheRootStoreButDoesNotMeetPo
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.ChainFailsToMeetPolicy {
     var multilineDescription: String {
         """
@@ -627,7 +627,7 @@ extension VerificationDiagnostic.ChainFailsToMeetPolicy {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension {
     var multilineDescription: String {
         """
@@ -645,7 +645,7 @@ extension VerificationDiagnostic.IssuerHasUnhandledCriticalExtension {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.IssuerHasNotSignedCertificate {
     var multilineDescription: String {
         """
@@ -658,7 +658,7 @@ extension VerificationDiagnostic.IssuerHasNotSignedCertificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.SearchingForIssuerOfPartialChain {
     var multilineDescription: String {
         """
@@ -669,7 +669,7 @@ extension VerificationDiagnostic.SearchingForIssuerOfPartialChain {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore {
     var multilineDescription: String {
         """
@@ -682,7 +682,7 @@ extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInRootStore 
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermediateStore {
     var multilineDescription: String {
         """
@@ -695,7 +695,7 @@ extension VerificationDiagnostic.FoundCandidateIssuersOfPartialChainInIntermedia
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.FoundValidCertificateChain {
     var multilineDescription: String {
         """
@@ -706,7 +706,7 @@ extension VerificationDiagnostic.FoundValidCertificateChain {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.CouldNotValidateLeafCertificate {
     var multilineDescription: String {
         """
@@ -716,7 +716,7 @@ extension VerificationDiagnostic.CouldNotValidateLeafCertificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.IssuerIsAlreadyInTheChain {
     var multilineDescription: String {
         """
@@ -729,7 +729,7 @@ extension VerificationDiagnostic.IssuerIsAlreadyInTheChain {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension VerificationDiagnostic.LoadingTrustRootsFailed {
     var multilineDescription: String {
         """

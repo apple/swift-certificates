@@ -56,7 +56,7 @@ public struct ExtendedKeyUsage {
     /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
     ///     `ASN1ObjectIdentifier.X509ExtensionID.extendedKeyUsage`.
     @inlinable
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.extendedKeyUsage else {
             throw CertificateError.incorrectOIDForExtension(
@@ -320,7 +320,7 @@ extension ExtendedKeyUsage.Usage.Backing: Hashable {}
 
 extension ExtendedKeyUsage.Usage.Backing: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Extended Key Usage extension.
     ///
@@ -336,7 +336,7 @@ extension Certificate.Extension {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension ExtendedKeyUsage: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)

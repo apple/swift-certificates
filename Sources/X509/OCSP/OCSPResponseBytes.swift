@@ -57,7 +57,7 @@ struct OCSPResponseBytes: DERImplicitlyTaggable, Hashable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension BasicOCSPResponse {
     init(decoding original: OCSPResponseBytes) throws {
         guard original.responseType == .OCSP.basicResponse else {
@@ -68,7 +68,7 @@ extension BasicOCSPResponse {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension OCSPResponseBytes {
     init(encoding original: BasicOCSPResponse) throws {
         self.responseType = .OCSP.basicResponse

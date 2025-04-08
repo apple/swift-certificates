@@ -37,34 +37,34 @@ extension Key {
 
 // MARK: Private Keys
 
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Crypto.P256.Signing.PrivateKey: Key {
     var wrapped: Certificate.PrivateKey { .init(self) }
 }
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Crypto.P384.Signing.PrivateKey: Key {
     var wrapped: Certificate.PrivateKey { .init(self) }
 }
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Crypto.P521.Signing.PrivateKey: Key {
     var wrapped: Certificate.PrivateKey { .init(self) }
 }
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension _CryptoExtras._RSA.Signing.PrivateKey: Key {
     var wrapped: Certificate.PrivateKey { .init(self) }
 }
 
 // MARK: Public Keys
 
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Crypto.P256.Signing.PublicKey: Key {
     var wrapped: Certificate.PublicKey { .init(self) }
 }
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Crypto.P384.Signing.PublicKey: Key {
     var wrapped: Certificate.PublicKey { .init(self) }
 }
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Crypto.P521.Signing.PublicKey: Key {
     var wrapped: Certificate.PublicKey { .init(self) }
 }
@@ -78,7 +78,7 @@ private protocol WrappedKey: Equatable {
 }
 
 extension Certificate.PublicKey: WrappedKey {}
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 extension Certificate.PrivateKey: WrappedKey {}
 
 final class PEMTests: XCTestCase {
@@ -118,7 +118,7 @@ final class PEMTests: XCTestCase {
         try assertPEMRoundtrip(key: _RSA.Signing.PrivateKey(keySize: .bits2048))
     }
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
     func testRSAPrivateKey() throws {
         // generated with "openssl genpkey -algorithm rsa"
         let rsaKey = try String(

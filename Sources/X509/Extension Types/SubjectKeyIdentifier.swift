@@ -40,7 +40,7 @@ public struct SubjectKeyIdentifier {
     /// - Throws: if the ``Certificate/Extension/oid`` is not equal to
     ///     `ASN1ObjectIdentifier.X509ExtensionID.subjectKeyIdentifier`.
     @inlinable
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
     public init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .X509ExtensionID.subjectKeyIdentifier else {
             throw CertificateError.incorrectOIDForExtension(
@@ -69,7 +69,7 @@ extension SubjectKeyIdentifier: CustomDebugStringConvertible {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Subject Key Identifier extension.
     ///
@@ -89,14 +89,14 @@ extension Certificate.Extension {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension SubjectKeyIdentifier: CertificateExtensionConvertible {
     public func makeCertificateExtension() throws -> Certificate.Extension {
         return try .init(self, critical: false)
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension SubjectKeyIdentifier {
     /// Construct a ``SubjectKeyIdentifier`` by hashing the given `publicKey` with SHA-1 according to RFC 5280 Section 4.2.1.2.
     /// - Parameter publicKey: the public key which will be hashed

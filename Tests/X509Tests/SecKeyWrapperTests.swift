@@ -64,7 +64,7 @@ final class SecKeyWrapperTests: XCTestCase {
         return keys
     }
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
     func testPEMExport() async throws {
         for candidate in try generateCandidateKeys() {
             try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in

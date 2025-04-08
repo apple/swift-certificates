@@ -97,7 +97,7 @@ struct CMSContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, S
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension CMSContentInfo {
     @inlinable
     init(_ signedData: CMSSignedData) throws {

@@ -38,7 +38,7 @@ import SwiftASN1
 /// then the `version` MUST be 1.  If the `SignerIdentifier` is `subjectKeyIdentifier`,
 /// then the `version` MUST be 3.
 @usableFromInline
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 struct CMSSignerInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @usableFromInline
     enum Error: Swift.Error {
@@ -228,7 +228,7 @@ struct CMSSignerInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Se
 }
 
 // MARK: - SignedAttrs
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension CMSSignerInfo {
     @inlinable
     /// Returns the  signedAttrs in DER encoded form by re-serializes the parsed signedAttrs, or immediately returning

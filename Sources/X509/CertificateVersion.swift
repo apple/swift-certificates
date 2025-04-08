@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate {
     /// The X.509 certificate version.
     ///
@@ -36,13 +36,13 @@ extension Certificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Version: Hashable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Version: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Version: Comparable {
     @inlinable
     public static func < (lhs: Certificate.Version, rhs: Certificate.Version) -> Bool {
@@ -50,7 +50,7 @@ extension Certificate.Version: Comparable {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Version: CustomStringConvertible {
     public var description: String {
         switch self {

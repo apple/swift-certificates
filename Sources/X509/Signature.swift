@@ -21,7 +21,7 @@ import FoundationEssentials
 import Foundation
 #endif
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate {
     /// An abstract representation of the cryptographic signature on a certificate.
     ///
@@ -69,13 +69,13 @@ extension Certificate {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Signature: Hashable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Signature: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Signature: CustomStringConvertible {
     public var description: String {
         switch backing {
@@ -89,7 +89,7 @@ extension Certificate.Signature: CustomStringConvertible {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Certificate.Signature {
     @usableFromInline
     enum BackingSignature: Hashable, Sendable {
@@ -128,7 +128,7 @@ extension Certificate.Signature {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension ASN1BitString {
     @inlinable
     init(_ signature: Certificate.Signature) {
@@ -145,7 +145,7 @@ extension ASN1BitString {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension ASN1OctetString {
     @inlinable
     init(_ signature: Certificate.Signature) {
@@ -164,7 +164,7 @@ extension ASN1OctetString {
 
 // MARK: Public key operations
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension P256.Signing.PublicKey {
     @inlinable
     internal func isValidSignature<Bytes: DataProtocol>(
@@ -192,7 +192,7 @@ extension P256.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension P384.Signing.PublicKey {
     @inlinable
     internal func isValidSignature<Bytes: DataProtocol>(
@@ -220,7 +220,7 @@ extension P384.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension P521.Signing.PublicKey {
     @inlinable
     internal func isValidSignature<Bytes: DataProtocol>(
@@ -248,7 +248,7 @@ extension P521.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension _RSA.Signing.PublicKey {
     @inlinable
     internal func isValidSignature<Bytes: DataProtocol>(
@@ -278,7 +278,7 @@ extension _RSA.Signing.PublicKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Curve25519.Signing.PublicKey {
     @inlinable
     internal func isValidSignature<Bytes: DataProtocol>(
@@ -302,7 +302,7 @@ extension Curve25519.Signing.PublicKey {
 
 // MARK: Private key operations
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension P256.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(
@@ -329,7 +329,7 @@ extension P256.Signing.PrivateKey {
 }
 
 #if canImport(Darwin)
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension SecureEnclave.P256.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(
@@ -356,7 +356,7 @@ extension SecureEnclave.P256.Signing.PrivateKey {
 }
 #endif
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension P384.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(
@@ -382,7 +382,7 @@ extension P384.Signing.PrivateKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension P521.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(
@@ -408,7 +408,7 @@ extension P521.Signing.PrivateKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension _RSA.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(
@@ -438,7 +438,7 @@ extension _RSA.Signing.PrivateKey {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 extension Curve25519.Signing.PrivateKey {
     @inlinable
     func signature<Bytes: DataProtocol>(

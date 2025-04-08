@@ -23,7 +23,7 @@ import SwiftASN1
 /// The definition of `Name` is taken from X.501 [X.501-88], and the
 /// definition of `CertificateSerialNumber` is taken from X.509 [X.509-97].
 @usableFromInline
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, *)
 struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {

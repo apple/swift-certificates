@@ -22,7 +22,7 @@ import SwiftASN1
 @testable import X509
 @preconcurrency import Crypto
 
-@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, *)
 final class VerifierTests: XCTestCase {
     private static let referenceTime = Date()
 
