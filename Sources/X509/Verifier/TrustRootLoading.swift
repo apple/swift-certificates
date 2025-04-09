@@ -28,7 +28,7 @@ private let rootCAFileSearchPaths = [
     "/etc/pki/tls/certs/ca-bundle.crt",  // Fedora
 ]
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     /// A ``CertificateStore`` that includes all root Certificate Authorities (CAs) that
     /// are installed in the systems trust store.
@@ -55,7 +55,7 @@ extension CertificateStore {
         }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     @_spi(Testing)
     public static func loadTrustRoots(at searchPaths: [String]) throws -> [DistinguishedName: [Certificate]] {
@@ -94,7 +94,7 @@ extension CertificateStore {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension DispatchQueue {
     func asyncFuture<Success: Sendable>(
         withResultOf work: @Sendable @escaping () throws -> Success

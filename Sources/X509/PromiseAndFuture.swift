@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 // MARK: - Promise
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 final class Promise<Value: Sendable, Failure: Error> {
     private enum State {
         case unfulfilled(observers: [CheckedContinuation<Result<Value, Failure>, Never>])
@@ -71,10 +71,10 @@ final class Promise<Value: Sendable, Failure: Error> {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Promise: Sendable where Value: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Promise {
     func succeed(with value: Value) {
         self.fulfil(with: .success(value))
@@ -87,7 +87,7 @@ extension Promise {
 
 // MARK: - Future
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct Future<Value: Sendable, Failure: Error> {
     private let promise: Promise<Value, Failure>
 
@@ -102,10 +102,10 @@ struct Future<Value: Sendable, Failure: Error> {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Future: Sendable where Value: Sendable {}
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Future {
     var value: Value {
         get async throws {
@@ -114,7 +114,7 @@ extension Future {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Future where Failure == Never {
     var value: Value {
         get async {
@@ -123,7 +123,7 @@ extension Future where Failure == Never {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Result where Failure == Never {
     func get() -> Success {
         switch self {

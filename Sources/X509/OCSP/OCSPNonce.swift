@@ -34,7 +34,7 @@ struct OCSPNonce: DERImplicitlyTaggable, Hashable, Sendable {
         self.rawValue = .init(contentBytes: generator.bytes(count: 32))
     }
 
-    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
     init(_ ext: Certificate.Extension) throws {
         guard ext.oid == .OCSPExtensionID.nonceIdentifier else {
             throw CertificateError.incorrectOIDForExtension(
@@ -63,7 +63,7 @@ extension ASN1ObjectIdentifier.OCSPExtensionID {
     static let nonceIdentifier: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 48, 1, 2]
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.Extension {
     /// Construct an opaque ``Certificate/Extension`` from this Key Usage extension.
     ///
@@ -77,14 +77,14 @@ extension Certificate.Extension {
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension OCSPNonce: CertificateExtensionConvertible {
     func makeCertificateExtension() throws -> Certificate.Extension {
         try .init(self, critical: false)
     }
 }
 
-@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, *)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.Extensions {
     var ocspNonce: OCSPNonce? {
         get throws {
