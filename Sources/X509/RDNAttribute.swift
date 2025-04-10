@@ -33,7 +33,9 @@ extension RelativeDistinguishedName {
                 case printable(String)
                 /// ``ASN1UTF8String``
                 case utf8(String)
-                /// `.any` can never contain bytes which are equal to the DER representation of `.printable` or `.utf8`.
+                /// ``ASN1IA5String``
+                case ia5(String)
+                /// `.any` can never contain bytes which are equal to the DER representation of `.printable`, `.utf8` or `.ia5`.
                 /// This invariant must not be violated or otherwise the synthesised `Hashable` would be wrong.
                 case any(ASN1Any)
             }
@@ -76,6 +78,9 @@ extension ASN1Any {
         case .utf8(let utf8String):
             // force try is safe because we verify in the initialiser that it is valid
             self = try! .init(erasing: ASN1UTF8String(utf8String))
+        case .ia5(let ia5String):
+            // force try is safe because we verify in the initialiser that it is valid
+            self = try! .init(erasing: ASN1IA5String(ia5String))
         case .any(let any):
             self = any
         }
@@ -106,6 +111,14 @@ extension RelativeDistinguishedName.Attribute.Value {
         self.storage = .printable(printableString)
     }
 
+    /// A helper constructor to construct a ``RelativeDistinguishedName/Attribute/Value`` with an `ASN1IA5String`.
+    @inlinable
+    public init(ia5String: String) throws {
+        // verify that it is indeed a ASN1IA5String
+        _ = try ASN1IA5String(ia5String)
+        self.storage = .ia5(ia5String)
+    }
+
     @inlinable
     public init(asn1Any: ASN1Any) {
         do {
@@ -125,6 +138,8 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: DERParseable, DERSe
                 self = .utf8(String(try ASN1UTF8String(derEncoded: node)))
             case ASN1PrintableString.defaultIdentifier:
                 self = .printable(String(try ASN1PrintableString(derEncoded: node)))
+            case ASN1IA5String.defaultIdentifier:
+                self = .ia5(String(try ASN1IA5String(derEncoded: node)))
             default:
                 self = .any(ASN1Any(derEncoded: node))
             }
@@ -142,6 +157,10 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: DERParseable, DERSe
             try printableString.serialize(into: &coder)
         case .utf8(let utf8String):
             let string = ASN1UTF8String(utf8String)
+            try string.serialize(into: &coder)
+        case .ia5(let ia5String):
+            // force try is safe because we verify in the initialiser that it is valid
+            let string = try! ASN1IA5String(ia5String)
             try string.serialize(into: &coder)
         case .any(let any):
             try any.serialize(into: &coder)
@@ -220,6 +239,10 @@ extension RelativeDistinguishedName.Attribute: CustomStringConvertible {
             attributeKey = "OU"
         case .RDNAttributeType.streetAddress:
             attributeKey = "STREET"
+        case .RDNAttributeType.domainComponent:
+            attributeKey = "DC"
+        case .RDNAttributeType.emailAddress:
+            attributeKey = "E"
         case let type:
             attributeKey = String(describing: type)
         }
@@ -275,6 +298,12 @@ extension RelativeDistinguishedName.Attribute {
         self.value = try .init(printableString: printableString)
     }
 
+    @inlinable
+    public init(type: ASN1ObjectIdentifier, ia5String: String) throws {
+        self.type = type
+        self.value = try .init(ia5String: ia5String)
+    }
+
     /// Create a new attribute from a given type and value.
     ///
     /// - Parameter type: The type of the attribute.
@@ -318,6 +347,13 @@ extension ASN1ObjectIdentifier {
         /// information from a postal address (i.e., the street name, place,
         /// avenue, and the house number).
         public static let streetAddress: ASN1ObjectIdentifier = [2, 5, 4, 9]
+
+        /// The `domainComponent` attribute type contains parts (labels) of a DNS domain name
+        public static let domainComponent: ASN1ObjectIdentifier = [0, 9, 2342, 19_200_300, 100, 1, 25]
+
+        /// The `emailAddress` attribute type contains email address defined in PCKS#9 (RFC2985).
+        /// Be aware that, modern best practices (e.g., RFC 5280) discourage embedding email addresses in the `Subject DN` instead it should be in  `Subject Alternative Name (SAN)
+        public static let emailAddress: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 9, 1]
     }
 }
 
@@ -331,6 +367,8 @@ extension String {
             self = printable
         case .utf8(let utf8):
             self = utf8
+        case .ia5(let ia5):
+            self = ia5
         case .any:
             return nil
         }

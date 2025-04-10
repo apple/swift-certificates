@@ -75,6 +75,8 @@ certificate authorities, authenticating peers, and more.
 - ``OrganizationName``
 - ``StateOrProvinceName``
 - ``StreetAddress``
+- ``DomainComponent``
+- ``EmailAddress``
 
 ### Verifying Certificates
 

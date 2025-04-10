@@ -211,6 +211,9 @@ final class DistinguishedNameTests: XCTestCase {
             OrganizationName("DigiCert Inc")
             OrganizationalUnitName("www.digicert.com")
             CommonName("DigiCert Global Root G3")
+            EmailAddress("jon.doe@apple.com")
+            DomainComponent("apple")
+            DomainComponent("com")
         }
         XCTAssertEqual(
             name,
@@ -228,6 +231,12 @@ final class DistinguishedNameTests: XCTestCase {
                     type: .RDNAttributeType.commonName,
                     utf8String: "DigiCert Global Root G3"
                 ),
+                RelativeDistinguishedName.Attribute(
+                    type: .RDNAttributeType.emailAddress,
+                    ia5String: "jon.doe@apple.com"
+                ),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.domainComponent, ia5String: "apple"),
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.domainComponent, ia5String: "com"),
             ])
         )
     }
@@ -280,6 +289,9 @@ final class DistinguishedNameTests: XCTestCase {
 
     func testDistinguishedNameRepresentation() throws {
         let name = try DistinguishedName([
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.domainComponent, ia5String: "com"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.domainComponent, ia5String: "apple"),
+            RelativeDistinguishedName.Attribute(type: .RDNAttributeType.emailAddress, ia5String: "jon.doe@apple.com"),
             RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US"),
             RelativeDistinguishedName.Attribute(type: .RDNAttributeType.organizationName, utf8String: "DigiCert Inc"),
             RelativeDistinguishedName.Attribute(
@@ -290,14 +302,30 @@ final class DistinguishedNameTests: XCTestCase {
                 type: .RDNAttributeType.commonName,
                 utf8String: "DigiCert Global Root G3"
             ),
+
         ])
 
         let s = String(describing: name)
-        XCTAssertEqual(s, "CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,C=US")
+        XCTAssertEqual(
+            s,
+            "CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,C=US,E=jon.doe@apple.com,DC=apple,DC=com"
+        )
     }
 
     func testDistinguishedNameRepresentationWithNestedAttributes() throws {
         let name = try DistinguishedName([
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.domainComponent, ia5String: "com")
+            ]),
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(type: .RDNAttributeType.domainComponent, ia5String: "apple")
+            ]),
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(
+                    type: .RDNAttributeType.emailAddress,
+                    ia5String: "jon.doe@apple.com"
+                )
+            ]),
             RelativeDistinguishedName([
                 RelativeDistinguishedName.Attribute(type: .RDNAttributeType.countryName, utf8String: "US")
             ]),
@@ -329,7 +357,10 @@ final class DistinguishedNameTests: XCTestCase {
         ])
 
         let s = String(describing: name)
-        XCTAssertEqual(s, "CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,ST=CA+ST=California,C=US")
+        XCTAssertEqual(
+            s,
+            "CN=DigiCert Global Root G3,OU=www.digicert.com,O=DigiCert Inc,ST=CA+ST=California,C=US,E=jon.doe@apple.com,DC=apple,DC=com"
+        )
     }
 
     func testDistinguishedNameRepresentationWithCommasAndNewlines() throws {
@@ -420,7 +451,17 @@ final class DistinguishedNameTests: XCTestCase {
         let examplesAndResults: [(RelativeDistinguishedName.Attribute, String?)] = try [
             (.init(type: .RDNAttributeType.commonName, printableString: "foo"), "foo"),
             (.init(type: .RDNAttributeType.commonName, utf8String: "bar"), "bar"),
-            (.init(type: .RDNAttributeType.commonName, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+            (.init(type: .RDNAttributeType.commonName, ia5String: "foo"), "foo"),
+            /// ASN1IA5String with wrong tag
+            (
+                .init(type: .RDNAttributeType.commonName, value: ASN1Any(derEncoded: [0x19, 0x03, 0x41, 0x42, 0x43])),
+                nil
+            ),
+            /// ASN1IA5String byte that falls outside the range of 7-bit ASCII
+            (
+                .init(type: .RDNAttributeType.commonName, value: ASN1Any(derEncoded: [0x16, 0x03, 0x41, 0x42, 0x80])),
+                nil
+            ),
         ]
 
         for (example, result) in examplesAndResults {
@@ -436,7 +477,7 @@ final class DistinguishedNameTests: XCTestCase {
             (.init(type: weirdOID, utf8String: "bar"), "bar"),
             (.init(type: weirdOID, value: ASN1Any(erasing: ASN1UTF8String("foo"))), "foo"),
             (.init(type: weirdOID, value: ASN1Any(erasing: ASN1PrintableString("baz"))), "baz"),
-            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1IA5String("foo"))), nil),
+            (.init(type: weirdOID, value: ASN1Any(erasing: ASN1IA5String("foo"))), "foo"),
             (.init(type: weirdOID, value: ASN1Any(erasing: 5)), nil),
             (.init(type: weirdOID, value: ASN1Any(erasing: ASN1OctetString(contentBytes: [1, 2, 3, 4]))), nil),
         ]
