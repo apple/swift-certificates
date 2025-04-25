@@ -303,7 +303,7 @@ extension Certificate.PrivateKey {
             self = try .init(ecdsaAlgorithm: sec1.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
 
         case Self.pemDiscriminatorForPKCS8:
-            self = try .init(pkcs8DERBytes: pemDocument.derBytes)
+            self = try .init(derBytes: pemDocument.derBytes)
 
         default:
             throw ASN1Error.invalidPEMDocument(
@@ -351,8 +351,8 @@ extension Certificate.PrivateKey {
 @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
 extension Certificate.PrivateKey {
     /// Initialize a new certificate private key from PKCS8-format DER bytes.
-    public init(pkcs8DERBytes: [UInt8]) throws {
-        let pkcs8 = try PKCS8PrivateKey(derEncoded: pkcs8DERBytes)
+    public init(derBytes: [UInt8]) throws {
+        let pkcs8 = try PKCS8PrivateKey(derEncoded: derBytes)
         switch pkcs8.algorithm {
         case .ecdsaP256, .ecdsaP384, .ecdsaP521:
             let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
