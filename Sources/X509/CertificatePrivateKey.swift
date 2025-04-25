@@ -303,24 +303,7 @@ extension Certificate.PrivateKey {
             self = try .init(ecdsaAlgorithm: sec1.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
 
         case Self.pemDiscriminatorForPKCS8:
-            let pkcs8 = try PKCS8PrivateKey(derEncoded: pemDocument.derBytes)
-            switch pkcs8.algorithm {
-            case .ecdsaP256, .ecdsaP384, .ecdsaP521:
-                let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
-                if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
-                    throw ASN1Error.invalidASN1Object(
-                        reason: "algorithm mismatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
-                    )
-                }
-                self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
-
-            case .rsaKey:
-                self = try .init(_CryptoExtras._RSA.Signing.PrivateKey(derRepresentation: pkcs8.privateKey.bytes))
-            case .ed25519:
-                self = try .init(Curve25519.Signing.PrivateKey(pkcs8Key: pkcs8))
-            default:
-                throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm)")
-            }
+            self = try .init(derBytes: pemDocument.derBytes)
 
         default:
             throw ASN1Error.invalidPEMDocument(
@@ -361,6 +344,31 @@ extension Certificate.PrivateKey {
         case .secKey(let key): return try key.pemDocument()
         #endif
         case .ed25519(let key): return key.pemRepresentation
+        }
+    }
+}
+
+@available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
+extension Certificate.PrivateKey {
+    /// Initialize a new certificate private key from PKCS8-format DER bytes.
+    public init(derBytes: [UInt8]) throws {
+        let pkcs8 = try PKCS8PrivateKey(derEncoded: derBytes)
+        switch pkcs8.algorithm {
+        case .ecdsaP256, .ecdsaP384, .ecdsaP521:
+            let sec1 = try SEC1PrivateKey(derEncoded: pkcs8.privateKey.bytes)
+            if let innerAlgorithm = sec1.algorithm, innerAlgorithm != pkcs8.algorithm {
+                throw ASN1Error.invalidASN1Object(
+                    reason: "algorithm mismatch. PKCS#8 is \(pkcs8.algorithm) but inner SEC1 is \(innerAlgorithm)"
+                )
+            }
+            self = try .init(ecdsaAlgorithm: pkcs8.algorithm, rawEncodedPrivateKey: sec1.privateKey.bytes)
+
+        case .rsaKey:
+            self = try .init(_CryptoExtras._RSA.Signing.PrivateKey(derRepresentation: pkcs8.privateKey.bytes))
+        case .ed25519:
+            self = try .init(Curve25519.Signing.PrivateKey(pkcs8Key: pkcs8))
+        default:
+            throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm)")
         }
     }
 }

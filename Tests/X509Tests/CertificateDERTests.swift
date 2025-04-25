@@ -761,3 +761,50 @@ final class CertificateDERTests: XCTestCase {
         XCTAssertNoThrow(try decoded.extensions.nameConstraints)
     }
 }
+
+final class CertificatePrivateKeyDEREncodedTests: XCTestCase {
+    func testECDSAP256() throws {
+        let key = P256.Signing.PrivateKey()
+        let derBytes = Array(key.derRepresentation)
+        let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
+
+        XCTAssertEqual(parsedKey.backing, .p256(key))
+    }
+
+    func testECDSAP384() throws {
+        let key = P384.Signing.PrivateKey()
+        let derBytes = Array(key.derRepresentation)
+        let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
+
+        XCTAssertEqual(parsedKey.backing, .p384(key))
+    }
+
+    func testECDSAP521() throws {
+        let key = P521.Signing.PrivateKey()
+        let derBytes = Array(key.derRepresentation)
+        let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
+
+        XCTAssertEqual(parsedKey.backing, .p521(key))
+    }
+
+    func testED25519() throws {
+        let key = Curve25519.Signing.PrivateKey()
+        let derBytes = key.derRepresentation
+        let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
+
+        XCTAssertEqual(parsedKey.backing, .ed25519(key))
+    }
+
+    func testRSA() throws {
+        // Unlike other algorithms, RSA's bytes representation is not in PKCS#8 format, so we have
+        // to bridge it by first serialising the key as a PKCS#8 PEM document, and then getting
+        // its DER bytes.
+        let key = try _CryptoExtras._RSA.Signing.PrivateKey(keySize: .bits2048)
+        let pkcs8 = key.pkcs8PEMRepresentation
+        let pemDoc = try PEMDocument(pemString: pkcs8)
+        let derBytes = pemDoc.derBytes
+        let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
+
+        XCTAssertEqual(parsedKey.backing, .rsa(key))
+    }
+}
