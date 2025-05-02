@@ -25,7 +25,6 @@ final class CertificateTests: XCTestCase {
         XCTAssertEqual(s, "a:14:1e:28")
     }
 
-    #if swift(>=5.8)
     @available(macOS 13.3, iOS 16.4, watchOS 9.4, tvOS 16.4, macCatalyst 16.4, visionOS 1.0, *)
     func testSerialNumberStaticBigInt() {
         XCTAssertEqual(
@@ -40,7 +39,6 @@ final class CertificateTests: XCTestCase {
         )
         XCTAssertEqual(Certificate.SerialNumber(123_456_789), 123_456_789)
     }
-    #endif
 
     func testSerialNumberInits() {
         XCTAssertEqual(Certificate.SerialNumber(bytes: [0, 1, 2, 3, 4, 5, 6, 7, 8]).bytes, [1, 2, 3, 4, 5, 6, 7, 8])

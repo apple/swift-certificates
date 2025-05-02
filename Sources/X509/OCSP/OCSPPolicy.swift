@@ -16,10 +16,8 @@ import SwiftASN1
 import Crypto
 #if canImport(FoundationEssentials)
 import FoundationEssentials
-#elseif canImport(Darwin) || swift(>=5.9.1)
-import Foundation
 #else
-@preconcurrency import Foundation
+import Foundation
 #endif
 
 // Swift CI has implicit concurrency disabled
