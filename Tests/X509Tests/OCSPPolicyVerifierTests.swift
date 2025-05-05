@@ -18,10 +18,8 @@ import SwiftASN1
 @testable import X509
 #if canImport(FoundationEssentials)
 import FoundationEssentials
-#elseif canImport(Darwin) || swift(>=5.9.1)
-import Foundation
 #else
-@preconcurrency import Foundation
+import Foundation
 #endif
 
 actor TestRequester: OCSPRequester {
