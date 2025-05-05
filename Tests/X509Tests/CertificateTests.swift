@@ -472,7 +472,7 @@ final class CertificateTests: XCTestCase {
 
     private static let referenceTime = Date(timeIntervalSince1970: 1_691_504_774)
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 16.4, visionOS 1.0, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     func testCertificateDescription() throws {
         let caPrivateKey = P384.Signing.PrivateKey()
         let certificateName1 = try! DistinguishedName {
@@ -699,7 +699,7 @@ final class CertificateTests: XCTestCase {
         XCTAssertEqual(try reWrappedKey.serializeAsPEM().pemString, pemKey)
     }
 
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 16.4, visionOS 1.0, *)
+    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     func testRFC8410Ed25519PrivateKey() throws {
         let pemKey = """
             -----BEGIN PRIVATE KEY-----
