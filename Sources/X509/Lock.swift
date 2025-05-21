@@ -35,7 +35,7 @@ import wasi_pthread
 #if os(Windows)
 @usableFromInline
 typealias LockPrimitive = SRWLOCK
-#elseif os(OpenBSD)
+#elseif os(OpenBSD) || os(FreeBSD)
 @usableFromInline
 typealias LockPrimitive = pthread_mutex_t?
 #else
@@ -54,14 +54,14 @@ extension LockOperations {
         #if os(Windows)
         InitializeSRWLock(mutex)
         #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
-        #if os(OpenBSD)
+        #if os(OpenBSD) || os(FreeBSD)
         var attr = pthread_mutexattr_t(bitPattern: 0)
         #else
         var attr = pthread_mutexattr_t()
         #endif
         pthread_mutexattr_init(&attr)
         debugOnly {
-            #if os(OpenBSD)
+            #if os(OpenBSD) || os(FreeBSD)
             pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK.rawValue))
             #else
             pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK))
