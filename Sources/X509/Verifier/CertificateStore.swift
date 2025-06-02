@@ -138,16 +138,18 @@ extension CertificateStore {
 extension CertificateStore.Resolved {
     @usableFromInline
     subscript(subject: DistinguishedName) -> [Certificate]? {
-        switch self {
-        case .custom(let inner): inner[subject]
-        case .concrete(let inner): inner[subject]
+        get async {
+            switch self {
+            case .custom(let inner): await inner[subject]
+            case .concrete(let inner): inner[subject]
+            }
         }
     }
 
     @usableFromInline
-    func contains(_ certificate: Certificate) -> Bool {
+    func contains(_ certificate: Certificate) async -> Bool {
         switch self {
-        case .custom(let inner): inner.contains(certificate)
+        case .custom(let inner): await inner.contains(certificate)
         case .concrete(let inner): inner.contains(certificate)
         }
     }

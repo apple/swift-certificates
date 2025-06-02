@@ -82,13 +82,12 @@ final class CertificateStoreTests: XCTestCase {
 
     struct CertStore: CustomCertificateStore {
         subscript(subject: X509.DistinguishedName) -> [X509.Certificate]? {
-            let found = self.trustRoots[normalizeDistinguishedName(subject)]
-            print("trustRoots=\(self.trustRoots)")
-            // print("Looking up [\(subject)] -> \(found)")
-            return found
+            get async {
+                self.trustRoots[normalizeDistinguishedName(subject)]
+            }
         }
 
-        func contains(_ certificate: X509.Certificate) -> Bool {
+        func contains(_ certificate: X509.Certificate) async -> Bool {
             self.trustRoots[normalizeDistinguishedName(certificate.subject)]?.contains(certificate) == true
         }
 

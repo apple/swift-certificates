@@ -15,17 +15,21 @@
 /// Implement the ``CustomCertificateStore`` if you want to perform dynamic
 /// certificate lookup, or if you need custom logic when matching the
 /// ``DistinguishedName`` of an Issuer with the Subject of the issuer
-/// certificate.
+/// certificate, then implement a custom certificate store used by the
+/// ```Verifier```.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public protocol CustomCertificateStore: Sendable, Hashable {
-    /// Obtain a list of certificates which has a given subject.
+    /// Obtain a list of certificates which has a given subject. Note that this
+    /// is an async method so that database lookups can be performed
+    /// asynchronously.
     subscript(subject: DistinguishedName) -> [Certificate]? {
-        get
+        get async
     }
 
     /// Validate if a given certificate is known to exist in this certificate
-    /// store.
-    func contains(_ certificate: Certificate) -> Bool
+    /// store. Note that this is an async method so that the existence check
+    /// can be performed against a database.
+    func contains(_ certificate: Certificate) async -> Bool
 
     /// Add a certificate to this certificate store.
     mutating func append(contentsOf certificates: some Sequence<Certificate>)
@@ -44,12 +48,14 @@ struct AnyCustomCertificateStore: CustomCertificateStore {
 
     @inlinable
     subscript(subject: DistinguishedName) -> [Certificate]? {
-        value[subject]
+        get async {
+            await value[subject]
+        }
     }
 
     @inlinable
-    func contains(_ certificate: Certificate) -> Bool {
-        value.contains(certificate)
+    func contains(_ certificate: Certificate) async -> Bool {
+        await value.contains(certificate)
     }
 
     @inlinable
@@ -91,11 +97,13 @@ extension AnyCustomCertificateStore {
         }
 
         subscript(subject: DistinguishedName) -> [Certificate]? {
-            value[subject]
+            get async {
+                await value[subject]
+            }
         }
 
-        func contains(_ certificate: Certificate) -> Bool {
-            value.contains(certificate)
+        func contains(_ certificate: Certificate) async -> Bool {
+            await value.contains(certificate)
         }
 
         @inlinable
