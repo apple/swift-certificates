@@ -92,6 +92,7 @@ add_library(X509
   "Verifier/AllOfPolicies.swift"
   "Verifier/AnyPolicy.swift"
   "Verifier/CertificateStore.swift"
+  "Verifier/CustomCertificateStore.swift"
   "Verifier/OneOfPolicies.swift"
   "Verifier/PolicyBuilder.swift"
   "Verifier/RFC5280/BasicConstraintsPolicy.swift"

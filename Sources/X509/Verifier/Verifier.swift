@@ -55,7 +55,7 @@ public struct Verifier<Policy: VerifierPolicy> {
         // which may let us chain through another variant of this certificate and build a valid chain. This is a very
         // deliberate choice: certificates that assert the same combination of (subject, public key, SAN) but different
         // extensions or policies should not be tolerated by this check, and will be ignored.
-        if rootCertificates.contains(leafCertificate) {
+        if await rootCertificates.contains(leafCertificate) {
             let unverifiedChain = UnverifiedCertificateChain([leafCertificate])
 
             switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
@@ -81,7 +81,7 @@ public struct Verifier<Policy: VerifierPolicy> {
             diagnosticCallback?(.searchingForIssuerOfPartialChain(nextPartialCandidate))
             // We want to search for parents. Our preferred parent comes from the root store, as this will potentially
             // produce smaller chains.
-            if var rootParents = rootCertificates[nextPartialCandidate.currentTip.issuer] {
+            if var rootParents = await rootCertificates[nextPartialCandidate.currentTip.issuer] {
                 // We then want to sort by suitability.
                 rootParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
                 diagnosticCallback?(
@@ -115,7 +115,7 @@ public struct Verifier<Policy: VerifierPolicy> {
                 }
             }
 
-            if var intermediateParents = intermediates[nextPartialCandidate.currentTip.issuer] {
+            if var intermediateParents = await intermediates[nextPartialCandidate.currentTip.issuer] {
                 // We then want to sort by suitability.
                 intermediateParents.sortBySuitabilityForIssuing(certificate: nextPartialCandidate.currentTip)
                 diagnosticCallback?(
