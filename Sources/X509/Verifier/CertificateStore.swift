@@ -136,7 +136,7 @@ extension CertificateStore {
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore.Resolved {
-    @usableFromInline
+    @inlinable
     subscript(subject: DistinguishedName) -> [Certificate]? {
         get async {
             switch self {
@@ -146,7 +146,7 @@ extension CertificateStore.Resolved {
         }
     }
 
-    @usableFromInline
+    @inlinable
     func contains(_ certificate: Certificate) async -> Bool {
         switch self {
         case .custom(let inner): await inner.contains(certificate)
