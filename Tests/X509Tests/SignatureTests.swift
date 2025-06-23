@@ -64,7 +64,10 @@ final class SignatureTests: XCTestCase {
         let input = Array("Hello World".utf8)
 
         let expected = try Self.ed25519Key.signature(for: input)
-        let signature = try Certificate.Signature(signatureAlgorithm: .ed25519, signatureBytes: .init(bytes: Array(expected)[...]))
+        let signature = try Certificate.Signature(
+            signatureAlgorithm: .ed25519,
+            signatureBytes: .init(bytes: Array(expected)[...])
+        )
 
         XCTAssertEqual(.init(expected), signature.rawRepresentation)
     }
