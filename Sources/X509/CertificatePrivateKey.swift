@@ -91,8 +91,14 @@ extension Certificate {
         }
         #endif
 
+        /// Use the private key to sign the provided bytes with a given signature algorithm.
+        ///
+        /// - Parameters:
+        ///   - bytes: The data to create the signature for.
+        ///   - signatureAlgorithm: The signature algorithm to use.
+        /// - Returns: The signature.
         @inlinable
-        internal func sign<Bytes: DataProtocol>(
+        public func sign<Bytes: DataProtocol>(
             bytes: Bytes,
             signatureAlgorithm: SignatureAlgorithm
         ) throws -> Signature {

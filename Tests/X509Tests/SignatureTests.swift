@@ -50,6 +50,25 @@ final class SignatureTests: XCTestCase {
     )
     #endif
 
+    func testRSASignatureBytes() throws {
+        let input = Array("Hello World".utf8)
+        let privateKey = Certificate.PrivateKey(Self.rsaKey)
+
+        let expected = try Self.rsaKey.signature(for: SHA256.hash(data: input), padding: .insecurePKCS1v1_5)
+        let found = try privateKey.sign(bytes: input, signatureAlgorithm: .sha256WithRSAEncryption)
+
+        XCTAssertEqual(.init(expected.rawRepresentation), found.rawRepresentation)
+    }
+
+    func testEd25519SignatureBytes() throws {
+        let input = Array("Hello World".utf8)
+
+        let expected = try Self.ed25519Key.signature(for: input)
+        let signature = try Certificate.Signature(signatureAlgorithm: .ed25519, signatureBytes: .init(bytes: Array(expected)[...]))
+
+        XCTAssertEqual(.init(expected), signature.rawRepresentation)
+    }
+
     func testP384Signature() throws {
         // This is the P384 signature over LetsEncrypt Intermediate E1.
         let signatureBytes: [UInt8] = [
@@ -74,6 +93,8 @@ final class SignatureTests: XCTestCase {
             XCTFail("Invalid signature decode")
             return
         }
+
+        XCTAssertEqual(signature.rawRepresentation, signatureBytes)
 
         // Validate that the signature is valid over the TBS certificate bytes.
         let issuingPublicKeyBytes: [UInt8] = [
