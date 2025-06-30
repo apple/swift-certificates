@@ -72,6 +72,18 @@ final class SignatureTests: XCTestCase {
         XCTAssertEqual(.init(expected), signature.rawRepresentation)
     }
 
+    func testECDSASignatureBytes() throws {
+        let input = Array("Hello World".utf8)
+
+        let expected = try Self.p384Key.signature(for: SHA256.hash(data: input))
+        let signature = try Certificate.Signature(
+            signatureAlgorithm: .ecdsaWithSHA256,
+            signatureBytes: .init(bytes: Array(expected.derRepresentation)[...])
+        )
+
+        XCTAssertEqual(.init(expected.derRepresentation), signature.rawRepresentation)
+    }
+
     func testP384Signature() throws {
         // This is the P384 signature over LetsEncrypt Intermediate E1.
         let signatureBytes: [UInt8] = [
@@ -97,7 +109,7 @@ final class SignatureTests: XCTestCase {
             return
         }
 
-        XCTAssertEqual(signature.rawRepresentation, signatureBytes)
+        XCTAssertEqual(signature.rawRepresentation, .init(signatureBytes))
 
         // Validate that the signature is valid over the TBS certificate bytes.
         let issuingPublicKeyBytes: [UInt8] = [
