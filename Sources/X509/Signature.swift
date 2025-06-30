@@ -132,18 +132,9 @@ extension Certificate.Signature {
 extension Certificate.Signature {
     /// The raw byte representation of the signature.
     @inlinable
-    public var rawRepresentation: [UInt8] {
-        switch backing {
-        case let .ecdsa(signature):
-            var serializer = DER.Serializer()
-            // we are serializing from raw bytes, force try is safe here
-            try! signature.serialize(into: &serializer, withIdentifier: ECDSASignature.defaultIdentifier)
-            return serializer.serializedBytes
-        case let .ed25519(data):
-            return .init(data)
-        case let .rsa(signature):
-            return .init(signature.rawRepresentation)
-        }
+    public var rawRepresentation: ArraySlice<UInt8> {
+        let bitString = ASN1BitString(self)
+        return bitString.bytes
     }
 }
 
