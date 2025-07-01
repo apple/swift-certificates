@@ -129,19 +129,28 @@ extension Certificate.Signature {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension ASN1BitString {
+extension Certificate.Signature {
+    /// The raw byte representation of the signature.
     @inlinable
-    init(_ signature: Certificate.Signature) {
-        switch signature.backing {
+    public var rawRepresentation: [UInt8] {
+        switch self.backing {
         case .ecdsa(let sig):
             var serializer = DER.Serializer()
             try! serializer.serialize(sig)
-            self = ASN1BitString(bytes: serializer.serializedBytes[...])
-        case .rsa(let sig):
-            self = ASN1BitString(bytes: ArraySlice(sig.rawRepresentation))
-        case .ed25519(let sig):
-            self = ASN1BitString(bytes: ArraySlice(sig))
+            return serializer.serializedBytes
+        case let .ed25519(data):
+            return .init(data)
+        case let .rsa(signature):
+            return .init(signature.rawRepresentation)
         }
+    }
+}
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension ASN1BitString {
+    @inlinable
+    init(_ signature: Certificate.Signature) {
+        self.init(bytes: signature.rawRepresentation[...])
     }
 }
 
