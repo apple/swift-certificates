@@ -52,7 +52,11 @@ final class SecKeyWrapperTests: XCTestCase {
                     for useSEP in [true, false] {
                         keys.append(
                             CandidateKey(
-                                key: try SignatureTests.generateSecKey(keyType: keyType, keySize: keySize, useSEP: useSEP),
+                                key: try SignatureTests.generateSecKey(
+                                    keyType: keyType,
+                                    keySize: keySize,
+                                    useSEP: useSEP
+                                ),
                                 type: "EC-\(keyType)",
                                 keySize: keySize,
                                 sep: useSEP
