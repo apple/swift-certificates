@@ -472,7 +472,7 @@ final class SignatureTests: XCTestCase {
     static func generateSecKey(keyType: CFString, keySize: Int, useSEP: Bool) throws -> SecKey {
         let access = SecAccessControlCreateWithFlags(
             kCFAllocatorDefault,
-            kSecAttrAccessibleAfterFirstUnlock,
+            kSecAttrAccessibleAlwaysThisDeviceOnly,
             .privateKeyUsage,
             nil
         )!
