@@ -16,7 +16,7 @@ import SwiftASN1
 
 extension ASN1ObjectIdentifier {
     /// OIDs that identify known X509 extensions.
-    public enum X509ExtensionID {
+    public enum X509ExtensionID: Sendable {
         /// Identifies the authority key identifier extension, corresponding to
         /// ``AuthorityKeyIdentifier``.
         public static let authorityKeyIdentifier: ASN1ObjectIdentifier = [2, 5, 29, 35]

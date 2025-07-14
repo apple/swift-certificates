@@ -56,6 +56,9 @@ public struct AnyPolicy: VerifierPolicy {
     }
 }
 
+@available(*, unavailable)
+extension AnyPolicy: Sendable { }
+
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct LegacyPolicySet: VerifierPolicy {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier]

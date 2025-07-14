@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the Locality Name (L) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct LocalityName: RelativeDistinguishedNameConvertible {
+public struct LocalityName: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the locality name field.
     public var name: String
 

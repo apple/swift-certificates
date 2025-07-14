@@ -16,6 +16,10 @@
 import PackageDescription
 import class Foundation.ProcessInfo
 
+let defaultSwiftSettings: [SwiftSetting] = [
+    .unsafeFlags(["-Xfrontend", "-require-explicit-sendable"]),
+  ]
+
 let package = Package(
     name: "swift-certificates",
     products: [
@@ -35,7 +39,8 @@ let package = Package(
             ],
             exclude: [
                 "CMakeLists.txt"
-            ]
+            ],
+            swiftSettings: defaultSwiftSettings
         ),
         .testTarget(
             name: "X509Tests",
@@ -53,19 +58,22 @@ let package = Package(
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
                 .copy("ca-certificates.crt"),
-            ]
+            ],
+            swiftSettings: defaultSwiftSettings
         ),
         .target(
             name: "_CertificateInternals",
             exclude: [
                 "CMakeLists.txt"
-            ]
+            ],
+            swiftSettings: defaultSwiftSettings
         ),
         .testTarget(
             name: "CertificateInternalsTests",
             dependencies: [
                 "_CertificateInternals"
-            ]
+            ],
+            swiftSettings: defaultSwiftSettings
         ),
     ]
 )

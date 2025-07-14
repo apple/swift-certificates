@@ -28,7 +28,7 @@ import SwiftASN1
 /// 3. Basic Constraints. Police the constraints contained in the ``BasicConstraints`` extension.
 /// 4. Name Constraints. Police the constraints contained in the ``NameConstraints`` extension.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public struct RFC5280Policy: VerifierPolicy {
+public struct RFC5280Policy: VerifierPolicy, Sendable {
     public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.basicConstraints,
         .X509ExtensionID.nameConstraints,

@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the Organization Name (O) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct OrganizationName: RelativeDistinguishedNameConvertible {
+public struct OrganizationName: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the organization name field.
     public var name: String
 
