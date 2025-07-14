@@ -60,4 +60,4 @@ public struct AllOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension AllOfPolicies: Sendable where Policy: Sendable { }
+extension AllOfPolicies: Sendable where Policy: Sendable {}

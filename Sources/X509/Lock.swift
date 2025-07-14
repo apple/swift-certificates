@@ -197,7 +197,7 @@ final class LockStorage<Value>: ManagedBuffer<Value, LockPrimitive> {
 }
 
 @available(*, unavailable)
-extension LockStorage: Sendable { }
+extension LockStorage: Sendable {}
 
 /// A threading lock based on `libpthread` instead of `libdispatch`.
 ///

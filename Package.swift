@@ -17,8 +17,8 @@ import PackageDescription
 import class Foundation.ProcessInfo
 
 let defaultSwiftSettings: [SwiftSetting] = [
-    .unsafeFlags(["-Xfrontend", "-require-explicit-sendable"]),
-  ]
+    .unsafeFlags(["-Xfrontend", "-require-explicit-sendable"])
+]
 
 let package = Package(
     name: "swift-certificates",

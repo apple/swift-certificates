@@ -117,7 +117,7 @@ extension OneOfPolicyBuilder {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension OneOfPolicyBuilder.Tuple2: Sendable where First: Sendable, Second: Sendable { }
+extension OneOfPolicyBuilder.Tuple2: Sendable where First: Sendable, Second: Sendable {}
 
 // MARK: if
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -151,7 +151,7 @@ extension OneOfPolicyBuilder {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension OneOfPolicyBuilder.WrappedOptional: Sendable where Wrapped: Sendable { }
+extension OneOfPolicyBuilder.WrappedOptional: Sendable where Wrapped: Sendable {}
 
 // MARK: if/else and switch
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -211,4 +211,4 @@ public struct OneOfPolicies<Policy: VerifierPolicy>: VerifierPolicy {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension OneOfPolicies: Sendable where Policy: Sendable { }
+extension OneOfPolicies: Sendable where Policy: Sendable {}
