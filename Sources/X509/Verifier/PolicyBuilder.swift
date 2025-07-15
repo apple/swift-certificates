@@ -26,7 +26,7 @@ import SwiftASN1
 /// }
 /// ```
 @resultBuilder
-public struct PolicyBuilder {}
+public struct PolicyBuilder: Sendable {}
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension PolicyBuilder {
@@ -40,7 +40,7 @@ extension PolicyBuilder {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension PolicyBuilder {
     @usableFromInline
-    struct Empty: VerifierPolicy {
+    struct Empty: VerifierPolicy, Sendable {
         @inlinable
         var verifyingCriticalExtensions: [SwiftASN1.ASN1ObjectIdentifier] { [] }
 
@@ -108,6 +108,9 @@ extension PolicyBuilder {
     }
 }
 
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension PolicyBuilder.Tuple2: Sendable where First: Sendable, Second: Sendable {}
+
 // MARK: if
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension PolicyBuilder {
@@ -137,6 +140,9 @@ extension PolicyBuilder {
         WrappedOptional(component)
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension PolicyBuilder.WrappedOptional: Sendable where Wrapped: Sendable {}
 
 // MARK: if/else and switch
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -196,6 +202,12 @@ extension PolicyBuilder {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension PolicyBuilder._Either: Sendable where First: Sendable, Second: Sendable {}
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension PolicyBuilder._Either.Storage: Sendable where First: Sendable, Second: Sendable {}
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension PolicyBuilder {
     @usableFromInline
     struct CachedVerifyingCriticalExtensions<Wrapped: VerifierPolicy>: VerifierPolicy {
@@ -231,3 +243,6 @@ extension PolicyBuilder {
         return AnyPolicy(cachedPolicy)
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension PolicyBuilder.CachedVerifyingCriticalExtensions: Sendable where Wrapped: Sendable {}

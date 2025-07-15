@@ -128,7 +128,7 @@ extension CertificateStore {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     @usableFromInline
-    enum Resolved {
+    enum Resolved: Sendable {
         case custom(AnyCustomCertificateStore)
         case concrete(ConcreteResolved)
     }
@@ -158,7 +158,7 @@ extension CertificateStore.Resolved {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     @usableFromInline
-    struct ConcreteResolved {
+    struct ConcreteResolved: Sendable {
 
         @usableFromInline
         var systemTrustRoots: [DistinguishedName: [Certificate]]

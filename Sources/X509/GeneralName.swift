@@ -204,7 +204,7 @@ extension GeneralName.OtherName: CustomStringConvertible {
 }
 
 @usableFromInline
-struct GeneralNames: DERImplicitlyTaggable {
+struct GeneralNames: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

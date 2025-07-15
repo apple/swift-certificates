@@ -40,7 +40,7 @@
 /// Users are also able to mark specific extensions as critical by using the ``Critical`` helper type.
 @resultBuilder
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public struct ExtensionsBuilder {
+public struct ExtensionsBuilder: Sendable {
     @inlinable
     public static func buildExpression<Extension: CertificateExtensionConvertible>(
         _ expression: Extension
@@ -147,3 +147,6 @@ public struct Critical<BaseExtension: CertificateExtensionConvertible>: Certific
         return ext
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension Critical: Sendable where BaseExtension: Sendable {}

@@ -20,7 +20,7 @@ import SwiftASN1
 import Crypto
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public enum CMS {
+public enum CMS: Sendable {
     @_spi(CMS)
     @inlinable
     public static func sign<Bytes: DataProtocol>(
@@ -447,7 +447,7 @@ public enum CMS {
     @_spi(CMS)
     public typealias SignatureVerificationResult = Result<Valid, VerificationError>
 
-    public struct Valid: Hashable {
+    public struct Valid: Hashable, Sendable {
         public var signer: Certificate
 
         @inlinable

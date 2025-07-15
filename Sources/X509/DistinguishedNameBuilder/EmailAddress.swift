@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the Domain Component (E) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct EmailAddress: RelativeDistinguishedNameConvertible {
+public struct EmailAddress: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the email name field.
     public var name: String
 

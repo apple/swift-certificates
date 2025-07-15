@@ -255,7 +255,7 @@ extension AuthorityInformationAccess: CertificateExtensionConvertible {
 //         accessMethod          OBJECT IDENTIFIER,
 //         accessLocation        GeneralName  }
 @usableFromInline
-struct AuthorityInfoAccessSyntax: DERImplicitlyTaggable {
+struct AuthorityInfoAccessSyntax: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -285,7 +285,7 @@ struct AuthorityInfoAccessSyntax: DERImplicitlyTaggable {
 }
 
 @usableFromInline
-struct AIAAccessDescription: DERImplicitlyTaggable {
+struct AIAAccessDescription: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -329,7 +329,7 @@ struct AIAAccessDescription: DERImplicitlyTaggable {
 
 extension ASN1ObjectIdentifier {
     @usableFromInline
-    enum AccessMethodIdentifiers {
+    enum AccessMethodIdentifiers: Sendable {
         @usableFromInline
         static let ocspServer: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 48, 1]
 

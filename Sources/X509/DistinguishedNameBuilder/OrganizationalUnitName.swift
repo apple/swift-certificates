@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the Organizational Unit Name (OU) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct OrganizationalUnitName: RelativeDistinguishedNameConvertible {
+public struct OrganizationalUnitName: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the organizational unit name field.
     public var name: String
 

@@ -374,7 +374,7 @@ extension ASN1ObjectIdentifier {
     /// An acceptable usage for a certificate as attested in an
     /// ``ExtendedKeyUsage``
     /// extension.
-    public enum ExtendedKeyUsage {
+    public enum ExtendedKeyUsage: Sendable {
         /// The public key may be used for any purpose.
         public static let any: ASN1ObjectIdentifier = [2, 5, 29, 37, 0]
 
@@ -402,7 +402,7 @@ extension ASN1ObjectIdentifier {
 }
 
 @usableFromInline
-struct ASN1ExtendedKeyUsage: DERImplicitlyTaggable {
+struct ASN1ExtendedKeyUsage: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

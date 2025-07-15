@@ -184,7 +184,7 @@ public struct OCSPFailureMode: Hashable, Sendable {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
     public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     struct Storage: Sendable {

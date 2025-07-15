@@ -317,7 +317,7 @@ extension RelativeDistinguishedName.Attribute {
 
 extension ASN1ObjectIdentifier {
     /// Common object identifiers used within ``RelativeDistinguishedName/Attribute``s.
-    public enum RDNAttributeType {
+    public enum RDNAttributeType: Sendable {
         /// The 'countryName' attribute type contains a two-letter
         /// ISO 3166 country code.
         public static let countryName: ASN1ObjectIdentifier = [2, 5, 4, 6]

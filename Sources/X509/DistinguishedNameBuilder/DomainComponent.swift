@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the Domain Component (DC) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct DomainComponent: RelativeDistinguishedNameConvertible {
+public struct DomainComponent: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the organizational unit name field.
     public var name: String
 

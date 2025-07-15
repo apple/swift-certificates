@@ -61,7 +61,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -157,7 +157,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -253,7 +253,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -349,7 +349,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -749,7 +749,7 @@ extension NameConstraints: CertificateExtensionConvertible {
 // MARK: ASN1 Helpers
 @usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-struct NameConstraintsValue: DERImplicitlyTaggable {
+struct NameConstraintsValue: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -837,7 +837,7 @@ struct NameConstraintsValue: DERImplicitlyTaggable {
 // [GeneralSubtree] will force a heap allocation. Instead, we inline the definition of GeneralSubtree into
 // GeneralSubtrees, to avoid the extra allocation.
 @usableFromInline
-struct GeneralSubtrees: DERImplicitlyTaggable {
+struct GeneralSubtrees: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

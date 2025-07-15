@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the Country Name (C) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct CountryName: RelativeDistinguishedNameConvertible {
+public struct CountryName: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the country name field.
     public var name: String
 

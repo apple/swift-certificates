@@ -17,7 +17,7 @@ import SwiftASN1
 /// Set the State or Province Name (ST) of a ``DistinguishedName``.
 ///
 /// This type is used in ``DistinguishedNameBuilder`` contexts.
-public struct StateOrProvinceName: RelativeDistinguishedNameConvertible {
+public struct StateOrProvinceName: RelativeDistinguishedNameConvertible, Sendable {
     /// The value of the state or province name field.
     public var name: String
 
