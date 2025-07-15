@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022-2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2022-2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -198,7 +198,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         private var maxDuration: TimeInterval
 
         /// the time used to decide if the request is relatively recent
-        private var validationTime: Date
+        private var fixedValidationTime: Date?
 
         /// If true, a nonce is generated per OCSP request and attached to the request.
         /// If the response contains a nonce, it must match with the initially send nonce.
@@ -210,12 +210,12 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             requester: Requester,
             requestHashAlgorithm: OCSPRequestHashAlgorithm,
             maxDuration: TimeInterval,
-            validationTime: Date
+            fixedValidationTime: Date? = nil
         ) {
             self.requester = requester
             self.requestHashAlgorithm = requestHashAlgorithm
             self.maxDuration = maxDuration
-            self.validationTime = validationTime
+            self.fixedValidationTime = fixedValidationTime
             self.failureMode = failureMode
         }
     }
@@ -231,13 +231,33 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
 
     private var storage: Storage
 
+    @available(
+        *,
+        deprecated,
+        renamed: "init(failureMode:requester:fixedValidationTime:)",
+        message: "Use init(failureMode:requester:fixedValidationTime:) instead."
+    )
     public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
+        self.init(failureMode: failureMode, requester: requester, fixedValidationTime: validationTime)
+    }
+
+    /// Creates an instance with an optional *fixed* validation time.
+    ///
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the request is recent. A fixed time is a *specific*
+    ///   time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*, pass `nil` to
+    ///   `fixedValidationTime`.
+    ///
+    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
+    ///   comparison; the validation method may be invoked long after initialization.
+    public init(failureMode: OCSPFailureMode, requester: Requester, fixedValidationTime: Date? = nil) {
         self.storage = .init(
             failureMode: failureMode,
             requester: requester,
             requestHashAlgorithm: .insecureSha1,
             maxDuration: 10,
-            validationTime: validationTime
+            fixedValidationTime: fixedValidationTime
         )
     }
 
@@ -424,7 +444,7 @@ extension OCSPVerifierPolicy.Storage {
             )
         }
 
-        switch basicResponse.responseData.verifyTime(validationTime: self.validationTime) {
+        switch basicResponse.responseData.verifyTime(fixedValidationTime: self.fixedValidationTime) {
         case .failsToMeetPolicy(reason: let reason):
             return self.softFailure(reason: reason)
         case .meetsPolicy:
@@ -447,7 +467,7 @@ extension OCSPVerifierPolicy.Storage {
             return self.softFailure(reason: .init("failed to decode nonce response \(error)"))
         }
 
-        switch response.verifyTime(validationTime: self.validationTime) {
+        switch response.verifyTime(fixedValidationTime: self.fixedValidationTime) {
         case .meetsPolicy:
             break
         case .failsToMeetPolicy(let reason):
@@ -501,7 +521,7 @@ extension OCSPVerifierPolicy.Storage {
             rootCertificates: CertificateStore([issuer])
         ) {
             OCSPResponderSigningPolicy(issuer: issuer)
-            RFC5280Policy(validationTime: validationTime)
+            RFC5280Policy(fixedValidationTime: self.fixedValidationTime)
         }
 
         let validationResult = await verifier.validate(
@@ -580,10 +600,12 @@ extension OCSPResponseData {
     static let defaultTrustTimeLeeway: TimeInterval = 4500.0
 
     func verifyTime(
-        validationTime: Date,
+        fixedValidationTime: Date? = nil,
         trustTimeLeeway: TimeInterval = Self.defaultTrustTimeLeeway
     ) -> PolicyEvaluationResult {
         let producedAt = Date(self.producedAt)
+        // Obtain the current time if fixedValidationTime is nil.
+        let validationTime = fixedValidationTime ?? Date()
 
         guard producedAt <= validationTime.advanced(by: trustTimeLeeway) else {
             return .failsToMeetPolicy(
@@ -600,7 +622,7 @@ extension OCSPResponseData {
 extension OCSPSingleResponse {
 
     func verifyTime(
-        validationTime: Date,
+        fixedValidationTime: Date? = nil,
         trustTimeLeeway: TimeInterval = OCSPResponseData.defaultTrustTimeLeeway
     ) -> PolicyEvaluationResult {
         /// Clients MUST check for the existence of the nextUpdate field and MUST
@@ -614,6 +636,8 @@ extension OCSPSingleResponse {
 
         let thisUpdate = Date(self.thisUpdate)
         let nextUpdate = Date(nextUpdateGeneralizedTime)
+        // Obtain the current time if fixedValidationTime is nil.
+        let validationTime = fixedValidationTime ?? Date()
 
         guard thisUpdate <= validationTime.advanced(by: trustTimeLeeway) else {
             return .failsToMeetPolicy(

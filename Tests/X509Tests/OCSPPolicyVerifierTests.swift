@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -272,7 +272,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         hard: ExpectedVerificationResult,
         chain: [Certificate],
         requester: @autoclosure () -> some OCSPRequester,
-        validationTime: Date? = nil,
+        fixedValidationTime: Date? = nil,
         expectedQueryCount: Int = 1,
         file: StaticString = #filePath,
         line: UInt = #line
@@ -284,6 +284,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 chain: chain,
                 requester: requester(),
                 expectedQueryCount: expectedQueryCount,
+                fixedValidationTime: fixedValidationTime,
                 file: file,
                 line: line
             )
@@ -293,7 +294,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 chain: chain,
                 requester: requester(),
                 expectedQueryCount: expectedQueryCount,
-                validationTime: validationTime,
+                fixedValidationTime: fixedValidationTime,
                 file: file,
                 line: line
             )
@@ -306,6 +307,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 chain: chain,
                 requester: requester(),
                 expectedQueryCount: expectedQueryCount,
+                fixedValidationTime: fixedValidationTime,
                 file: file,
                 line: line
             )
@@ -315,7 +317,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 chain: chain,
                 requester: requester(),
                 expectedQueryCount: expectedQueryCount,
-                validationTime: validationTime,
+                fixedValidationTime: fixedValidationTime,
                 file: file,
                 line: line
             )
@@ -327,14 +329,14 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         chain: [Certificate],
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
-        validationTime: Date? = nil,
+        fixedValidationTime: Date? = nil,
         file: StaticString = #filePath,
         line: UInt = #line
     ) async {
         var policy = OCSPVerifierPolicy(
             failureMode: mode,
             requester: requester,
-            validationTime: validationTime ?? self.validationTime
+            fixedValidationTime: fixedValidationTime
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .meetsPolicy = result else {
@@ -368,7 +370,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         chain: [Certificate],
         requester: some OCSPRequester,
         expectedQueryCount: Int = 1,
-        validationTime: Date? = nil,
+        fixedValidationTime: Date? = nil,
 
         file: StaticString = #filePath,
         line: UInt = #line
@@ -376,7 +378,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         var policy = OCSPVerifierPolicy(
             failureMode: mode,
             requester: requester,
-            validationTime: validationTime ?? self.validationTime
+            fixedValidationTime: fixedValidationTime
         )
         let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
         guard case .failsToMeetPolicy = result else {
@@ -712,7 +714,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 producedAt: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 2,
                 thisUpdate: self.validationTime,
                 nextUpdate: self.validationTime + 1
-            )
+            ),
+            fixedValidationTime: self.validationTime
         )
 
         /// is almost exactly in the current time window
@@ -723,7 +726,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
             requester: responseWithCertStatusGood(
                 thisUpdate: self.validationTime,
                 nextUpdate: self.validationTime + 1
-            )
+            ),
+            fixedValidationTime: self.validationTime
         )
 
         /// is almost exactly in the current time window with leeway
@@ -735,7 +739,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 producedAt: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
                 thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 1,
                 nextUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway + 2
-            )
+            ),
+            fixedValidationTime: self.validationTime
         )
 
         /// no next update
@@ -757,7 +762,8 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 producedAt: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 1,
                 thisUpdate: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 1,
                 nextUpdate: self.validationTime + OCSPResponseData.defaultTrustTimeLeeway + 2
-            )
+            ),
+            fixedValidationTime: self.validationTime
         )
 
         /// next update is in the past
@@ -779,6 +785,17 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 thisUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway - 2,
                 nextUpdate: self.validationTime - OCSPResponseData.defaultTrustTimeLeeway - 1
             )
+        )
+        /// this update, next update, and validation time is a fixed date in the future
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
+            chain: Self.chainWithSingleCertWithOCSP,
+            requester: responseWithCertStatusGood(
+                thisUpdate: Date() + .days(10),
+                nextUpdate: Date() + .days(20)
+            ),
+            fixedValidationTime: Date() + .days(15)
         )
     }
 
@@ -843,7 +860,7 @@ final class OCSPVerifierPolicyTests: XCTestCase {
                 ocspResponseLeaf,
                 ocspResponseIntermediate,
             ]).assertNoThrow(),
-            validationTime: timeOfOCSPRequest
+            fixedValidationTime: timeOfOCSPRequest
         )
     }
 }

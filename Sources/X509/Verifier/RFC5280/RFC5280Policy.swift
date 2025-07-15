@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -56,9 +56,23 @@ public struct RFC5280Policy: VerifierPolicy {
     let nameConstraintsPolicy: NameConstraintsPolicy
 
     @inlinable
+    @available(*, deprecated, renamed: "init(fixedValidationTime:)", message: "Use init(fixedValidationTime:) instead.")
     public init(validationTime: Date) {
+        self.init(fixedValidationTime: validationTime)
+    }
+
+    /// Creates an instance with an optional *fixed* expiry validation time.
+    ///
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the certificates in the chain have expired. A fixed
+    ///   time is a *specific* time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*,
+    ///   pass `nil` to `fixedValidationTime`.
+    ///
+    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
+    ///   comparison; the validation method may be invoked long after initialization.
+    @inlinable
+    public init(fixedValidationTime: Date? = nil) {
         self.versionPolicy = VersionPolicy()
-        self.expiryPolicy = ExpiryPolicy(validationTime: validationTime)
+        self.expiryPolicy = ExpiryPolicy(fixedValidationTime: fixedValidationTime)
         self.basicConstraintsPolicy = BasicConstraintsPolicy()
         self.nameConstraintsPolicy = NameConstraintsPolicy()
     }

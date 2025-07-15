@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -207,7 +207,7 @@ final class CertificateStoreTests: XCTestCase {
         concreteStore.append(Self.ca1)
 
         var concreteVerifier = Verifier(rootCertificates: concreteStore) {
-            RFC5280Policy(validationTime: Date.now)
+            RFC5280Policy()
         }
         let concreteResult = await concreteVerifier.validate(
             leafCertificate: Self.leafCert,
@@ -224,7 +224,7 @@ final class CertificateStoreTests: XCTestCase {
         customStore.append(Self.ca1)
 
         var customVerifier = Verifier(rootCertificates: customStore) {
-            RFC5280Policy(validationTime: Date.now)
+            RFC5280Policy()
         }
         let customResult = await customVerifier.validate(
             leafCertificate: Self.leafCert,
