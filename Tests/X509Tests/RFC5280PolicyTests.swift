@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -30,13 +30,13 @@ class RFC5280PolicyBase: XCTestCase {
         case nameConstraints
 
         @PolicyBuilder
-        func create(_ validationTime: Date) -> some VerifierPolicy {
+        func create(_ fixedValidationTime: Date? = nil) -> some VerifierPolicy {
             switch self {
             case .rfc5280:
-                RFC5280Policy(validationTime: validationTime)
+                RFC5280Policy(fixedValidationTime: fixedValidationTime)
 
             case .expiry:
-                ExpiryPolicy(validationTime: validationTime)
+                ExpiryPolicy(fixedValidationTime: fixedValidationTime)
                 CatchAllPolicy()
 
             case .basicConstraints:
@@ -299,7 +299,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
-        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy() }
         let result = await verifier.validate(
             leafCertificate: leaf,
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
@@ -317,7 +317,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(version: .v1, issuer: .unconstrainedIntermediate, customExtensions: .init())
 
-        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy() }
         let result = await verifier.validate(
             leafCertificate: leaf,
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
@@ -341,7 +341,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             }
         )
 
-        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy() }
         let result = await verifier.validate(
             leafCertificate: leaf,
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
@@ -407,6 +407,58 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             XCTFail("Failed to validate: \(result)")
             return
         }
+    }
+
+    func testExpiryCheckCorrectWhenDelayBetweenInitializationAndValidation() async throws {
+        let currentTime = Date()
+        // Create a certificate that expires 1 second in the future.
+        let leaf = TestPKI.issueLeaf(
+            notValidBefore: currentTime,
+            notValidAfter: currentTime + 1,  // Certificate expires in 1 second.
+            issuer: .unconstrainedIntermediate
+        )
+
+        // Construct the policy incorrectly: .now corresponds to the point of initialization.
+        let timeAtInitPolicy = RFC5280Policy(fixedValidationTime: .now)
+
+        // Construct the policy correctly: set fixedValidationTime = nil; the current time will be obtained at the point
+        // of validation.
+        let timeAtValidationPolicy = RFC5280Policy(fixedValidationTime: nil)
+
+        // Now wait for 2 seconds before validating. Certificate will have then expired.
+        try await Task.sleep(for: .seconds(2))
+
+        var timeAtInitVerifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+            timeAtInitPolicy
+        }
+        var timeAtValidationVerifier = Verifier(rootCertificates: CertificateStore([TestPKI.unconstrainedCA])) {
+            timeAtValidationPolicy
+        }
+
+        // Run the verifiers
+        let timeAtInitResult = await timeAtInitVerifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
+        let timeAtValidationResult = await timeAtValidationVerifier.validate(
+            leafCertificate: leaf,
+            intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
+        )
+
+        // The incorrectly constructed policy, whose `fixedValidationTime` corresponds to the point of initialization,
+        // will determine the certificate to be valid.
+        guard case .validCertificate = timeAtInitResult else {
+            XCTFail("fixedValidationTime < certificate expiration, but the certificate was determined to be invalid.")
+            return
+        }
+
+        // The correctly initialized policy will determine the certificate to be invalid: at the point of validation,
+        // the current time will be obtained; this time will be strictly after the certificate expired.
+        guard case .couldNotValidate(let policyFailures) = timeAtValidationResult else {
+            XCTFail("An expired certificate was incorrectly determined to be valid.")
+            return
+        }
+        XCTAssertEqual(policyFailures.count, 1)
     }
 
     func _expiredIntermediateIsRejected(_ policyFactory: PolicyFactory) async throws {
@@ -1589,7 +1641,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
 
-        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy() }
         let result = await verifier.validate(
             leafCertificate: leaf,
             intermediates: CertificateStore([alternativeIntermediate])
@@ -1617,7 +1669,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
 
         let roots = CertificateStore([TestPKI.unconstrainedCA])
 
-        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: Date()) }
+        var verifier = Verifier(rootCertificates: roots) { RFC5280Policy() }
         let result = await verifier.validate(
             leafCertificate: leaf,
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])

@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -176,7 +176,7 @@ final class CMSTests: XCTestCase {
     )
 
     @PolicyBuilder static var defaultPolicies: some VerifierPolicy {
-        RFC5280Policy(validationTime: Date())
+        RFC5280Policy()
     }
 
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
