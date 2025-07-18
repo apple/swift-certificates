@@ -285,8 +285,8 @@ extension Certificate: Hashable {
     @inlinable
     public static func == (lhs: Certificate, rhs: Certificate) -> Bool {
         return lhs.tbsCertificateBytes == rhs.tbsCertificateBytes
-        && lhs.signatureBytes == rhs.signatureBytes
-        && lhs.signatureAlgorithmBytes == rhs.signatureAlgorithmBytes
+            && lhs.signatureBytes == rhs.signatureBytes
+            && lhs.signatureAlgorithmBytes == rhs.signatureAlgorithmBytes
     }
 
     @inlinable
