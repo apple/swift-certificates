@@ -281,7 +281,21 @@ public struct Certificate {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension Certificate: Hashable {}
+extension Certificate: Hashable {
+    @inlinable
+    public static func == (lhs: Certificate, rhs: Certificate) -> Bool {
+        return lhs.tbsCertificateBytes == rhs.tbsCertificateBytes
+            && lhs.signatureBytes == rhs.signatureBytes
+            && lhs.signatureAlgorithmBytes == rhs.signatureAlgorithmBytes
+    }
+
+    @inlinable
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.tbsCertificateBytes)
+        hasher.combine(self.signatureBytes)
+        hasher.combine(self.signatureAlgorithmBytes)
+    }
+}
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate: Sendable {}
