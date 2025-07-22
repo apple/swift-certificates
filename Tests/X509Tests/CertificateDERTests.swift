@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -543,7 +543,7 @@ final class CertificateDERTests: XCTestCase {
         // And we should be able to validate it.
         let roots = CertificateStore([issuer])
         var verifier = Verifier(rootCertificates: roots) {
-            RFC5280Policy(validationTime: now + 1)
+            RFC5280Policy(fixedValidationTime: now + 1)
         }
         let result = await verifier.validate(leafCertificate: parsed, intermediates: CertificateStore())
 

@@ -27,15 +27,26 @@ struct ExpiryPolicy: VerifierPolicy, Sendable {
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     @usableFromInline
-    let validationTime: GeneralizedTime
+    let fixedValidationTime: GeneralizedTime?
 
+    /// Creates an instance with an optional *fixed* expiry validation time.
+    ///
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the certificates in the chain have expired. A fixed
+    ///   time is a *specific* time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*,
+    ///   pass `nil` to `fixedValidationTime`.
+    ///
+    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
+    ///   comparison; the validation method may be invoked long after initialization.
     @inlinable
-    init(validationTime: Date) {
-        self.validationTime = GeneralizedTime(validationTime)
+    init(fixedValidationTime: Date? = nil) {
+        self.fixedValidationTime = fixedValidationTime.map(GeneralizedTime.init)
     }
 
     @inlinable
     func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
+        // Obtain the current time if self.fixedValidationTime is nil.
+        let validationTime = self.fixedValidationTime ?? GeneralizedTime(Date())
+
         // This is an easy check: confirm all the certs are valid.
         //
         // Note that we do this computation on the TBSCertificate Validity struct, not the public Date fields. This is
@@ -51,11 +62,11 @@ struct ExpiryPolicy: VerifierPolicy, Sendable {
                 )
             }
 
-            if self.validationTime < notValidBefore {
+            if validationTime < notValidBefore {
                 return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) is not yet valid")
             }
 
-            if self.validationTime > notValidAfter {
+            if validationTime > notValidAfter {
                 return .failsToMeetPolicy(reason: "RFC5280Policy: Certificate \(cert) has expired")
             }
         }
