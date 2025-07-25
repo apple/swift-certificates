@@ -28,8 +28,9 @@ import SwiftASN1
 /// the basic checks from that RFC. Other objects are less common, such as ``OCSPVerifierPolicy``, which performs live
 /// revocation checking. Users can also implement their own policies to enable swift-certificates to support other
 /// use-cases.
+@preconcurrency
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public protocol VerifierPolicy {
+public protocol VerifierPolicy: _X509SendableMetatype {
     /// The X.509 extension types that this policy understands and enforces.
     ///
     /// X.509 certificates can have extensions marked as `critical`. These extensions _must_ be understood and enforced by the
