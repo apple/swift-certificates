@@ -225,7 +225,7 @@ extension String.UTF8View {
 }
 
 @usableFromInline
-struct ReverseDNSLabelSequence: Sequence {
+struct ReverseDNSLabelSequence: Sequence, Sendable {
     @usableFromInline
     var base: String.UTF8View.SubSequence
 
@@ -240,7 +240,7 @@ struct ReverseDNSLabelSequence: Sequence {
     }
 
     @usableFromInline
-    struct Iterator: IteratorProtocol {
+    struct Iterator: IteratorProtocol, Sendable {
         @usableFromInline
         var base: String.UTF8View.SubSequence?
 
@@ -297,7 +297,7 @@ extension String.UTF8View.SubSequence {
     }
 
     @usableFromInline
-    enum LabelContents {
+    enum LabelContents: Sendable {
         case allASCII(nonNumerics: Int)
         case nonASCII
     }
