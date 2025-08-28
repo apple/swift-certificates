@@ -101,7 +101,7 @@ extension BasicConstraints: CertificateExtensionConvertible {
 
 // MARK: ASN1 helpers
 @usableFromInline
-struct BasicConstraintsValue: DERImplicitlyTaggable {
+struct BasicConstraintsValue: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
