@@ -118,6 +118,7 @@ add_library(X509
   "X509BaseTypes/Time.swift"
   "X509BaseTypes/TimeCalculations.swift"
   "X509BaseTypes/Validity.swift"
+  "X509SendableMetatype.swift"
 )
 
 target_link_libraries(X509 PUBLIC
