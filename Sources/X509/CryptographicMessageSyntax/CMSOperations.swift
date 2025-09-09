@@ -210,6 +210,7 @@ public enum CMS: Sendable {
         return try CMSContentInfo(signedData)
     }
 
+    @available(*, deprecated, renamed: "validateAttachedSignature(signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:policy:)")
     @_spi(CMS)
     @inlinable
     public static func isValidAttachedSignature<SignatureBytes: DataProtocol>(
@@ -243,6 +244,38 @@ public enum CMS: Sendable {
 
     @_spi(CMS)
     @inlinable
+    public static func validateAttachedSignature<SignatureBytes: DataProtocol>(
+        signatureBytes: SignatureBytes,
+        additionalIntermediateCertificates: [Certificate] = [],
+        trustRoots: CertificateStore,
+        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
+        microsoftCompatible: Bool = false,
+        @PolicyBuilder policy: () throws -> some VerifierPolicy
+    ) async rethrows -> SignatureValidationResult {
+        do {
+            // this means we parse the blob twice, but that's probably better than repeating a lot of code.
+            let parsedSignature = try CMSContentInfo(berEncoded: ArraySlice(signatureBytes))
+            guard let attachedData = try parsedSignature.signedData?.encapContentInfo.eContent else {
+                return .failure(.init(invalidCMSBlockReason: "No attached content"))
+            }
+
+            return try await validateSignature(
+                dataBytes: attachedData.bytes,
+                signatureBytes: signatureBytes,
+                trustRoots: trustRoots,
+                diagnosticCallback: diagnosticCallback,
+                microsoftCompatible: microsoftCompatible,
+                allowAttachedContent: true,
+                policy: policy
+            )
+        } catch {
+            return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
+        }
+    }
+
+    @available(*, deprecated, renamed: "validateSignature(dataBytes:signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:allowAttachedContent:policy:)")
+    @_spi(CMS)
+    @inlinable
     public static func isValidSignature<
         DataBytes: DataProtocol,
         SignatureBytes: DataProtocol
@@ -256,6 +289,42 @@ public enum CMS: Sendable {
         allowAttachedContent: Bool = false,
         @PolicyBuilder policy: () throws -> some VerifierPolicy
     ) async rethrows -> SignatureVerificationResult {
+        switch try await validateSignature(
+            dataBytes: dataBytes,
+            signatureBytes: signatureBytes,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            trustRoots: trustRoots,
+            diagnosticCallback: diagnosticCallback,
+            microsoftCompatible: microsoftCompatible,
+            allowAttachedContent: allowAttachedContent,
+            policy: policy) {
+        case .success(let valid):
+            return .success(valid)
+        case .failure(let invalid):
+            switch invalid {
+            case .invalidCMSBlock(let info):
+                return .failure(.invalidCMSBlock(VerificationError.InvalidCMSBlock(reason: info.reason)))
+            case .unableToValidateSigner(let info):
+                return .failure(.unableToValidateSigner(VerificationError.SignerValidationFailure(validationFailures: info.validationFailures.map {.init(chain: $0.chain, policyFailureReason: $0.policyFailureReason)}, signer: info.signer)))
+            }
+        }
+    }
+
+    @_spi(CMS)
+    @inlinable
+    public static func validateSignature<
+        DataBytes: DataProtocol,
+        SignatureBytes: DataProtocol
+    >(
+        dataBytes: DataBytes,
+        signatureBytes: SignatureBytes,
+        additionalIntermediateCertificates: [Certificate] = [],
+        trustRoots: CertificateStore,
+        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
+        microsoftCompatible: Bool = false,
+        allowAttachedContent: Bool = false,
+        @PolicyBuilder policy: () throws -> some VerifierPolicy
+    ) async rethrows -> SignatureValidationResult {
         let signedData: CMSSignedData
         let signingCert: Certificate
         do {
@@ -425,7 +494,7 @@ public enum CMS: Sendable {
 
         var verifier = try Verifier(rootCertificates: trustRoots, policy: policy)
         let result = await verifier.validate(
-            leafCertificate: signingCert,
+            leaf: signingCert,
             intermediates: untrustedIntermediates,
             diagnosticCallback: diagnosticCallback
         )
@@ -444,8 +513,13 @@ public enum CMS: Sendable {
         case unexpectedCMSType
     }
 
+
+    @available(*, deprecated, renamed: "SignatureValidationResult")
     @_spi(CMS)
     public typealias SignatureVerificationResult = Result<Valid, VerificationError>
+
+    @_spi(CMS)
+    public typealias SignatureValidationResult = Result<Valid, Invalid>
 
     public struct Valid: Hashable, Sendable {
         public var signer: Certificate
@@ -456,6 +530,7 @@ public enum CMS: Sendable {
         }
     }
 
+    @available(*, deprecated, renamed: "Invalid")
     @_spi(CMS) public enum VerificationError: Swift.Error, Hashable {
         case unableToValidateSigner(SignerValidationFailure)
         case invalidCMSBlock(InvalidCMSBlock)
@@ -467,6 +542,37 @@ public enum CMS: Sendable {
 
             @inlinable
             public init(validationFailures: [VerificationResult.PolicyFailure], signer: Certificate) {
+                self.validationFailures = validationFailures
+                self.signer = signer
+            }
+        }
+
+        public struct InvalidCMSBlock: Hashable, Swift.Error {
+            public var reason: String
+
+            @inlinable
+            public init(reason: String) {
+                self.reason = reason
+            }
+        }
+
+        @inlinable
+        internal init(invalidCMSBlockReason: String) {
+            self = .invalidCMSBlock(.init(reason: invalidCMSBlockReason))
+        }
+    }
+
+    @_spi(CMS) public enum Invalid: Swift.Error, Hashable {
+        case unableToValidateSigner(SignerValidationFailure)
+        case invalidCMSBlock(InvalidCMSBlock)
+
+        public struct SignerValidationFailure: Hashable, Swift.Error {
+            public var validationFailures: [CertificateValidationResult.PolicyFailure]
+
+            public var signer: Certificate
+
+            @inlinable
+            public init(validationFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
                 self.validationFailures = validationFailures
                 self.signer = signer
             }

@@ -525,7 +525,7 @@ extension OCSPVerifierPolicy.Storage {
         }
 
         let validationResult = await verifier.validate(
-            leafCertificate: leafCertificate,
+            leaf: leafCertificate,
             intermediates: CertificateStore()
         )
 

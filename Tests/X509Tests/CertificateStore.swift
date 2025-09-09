@@ -201,7 +201,8 @@ final class CertificateStoreTests: XCTestCase {
         )
     }()
 
-    func testCustomCertificateStore() async throws {
+    @available(*, deprecated, message: "test for replacement in testCustomCertificateStore")
+    func testCustomCertificateStoreDeprecated() async throws {
         // MUST fail due to encoding of DN mismatch:
         var concreteStore = CertificateStore()
         concreteStore.append(Self.ca1)
@@ -228,6 +229,42 @@ final class CertificateStoreTests: XCTestCase {
         }
         let customResult = await customVerifier.validate(
             leafCertificate: Self.leafCert,
+            intermediates: CertificateStore()
+        )
+
+        guard case .validCertificate(_) = customResult else {
+            XCTFail("Failed to validate: \(customResult)")
+            return
+        }
+    }
+
+    func testCustomCertificateStore() async throws {
+        // MUST fail due to encoding of DN mismatch:
+        var concreteStore = CertificateStore()
+        concreteStore.append(Self.ca1)
+
+        var concreteVerifier = Verifier(rootCertificates: concreteStore) {
+            RFC5280Policy()
+        }
+        let concreteResult = await concreteVerifier.validate(
+            leaf: Self.leafCert,
+            intermediates: CertificateStore()
+        )
+
+        guard case .couldNotValidate = concreteResult else {
+            XCTFail("Incorrectly validated: \(concreteResult)")
+            return
+        }
+
+        // The custom CertStore should normalize the DN so it no longer fails:
+        var customStore = CertificateStore(custom: CertStore([]))
+        customStore.append(Self.ca1)
+
+        var customVerifier = Verifier(rootCertificates: customStore) {
+            RFC5280Policy()
+        }
+        let customResult = await customVerifier.validate(
+            leaf: Self.leafCert,
             intermediates: CertificateStore()
         )
 

@@ -174,7 +174,8 @@ private let unicodeCNCert = try! Certificate(
     issuerPrivateKey: key
 )
 
-final class ServerIdentityPolicyTests: XCTestCase {
+@available(*, deprecated, message: "deprecated because it uses deprecated API")
+final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
     func testCanValidateHostnameInFirstSan() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -183,7 +184,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "localhost", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -199,7 +200,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -215,7 +216,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "example.com.", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -231,7 +232,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "LoCaLhOsT", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -247,7 +248,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "httpbin.org", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -263,7 +264,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: nil, serverIP: "192.168.0.1")
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -279,7 +280,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: nil, serverIP: "2001:db8::1")
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -295,7 +296,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: nil, serverIP: "192.168.0.2")
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -311,7 +312,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: nil, serverIP: "2001:db8::2")
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiSANCert,
                 intermediates: CertificateStore()
@@ -327,7 +328,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "this.wildcard.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -343,7 +344,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "foo.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -359,7 +360,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "bar.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -375,7 +376,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "baz.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -391,7 +392,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "trailing.period.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -407,7 +408,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "straße.unicode.example.com", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -423,7 +424,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "xn--strae-oqa.unicode.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -439,7 +440,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "xn--xx-gia.unicode.example.com", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -455,7 +456,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "weirdwildcard.nomatch.example.com", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -471,7 +472,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "one.two.double.example.com", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -487,7 +488,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "foo.straße.example.com", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -503,7 +504,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "foo.xn--strae-oqa.example.com", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -519,7 +520,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "nul\u{0000}l.example.com", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -535,7 +536,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "localhost", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiCNCert,
                 intermediates: CertificateStore()
@@ -551,7 +552,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "LoCaLhOsT", serverIP: nil)
             }
         )
-        await XCTAssertValidCertificate(
+        await XCTAssertValidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: multiCNCert,
                 intermediates: CertificateStore()
@@ -567,7 +568,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "straße.org", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: unicodeCNCert,
                 intermediates: CertificateStore()
@@ -583,7 +584,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "xn--strae-oqa.org", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: unicodeCNCert,
                 intermediates: CertificateStore()
@@ -599,7 +600,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "localhost", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: noCNCert,
                 intermediates: CertificateStore()
@@ -615,7 +616,7 @@ final class ServerIdentityPolicyTests: XCTestCase {
                 ServerIdentityPolicy(serverHostname: "httpbin.org", serverIP: nil)
             }
         )
-        await XCTAssertInvalidCertificate(
+        await XCTAssertInvalidCertificateDeprecated(
             await verifier.validate(
                 leafCertificate: weirdoSANCert,
                 intermediates: CertificateStore()
@@ -638,7 +639,8 @@ extension ASN1OctetString {
     }
 }
 
-private func XCTAssertValidCertificate(
+@available(*, deprecated, message: "deprecated because it uses deprecated API")
+private func XCTAssertValidCertificateDeprecated(
     _ verifier: @autoclosure () async throws -> VerificationResult,
     file: StaticString = #filePath,
     line: UInt = #line
@@ -649,8 +651,482 @@ private func XCTAssertValidCertificate(
     }
 }
 
-private func XCTAssertInvalidCertificate(
+@available(*, deprecated, message: "deprecated because it uses deprecated API")
+private func XCTAssertInvalidCertificateDeprecated(
     _ verifier: @autoclosure () async throws -> VerificationResult,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async rethrows {
+    let result = try await verifier()
+    if case .validCertificate = result {
+        XCTFail("Incorrectly validated certificate", file: file, line: line)
+    }
+}
+
+
+final class ServerIdentityPolicyTests: XCTestCase {
+    func testCanValidateHostnameInFirstSan() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "localhost", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testCanValidateHostnameInSecondSan() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testIgnoresTrailingPeriod() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "example.com.", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testLowercasesHostnameForSan() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "LoCaLhOsT", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsIncorrectHostname() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "httpbin.org", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testAcceptsIpv4Address() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: nil, serverIP: "192.168.0.1")
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testAcceptsIpv6Address() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: nil, serverIP: "2001:db8::1")
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsIncorrectIpv4Address() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: nil, serverIP: "192.168.0.2")
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsIncorrectIpv6Address() async throws {
+        let roots = CertificateStore([multiSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: nil, serverIP: "2001:db8::2")
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: multiSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testAcceptsWildcards() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "this.wildcard.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testAcceptsSuffixWildcard() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "foo.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testAcceptsPrefixWildcard() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "bar.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testAcceptsInfixWildcard() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "baz.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testIgnoresTrailingPeriodInCert() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "trailing.period.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsEncodedIDNALabel() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "straße.unicode.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testMatchesUnencodedIDNALabel() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "xn--strae-oqa.unicode.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testDoesNotMatchIDNALabelWithWildcard() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "xn--xx-gia.unicode.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testDoesNotMatchNonLeftmostWildcards() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "weirdwildcard.nomatch.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testDoesNotMatchMultipleWildcards() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "one.two.double.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsWildcardBeforeUnencodedIDNALabel() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "foo.straße.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testMatchesWildcardBeforeEncodedIDNALabel() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "foo.xn--strae-oqa.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testDoesNotMatchSANWithEmbeddedNULL() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "nul\u{0000}l.example.com", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testFallsBackToCommonName() async throws {
+        let roots = CertificateStore([multiCNCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "localhost", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiCNCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testLowercasesForCommonName() async throws {
+        let roots = CertificateStore([multiCNCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "LoCaLhOsT", serverIP: nil)
+            }
+        )
+        await XCTAssertValidCertificate(
+            await verifier.validate(
+                leaf: multiCNCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsUnicodeCommonNameWithUnencodedIDNALabel() async throws {
+        let roots = CertificateStore([unicodeCNCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "straße.org", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: unicodeCNCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testRejectsUnicodeCommonNameWithEncodedIDNALabel() async throws {
+        let roots = CertificateStore([unicodeCNCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "xn--strae-oqa.org", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: unicodeCNCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testHandlesMissingCommonName() async throws {
+        let roots = CertificateStore([noCNCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "localhost", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: noCNCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+
+    func testDoesNotFallBackToCNWithSans() async throws {
+        let roots = CertificateStore([weirdoSANCert])
+        var verifier = Verifier(
+            rootCertificates: roots,
+            policy: {
+                ServerIdentityPolicy(serverHostname: "httpbin.org", serverIP: nil)
+            }
+        )
+        await XCTAssertInvalidCertificate(
+            await verifier.validate(
+                leaf: weirdoSANCert,
+                intermediates: CertificateStore()
+            )
+        )
+    }
+}
+
+private func XCTAssertValidCertificate(
+    _ verifier: @autoclosure () async throws -> CertificateValidationResult,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) async rethrows {
+    let result = try await verifier()
+    if case .couldNotValidate(let reason) = result {
+        XCTFail("Could not validate certificate, reason: \(reason)", file: file, line: line)
+    }
+}
+
+private func XCTAssertInvalidCertificate(
+    _ verifier: @autoclosure () async throws -> CertificateValidationResult,
     file: StaticString = #filePath,
     line: UInt = #line
 ) async rethrows {

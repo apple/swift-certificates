@@ -27,21 +27,21 @@ public struct Verifier<Policy: VerifierPolicy> {
 
     @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
     public mutating func validate(
-        leafCertificate: Certificate,
+        leaf: Certificate,
         intermediates: CertificateStore,
         diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil
-    ) async -> VerificationResult {
-        var partialChains: [CandidatePartialChain] = [CandidatePartialChain(leaf: leafCertificate)]
+    ) async -> CertificateValidationResult {
+        var partialChains: [CandidatePartialChain] = [CandidatePartialChain(leaf: leaf)]
 
-        var policyFailures: [VerificationResult.PolicyFailure] = []
+        var policyFailures: [CertificateValidationResult.PolicyFailure] = []
 
         // First check: does this leaf certificate contain critical extensions that are not satisfied by the PolicySet?
         // If so, reject the chain.
-        if leafCertificate.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
+        if leaf.hasUnhandledCriticalExtensions(handledExtensions: self.policy.verifyingCriticalExtensions) {
 
             diagnosticCallback?(
                 .leafCertificateHasUnhandledCriticalExtension(
-                    leafCertificate,
+                    leaf,
                     handledCriticalExtensions: self.policy.verifyingCriticalExtensions
                 )
             )
@@ -55,21 +55,21 @@ public struct Verifier<Policy: VerifierPolicy> {
         // which may let us chain through another variant of this certificate and build a valid chain. This is a very
         // deliberate choice: certificates that assert the same combination of (subject, public key, SAN) but different
         // extensions or policies should not be tolerated by this check, and will be ignored.
-        if await rootCertificates.contains(leafCertificate) {
-            let unverifiedChain = UnverifiedCertificateChain([leafCertificate])
+        if await rootCertificates.contains(leaf) {
+            let unverifiedChain = UnverifiedCertificateChain([leaf])
 
             switch await self.policy.chainMeetsPolicyRequirements(chain: unverifiedChain) {
             case .meetsPolicy:
                 // We're good!
                 diagnosticCallback?(.foundValidCertificateChain(unverifiedChain.certificates))
-                return .validCertificate(unverifiedChain.certificates)
+                return .validCertificate(.init(unverifiedChain.certificates))
 
             case .failsToMeetPolicy(reason: let reason):
                 diagnosticCallback?(
-                    .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(leafCertificate, reason: reason)
+                    .leafCertificateIsInTheRootStoreButDoesNotMeetPolicy(leaf, reason: reason)
                 )
                 policyFailures.append(
-                    VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
+                    CertificateValidationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
                 )
             }
         }
@@ -104,12 +104,12 @@ public struct Verifier<Policy: VerifierPolicy> {
                     case .meetsPolicy:
                         // We're good!
                         diagnosticCallback?(.foundValidCertificateChain(unverifiedChain.certificates))
-                        return .validCertificate(unverifiedChain.certificates)
+                        return .validCertificate(.init(unverifiedChain.certificates))
 
                     case .failsToMeetPolicy(reason: let reason):
                         diagnosticCallback?(.chainFailsToMeetPolicy(unverifiedChain, reason: reason))
                         policyFailures.append(
-                            VerificationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
+                            CertificateValidationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
                         )
                     }
                 }
@@ -143,8 +143,23 @@ public struct Verifier<Policy: VerifierPolicy> {
             }
         }
 
-        diagnosticCallback?(.couldNotValidateLeafCertificate(leafCertificate))
+        diagnosticCallback?(.couldNotValidateLeafCertificate(leaf))
         return .couldNotValidate(policyFailures)
+    }
+
+    @available(*, deprecated, renamed: "validate(leaf:intermediates:diagnosticCallback:)")
+    @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+    public mutating func validate(
+        leafCertificate: Certificate,
+        intermediates: CertificateStore,
+        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil
+    ) async -> VerificationResult {
+        switch await validate(leaf: leafCertificate, intermediates: intermediates, diagnosticCallback: diagnosticCallback) {
+        case .validCertificate(let ValidatedCertificateChain):
+            return .validCertificate(Array(ValidatedCertificateChain))
+        case .couldNotValidate(let policyFailures):
+            return .couldNotValidate(policyFailures.map { .init(chain: $0.chain, policyFailureReason: $0.policyFailureReason) })
+        }
     }
 
     @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -187,14 +202,36 @@ public struct Verifier<Policy: VerifierPolicy> {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Verifier: Sendable where Policy: Sendable {}
 
+@available(*, deprecated, renamed: "CertificateValidationResult")
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public enum VerificationResult: Hashable, Sendable {
     case validCertificate([Certificate])
     case couldNotValidate([PolicyFailure])
 }
 
+@available(*, deprecated, renamed: "CertificateValidationResult.PolicyFailure")
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension VerificationResult {
+    public struct PolicyFailure: Hashable, Sendable {
+        public var chain: UnverifiedCertificateChain
+        public var policyFailureReason: PolicyFailureReason
+
+        @inlinable
+        public init(chain: UnverifiedCertificateChain, policyFailureReason: PolicyFailureReason) {
+            self.chain = chain
+            self.policyFailureReason = policyFailureReason
+        }
+    }
+}
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+public enum CertificateValidationResult: Hashable, Sendable {
+    case validCertificate(ValidatedCertificateChain)
+    case couldNotValidate([PolicyFailure])
+}
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension CertificateValidationResult {
     public struct PolicyFailure: Hashable, Sendable {
         public var chain: UnverifiedCertificateChain
         public var policyFailureReason: PolicyFailureReason

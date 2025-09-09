@@ -544,7 +544,8 @@ final class VerifierTests: XCTestCase {
         RFC5280Policy(fixedValidationTime: referenceTime)
     }
 
-    func testTrivialChainBuilding() async throws {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testTrivialChainBuildingDeprecated() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
 
@@ -580,7 +581,44 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testRootsWithSKIArePreferred() async throws {
+    func testTrivialChainBuilding() async throws {
+        let roots = CertificateStore([Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testRootsWithSKIArePreferredDeprecated() async throws {
         let roots = CertificateStore([Self.ca1WithoutSubjectKeyIdentifier, Self.ca1])
         let log = DiagnosticsLog()
 
@@ -616,7 +654,44 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testMissingIntermediateFailsToBuild() async throws {
+    func testRootsWithSKIArePreferred() async throws {
+        let roots = CertificateStore([Self.ca1WithoutSubjectKeyIdentifier, Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1, Self.ca1WithoutSubjectKeyIdentifier]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testMissingIntermediateFailsToBuildDeprecated() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
 
@@ -643,7 +718,35 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testMissingRootFailsToBuild() async throws {
+    func testMissingIntermediateFailsToBuild() async throws {
+        let roots = CertificateStore([Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore(),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .couldNotValidate(let policyResults) = result else {
+            XCTFail("Accidentally validated: \(result)")
+            return
+        }
+
+        XCTAssertEqual(policyResults, [])
+        print(log)
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .couldNotValidateLeafCertificate(Self.localhostLeaf),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testMissingRootFailsToBuildDeprecated() async throws {
         let roots = CertificateStore()
         let log = DiagnosticsLog()
 
@@ -674,7 +777,39 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testExtraRootsAreIgnored() async throws {
+    func testMissingRootFailsToBuild() async throws {
+        let roots = CertificateStore()
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .couldNotValidate(let policyResults) = result else {
+            XCTFail("Accidentally validated: \(result)")
+            return
+        }
+
+        XCTAssertEqual(policyResults, [])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .couldNotValidateLeafCertificate(Self.localhostLeaf),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testExtraRootsAreIgnoredDeprecated() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
 
@@ -709,7 +844,43 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testPuttingRootsInTheIntermediariesIsntAProblem() async throws {
+    func testExtraRootsAreIgnored() async throws {
+        let roots = CertificateStore([Self.ca1, Self.ca2])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testPuttingRootsInTheIntermediariesIsntAProblemDeprecated() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
 
@@ -744,7 +915,43 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testSupportsCrossSignedRootWithoutTrouble() async throws {
+    func testPuttingRootsInTheIntermediariesIsntAProblem() async throws {
+        let roots = CertificateStore([Self.ca1, Self.ca2])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca1, Self.ca2]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testSupportsCrossSignedRootWithoutTroubleDeprecated() async throws {
         let roots = CertificateStore([Self.ca2])
         let log = DiagnosticsLog()
 
@@ -787,7 +994,51 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async throws {
+    func testSupportsCrossSignedRootWithoutTrouble() async throws {
+        let roots = CertificateStore([Self.ca2])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca1CrossSignedByCA2]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1CrossSignedByCA2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2],
+                    issuers: [Self.ca2]
+                ),
+                .foundValidCertificateChain([
+                    Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2,
+                ]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testBuildsTheShorterPathInTheCaseOfCrossSignedRootsDeprecated() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
 
@@ -822,7 +1073,43 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testPrefersToUseIntermediatesWithSKIThatMatches() async throws {
+    func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async throws {
+        let roots = CertificateStore([Self.ca1, Self.ca2])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testPrefersToUseIntermediatesWithSKIThatMatchesDeprecated() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
 
@@ -857,7 +1144,43 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testPrefersNoSKIToNonMatchingSKI() async throws {
+    func testPrefersToUseIntermediatesWithSKIThatMatches() async throws {
+        let roots = CertificateStore([Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.intermediate1WithoutSKIAKI]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1, Self.intermediate1WithoutSKIAKI]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testPrefersNoSKIToNonMatchingSKIDeprecated() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
 
@@ -892,7 +1215,43 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testRejectsRootsThatDidNotSignTheCertBeforeThem() async throws {
+    func testPrefersNoSKIToNonMatchingSKI() async throws {
+        let roots = CertificateStore([Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1WithIncorrectSKIAKI, Self.intermediate1WithoutSKIAKI]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1WithoutSKIAKI, Self.ca1])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1WithoutSKIAKI, Self.intermediate1WithIncorrectSKIAKI]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1WithoutSKIAKI],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1WithoutSKIAKI, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testRejectsRootsThatDidNotSignTheCertBeforeThemDeprecated() async throws {
         let roots = CertificateStore([Self.ca1WithAlternativePrivateKey, Self.ca2])
         let log = DiagnosticsLog()
 
@@ -942,7 +1301,58 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testPolicyFailuresCanFindLongerPaths() async throws {
+    func testRejectsRootsThatDidNotSignTheCertBeforeThem() async throws {
+        let roots = CertificateStore([Self.ca1WithAlternativePrivateKey, Self.ca2])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.ca1CrossSignedByCA2, Self.ca2CrossSignedByCA1, Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1WithAlternativePrivateKey]
+                ),
+                .issuerHasNotSignedCertificate(
+                    Self.ca1WithAlternativePrivateKey,
+                    partialChain: [Self.localhostLeaf, Self.intermediate1]
+                ),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1CrossSignedByCA2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2],
+                    issuers: [Self.ca2]
+                ),
+                .foundValidCertificateChain([
+                    Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2,
+                ]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testPolicyFailuresCanFindLongerPathsDeprecated() async throws {
         let roots = CertificateStore([Self.ca1, Self.ca2])
         let log = DiagnosticsLog()
 
@@ -996,7 +1406,62 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testInsanePKICanStillBuild() async throws {
+    func testPolicyFailuresCanFindLongerPaths() async throws {
+        let roots = CertificateStore([Self.ca1, Self.ca2])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) {
+            FailIfCertInChainPolicy(forbiddenCert: Self.ca1)
+            Self.defaultPolicy
+        }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1, Self.ca2CrossSignedByCA1, Self.ca1CrossSignedByCA2]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf],
+                    issuers: [Self.intermediate1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1]
+                ),
+                .chainFailsToMeetPolicy(
+                    UnverifiedCertificateChain([Self.localhostLeaf, Self.intermediate1, Self.ca1]),
+                    reason: .init("chain must not contain forbidden certificate")
+                ),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.localhostLeaf, Self.intermediate1],
+                    issuers: [Self.ca1CrossSignedByCA2]
+                ),
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2],
+                    issuers: [Self.ca2]
+                ),
+                .foundValidCertificateChain([
+                    Self.localhostLeaf, Self.intermediate1, Self.ca1CrossSignedByCA2, Self.ca2,
+                ]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testInsanePKICanStillBuildDeprecated() async throws {
         let roots = CertificateStore([Self.ca1])
         let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x2, Self.x1])
         let log = DiagnosticsLog()
@@ -1059,7 +1524,71 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async throws {
+    func testInsanePKICanStillBuild() async throws {
+        let roots = CertificateStore([Self.ca1])
+        let intermediates = CertificateStore([Self.t1, Self.t2, Self.t3, Self.x2, Self.x1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.insaneLeaf,
+            intermediates: intermediates,
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1])
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf],
+                    issuers: [Self.t3, Self.t2, Self.t1]
+                ),
+                .issuerHasNotSignedCertificate(Self.t1, partialChain: [Self.insaneLeaf]),
+                .issuerHasNotSignedCertificate(Self.t2, partialChain: [Self.insaneLeaf]),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3],
+                    issuers: [Self.x2, Self.x1]
+                ),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2],
+                    issuers: [Self.t3, Self.t2, Self.t1]
+                ),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2], issuer: Self.t3),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2, Self.t2],
+                    issuers: [Self.x2, Self.x1]
+                ),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2], issuer: Self.x2),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1]),
+                .foundCandidateIssuersOfPartialChainInIntermediateStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1],
+                    issuers: [Self.t3, Self.t2, Self.t1]
+                ),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t2),
+                .issuerIsAlreadyInTheChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1], issuer: Self.t3),
+                .searchingForIssuerOfPartialChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1]),
+                .foundCandidateIssuersOfPartialChainInRootStore(
+                    [Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1],
+                    issuers: [Self.ca1]
+                ),
+                .foundValidCertificateChain([Self.insaneLeaf, Self.t3, Self.x2, Self.t2, Self.x1, Self.t1, Self.ca1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testSelfSignedCertsAreRejectedWhenNotInTheTrustStoreDeprecated() async throws {
         let roots = CertificateStore([Self.ca1])
         let log = DiagnosticsLog()
 
@@ -1084,7 +1613,33 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testSelfSignedCertsAreTrustedWhenInTrustStore() async throws {
+    func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async throws {
+        let roots = CertificateStore([Self.ca1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.isolatedSelfSignedCert,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .couldNotValidate = result else {
+            XCTFail("Incorrectly validated: \(result)")
+            return
+        }
+
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.isolatedSelfSignedCert]),
+                .couldNotValidateLeafCertificate(Self.isolatedSelfSignedCert),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testSelfSignedCertsAreTrustedWhenInTrustStoreDeprecated() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCert])
         let log = DiagnosticsLog()
 
@@ -1109,7 +1664,33 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testTrustRootsCanBeNonSelfSignedLeaves() async throws {
+    func testSelfSignedCertsAreTrustedWhenInTrustStore() async throws {
+        let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCert])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.isolatedSelfSignedCert,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.isolatedSelfSignedCert])
+        XCTAssertEqual(
+            log,
+            [
+                .foundValidCertificateChain([Self.isolatedSelfSignedCert])
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testTrustRootsCanBeNonSelfSignedLeavesDeprecated() async throws {
         // we use a custom policy here to ignore the fact that the basic constraints extension is critical.
         struct IgnoreBasicConstraintsPolicy: VerifierPolicy {
             let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [.X509ExtensionID.basicConstraints]
@@ -1143,7 +1724,42 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testTrustRootsCanBeNonSelfSignedIntermediates() async throws {
+    func testTrustRootsCanBeNonSelfSignedLeaves() async throws {
+        // we use a custom policy here to ignore the fact that the basic constraints extension is critical.
+        struct IgnoreBasicConstraintsPolicy: VerifierPolicy {
+            let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [.X509ExtensionID.basicConstraints]
+
+            func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult {
+                return .meetsPolicy
+            }
+        }
+
+        let roots = CertificateStore([Self.localhostLeaf])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { IgnoreBasicConstraintsPolicy() }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf])
+        XCTAssertEqual(
+            log,
+            [
+                .foundValidCertificateChain([Self.localhostLeaf])
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testTrustRootsCanBeNonSelfSignedIntermediatesDeprecated() async throws {
         let roots = CertificateStore([Self.intermediate1])
         let log = DiagnosticsLog()
 
@@ -1170,13 +1786,68 @@ final class VerifierTests: XCTestCase {
         )
     }
 
-    func testWePoliceCriticalExtensionsOnLeafCerts() async throws {
+    func testTrustRootsCanBeNonSelfSignedIntermediates() async throws {
+        let roots = CertificateStore([Self.intermediate1])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.localhostLeaf,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate: \(result)")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [Self.localhostLeaf, Self.intermediate1])
+        XCTAssertEqual(
+            log,
+            [
+                .searchingForIssuerOfPartialChain([Self.localhostLeaf]),
+                .foundCandidateIssuersOfPartialChainInRootStore([Self.localhostLeaf], issuers: [Self.intermediate1]),
+                .foundValidCertificateChain([Self.localhostLeaf, Self.intermediate1]),
+            ]
+        )
+    }
+
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
+    func testWePoliceCriticalExtensionsOnLeafCertsDeprecated() async throws {
         let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCertWithWeirdCriticalExtension])
         let log = DiagnosticsLog()
 
         var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
         let result = await verifier.validate(
             leafCertificate: Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
+            intermediates: CertificateStore([Self.intermediate1]),
+            diagnosticCallback: log.append(_:)
+        )
+
+        guard case .couldNotValidate = result else {
+            XCTFail("Incorrectly validated: \(result)")
+            return
+        }
+
+        XCTAssertEqual(
+            log,
+            [
+                .leafCertificateHasUnhandledCriticalExtension(
+                    Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
+                    handledCriticalExtensions: Self.defaultPolicy.verifyingCriticalExtensions
+                )
+            ]
+        )
+    }
+
+    func testWePoliceCriticalExtensionsOnLeafCerts() async throws {
+        let roots = CertificateStore([Self.ca1, Self.isolatedSelfSignedCertWithWeirdCriticalExtension])
+        let log = DiagnosticsLog()
+
+        var verifier = Verifier(rootCertificates: roots) { Self.defaultPolicy }
+        let result = await verifier.validate(
+            leaf: Self.isolatedSelfSignedCertWithWeirdCriticalExtension,
             intermediates: CertificateStore([Self.intermediate1]),
             diagnosticCallback: log.append(_:)
         )
