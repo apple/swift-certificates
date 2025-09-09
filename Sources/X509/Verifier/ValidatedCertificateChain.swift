@@ -43,7 +43,7 @@ public struct ValidatedCertificateChain: Sendable, Collection, RandomAccessColle
     /// - Parameter uncheckedCertificateChain: An already validated certificate chain ordered from leaf to root certificate.
     ///
     /// - Warning: Only initialize this type with a *validated* certificate chain containing at least one
-    ///     certificate. This type  does not perform checks to verify the input.
+    ///     certificate. This type does not perform checks to verify the input.
     ///
     /// - Precondition: The `uncheckedCertificateChain` must contain at least one element.
     public init(uncheckedCertificateChain: [Certificate]) {
