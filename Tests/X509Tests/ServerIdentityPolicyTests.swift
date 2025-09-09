@@ -663,7 +663,6 @@ private func XCTAssertInvalidCertificateDeprecated(
     }
 }
 
-
 final class ServerIdentityPolicyTests: XCTestCase {
     func testCanValidateHostnameInFirstSan() async throws {
         let roots = CertificateStore([multiSANCert])

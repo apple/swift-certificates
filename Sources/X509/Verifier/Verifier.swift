@@ -109,7 +109,10 @@ public struct Verifier<Policy: VerifierPolicy> {
                     case .failsToMeetPolicy(reason: let reason):
                         diagnosticCallback?(.chainFailsToMeetPolicy(unverifiedChain, reason: reason))
                         policyFailures.append(
-                            CertificateValidationResult.PolicyFailure(chain: unverifiedChain, policyFailureReason: reason)
+                            CertificateValidationResult.PolicyFailure(
+                                chain: unverifiedChain,
+                                policyFailureReason: reason
+                            )
                         )
                     }
                 }
@@ -154,11 +157,17 @@ public struct Verifier<Policy: VerifierPolicy> {
         intermediates: CertificateStore,
         diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil
     ) async -> VerificationResult {
-        switch await validate(leaf: leafCertificate, intermediates: intermediates, diagnosticCallback: diagnosticCallback) {
+        switch await validate(
+            leaf: leafCertificate,
+            intermediates: intermediates,
+            diagnosticCallback: diagnosticCallback
+        ) {
         case .validCertificate(let ValidatedCertificateChain):
             return .validCertificate(Array(ValidatedCertificateChain))
         case .couldNotValidate(let policyFailures):
-            return .couldNotValidate(policyFailures.map { .init(chain: $0.chain, policyFailureReason: $0.policyFailureReason) })
+            return .couldNotValidate(
+                policyFailures.map { .init(chain: $0.chain, policyFailureReason: $0.policyFailureReason) }
+            )
         }
     }
 

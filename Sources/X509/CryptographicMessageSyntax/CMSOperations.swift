@@ -210,7 +210,12 @@ public enum CMS: Sendable {
         return try CMSContentInfo(signedData)
     }
 
-    @available(*, deprecated, renamed: "validateAttachedSignature(signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:policy:)")
+    @available(
+        *,
+        deprecated,
+        renamed:
+            "validateAttachedSignature(signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:policy:)"
+    )
     @_spi(CMS)
     @inlinable
     public static func isValidAttachedSignature<SignatureBytes: DataProtocol>(
@@ -273,7 +278,12 @@ public enum CMS: Sendable {
         }
     }
 
-    @available(*, deprecated, renamed: "validateSignature(dataBytes:signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:allowAttachedContent:policy:)")
+    @available(
+        *,
+        deprecated,
+        renamed:
+            "validateSignature(dataBytes:signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:allowAttachedContent:policy:)"
+    )
     @_spi(CMS)
     @inlinable
     public static func isValidSignature<
@@ -297,7 +307,8 @@ public enum CMS: Sendable {
             diagnosticCallback: diagnosticCallback,
             microsoftCompatible: microsoftCompatible,
             allowAttachedContent: allowAttachedContent,
-            policy: policy) {
+            policy: policy
+        ) {
         case .success(let valid):
             return .success(valid)
         case .failure(let invalid):
@@ -305,7 +316,16 @@ public enum CMS: Sendable {
             case .invalidCMSBlock(let info):
                 return .failure(.invalidCMSBlock(VerificationError.InvalidCMSBlock(reason: info.reason)))
             case .unableToValidateSigner(let info):
-                return .failure(.unableToValidateSigner(VerificationError.SignerValidationFailure(validationFailures: info.validationFailures.map {.init(chain: $0.chain, policyFailureReason: $0.policyFailureReason)}, signer: info.signer)))
+                return .failure(
+                    .unableToValidateSigner(
+                        VerificationError.SignerValidationFailure(
+                            validationFailures: info.validationFailures.map {
+                                .init(chain: $0.chain, policyFailureReason: $0.policyFailureReason)
+                            },
+                            signer: info.signer
+                        )
+                    )
+                )
             }
         }
     }
@@ -512,7 +532,6 @@ public enum CMS: Sendable {
         case incorrectCMSVersionUsed
         case unexpectedCMSType
     }
-
 
     @available(*, deprecated, renamed: "SignatureValidationResult")
     @_spi(CMS)

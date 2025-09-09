@@ -2033,7 +2033,6 @@ private enum TestPKI {
     }
 }
 
-
 // MARK: New API
 
 class RFC5280PolicyBase: XCTestCase {
@@ -3081,7 +3080,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             return
         }
 
-        XCTAssertEqual(Array(chain), [leaf, secondLevelIntermediate, newFirstLevelIntermediate, TestPKI.unconstrainedCA])
+        XCTAssertEqual(
+            Array(chain),
+            [leaf, secondLevelIntermediate, newFirstLevelIntermediate, TestPKI.unconstrainedCA]
+        )
     }
 
     func testPathLengthConstraintsFromIntermediatesAreApplied() async throws {

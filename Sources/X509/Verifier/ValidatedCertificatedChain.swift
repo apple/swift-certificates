@@ -1,4 +1,3 @@
-
 /// A validated certificate chain that traces the trust from a leaf to a root certificate. This type does not perform any validation
 /// itself. It is a container that gives information about the contained certificates. The safe method to acquire it goes through
 /// the certificate validation processes in a `Verifier`.
@@ -34,7 +33,10 @@ public struct ValidatedCertificateChain: Sendable, Collection, RandomAccessColle
     ///
     /// - Precondition: The `uncheckedCertificateChain` must contain at least one element.
     public init(uncheckedCertificateChain: [Certificate]) {
-        precondition(uncheckedCertificateChain.count > 0, "A valid certificate chain contains at least one certificate.")
+        precondition(
+            uncheckedCertificateChain.count > 0,
+            "A valid certificate chain contains at least one certificate."
+        )
         self.validatedChain = uncheckedCertificateChain
     }
 
