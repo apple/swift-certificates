@@ -57,7 +57,7 @@ public struct ValidatedCertificateChain: Sendable, Collection, RandomAccessColle
     /// Creates a `ValidatedCertificateChain` that represents a verified chain of trust from leaf to root.
     /// - Parameter validatedChain: The validated certificate chain.
     /// - Precondition: The `validatedChain` must contain at least one certificate.
-    package init(_ validatedChain: [Certificate]) {
+    init(_ validatedChain: [Certificate]) {
         precondition(validatedChain.count > 0, "A valid certificate chain contains at least one certificate.")
         self.validatedChain = validatedChain
     }
