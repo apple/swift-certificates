@@ -1,3 +1,17 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftCertificates open source project
+//
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of SwiftCertificates project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
 /// A validated certificate chain that traces the trust from a leaf to a root certificate. This type does not perform any validation
 /// itself. It is a container that gives information about the contained certificates. The safe method to acquire it goes through
 /// the certificate validation processes in a `Verifier`.
