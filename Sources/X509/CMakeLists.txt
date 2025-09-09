@@ -107,6 +107,7 @@ add_library(X509
   "Verifier/ServerIdentityPolicy.swift"
   "Verifier/TrustRootLoading.swift"
   "Verifier/UnverifiedChain.swift"
+  "Verifier/ValidatedCertificateChain.swift"
   "Verifier/VerificationDiagnostic.swift"
   "Verifier/Verifier.swift"
   "Verifier/VerifierPolicy.swift"
