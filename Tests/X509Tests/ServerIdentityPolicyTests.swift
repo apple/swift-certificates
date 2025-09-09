@@ -174,8 +174,9 @@ private let unicodeCNCert = try! Certificate(
     issuerPrivateKey: key
 )
 
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+// All tests in this class are deprecated.
 final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCanValidateHostnameInFirstSan() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -192,6 +193,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCanValidateHostnameInSecondSan() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -208,6 +210,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIgnoresTrailingPeriod() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -224,6 +227,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testLowercasesHostnameForSan() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -240,6 +244,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsIncorrectHostname() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -256,6 +261,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAcceptsIpv4Address() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -272,6 +278,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAcceptsIpv6Address() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -288,6 +295,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsIncorrectIpv4Address() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -304,6 +312,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsIncorrectIpv6Address() async throws {
         let roots = CertificateStore([multiSANCert])
         var verifier = Verifier(
@@ -320,6 +329,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAcceptsWildcards() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -336,6 +346,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAcceptsSuffixWildcard() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -352,6 +363,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAcceptsPrefixWildcard() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -368,6 +380,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAcceptsInfixWildcard() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -384,6 +397,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIgnoresTrailingPeriodInCert() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -400,6 +414,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsEncodedIDNALabel() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -416,6 +431,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testMatchesUnencodedIDNALabel() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -432,6 +448,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDoesNotMatchIDNALabelWithWildcard() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -448,6 +465,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDoesNotMatchNonLeftmostWildcards() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -464,6 +482,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDoesNotMatchMultipleWildcards() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -480,6 +499,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsWildcardBeforeUnencodedIDNALabel() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -496,6 +516,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testMatchesWildcardBeforeEncodedIDNALabel() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -512,6 +533,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDoesNotMatchSANWithEmbeddedNULL() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(
@@ -528,6 +550,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testFallsBackToCommonName() async throws {
         let roots = CertificateStore([multiCNCert])
         var verifier = Verifier(
@@ -544,6 +567,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testLowercasesForCommonName() async throws {
         let roots = CertificateStore([multiCNCert])
         var verifier = Verifier(
@@ -560,6 +584,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsUnicodeCommonNameWithUnencodedIDNALabel() async throws {
         let roots = CertificateStore([unicodeCNCert])
         var verifier = Verifier(
@@ -576,6 +601,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsUnicodeCommonNameWithEncodedIDNALabel() async throws {
         let roots = CertificateStore([unicodeCNCert])
         var verifier = Verifier(
@@ -592,6 +618,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testHandlesMissingCommonName() async throws {
         let roots = CertificateStore([noCNCert])
         var verifier = Verifier(
@@ -608,6 +635,7 @@ final class ServerIdentityPolicyTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDoesNotFallBackToCNWithSans() async throws {
         let roots = CertificateStore([weirdoSANCert])
         var verifier = Verifier(

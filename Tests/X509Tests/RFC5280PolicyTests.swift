@@ -22,8 +22,9 @@ import SwiftASN1
 @testable @_spi(DisableValidityCheck) import X509
 @preconcurrency import Crypto
 
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+// Everything in this test class is deprecated. A duplicated version of this class tests the new API.
 class RFC5280PolicyBaseDeprecated: XCTestCase {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     enum PolicyFactory {
         case rfc5280
         case expiry
@@ -65,6 +66,7 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func nameconstraintsExcludedSubtrees(
         excludedSubtrees: [GeneralName],
         subjectAlternativeNames: [GeneralName],
@@ -188,6 +190,7 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         XCTAssertEqual(chain, [leaf, intermediateWithAConstrainedNameForSomeReason, TestPKI.unconstrainedCA])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func nameconstraintsPermittedSubtrees(
         permittedSubtrees: [GeneralName],
         subjectAlternativeNames: [GeneralName],
@@ -295,8 +298,9 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
     }
 }
 
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+// All tests in this class are deprecated.
 final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testValidCertsAreAccepted() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(issuer: .unconstrainedIntermediate)
@@ -315,6 +319,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testValidV1CertsAreAccepted() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(version: .v1, issuer: .unconstrainedIntermediate, customExtensions: .init())
@@ -333,6 +338,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testValidV1CertsWithExtensionsAreRejected() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -357,6 +363,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     private func _expiredLeafIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -381,14 +388,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredLeafIsRejected() async throws {
         try await self._expiredLeafIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredLeafIsRejectedBasePolicy() async throws {
         try await self._expiredLeafIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredLeafIsNotRejectedIfThePolicyDisablesExpiryChecking() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -411,6 +421,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiryCheckCorrectWhenDelayBetweenInitializationAndValidation() async throws {
         let currentTime = Date()
         // Create a certificate that expires 1 second in the future.
@@ -463,6 +474,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _expiredIntermediateIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -487,14 +499,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredIntermediateIsRejected() async throws {
         try await self._expiredIntermediateIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredIntermediateIsRejectedBasePolicy() async throws {
         try await self._expiredIntermediateIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredIntermediateIsNotRejectedIfThePolicyDisablesExpiryChecking() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -517,6 +532,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _expiredRootIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -541,14 +557,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredRootIsRejected() async throws {
         try await self._expiredRootIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredRootIsRejectedBasePolicy() async throws {
         try await self._expiredRootIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExpiredRootIsNotRejectedIfThePolicyDisablesExpiryChecking() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -571,6 +590,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _notYetValidLeafIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -595,14 +615,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidLeafIsRejected() async throws {
         try await self._notYetValidLeafIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidLeafIsRejectedBasePolicy() async throws {
         try await self._notYetValidLeafIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidLeafIsNotRejectedIfValidityCheckingIsDisabled() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -625,6 +648,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _notYetValidIntermediateIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -650,14 +674,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidIntermediateIsRejected() async throws {
         try await self._notYetValidIntermediateIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidIntermediateIsRejectedBasePolicy() async throws {
         try await self._notYetValidIntermediateIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidIntermediateIsNotRejectedIfValidityCheckingIsDisabled() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -681,6 +708,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _notYetValidRootIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -706,14 +734,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidRootIsRejected() async throws {
         try await self._notYetValidRootIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidRootIsRejectedBasePolicy() async throws {
         try await self._notYetValidRootIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotYetValidRootIsNotRejectedIfValidityCheckingIsDisabled() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -736,6 +767,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _malformedExpiryIsRejected(_ policyFactory: PolicyFactory) async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -760,14 +792,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(policyFailures.count, 1)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testMalformedExpiryIsRejected() async throws {
         try await self._malformedExpiryIsRejected(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testMalformedExpiryIsRejectedBasePolicy() async throws {
         try await self._malformedExpiryIsRejected(.expiry)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testMalformedExpiryIsNotRejectedIfValidityCheckingIsDisabled() async throws {
         let roots = CertificateStore([TestPKI.unconstrainedCA])
         let leaf = TestPKI.issueLeaf(
@@ -791,12 +826,14 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
     }
 
     // This is a BasicConstraints extension that is invalid gibberish
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     private static let brokenBasicConstraints = Certificate.Extension(
         oid: .X509ExtensionID.basicConstraints,
         critical: true,
         value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     )
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _selfSignedCertsMustBeMarkedAsCA(_ policyFactory: PolicyFactory) async throws {
         let certsAndValidity = [
             (TestPKI.issueSelfSignedCert(basicConstraints: .isCertificateAuthority(maxPathLength: nil)), true),
@@ -828,14 +865,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSelfSignedCertsMustBeMarkedAsCA() async throws {
         try await self._selfSignedCertsMustBeMarkedAsCA(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSelfSignedCertsMustBeMarkedAsCABasePolicy() async throws {
         try await self._selfSignedCertsMustBeMarkedAsCA(.basicConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _intermediateCAMustBeMarkedCAInBasicConstraints(_ policyFactory: PolicyFactory) async throws {
         let invalidIntermediateCAs = [
             // Explicitly not being a CA is bad
@@ -922,14 +962,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIntermediateCAMustBeMarkedAsCAInBasicConstraints() async throws {
         try await self._intermediateCAMustBeMarkedCAInBasicConstraints(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIntermediateCAMustBeMarkedAsCAInBasicConstraintsBasePolicy() async throws {
         try await self._intermediateCAMustBeMarkedCAInBasicConstraints(.basicConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _rootCAMustBeMarkedCAInBasicConstraints(_ policyFactory: PolicyFactory) async throws {
         let invalidRootCAs = [
             // Explicitly not being a CA is bad
@@ -1002,14 +1045,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRootCAMustBeMarkedAsCAInBasicConstraints() async throws {
         try await self._rootCAMustBeMarkedCAInBasicConstraints(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRootCAMustBeMarkedAsCAInBasicConstraintsBasePolicy() async throws {
         try await self._rootCAMustBeMarkedCAInBasicConstraints(.basicConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _pathLengthConstraintsFromIntermediatesAreApplied(_ policyFactory: PolicyFactory) async throws {
         // This test requires that we use a second-level intermediate, to police the first-level
         // intermediate's path length constraint. This second level intermediate has a valid path length
@@ -1072,14 +1118,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(chain, [leaf, secondLevelIntermediate, newFirstLevelIntermediate, TestPKI.unconstrainedCA])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPathLengthConstraintsFromIntermediatesAreApplied() async throws {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPathLengthConstraintsFromIntermediatesAreAppliedBasePolicy() async throws {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.basicConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _pathLengthConstraintsOnRootsAreApplied(_ policyFactory: PolicyFactory) async throws {
         // This test requires that we use a second-level intermediate, to police the first-level
         // intermediate's path length constraint. This second level intermediate has a valid path length
@@ -1124,14 +1173,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(chain, [leaf, TestPKI.unconstrainedIntermediate, TestPKI.unconstrainedCA])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPathLengthConstraintsOnRootsAreApplied() async throws {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPathLengthConstraintsOnRootsAreAppliedBasePolicy() async throws {
         try await self._pathLengthConstraintsFromIntermediatesAreApplied(.basicConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func _pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(_ policyFactory: PolicyFactory) async throws {
         // We are building a certificate chain that looks like this:
         // Cert(Iss=Y, Sub=X, Key=1, pathLen=0)
@@ -1174,14 +1226,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(chain, [leaf, intermediate, alternativeRoot])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates() async throws {
         try await self._pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificatesBasePolicy() async throws {
         try await self._pathLengthConstraintsDoesOnlyCountNonSelfIssuedCertificates(.basicConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDNSNameConstraintsExcludedSubtrees() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
@@ -1193,6 +1248,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDNSNameConstraintsExcludedSubtreesBasePolicy() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
@@ -1204,6 +1260,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIPAddressNameConstraintsExcludedSubtrees() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
@@ -1215,6 +1272,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIPAddressNameConstraintsExcludedSubtreesBasePolicy() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsExcludedSubtrees(
@@ -1226,6 +1284,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDirectoryNameConstraintsExcludedSubtrees() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
@@ -1239,6 +1298,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDirectoryNameConstraintsExcludedSubtreesBasePolicy() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
@@ -1252,6 +1312,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDNSNameConstraintsPermittedSubtrees() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
@@ -1263,6 +1324,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDNSNameConstraintsPermittedSubtreesBasePolicy() async throws {
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
@@ -1274,6 +1336,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIPAddressNameConstraintsPermittedSubtrees() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
@@ -1285,6 +1348,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIPAddressNameConstraintsPermittedSubtreesBasePolicy() async throws {
         for (ipAddress, constraint, match) in IPAddressNameTests.fixtures {
             try await self.nameconstraintsPermittedSubtrees(
@@ -1296,6 +1360,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDirectoryNameConstraintsPermittedSubtrees() async throws {
         // Fun fact! These tests require additional permitted subtrees, because they _also_ have to match the subject names
         // of the certificates. So let's add those too to omit them from the testing.
@@ -1320,6 +1385,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDirectoryNameConstraintsPermittedSubtreesBasePolicy() async throws {
         // Fun fact! These tests require additional permitted subtrees, because they _also_ have to match the subject names
         // of the certificates. So let's add those too to omit them from the testing.
@@ -1344,6 +1410,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func allExcludedSubtreesAreEvaluated(_ policyFactory: PolicyFactory) async throws {
         // This confirms that so long as there exists _a_ constraint, it matches, even if there are others.
         let names: [GeneralName] = [
@@ -1393,14 +1460,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAllExcludedSubtreesAreEvaluated() async throws {
         try await self.allExcludedSubtreesAreEvaluated(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAllExcludedSubtreesAreEvaluatedBasePolicy() async throws {
         try await self.allExcludedSubtreesAreEvaluated(.nameConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func subtreesOfUnknownTypeAlwaysFail(_ policyFactory: PolicyFactory) async throws {
         let subtrees: [GeneralName] = try [
             .otherName(.init(typeID: [1, 2, 1, 1], value: ASN1Any(erasing: ASN1Null()))),
@@ -1468,15 +1538,18 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSubtreesOfUnknownTypeAlwaysFail() async throws {
         try await self.subtreesOfUnknownTypeAlwaysFail(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSubtreesOfUnknownTypeAlwaysFailBasePolicy() async throws {
         try await self.subtreesOfUnknownTypeAlwaysFail(.nameConstraints)
     }
 
     // This is a NameConstraints extension that is invalid gibberish
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     private static let brokenNameConstraints = Certificate.Extension(
         oid: .X509ExtensionID.nameConstraints,
         critical: true,
@@ -1484,12 +1557,14 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
     )
 
     // This is a SAN extension that is invalid gibberish
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     private static let brokenSubjectAlternativeName = Certificate.Extension(
         oid: .X509ExtensionID.subjectAlternativeName,
         critical: true,
         value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     )
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func brokenExtensionsPreventValidation(_ policyFactory: PolicyFactory) async throws {
         let alternativeRoot = TestPKI.issueCA(
             extensions: try! Certificate.Extensions {
@@ -1553,14 +1628,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testBrokenExtensionsPreventValidation() async throws {
         try await self.brokenExtensionsPreventValidation(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testBrokenExtensionsPreventValidationBasePolicy() async throws {
         try await self.brokenExtensionsPreventValidation(.nameConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func excludedSubtreesBeatPermittedSubtrees(_ policyFactory: PolicyFactory) async throws {
         let name = try! DistinguishedName {
             CommonName("Example")
@@ -1608,14 +1686,17 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExcludedSubtreesBeatPermittedSubtrees() async throws {
         try await self.excludedSubtreesBeatPermittedSubtrees(.rfc5280)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testExcludedSubtreesBeatPermittedSubtreesBasePolicy() async throws {
         try await self.excludedSubtreesBeatPermittedSubtrees(.nameConstraints)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIgnoresKeyUsage() async throws {
         // This test doesn't have a base policy version, only the combined policy does this.
         let alternativeIntermediate = TestPKI.issueIntermediate(
@@ -1657,6 +1738,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         XCTAssertEqual(chain, [leaf, alternativeIntermediate, TestPKI.unconstrainedCA])
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testFailsOnWeirdCriticalExtensionInLeaf() async throws {
         // This test doesn't have a base policy version, only the combined policy does this.
         let leaf = TestPKI.issueLeaf(
@@ -1684,8 +1766,9 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
     }
 }
 
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+// All tests in the class are deprecated. A duplicated version of this class tests the new API.
 final class RFC5280PolicyURINameTests1Deprecated: RFC5280PolicyBaseDeprecated {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testURINameConstraintsExcludedSubtrees() async throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
@@ -1723,8 +1806,10 @@ final class RFC5280PolicyURINameTests1Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 }
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+
+// All tests in the class are deprecated. A duplicated version of this class tests the new API.
 final class RFC5280PolicyURINameTests2Deprecated: RFC5280PolicyBaseDeprecated {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testURINameConstraintsExcludedSubtreesBasePolicy() async throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
@@ -1762,8 +1847,10 @@ final class RFC5280PolicyURINameTests2Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 }
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+
+// All tests in the class are deprecated. A duplicated version of this class tests the new API.
 final class RFC5280PolicyURINameTests3Deprecated: RFC5280PolicyBaseDeprecated {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testURINameConstraintsPermittedSubtrees() async throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
@@ -1801,8 +1888,10 @@ final class RFC5280PolicyURINameTests3Deprecated: RFC5280PolicyBaseDeprecated {
         }
     }
 }
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+
+// All tests in the class are deprecated. A duplicated version of this class tests the new API.
 final class RFC5280PolicyURINameTests4Deprecated: RFC5280PolicyBaseDeprecated {
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testURINameConstraintsPermittedSubtreesBasePolicy() async throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
@@ -2032,8 +2121,6 @@ private enum TestPKI {
         )
     }
 }
-
-// MARK: New API
 
 class RFC5280PolicyBase: XCTestCase {
     enum PolicyFactory {

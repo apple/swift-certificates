@@ -23,7 +23,7 @@ import _CryptoExtras
 import SwiftASN1
 @testable @_spi(CMS) import X509
 
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
+// All tests in this class are deprecated. A new version of this test uses the new API.
 final class CMSTestsDeprecated: XCTestCase {
     static let rootCertKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
     static let rootCertName = try! DistinguishedName {
@@ -180,6 +180,7 @@ final class CMSTestsDeprecated: XCTestCase {
         RFC5280Policy()
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
         var serializer = DER.Serializer()
         try serializer.serialize(value)
@@ -187,6 +188,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertEqual(parsed, value)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testIssuerAndSerialNumber() throws {
         try assertRoundTrips(
             CMSIssuerAndSerialNumber(
@@ -199,6 +201,7 @@ final class CMSTestsDeprecated: XCTestCase {
             )
         )
     }
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSignerIdentifier() throws {
         try assertRoundTrips(
             CMSSignerIdentifier.issuerAndSerialNumber(
@@ -216,6 +219,7 @@ final class CMSTestsDeprecated: XCTestCase {
             CMSSignerIdentifier.subjectKeyIdentifier(.init(keyIdentifier: [10, 20, 30, 40]))
         )
     }
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCMSSignerInfo() throws {
         try assertRoundTrips(
             CMSSignerInfo(
@@ -281,6 +285,7 @@ final class CMSTestsDeprecated: XCTestCase {
             "unexpected signerIdentifier for version should throw"
         )
     }
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testEncapsulatedContentInfo() throws {
         try assertRoundTrips(
             CMSEncapsulatedContentInfo(
@@ -295,6 +300,7 @@ final class CMSTestsDeprecated: XCTestCase {
             )
         )
     }
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSignedData() throws {
         try assertRoundTrips(
             CMSSignedData(
@@ -367,6 +373,7 @@ final class CMSTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testContentInfo() throws {
         let privateKey = P384.Signing.PrivateKey()
         try assertRoundTrips(
@@ -405,6 +412,7 @@ final class CMSTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSimpleSigningVerifying() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -433,6 +441,7 @@ final class CMSTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testAttachedSigningVerifying() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -463,6 +472,7 @@ final class CMSTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testForbidsDetachedSignatureVerifyingAsAttached() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -482,6 +492,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidAttachedSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testToleratesAttachedSignatureVerifyingAsDetached() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -503,6 +514,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidDetachedSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testParsingSimpleSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -520,6 +532,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertEqual(signatureBytes, try signature.encodedBytes)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testParsingSignatureWithIntermediates() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -538,6 +551,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertEqual(signatureBytes, try signature.encodedBytes)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testToleratesAdditionalSignerInfos() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -562,6 +576,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertEqual(try cmsData.encodedBytes, try signature.encodedBytes)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireCMSV1SignatureOnCMSSignatureType() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -579,6 +594,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertThrowsError(try CMSSignature(derEncoded: cmsData.encodedBytes))
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRejectsSignatureWithoutRoot() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -596,6 +612,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testPoliciesAreApplied() async throws {
         final class RejectAllPolicy: VerifierPolicy {
             let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
@@ -625,6 +642,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireCMSSignedData() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -644,6 +662,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireCMSV1SignatureWhenInvalidV3SignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -667,6 +686,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireCMSV1SignatureEvenOnTheSignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -689,6 +709,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireCMSV1SignatureEvenWhenV3IsCorrectlyAttestedOnSignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -714,6 +735,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCMSV3Signature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -740,6 +762,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCMSV4SignatureWithV1SignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -762,6 +785,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCMSV4SignatureWithV3SignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -789,6 +813,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCMSV4SignatureWithInvalidV3SignerInfo() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -813,6 +838,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCMSAttachedSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let cmsData = try CMS.generateSignedTestData(
@@ -830,6 +856,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testForbidsAdditionalSignerInfos() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -852,6 +879,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireCMSDataTypeInEncapContent() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -874,6 +902,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireAttachedSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let cmsData = try CMS.generateSignedTestData(
@@ -891,6 +920,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireDetachedSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let cmsData = try CMS.generateSignedTestData(
@@ -909,6 +939,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testRequireValidDetachedSignatureWhenTolerated() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -932,6 +963,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDigestAlgorithmsNotPresentInTheMainSetAreRejected() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -954,6 +986,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDigestAlgorithmAndSigningAlgorithmMismatch() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -978,6 +1011,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testInvalidSignatureIsRejected() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
@@ -1003,6 +1037,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testNotInsertingIntermediatesLeadsToCertValidationFailures() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -1020,6 +1055,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCanProvideIntermediatesDuringVerification() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -1040,6 +1076,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testCanProvideIntermediatesInSigningProcess() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -1060,6 +1097,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDuplicateIntermediatesIsNotAnIssue() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -1081,6 +1119,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSigningWithRSA() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1099,6 +1138,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSigningWithEd25519() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1117,6 +1157,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSigningWithSigningTimeSignedAttr() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1136,6 +1177,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSigningWithSigningTimeSignedAttrAndSHA512() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1155,6 +1197,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSigningAttachedWithSigningTimeSignedAttr() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1176,6 +1219,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testToleratesAttachedSignatureWithSigningTimeSignedAttrVerifyingAsDetached() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1197,6 +1241,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertValidSignatureDeprecated(isValidDetachedSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testForbidsDetachedSignatureWithSigningTimeSignedAttrVerifyingAsAttached() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         let signature = try CMS.sign(
@@ -1216,6 +1261,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidAttachedSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSigningContentBytesWithSigningTimeSignedAttrsIsInvalidSignature() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -1238,6 +1284,7 @@ final class CMSTestsDeprecated: XCTestCase {
         XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testSubjectKeyIdentifierIsCorrectlyImplicitylyTagged() throws {
         let implicitlyTaggedSki: [UInt8] = [
             0x80,  // Context-specific tag [0]
@@ -1251,36 +1298,42 @@ final class CMSTestsDeprecated: XCTestCase {
         )
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDefaultRSASignatureAlgorithm() throws {
         let privateKey = try Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
         let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
         XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "sha256WithRSAEncryption")
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDefaultP256SignatureAlgorithm() throws {
         let privateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
         let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
         XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA256")
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDefaultP384SignatureAlgorithm() throws {
         let privateKey = Certificate.PrivateKey(P384.Signing.PrivateKey())
         let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
         XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA384")
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDefaultP521SignatureAlgorithm() throws {
         let privateKey = Certificate.PrivateKey(P521.Signing.PrivateKey())
         let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
         XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ecdsaWithSHA512")
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     func testDefaultEd25519SignatureAlgorithm() throws {
         let privateKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
         let signerInfo = try self.signAndExtractSignerInfo(privateKey: privateKey)
         XCTAssertEqual(signerInfo?.signatureAlgorithm.description, "ed25519")
     }
 
+    @available(*, deprecated, message: "deprecated because it uses deprecated API")
     private func signAndExtractSignerInfo(privateKey: Certificate.PrivateKey) throws -> CMSSignerInfo? {
         let name = try DistinguishedName { CommonName("test") }
         let certificate = try Certificate(
