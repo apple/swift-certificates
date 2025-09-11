@@ -256,7 +256,7 @@ public enum CMS: Sendable {
         diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
         microsoftCompatible: Bool = false,
         @PolicyBuilder policy: () throws -> some VerifierPolicy
-    ) async rethrows -> SignatureValidationResult {
+    ) async rethrows -> SignatureVerificationResult {
         do {
             // this means we parse the blob twice, but that's probably better than repeating a lot of code.
             let parsedSignature = try CMSContentInfo(berEncoded: ArraySlice(signatureBytes))
@@ -316,16 +316,7 @@ public enum CMS: Sendable {
             case .invalidCMSBlock(let info):
                 return .failure(.invalidCMSBlock(VerificationError.InvalidCMSBlock(reason: info.reason)))
             case .unableToValidateSigner(let info):
-                return .failure(
-                    .unableToValidateSigner(
-                        VerificationError.SignerValidationFailure(
-                            validationFailures: info.validationFailures.map {
-                                .init(chain: $0.chain, policyFailureReason: $0.policyFailureReason)
-                            },
-                            signer: info.signer
-                        )
-                    )
-                )
+                return .failure(.unableToValidateSigner(info))
             }
         }
     }
@@ -344,7 +335,7 @@ public enum CMS: Sendable {
         microsoftCompatible: Bool = false,
         allowAttachedContent: Bool = false,
         @PolicyBuilder policy: () throws -> some VerifierPolicy
-    ) async rethrows -> SignatureValidationResult {
+    ) async rethrows -> SignatureVerificationResult {
         let signedData: CMSSignedData
         let signingCert: Certificate
         do {
@@ -523,7 +514,7 @@ public enum CMS: Sendable {
         case .validCertificate:
             return .success(.init(signer: signingCert))
         case .couldNotValidate(let validationFailures):
-            return .failure(.unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert)))
+            return .failure(.unableToValidateSigner(.init(policyFailures: validationFailures, signer: signingCert)))
         }
     }
 
@@ -533,12 +524,8 @@ public enum CMS: Sendable {
         case unexpectedCMSType
     }
 
-    @available(*, deprecated, renamed: "SignatureValidationResult")
     @_spi(CMS)
     public typealias SignatureVerificationResult = Result<Valid, VerificationError>
-
-    @_spi(CMS)
-    public typealias SignatureValidationResult = Result<Valid, Invalid>
 
     public struct Valid: Hashable, Sendable {
         public var signer: Certificate
@@ -549,19 +536,31 @@ public enum CMS: Sendable {
         }
     }
 
-    @available(*, deprecated, renamed: "Invalid")
     @_spi(CMS) public enum VerificationError: Swift.Error, Hashable {
         case unableToValidateSigner(SignerValidationFailure)
         case invalidCMSBlock(InvalidCMSBlock)
 
         public struct SignerValidationFailure: Hashable, Swift.Error {
-            public var validationFailures: [VerificationResult.PolicyFailure]
+            @available(*, deprecated, renamed: "policyFailures")
+            public var validationFailures: [VerificationResult.PolicyFailure] {
+                get { self.policyFailures.map { .init($0) } }
+                set { self.policyFailures = newValue.map { $0.upgrade() } }
+            }
+
+            public var policyFailures: [CertificateValidationResult.PolicyFailure]
 
             public var signer: Certificate
 
+            @available(*, deprecated, renamed: "init(failures:signer:)")
             @inlinable
             public init(validationFailures: [VerificationResult.PolicyFailure], signer: Certificate) {
-                self.validationFailures = validationFailures
+                self.policyFailures = validationFailures.map { $0.upgrade() }
+                self.signer = signer
+            }
+
+            @inlinable
+            public init(policyFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
+                self.policyFailures = policyFailures
                 self.signer = signer
             }
         }

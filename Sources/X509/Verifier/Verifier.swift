@@ -166,7 +166,7 @@ public struct Verifier<Policy: VerifierPolicy> {
             return .validCertificate(Array(ValidatedCertificateChain))
         case .couldNotValidate(let policyFailures):
             return .couldNotValidate(
-                policyFailures.map { .init(chain: $0.chain, policyFailureReason: $0.policyFailureReason) }
+                policyFailures.map { .init($0) }
             )
         }
     }
@@ -229,6 +229,17 @@ extension VerificationResult {
         public init(chain: UnverifiedCertificateChain, policyFailureReason: PolicyFailureReason) {
             self.chain = chain
             self.policyFailureReason = policyFailureReason
+        }
+
+        @inlinable
+        init(_ other: CertificateValidationResult.PolicyFailure) {
+            self.chain = other.chain
+            self.policyFailureReason = other.policyFailureReason
+        }
+
+        @inlinable
+        func upgrade() -> CertificateValidationResult.PolicyFailure {
+            .init(chain: self.chain, policyFailureReason: self.policyFailureReason)
         }
     }
 }

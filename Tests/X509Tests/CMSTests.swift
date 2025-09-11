@@ -429,7 +429,7 @@ final class CMSTestsDeprecated: XCTestCase {
             trustRoots: CertificateStore([Self.rootCert]),
             diagnosticCallback: log.append(_:)
         ) { Self.defaultPolicies }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
 
         XCTAssertEqual(
             log,
@@ -460,7 +460,7 @@ final class CMSTestsDeprecated: XCTestCase {
             diagnosticCallback: log.append(_:),
             allowAttachedContent: true
         ) { Self.defaultPolicies }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
 
         XCTAssertEqual(
             log,
@@ -489,7 +489,7 @@ final class CMSTestsDeprecated: XCTestCase {
             trustRoots: CertificateStore([Self.rootCert]),
             diagnosticCallback: log.append(_:)
         ) { Self.defaultPolicies }
-        XCTAssertInvalidCMSBlockDeprecated(isValidAttachedSignature)
+        XCTAssertInvalidCMSBlock(isValidAttachedSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -511,7 +511,7 @@ final class CMSTestsDeprecated: XCTestCase {
             diagnosticCallback: log.append(_:),
             allowAttachedContent: true
         ) { Self.defaultPolicies }
-        XCTAssertValidSignatureDeprecated(isValidDetachedSignature)
+        XCTAssertValidSignature(isValidDetachedSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -609,7 +609,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: signature,
             trustRoots: CertificateStore([Self.secondRootCert])
         ) {}
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -639,7 +639,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             RejectAllPolicy()
         }
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -659,7 +659,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -683,7 +683,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -706,7 +706,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -732,7 +732,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -759,7 +759,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -782,7 +782,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -810,7 +810,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -835,7 +835,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -853,7 +853,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -876,7 +876,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -899,7 +899,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -917,7 +917,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -936,7 +936,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -960,7 +960,7 @@ final class CMSTestsDeprecated: XCTestCase {
             trustRoots: CertificateStore([Self.rootCert]),
             allowAttachedContent: true
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -983,7 +983,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1008,7 +1008,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1034,7 +1034,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: cmsData.encodedBytes,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1052,7 +1052,7 @@ final class CMSTestsDeprecated: XCTestCase {
             signatureBytes: signature,
             trustRoots: CertificateStore([Self.rootCert])
         ) {}
-        XCTAssertUnableToValidateSignerDeprecated(isValidSignature)
+        XCTAssertUnableToValidateSigner(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1073,7 +1073,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1094,7 +1094,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1116,7 +1116,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1135,7 +1135,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1154,7 +1154,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1174,7 +1174,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1194,7 +1194,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1216,7 +1216,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidSignature)
+        XCTAssertValidSignature(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1238,7 +1238,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertValidSignatureDeprecated(isValidDetachedSignature)
+        XCTAssertValidSignature(isValidDetachedSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1258,7 +1258,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertInvalidCMSBlockDeprecated(isValidAttachedSignature)
+        XCTAssertInvalidCMSBlock(isValidAttachedSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1281,7 +1281,7 @@ final class CMSTestsDeprecated: XCTestCase {
         ) {
             Self.defaultPolicies
         }
-        XCTAssertInvalidCMSBlockDeprecated(isValidSignature)
+        XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
@@ -1361,42 +1361,6 @@ extension DERSerializable {
             try serializer.serialize(self)
             return serializer.serializedBytes
         }
-    }
-}
-
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
-private func XCTAssertValidSignatureDeprecated(
-    _ result: CMS.SignatureVerificationResult,
-    file: StaticString = #filePath,
-    line: UInt = #line
-) {
-    guard case .success = result else {
-        XCTFail("Expected valid signature, got \(result)", file: file, line: line)
-        return
-    }
-}
-
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
-private func XCTAssertInvalidCMSBlockDeprecated(
-    _ result: CMS.SignatureVerificationResult,
-    file: StaticString = #filePath,
-    line: UInt = #line
-) {
-    guard case .failure(.invalidCMSBlock) = result else {
-        XCTFail("Expected invalid CMS Block, got \(result)", file: file, line: line)
-        return
-    }
-}
-
-@available(*, deprecated, message: "deprecated because it uses deprecated API")
-private func XCTAssertUnableToValidateSignerDeprecated(
-    _ result: CMS.SignatureVerificationResult,
-    file: StaticString = #filePath,
-    line: UInt = #line
-) {
-    guard case .failure(.unableToValidateSigner) = result else {
-        XCTFail("Expected unable to validate signer, got \(result)", file: file, line: line)
-        return
     }
 }
 
@@ -2678,7 +2642,7 @@ final class CMSTests: XCTestCase {
 }
 
 private func XCTAssertValidSignature(
-    _ result: CMS.SignatureValidationResult,
+    _ result: CMS.SignatureVerificationResult,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
@@ -2689,7 +2653,7 @@ private func XCTAssertValidSignature(
 }
 
 private func XCTAssertInvalidCMSBlock(
-    _ result: CMS.SignatureValidationResult,
+    _ result: CMS.SignatureVerificationResult,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
@@ -2700,7 +2664,7 @@ private func XCTAssertInvalidCMSBlock(
 }
 
 private func XCTAssertUnableToValidateSigner(
-    _ result: CMS.SignatureValidationResult,
+    _ result: CMS.SignatureVerificationResult,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
