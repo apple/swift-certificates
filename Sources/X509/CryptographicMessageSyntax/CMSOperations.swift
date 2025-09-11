@@ -499,37 +499,6 @@ public enum CMS: Sendable {
             self = .invalidCMSBlock(.init(reason: invalidCMSBlockReason))
         }
     }
-
-    @_spi(CMS) public enum Invalid: Swift.Error, Hashable {
-        case unableToValidateSigner(SignerValidationFailure)
-        case invalidCMSBlock(InvalidCMSBlock)
-
-        public struct SignerValidationFailure: Hashable, Swift.Error {
-            public var validationFailures: [CertificateValidationResult.PolicyFailure]
-
-            public var signer: Certificate
-
-            @inlinable
-            public init(validationFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
-                self.validationFailures = validationFailures
-                self.signer = signer
-            }
-        }
-
-        public struct InvalidCMSBlock: Hashable, Swift.Error {
-            public var reason: String
-
-            @inlinable
-            public init(reason: String) {
-                self.reason = reason
-            }
-        }
-
-        @inlinable
-        internal init(invalidCMSBlockReason: String) {
-            self = .invalidCMSBlock(.init(reason: invalidCMSBlockReason))
-        }
-    }
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
