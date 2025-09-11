@@ -210,12 +210,6 @@ public enum CMS: Sendable {
         return try CMSContentInfo(signedData)
     }
 
-    @available(
-        *,
-        deprecated,
-        renamed:
-            "validateAttachedSignature(signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:policy:)"
-    )
     @_spi(CMS)
     @inlinable
     public static func isValidAttachedSignature<SignatureBytes: DataProtocol>(
@@ -249,81 +243,7 @@ public enum CMS: Sendable {
 
     @_spi(CMS)
     @inlinable
-    public static func validateAttachedSignature<SignatureBytes: DataProtocol>(
-        signatureBytes: SignatureBytes,
-        additionalIntermediateCertificates: [Certificate] = [],
-        trustRoots: CertificateStore,
-        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
-        microsoftCompatible: Bool = false,
-        @PolicyBuilder policy: () throws -> some VerifierPolicy
-    ) async rethrows -> SignatureVerificationResult {
-        do {
-            // this means we parse the blob twice, but that's probably better than repeating a lot of code.
-            let parsedSignature = try CMSContentInfo(berEncoded: ArraySlice(signatureBytes))
-            guard let attachedData = try parsedSignature.signedData?.encapContentInfo.eContent else {
-                return .failure(.init(invalidCMSBlockReason: "No attached content"))
-            }
-
-            return try await validateSignature(
-                dataBytes: attachedData.bytes,
-                signatureBytes: signatureBytes,
-                trustRoots: trustRoots,
-                diagnosticCallback: diagnosticCallback,
-                microsoftCompatible: microsoftCompatible,
-                allowAttachedContent: true,
-                policy: policy
-            )
-        } catch {
-            return .failure(.invalidCMSBlock(.init(reason: String(describing: error))))
-        }
-    }
-
-    @available(
-        *,
-        deprecated,
-        renamed:
-            "validateSignature(dataBytes:signatureBytes:additionalIntermediateCertificates:trustRoots:diagnosticCallback:microsoftCompatible:allowAttachedContent:policy:)"
-    )
-    @_spi(CMS)
-    @inlinable
     public static func isValidSignature<
-        DataBytes: DataProtocol,
-        SignatureBytes: DataProtocol
-    >(
-        dataBytes: DataBytes,
-        signatureBytes: SignatureBytes,
-        additionalIntermediateCertificates: [Certificate] = [],
-        trustRoots: CertificateStore,
-        diagnosticCallback: ((VerificationDiagnostic) -> Void)? = nil,
-        microsoftCompatible: Bool = false,
-        allowAttachedContent: Bool = false,
-        @PolicyBuilder policy: () throws -> some VerifierPolicy
-    ) async rethrows -> SignatureVerificationResult {
-        switch try await validateSignature(
-            dataBytes: dataBytes,
-            signatureBytes: signatureBytes,
-            additionalIntermediateCertificates: additionalIntermediateCertificates,
-            trustRoots: trustRoots,
-            diagnosticCallback: diagnosticCallback,
-            microsoftCompatible: microsoftCompatible,
-            allowAttachedContent: allowAttachedContent,
-            policy: policy
-        ) {
-        case .success(let valid):
-            return .success(valid)
-        case .failure(let invalid):
-            switch invalid {
-            case .invalidCMSBlock(let info):
-                return .failure(.invalidCMSBlock(VerificationError.InvalidCMSBlock(reason: info.reason)))
-            case .unableToValidateSigner(let info):
-                return .failure(.unableToValidateSigner(info))
-            }
-        }
-    }
-
-    @_spi(CMS)
-    @inlinable
-    public static func validateSignature<
         DataBytes: DataProtocol,
         SignatureBytes: DataProtocol
     >(
