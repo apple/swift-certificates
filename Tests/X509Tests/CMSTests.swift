@@ -186,7 +186,6 @@ final class CMSTests: XCTestCase {
         XCTAssertEqual(parsed, value)
     }
 
-
     func testIssuerAndSerialNumber() throws {
         try assertRoundTrips(
             CMSIssuerAndSerialNumber(
@@ -1321,21 +1320,39 @@ final class CMSTests: XCTestCase {
         let otherPolicyFailureReason = PolicyFailureReason("not a real failure, but different")
 
         // Create policy failures and check their conversion.
-        let policyFailureDeprecated1 = VerificationResult.PolicyFailure(chain: unverifiedCertificateChain, policyFailureReason: policyFailureReason)
-        let policyFailure1 = CertificateValidationResult.PolicyFailure(chain: unverifiedCertificateChain, policyFailureReason: policyFailureReason)
+        let policyFailureDeprecated1 = VerificationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: policyFailureReason
+        )
+        let policyFailure1 = CertificateValidationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: policyFailureReason
+        )
         XCTAssertEqual(policyFailureDeprecated1.upgrade(), policyFailure1)
         XCTAssertEqual(policyFailureDeprecated1, VerificationResult.PolicyFailure(policyFailure1))
 
         // Create SignerValidationFailure with both constructors and check that they result in the same data.
-        let usingDeprecatedConstructor = CMS.VerificationError.SignerValidationFailure(validationFailures: [policyFailureDeprecated1], signer: certificate)
-        var usingNewConstructor = CMS.VerificationError.SignerValidationFailure(policyFailures: [policyFailure1], signer: certificate)
+        let usingDeprecatedConstructor = CMS.VerificationError.SignerValidationFailure(
+            validationFailures: [policyFailureDeprecated1],
+            signer: certificate
+        )
+        var usingNewConstructor = CMS.VerificationError.SignerValidationFailure(
+            policyFailures: [policyFailure1],
+            signer: certificate
+        )
         XCTAssertEqual(usingDeprecatedConstructor.validationFailures, usingNewConstructor.validationFailures)
         XCTAssertEqual(usingDeprecatedConstructor.policyFailures, usingNewConstructor.policyFailures)
         XCTAssertEqual(usingDeprecatedConstructor.signer, usingNewConstructor.signer)
 
         // Create PolicyFailures that differ from our previous failures.
-        let policyFailure2 = CertificateValidationResult.PolicyFailure(chain: unverifiedCertificateChain, policyFailureReason: otherPolicyFailureReason)
-        let policyFailureDeprecated2 = VerificationResult.PolicyFailure(chain: unverifiedCertificateChain, policyFailureReason: otherPolicyFailureReason)
+        let policyFailure2 = CertificateValidationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: otherPolicyFailureReason
+        )
+        let policyFailureDeprecated2 = VerificationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: otherPolicyFailureReason
+        )
         XCTAssertNotEqual(policyFailure1, policyFailure2)
         XCTAssertNotEqual(policyFailureDeprecated1, policyFailureDeprecated2)
 
