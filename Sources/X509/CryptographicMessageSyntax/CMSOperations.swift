@@ -434,7 +434,7 @@ public enum CMS: Sendable {
         case .validCertificate:
             return .success(.init(signer: signingCert))
         case .couldNotValidate(let validationFailures):
-            return .failure(.unableToValidateSigner(.init(policyFailures: validationFailures, signer: signingCert)))
+            return .failure(.unableToValidateSigner(.init(validationFailures: validationFailures, signer: signingCert)))
         }
     }
 
@@ -479,8 +479,8 @@ public enum CMS: Sendable {
             }
 
             @inlinable
-            public init(policyFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
-                self.policyFailures = policyFailures
+            public init(validationFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
+                self.policyFailures = validationFailures
                 self.signer = signer
             }
         }

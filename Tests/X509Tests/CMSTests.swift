@@ -1337,7 +1337,7 @@ final class CMSTests: XCTestCase {
             signer: certificate
         )
         var usingNewConstructor = CMS.VerificationError.SignerValidationFailure(
-            policyFailures: [policyFailure1],
+            validationFailures: [policyFailure1],
             signer: certificate
         )
         XCTAssertEqual(usingDeprecatedConstructor.validationFailures, usingNewConstructor.validationFailures)
