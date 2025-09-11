@@ -29,10 +29,6 @@ public struct ValidatedCertificateChain: Sendable, Collection, RandomAccessColle
         self.validatedChain[index]
     }
 
-    public func index(after i: Index) -> Index {
-        self.validatedChain.index(after: i)
-    }
-
     /// Creates a `ValidatedCertificateChain` that represents a chain of trust. The chain should be ordered
     /// from leaf to root and (with the exception of the root) each certificate should be issued by the owner of the subsequent
     /// certificate. Since the leaf and root certificate can be identical, a certificate chain must have at least one element.
