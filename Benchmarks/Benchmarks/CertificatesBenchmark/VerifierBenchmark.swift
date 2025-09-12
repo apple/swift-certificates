@@ -53,7 +53,7 @@ func testTrivialChainBuilding() async -> Int {
         RFC5280Policy(validationTime: TestCertificate.referenceTime)
     }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -69,7 +69,7 @@ func testExtraRootsAreIgnored() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -85,7 +85,7 @@ func testPuttingRootsInTheIntermediariesIsntAProblem() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca1, TestCertificate.ca2])
     )
 
@@ -101,7 +101,7 @@ func testSupportsCrossSignedRootWithoutTrouble() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.ca1CrossSignedByCA2])
     )
 
@@ -117,7 +117,7 @@ func testBuildsTheShorterPathInTheCaseOfCrossSignedRoots() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([
             TestCertificate.intermediate1, TestCertificate.ca2CrossSignedByCA1, TestCertificate.ca1CrossSignedByCA2,
         ])
@@ -135,7 +135,7 @@ func testPrefersToUseIntermediatesWithSKIThatMatches() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1, TestCertificate.intermediate1WithoutSKIAKI])
     )
 
@@ -151,7 +151,7 @@ func testPrefersNoSKIToNonMatchingSKI() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([
             TestCertificate.intermediate1WithIncorrectSKIAKI, TestCertificate.intermediate1WithoutSKIAKI,
         ])
@@ -169,7 +169,7 @@ func testRejectsRootsThatDidNotSignTheCertBeforeThem() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([
             TestCertificate.ca1CrossSignedByCA2, TestCertificate.ca2CrossSignedByCA1, TestCertificate.intermediate1,
         ])
@@ -189,7 +189,7 @@ func testPolicyFailuresCanFindLongerPaths() async -> Int {
         RFC5280Policy(validationTime: TestCertificate.referenceTime)
     }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([
             TestCertificate.intermediate1, TestCertificate.ca2CrossSignedByCA1, TestCertificate.ca1CrossSignedByCA2,
         ])
@@ -207,7 +207,7 @@ func testSelfSignedCertsAreTrustedWhenInTrustStore() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.isolatedSelfSignedCert,
+        leaf: TestCertificate.isolatedSelfSignedCert,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -232,7 +232,7 @@ func testTrustRootsCanBeNonSelfSignedLeaves() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { IgnoreBasicConstraintsPolicy() }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -248,7 +248,7 @@ func testTrustRootsCanBeNonSelfSignedIntermediates() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -277,7 +277,7 @@ func testWePoliceCriticalExtensionsOnLeafCerts() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.isolatedSelfSignedCertWithWeirdCriticalExtension,
+        leaf: TestCertificate.isolatedSelfSignedCertWithWeirdCriticalExtension,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -293,7 +293,7 @@ func testMissingIntermediateFailsToBuild() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([])
     )
 
@@ -309,7 +309,7 @@ func testSelfSignedCertsAreRejectedWhenNotInTheTrustStore() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.isolatedSelfSignedCert,
+        leaf: TestCertificate.isolatedSelfSignedCert,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 
@@ -324,7 +324,7 @@ func testMissingRootFailsToBuild() async -> Int {
 
     var verifier = Verifier(rootCertificates: roots) { RFC5280Policy(validationTime: TestCertificate.referenceTime) }
     let result = await verifier.validate(
-        leafCertificate: TestCertificate.localhostLeaf,
+        leaf: TestCertificate.localhostLeaf,
         intermediates: CertificateStore([TestCertificate.intermediate1])
     )
 

@@ -425,7 +425,7 @@ public enum CMS: Sendable {
 
         var verifier = try Verifier(rootCertificates: trustRoots, policy: policy)
         let result = await verifier.validate(
-            leafCertificate: signingCert,
+            leaf: signingCert,
             intermediates: untrustedIntermediates,
             diagnosticCallback: diagnosticCallback
         )
@@ -461,13 +461,26 @@ public enum CMS: Sendable {
         case invalidCMSBlock(InvalidCMSBlock)
 
         public struct SignerValidationFailure: Hashable, Swift.Error {
-            public var validationFailures: [VerificationResult.PolicyFailure]
+            @available(*, deprecated, renamed: "policyFailures")
+            public var validationFailures: [VerificationResult.PolicyFailure] {
+                get { self.policyFailures.map { .init($0) } }
+                set { self.policyFailures = newValue.map { $0.upgrade() } }
+            }
+
+            public var policyFailures: [CertificateValidationResult.PolicyFailure]
 
             public var signer: Certificate
 
+            @available(*, deprecated, renamed: "init(failures:signer:)")
             @inlinable
             public init(validationFailures: [VerificationResult.PolicyFailure], signer: Certificate) {
-                self.validationFailures = validationFailures
+                self.policyFailures = validationFailures.map { $0.upgrade() }
+                self.signer = signer
+            }
+
+            @inlinable
+            public init(validationFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
+                self.policyFailures = validationFailures
                 self.signer = signer
             }
         }

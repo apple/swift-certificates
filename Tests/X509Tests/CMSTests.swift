@@ -1298,6 +1298,77 @@ final class CMSTests: XCTestCase {
         let contentInfo = try CMSContentInfo(derEncoded: signatureBytes)
         return try contentInfo.signedData?.signerInfos.first
     }
+
+    @available(*, deprecated, message: "testing that deprecated initializer and new initialize work as expected")
+    func testSignerValidationFailureInitializerDeprecation() throws {
+        // Generate input data.
+        let privateKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
+        let name = try DistinguishedName { CommonName("test") }
+        let certificate = try Certificate(
+            version: .v3,
+            serialNumber: .init(bytes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            publicKey: privateKey.publicKey,
+            notValidBefore: Date(),
+            notValidAfter: Date() + 3600,
+            issuer: name,
+            subject: name,
+            extensions: Certificate.Extensions {},
+            issuerPrivateKey: privateKey
+        )
+        let unverifiedCertificateChain = UnverifiedCertificateChain([certificate])
+        let policyFailureReason = PolicyFailureReason("not a real failure")
+        let otherPolicyFailureReason = PolicyFailureReason("not a real failure, but different")
+
+        // Create policy failures and check their conversion.
+        let policyFailureDeprecated1 = VerificationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: policyFailureReason
+        )
+        let policyFailure1 = CertificateValidationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: policyFailureReason
+        )
+        XCTAssertEqual(policyFailureDeprecated1.upgrade(), policyFailure1)
+        XCTAssertEqual(policyFailureDeprecated1, VerificationResult.PolicyFailure(policyFailure1))
+
+        // Create SignerValidationFailure with both constructors and check that they result in the same data.
+        let usingDeprecatedConstructor = CMS.VerificationError.SignerValidationFailure(
+            validationFailures: [policyFailureDeprecated1],
+            signer: certificate
+        )
+        var usingNewConstructor = CMS.VerificationError.SignerValidationFailure(
+            validationFailures: [policyFailure1],
+            signer: certificate
+        )
+        XCTAssertEqual(usingDeprecatedConstructor.validationFailures, usingNewConstructor.validationFailures)
+        XCTAssertEqual(usingDeprecatedConstructor.policyFailures, usingNewConstructor.policyFailures)
+        XCTAssertEqual(usingDeprecatedConstructor.signer, usingNewConstructor.signer)
+
+        // Create PolicyFailures that differ from our previous failures.
+        let policyFailure2 = CertificateValidationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: otherPolicyFailureReason
+        )
+        let policyFailureDeprecated2 = VerificationResult.PolicyFailure(
+            chain: unverifiedCertificateChain,
+            policyFailureReason: otherPolicyFailureReason
+        )
+        XCTAssertNotEqual(policyFailure1, policyFailure2)
+        XCTAssertNotEqual(policyFailureDeprecated1, policyFailureDeprecated2)
+
+        // Verify that different values override the old ones.
+        usingNewConstructor.validationFailures = [policyFailureDeprecated2]
+        XCTAssertNotEqual(usingNewConstructor.policyFailures, [policyFailure1])
+        XCTAssertEqual(usingNewConstructor.policyFailures, [policyFailure2])
+        // We can assign the same data to make them equal again.
+        usingNewConstructor.validationFailures = [policyFailureDeprecated1]
+        XCTAssertEqual(usingNewConstructor.policyFailures, [policyFailure1])
+        XCTAssertNotEqual(usingNewConstructor.policyFailures, [policyFailure2])
+        // And the other way around.
+        usingNewConstructor.policyFailures = [policyFailure2]
+        XCTAssertEqual(usingNewConstructor.validationFailures, [policyFailureDeprecated2])
+        XCTAssertNotEqual(usingNewConstructor.validationFailures, [policyFailureDeprecated1])
+    }
 }
 
 extension DERSerializable {
