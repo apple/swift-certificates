@@ -19,7 +19,7 @@ import SwiftASN1
 /// This DSL allows us to construct ``OneOfPolicies`` within a ``PolicyBuilder``.
 /// ```swift
 /// let verifier = Verifier(rootCertificates: CertificateStore()) {
-///     RFC5280Policy(validationTime: Date())
+///     RFC5280Policy()
 ///     OneOfPolicies {
 ///         PolicyA()
 ///         PolicyB()
@@ -176,7 +176,7 @@ extension OneOfPolicyBuilder {
 /// It does not require that both PolicyA and PolicyB are met.
 /// ```swift
 /// let verifier = Verifier(rootCertificates: CertificateStore()) {
-///     RFC5280Policy(validationTime: Date())
+///     RFC5280Policy()
 ///     OneOfPolicies {
 ///         PolicyA()
 ///         PolicyB()

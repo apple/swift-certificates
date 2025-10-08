@@ -231,34 +231,60 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
 
     private var storage: Storage
 
-    @available(
-        *,
-        deprecated,
-        renamed: "init(failureMode:requester:fixedValidationTime:)",
-        message: "Use init(failureMode:requester:fixedValidationTime:) instead."
-    )
-    public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
-        self.init(failureMode: failureMode, requester: requester, fixedValidationTime: validationTime)
-    }
-
-    /// Creates an instance with an optional *fixed* validation time.
-    ///
-    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
-    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
-    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the request is recent. A fixed time is a *specific*
-    ///   time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*, pass `nil` to
-    ///   `fixedValidationTime`.
-    ///
-    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
-    ///   comparison; the validation method may be invoked long after initialization.
-    public init(failureMode: OCSPFailureMode, requester: Requester, fixedValidationTime: Date? = nil) {
+    private init(failureMode: OCSPFailureMode, requester: Requester, expiryValidationTime: Date?) {
         self.storage = .init(
             failureMode: failureMode,
             requester: requester,
             requestHashAlgorithm: .insecureSha1,
             maxDuration: 10,
-            fixedValidationTime: fixedValidationTime
+            fixedValidationTime: expiryValidationTime
         )
+    }
+
+    @available(
+        *,
+        deprecated,
+        message:
+            "Use `init(failureMode:requester:)` (or `init(failureMode:requester:fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+    )
+    public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: validationTime)
+    }
+
+    @available(
+        *,
+        deprecated,
+        message:
+            "Use `init(failureMode:requester:)` (or `init(failureMode:requester:fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+    )
+    public init(failureMode: OCSPFailureMode, requester: Requester, fixedValidationTime: Date? = nil) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedValidationTime)
+    }
+
+    /// - Note: Certificate expiry is validated against the *current* time (evaluated at the point of validation)
+    ///
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    public init(failureMode: OCSPFailureMode, requester: Requester) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: nil)
+    }
+
+    /// Creates an instance with a **fixed** time to validate certificate expiry against (a predetermined time *either*
+    /// in the past or future)
+    ///
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    /// - Parameter fixedExpiryValidationTime: The *fixed* time to compare against when determining if the certificates
+    ///   in the chain have expired. A fixed time is a predetermined time, either in the past or future, but **not** the
+    ///   current time. To compare against the current time *at the point of validation*, use
+    ///   ``init(failureMode:requester:)``.
+    ///
+    /// - Warning: Only use this initializer if you want to validate the certificates against a *fixed* time. Most users
+    ///   should use ``init()``: the expiry of the certificates will be validated against the current time (evaluated at
+    ///   the point of validation) when using that initializer.
+    @_spi(FixedValidationTime)
+    public init(failureMode: OCSPFailureMode, requester: Requester, fixedExpiryValidationTime: Date) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedExpiryValidationTime)
     }
 
     // this method currently doesn't need to be mutating. However, we want to reserve the right to change our mind
@@ -521,7 +547,11 @@ extension OCSPVerifierPolicy.Storage {
             rootCertificates: CertificateStore([issuer])
         ) {
             OCSPResponderSigningPolicy(issuer: issuer)
-            RFC5280Policy(fixedValidationTime: self.fixedValidationTime)
+            if let fixedValidationTime = self.fixedValidationTime {
+                RFC5280Policy(fixedExpiryValidationTime: fixedValidationTime)
+            } else {
+                RFC5280Policy()
+            }
         }
 
         let validationResult = await verifier.validate(

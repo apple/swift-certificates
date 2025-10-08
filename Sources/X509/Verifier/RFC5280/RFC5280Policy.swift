@@ -56,37 +56,63 @@ public struct RFC5280Policy: VerifierPolicy, Sendable {
     let nameConstraintsPolicy: NameConstraintsPolicy
 
     @inlinable
-    @available(*, deprecated, renamed: "init(fixedValidationTime:)", message: "Use init(fixedValidationTime:) instead.")
-    public init(validationTime: Date) {
-        self.init(fixedValidationTime: validationTime)
+    // private but @inlinable
+    init(expiryPolicy: ExpiryPolicy?) {
+        self.versionPolicy = VersionPolicy()
+        self.expiryPolicy = expiryPolicy
+        self.basicConstraintsPolicy = BasicConstraintsPolicy()
+        self.nameConstraintsPolicy = NameConstraintsPolicy()
     }
 
-    /// Creates an instance with an optional *fixed* expiry validation time.
-    ///
-    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the certificates in the chain have expired. A fixed
-    ///   time is a *specific* time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*,
-    ///   pass `nil` to `fixedValidationTime`.
-    ///
-    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
-    ///   comparison; the validation method may be invoked long after initialization.
     @inlinable
-    public init(fixedValidationTime: Date? = nil) {
-        self.versionPolicy = VersionPolicy()
-        self.expiryPolicy = ExpiryPolicy(fixedValidationTime: fixedValidationTime)
-        self.basicConstraintsPolicy = BasicConstraintsPolicy()
-        self.nameConstraintsPolicy = NameConstraintsPolicy()
+    @available(
+        *,
+        deprecated,
+        message: "Use `init()` (or `init(fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+    )
+    public init(validationTime: Date) {
+        self.init(expiryPolicy: ExpiryPolicy(fixedValidationTime: validationTime))
     }
 
-    private init() {
-        self.versionPolicy = VersionPolicy()
-        self.expiryPolicy = nil
-        self.basicConstraintsPolicy = BasicConstraintsPolicy()
-        self.nameConstraintsPolicy = NameConstraintsPolicy()
+    @inlinable
+    @available(
+        *,
+        deprecated,
+        message: "Use `init()` (or `init(fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+    )
+    public init(fixedValidationTime: Date? = nil) {
+        if let fixedValidationTime {
+            self.init(expiryPolicy: ExpiryPolicy(fixedValidationTime: fixedValidationTime))
+        } else {
+            self.init(expiryPolicy: ExpiryPolicy())
+        }
+    }
+
+    /// - Note: Certificate expiry is validated against the *current* time (evaluated at the point of validation)
+    @inlinable
+    public init() {
+        self.init(expiryPolicy: ExpiryPolicy())
+    }
+
+    /// Creates an instance with a **fixed** time to validate certificate expiry against (a predetermined time *either*
+    /// in the past or future)
+    ///
+    /// - Parameter fixedExpiryValidationTime: The *fixed* time to compare against when determining if the certificates
+    ///   in the chain have expired. A fixed time is a predetermined time, either in the past or future, but **not** the
+    ///   current time. To compare against the current time *at the point of validation*, use ``init()``.
+    ///
+    /// - Warning: Only use this initializer if you want to validate the certificates against a *fixed* time. Most users
+    ///   should use ``init()``: the expiry of the certificates will be validated against the current time (evaluated at
+    ///   the point of validation) when using that initializer.
+    @inlinable
+    @_spi(FixedValidationTime)
+    public init(fixedExpiryValidationTime: Date) {
+        self.init(expiryPolicy: ExpiryPolicy(fixedValidationTime: fixedExpiryValidationTime))
     }
 
     @_spi(DisableValidityCheck)
     public static func withValidityCheckDisabled() -> RFC5280Policy {
-        return RFC5280Policy()
+        return RFC5280Policy(expiryPolicy: nil)
     }
 
     @inlinable
