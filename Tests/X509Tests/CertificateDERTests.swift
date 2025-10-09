@@ -19,7 +19,7 @@ import Foundation
 #endif
 import XCTest
 import SwiftASN1
-@testable @_spi(FixedValidationTime) import X509
+@testable @_spi(FixedExpiryValidationTime) import X509
 import Crypto
 import _CryptoExtras
 

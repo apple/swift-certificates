@@ -245,7 +245,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         *,
         deprecated,
         message:
-            "Use `init(failureMode:requester:)` (or `init(failureMode:requester:fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+            "Use init(failureMode:requester:) to validated expiry against the current time. Otherwise, to validate against a fixed time, import with @_spi(FixedExpiryValidationTime) and use init(failureMode:requester:fixedExpiryValidationTime:)."
     )
     public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
         self.init(failureMode: failureMode, requester: requester, expiryValidationTime: validationTime)
@@ -255,7 +255,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         *,
         deprecated,
         message:
-            "Use `init(failureMode:requester:)` (or `init(failureMode:requester:fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+            "Use init(failureMode:requester:) to validated expiry against the current time. Otherwise, to validate against a fixed time, import with @_spi(FixedExpiryValidationTime) and use init(failureMode:requester:fixedExpiryValidationTime:)."
     )
     public init(failureMode: OCSPFailureMode, requester: Requester, fixedValidationTime: Date? = nil) {
         self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedValidationTime)
@@ -282,7 +282,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
     /// - Warning: Only use this initializer if you want to validate the certificates against a *fixed* time. Most users
     ///   should use ``init()``: the expiry of the certificates will be validated against the current time (evaluated at
     ///   the point of validation) when using that initializer.
-    @_spi(FixedValidationTime)
+    @_spi(FixedExpiryValidationTime)
     public init(failureMode: OCSPFailureMode, requester: Requester, fixedExpiryValidationTime: Date) {
         self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedExpiryValidationTime)
     }

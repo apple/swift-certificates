@@ -15,7 +15,7 @@
 import XCTest
 @preconcurrency import Crypto
 import SwiftASN1
-@testable @_spi(FixedValidationTime) import X509
+@testable @_spi(FixedExpiryValidationTime) import X509
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else

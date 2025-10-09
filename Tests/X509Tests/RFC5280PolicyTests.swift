@@ -19,7 +19,7 @@ import Foundation
 #endif
 import XCTest
 import SwiftASN1
-@testable @_spi(DisableValidityCheck) @_spi(FixedValidationTime) import X509
+@testable @_spi(DisableValidityCheck) @_spi(FixedExpiryValidationTime) import X509
 @preconcurrency import Crypto
 
 // Everything in this test class is deprecated. A duplicated version of this class tests the new API.

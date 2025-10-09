@@ -68,7 +68,8 @@ public struct RFC5280Policy: VerifierPolicy, Sendable {
     @available(
         *,
         deprecated,
-        message: "Use `init()` (or `init(fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+        message:
+            "Use init() to validated expiry against the current time. Otherwise, to validate against a fixed time, import with @_spi(FixedExpiryValidationTime) and use init(fixedExpiryValidationTime:)."
     )
     public init(validationTime: Date) {
         self.init(expiryPolicy: ExpiryPolicy(fixedValidationTime: validationTime))
@@ -78,7 +79,8 @@ public struct RFC5280Policy: VerifierPolicy, Sendable {
     @available(
         *,
         deprecated,
-        message: "Use `init()` (or `init(fixedExpiryValidationTime:)` to validate expiry against a fixed time)"
+        message:
+            "Use init() to validated expiry against the current time. Otherwise, to validate against a fixed time, import with @_spi(FixedExpiryValidationTime) and use init(fixedExpiryValidationTime:)."
     )
     public init(fixedValidationTime: Date? = nil) {
         if let fixedValidationTime {
@@ -105,7 +107,7 @@ public struct RFC5280Policy: VerifierPolicy, Sendable {
     ///   should use ``init()``: the expiry of the certificates will be validated against the current time (evaluated at
     ///   the point of validation) when using that initializer.
     @inlinable
-    @_spi(FixedValidationTime)
+    @_spi(FixedExpiryValidationTime)
     public init(fixedExpiryValidationTime: Date) {
         self.init(expiryPolicy: ExpiryPolicy(fixedValidationTime: fixedExpiryValidationTime))
     }
