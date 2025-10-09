@@ -150,7 +150,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR for a signer.
+    /// Construct a CSR using a signature provider.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
@@ -159,7 +159,7 @@ public struct CertificateSigningRequest {
     ///   - version: The CSR version.
     ///   - subject: The ``DistinguishedName`` of the subject of this CSR
     ///   - publicKey: The public key associated with this CSR.
-    ///   - signer: The signer associated with this CSR.
+    ///   - signatureProvider: The signature provider associated with this CSR.
     ///   - attributes: The attributes associated with this CSR
     ///   - signatureAlgorithm: The signature algorithm to use for the signature on this CSR.
     @inlinable
@@ -167,7 +167,7 @@ public struct CertificateSigningRequest {
         version: Version,
         subject: DistinguishedName,
         publicKey: Certificate.PublicKey,
-        signer: some Certificate.Signer,
+        signatureProvider: some Certificate.SignatureProvider,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) throws {
@@ -180,7 +180,7 @@ public struct CertificateSigningRequest {
         self.signatureAlgorithm = signatureAlgorithm
 
         let infoBytes = try DER.Serializer.serialized(element: self.info)
-        self.signature = try signer.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try signatureProvider.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
         self.infoBytes = infoBytes[...]
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
@@ -188,7 +188,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR for a signer.
+    /// Construct a CSR using a signature provider.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
@@ -197,7 +197,7 @@ public struct CertificateSigningRequest {
     ///   - version: The CSR version.
     ///   - subject: The ``DistinguishedName`` of the subject of this CSR
     ///   - publicKey: The public key associated with this CSR.
-    ///   - signer: The signer associated with this CSR.
+    ///   - signatureProvider: The signature provider associated with this CSR.
     ///   - attributes: The attributes associated with this CSR
     ///   - signatureAlgorithm: The signature algorithm to use for the signature on this CSR.
     @inlinable
@@ -205,7 +205,7 @@ public struct CertificateSigningRequest {
         version: Version,
         subject: DistinguishedName,
         publicKey: Certificate.PublicKey,
-        signer: some Certificate.AsyncSigner,
+        signatureProvider: some Certificate.AsyncSignatureProvider,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws {
@@ -218,7 +218,7 @@ public struct CertificateSigningRequest {
         self.signatureAlgorithm = signatureAlgorithm
 
         let infoBytes = try DER.Serializer.serialized(element: self.info)
-        self.signature = try await signer.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try await signatureProvider.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
         self.infoBytes = infoBytes[...]
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)

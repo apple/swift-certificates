@@ -3,7 +3,7 @@ import Foundation
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
 
-    public protocol Signer: Sendable {
+    public protocol SignatureProvider: Sendable {
 
         /// Use the signer to sign the provided bytes with a given signature algorithm.
         ///
@@ -24,7 +24,7 @@ extension Certificate {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
 
-    public protocol AsyncSigner: Sendable {
+    public protocol AsyncSignatureProvider: Sendable {
 
         /// Use the signer to sign the provided bytes with a given signature algorithm.
         ///
