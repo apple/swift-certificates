@@ -242,7 +242,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerSigner: any Signer
+        issuerSigner: some Signer
     ) throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
