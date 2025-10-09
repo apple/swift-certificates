@@ -46,7 +46,7 @@ extension Certificate {
         }
 
         @inlinable
-        internal init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1BitString) throws {
+        public init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1BitString) throws {
             switch signatureAlgorithm {
             case .ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512:
                 let signature = try ECDSASignature(derEncoded: signatureBytes.bytes)
