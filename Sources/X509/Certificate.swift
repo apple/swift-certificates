@@ -230,7 +230,7 @@ public struct Certificate {
     ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
     ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
     ///   - extensions: The extensions on this certificate.
-    ///   - issuerSigner: The signer to use to sign this certificate.
+    ///   - issuerSignatureProvider: The signature provider to use to sign this certificate.
     @inlinable
     public init(
         version: Version,
@@ -242,7 +242,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerSigner: some Signer
+        issuerSignatureProvider: some SignatureProvider
     ) throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
@@ -260,7 +260,7 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signature = try issuerSigner.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try issuerSignatureProvider.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
@@ -284,7 +284,7 @@ public struct Certificate {
     ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
     ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
     ///   - extensions: The extensions on this certificate.
-    ///   - issuerSigner: The signer to use to sign this certificate.
+    ///   - issuerSignatureProvider: The signature provider to use to sign this certificate.
     @inlinable
     public init(
         version: Version,
@@ -296,7 +296,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerSigner: some AsyncSigner
+        issuerSignatureProvider: some AsyncSignatureProvider
     ) async throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
@@ -314,7 +314,7 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signature = try await issuerSigner.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try await issuerSignatureProvider.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
