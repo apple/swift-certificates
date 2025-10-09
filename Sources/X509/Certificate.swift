@@ -268,6 +268,60 @@ public struct Certificate {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
+    /// Construct a certificate from constituent parts, signed by an custom signer.
+    ///
+    /// This API can be used to construct a ``Certificate`` directly, without an intermediary
+    /// Certificate Signing Request. The ``signature-swift.property`` for this certificate will be produced
+    /// automatically, using `issuerSigner`.
+    ///
+    /// - Parameters:
+    ///   - version: The X.509 specification version for this certificate.
+    ///   - serialNumber: The serial number of this certificate.
+    ///   - publicKey: The public key associated with this certificate.
+    ///   - notValidBefore: The date before which this certificate is not valid.
+    ///   - notValidAfter: The date after which this certificate is not valid.
+    ///   - issuer: The ``DistinguishedName`` of the issuer of this certificate.
+    ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
+    ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
+    ///   - extensions: The extensions on this certificate.
+    ///   - issuerSigner: The signer to use to sign this certificate.
+    @inlinable
+    public init(
+        version: Version,
+        serialNumber: SerialNumber,
+        publicKey: PublicKey,
+        notValidBefore: Date,
+        notValidAfter: Date,
+        issuer: DistinguishedName,
+        subject: DistinguishedName,
+        signatureAlgorithm: SignatureAlgorithm,
+        extensions: Extensions,
+        issuerSigner: some AsyncSigner
+    ) async throws {
+        self.tbsCertificate = TBSCertificate(
+            version: version,
+            serialNumber: serialNumber,
+            signature: signatureAlgorithm,
+            issuer: issuer,
+            validity: try Validity(
+                notBefore: .makeTime(from: notValidBefore),
+                notAfter: .makeTime(from: notValidAfter)
+            ),
+            subject: subject,
+            publicKey: publicKey,
+            extensions: extensions
+        )
+        self.signatureAlgorithm = signatureAlgorithm
+
+        let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
+        self.signature = try await issuerSigner.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.tbsCertificateBytes = tbsCertificateBytes
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(
+            element: AlgorithmIdentifier(self.signatureAlgorithm)
+        )[...]
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
+    }
+
     /// Construct a certificate from constituent parts, signed by an issuer key.
     ///
     /// This API can be used to construct a ``Certificate`` directly, without an intermediary
