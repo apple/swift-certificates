@@ -150,7 +150,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR using a signature provider.
+    /// Construct a CSR for a specific private key.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
@@ -158,29 +158,27 @@ public struct CertificateSigningRequest {
     /// - Parameters:
     ///   - version: The CSR version.
     ///   - subject: The ``DistinguishedName`` of the subject of this CSR
-    ///   - publicKey: The public key associated with this CSR.
-    ///   - signatureProvider: The signature provider associated with this CSR.
+    ///   - privateKey: The private key associated with this CSR.
     ///   - attributes: The attributes associated with this CSR
     ///   - signatureAlgorithm: The signature algorithm to use for the signature on this CSR.
     @inlinable
     public init(
         version: Version,
         subject: DistinguishedName,
-        publicKey: Certificate.PublicKey,
-        signatureProvider: some Certificate.PrivateKeyProtocol,
+        privateKey: some Certificate.PrivateKeyProtocol,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) throws {
         self.info = CertificationRequestInfo(
             version: version,
             subject: subject,
-            publicKey: publicKey,
+            publicKey: privateKey.publicKey,
             attributes: attributes
         )
         self.signatureAlgorithm = signatureAlgorithm
 
         let infoBytes = try DER.Serializer.serialized(element: self.info)
-        self.signature = try signatureProvider.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try privateKey.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
         self.infoBytes = infoBytes[...]
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
@@ -188,7 +186,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR using a signature provider.
+    /// Construct a CSR for a specific private key.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
@@ -196,29 +194,27 @@ public struct CertificateSigningRequest {
     /// - Parameters:
     ///   - version: The CSR version.
     ///   - subject: The ``DistinguishedName`` of the subject of this CSR
-    ///   - publicKey: The public key associated with this CSR.
-    ///   - signatureProvider: The signature provider associated with this CSR.
+    ///   - privateKey: The private key associated with this CSR.
     ///   - attributes: The attributes associated with this CSR
     ///   - signatureAlgorithm: The signature algorithm to use for the signature on this CSR.
     @inlinable
     public init(
         version: Version,
         subject: DistinguishedName,
-        publicKey: Certificate.PublicKey,
-        signatureProvider: some Certificate.AsyncPrivateKeyProtocol,
+        privateKey: some Certificate.AsyncPrivateKeyProtocol,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws {
         self.info = CertificationRequestInfo(
             version: version,
             subject: subject,
-            publicKey: publicKey,
+            publicKey: privateKey.publicKey,
             attributes: attributes
         )
         self.signatureAlgorithm = signatureAlgorithm
 
         let infoBytes = try DER.Serializer.serialized(element: self.info)
-        self.signature = try await signatureProvider.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try await privateKey.sign(bytes: infoBytes, signatureAlgorithm: signatureAlgorithm)
         self.infoBytes = infoBytes[...]
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
