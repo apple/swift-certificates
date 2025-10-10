@@ -183,7 +183,7 @@ extension Certificate {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension Certificate.PrivateKey: Certificate.SignatureProvider {}
+extension Certificate.PrivateKey: Certificate.PrivateKeyProtocol {}
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PrivateKey: Hashable {}
