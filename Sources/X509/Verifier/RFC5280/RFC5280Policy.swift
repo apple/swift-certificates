@@ -75,6 +75,14 @@ public struct RFC5280Policy: VerifierPolicy, Sendable {
         self.init(expiryPolicy: ExpiryPolicy(fixedValidationTime: validationTime))
     }
 
+    /// Creates an instance with an optional *fixed* expiry validation time.
+    ///
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the certificates in the chain have expired. A fixed
+    ///   time is a *specific* time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*,
+    ///   pass `nil` to `fixedValidationTime`.
+    ///
+    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
+    ///   comparison; the validation method may be invoked long after initialization.
     @inlinable
     @available(
         *,

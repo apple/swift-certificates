@@ -251,6 +251,16 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         self.init(failureMode: failureMode, requester: requester, expiryValidationTime: validationTime)
     }
 
+    /// Creates an instance with an optional *fixed* validation time.
+    ///
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the request is recent. A fixed time is a *specific*
+    ///   time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*, pass `nil` to
+    ///   `fixedValidationTime`.
+    ///
+    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
+    ///   comparison; the validation method may be invoked long after initialization.
     @available(
         *,
         deprecated,
@@ -261,10 +271,10 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Send
         self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedValidationTime)
     }
 
-    /// - Note: Certificate expiry is validated against the *current* time (evaluated at the point of validation)
-    ///
     /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
     /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    ///
+    /// - Note: Certificate expiry is validated against the *current* time (evaluated at the point of validation)
     public init(failureMode: OCSPFailureMode, requester: Requester) {
         self.init(failureMode: failureMode, requester: requester, expiryValidationTime: nil)
     }
