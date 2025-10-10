@@ -21,8 +21,8 @@ import SwiftASN1
 /// For Example, a simple ``Verifier`` with a simple policy can be constructed like this:
 /// ```swift
 /// let verifier = Verifier(rootCertificates: roots) {
-///     RFC5280Policy(validationTime: now)
-///     OCSPVerifierPolicy(failureMode: .soft, requester: requester, validationTime: now)
+///     RFC5280Policy()
+///     OCSPVerifierPolicy(failureMode: .soft, requester: requester)
 /// }
 /// ```
 @resultBuilder

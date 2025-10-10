@@ -19,7 +19,7 @@ import Foundation
 #endif
 import XCTest
 import SwiftASN1
-@testable import X509
+@testable @_spi(FixedExpiryValidationTime) import X509
 import Crypto
 import _CryptoExtras
 
@@ -544,7 +544,7 @@ final class CertificateDERTests: XCTestCase {
         // And we should be able to validate it.
         let roots = CertificateStore([issuer])
         var verifier = Verifier(rootCertificates: roots) {
-            RFC5280Policy(fixedValidationTime: now + 1)
+            RFC5280Policy(fixedExpiryValidationTime: now + 1)
         }
         let result = await verifier.validate(leafCertificate: parsed, intermediates: CertificateStore())
 
@@ -609,7 +609,7 @@ final class CertificateDERTests: XCTestCase {
         // And we should be able to validate it.
         let roots = CertificateStore([issuer])
         var verifier = Verifier(rootCertificates: roots) {
-            RFC5280Policy(fixedValidationTime: now + 1)
+            RFC5280Policy(fixedExpiryValidationTime: now + 1)
         }
         let result = await verifier.validate(leaf: parsed, intermediates: CertificateStore())
 

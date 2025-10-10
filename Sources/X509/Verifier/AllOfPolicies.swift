@@ -22,7 +22,7 @@ import SwiftASN1
 /// need to be met.
 /// ```swift
 /// let verifier = Verifier(rootCertificates: CertificateStore()) {
-///     RFC5280Policy(validationTime: Date())
+///     RFC5280Policy()
 ///     OneOfPolicies {
 ///         AllOfPolicies {
 ///             PolicyA()

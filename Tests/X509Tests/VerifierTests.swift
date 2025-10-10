@@ -541,7 +541,7 @@ final class VerifierTests: XCTestCase {
     }()
 
     @PolicyBuilder private static var defaultPolicy: some VerifierPolicy {
-        RFC5280Policy(fixedValidationTime: referenceTime)
+        RFC5280Policy()
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
