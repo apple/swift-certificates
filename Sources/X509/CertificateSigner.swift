@@ -3,9 +3,13 @@ import Foundation
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
 
-    public protocol SignatureProvider: Sendable {
+    public protocol PrivateKeyProtocol: Sendable {
 
-        /// Use the signer to sign the provided bytes with a given signature algorithm.
+        /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
+        /// this private key.
+        var publicKey: PublicKey { get }
+
+        /// Use the private key to sign the provided bytes with a given signature algorithm.
         ///
         /// - Parameters:
         ///   - bytes: The data to create the signature for.
@@ -24,9 +28,13 @@ extension Certificate {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
 
-    public protocol AsyncSignatureProvider: Sendable {
+    public protocol AsyncPrivateKeyProtocol: Sendable {
 
-        /// Use the signer to sign the provided bytes with a given signature algorithm.
+        /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
+        /// this private key.
+        var publicKey: PublicKey { get }
+
+        /// Use the private key to sign the provided bytes with a given signature algorithm.
         ///
         /// - Parameters:
         ///   - bytes: The data to create the signature for.

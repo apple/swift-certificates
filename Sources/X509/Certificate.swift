@@ -214,11 +214,14 @@ public struct Certificate {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a certificate from constituent parts, signed by an custom signer.
+    /// Construct a certificate from constituent parts, signed by an issuer key.
     ///
     /// This API can be used to construct a ``Certificate`` directly, without an intermediary
     /// Certificate Signing Request. The ``signature-swift.property`` for this certificate will be produced
-    /// automatically, using `issuerSigner`.
+    /// automatically, using `issuerPrivateKey`.
+    ///
+    /// This API can be used to construct a self-signed key by passing the private key for `publicKey` as the
+    /// `issuerPrivateKey` argument.
     ///
     /// - Parameters:
     ///   - version: The X.509 specification version for this certificate.
@@ -230,7 +233,7 @@ public struct Certificate {
     ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
     ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
     ///   - extensions: The extensions on this certificate.
-    ///   - issuerSignatureProvider: The signature provider to use to sign this certificate.
+    ///   - issuerPrivateKey: The private key to use to sign this certificate.
     @inlinable
     public init(
         version: Version,
@@ -242,7 +245,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerSignatureProvider: some SignatureProvider
+        issuerPrivateKey: some PrivateKeyProtocol
     ) throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
@@ -260,7 +263,7 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signature = try issuerSignatureProvider.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
@@ -268,11 +271,14 @@ public struct Certificate {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a certificate from constituent parts, signed by an custom signer.
+    /// Construct a certificate from constituent parts, signed by an issuer key.
     ///
     /// This API can be used to construct a ``Certificate`` directly, without an intermediary
     /// Certificate Signing Request. The ``signature-swift.property`` for this certificate will be produced
-    /// automatically, using `issuerSigner`.
+    /// automatically, using `issuerPrivateKey`.
+    ///
+    /// This API can be used to construct a self-signed key by passing the private key for `publicKey` as the
+    /// `issuerPrivateKey` argument.
     ///
     /// - Parameters:
     ///   - version: The X.509 specification version for this certificate.
@@ -284,7 +290,7 @@ public struct Certificate {
     ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
     ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
     ///   - extensions: The extensions on this certificate.
-    ///   - issuerSignatureProvider: The signature provider to use to sign this certificate.
+    ///   - issuerPrivateKey: The private key to use to sign this certificate.
     @inlinable
     public init(
         version: Version,
@@ -296,7 +302,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerSignatureProvider: some AsyncSignatureProvider
+        issuerPrivateKey: some AsyncPrivateKeyProtocol
     ) async throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
@@ -314,7 +320,7 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signature = try await issuerSignatureProvider.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try await issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
         self.tbsCertificateBytes = tbsCertificateBytes
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
