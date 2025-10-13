@@ -320,7 +320,10 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signature = try await issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.signature = try await issuerPrivateKey.sign(
+            bytes: tbsCertificateBytes,
+            signatureAlgorithm: signatureAlgorithm
+        )
         self.tbsCertificateBytes = tbsCertificateBytes
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
