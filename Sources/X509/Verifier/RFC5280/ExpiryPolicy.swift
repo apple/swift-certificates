@@ -29,17 +29,26 @@ struct ExpiryPolicy: VerifierPolicy, Sendable {
     @usableFromInline
     let fixedValidationTime: GeneralizedTime?
 
-    /// Creates an instance with an optional *fixed* expiry validation time.
-    ///
-    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the certificates in the chain have expired. A fixed
-    ///   time is a *specific* time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*,
-    ///   pass `nil` to `fixedValidationTime`.
-    ///
-    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
-    ///   comparison; the validation method may be invoked long after initialization.
+    /// Creates an instance that will use the the current time (evaluated *at the point of validation*) to verify
+    /// whether the certificates in the chain have not expired
     @inlinable
-    init(fixedValidationTime: Date? = nil) {
-        self.fixedValidationTime = fixedValidationTime.map(GeneralizedTime.init)
+    init() {
+        self.fixedValidationTime = nil
+    }
+
+    /// Creates an instance with a *fixed* expiry validation time.
+    ///
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the certificates in the
+    ///   chain have expired. A fixed time is a *specific* time, either in the past or future, but **not** the current
+    ///   time. To compare against the current time *at the point of validation*, use ``init()``.
+    ///
+    /// - Warning: Only use this initializer if you want to validate the certificates against a *fixed* time (a
+    ///   predetermined time *either* in the past or future). Most users should use ``init()``: the expiry of the
+    ///   certificates will be validated against the current time (evaluated at the point of validation) when using that
+    ///   initializer.
+    @inlinable
+    init(fixedValidationTime: Date) {
+        self.fixedValidationTime = GeneralizedTime(fixedValidationTime)
     }
 
     @inlinable

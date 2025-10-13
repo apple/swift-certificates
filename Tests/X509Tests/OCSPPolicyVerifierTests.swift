@@ -15,7 +15,7 @@
 import XCTest
 @preconcurrency import Crypto
 import SwiftASN1
-@testable import X509
+@testable @_spi(FixedExpiryValidationTime) import X509
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
@@ -333,12 +333,20 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) async {
-        var policy = OCSPVerifierPolicy(
-            failureMode: mode,
-            requester: requester,
-            fixedValidationTime: fixedValidationTime
-        )
-        let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
+        let result: PolicyEvaluationResult
+
+        if let fixedValidationTime {
+            var policy = OCSPVerifierPolicy(
+                failureMode: mode,
+                requester: requester,
+                fixedExpiryValidationTime: fixedValidationTime
+            )
+            result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
+        } else {
+            var policy = OCSPVerifierPolicy(failureMode: mode, requester: requester)
+            result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
+        }
+
         guard case .meetsPolicy = result else {
             XCTFail("fails to validate \(result)", file: file, line: line)
             printChainForDebugging(chain)
@@ -375,12 +383,20 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) async {
-        var policy = OCSPVerifierPolicy(
-            failureMode: mode,
-            requester: requester,
-            fixedValidationTime: fixedValidationTime
-        )
-        let result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
+        let result: PolicyEvaluationResult
+
+        if let fixedValidationTime {
+            var policy = OCSPVerifierPolicy(
+                failureMode: mode,
+                requester: requester,
+                fixedExpiryValidationTime: fixedValidationTime
+            )
+            result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
+        } else {
+            var policy = OCSPVerifierPolicy(failureMode: mode, requester: requester)
+            result = await policy.chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain(chain))
+        }
+
         guard case .failsToMeetPolicy = result else {
             XCTFail("chain did not fail validation", file: file, line: line)
             printChainForDebugging(chain)

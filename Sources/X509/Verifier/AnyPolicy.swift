@@ -21,7 +21,7 @@ import SwiftASN1
 /// ```swift
 /// let verifier = Verifier(rootCertificates: CertificateStore()) {
 ///     AnyPolicy {
-///         RFC5280Policy(validationTime: Date())
+///         RFC5280Policy()
 ///     }
 /// }
 /// ```

@@ -19,7 +19,7 @@ import Foundation
 #endif
 import XCTest
 import SwiftASN1
-@testable @_spi(DisableValidityCheck) import X509
+@testable @_spi(DisableValidityCheck) @_spi(FixedExpiryValidationTime) import X509
 @preconcurrency import Crypto
 
 // Everything in this test class is deprecated. A duplicated version of this class tests the new API.
@@ -32,11 +32,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         case nameConstraints
 
         @PolicyBuilder
-        func create(_ fixedValidationTime: Date? = nil) -> some VerifierPolicy {
+        func create(_ fixedValidationTime: Date) -> some VerifierPolicy {
             switch self {
             case .rfc5280:
-                RFC5280Policy(fixedValidationTime: fixedValidationTime)
-
+                RFC5280Policy(fixedExpiryValidationTime: fixedValidationTime)
             case .expiry:
                 ExpiryPolicy(fixedValidationTime: fixedValidationTime)
                 CatchAllPolicy()
@@ -432,11 +431,10 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
         )
 
         // Construct the policy incorrectly: .now corresponds to the point of initialization.
-        let timeAtInitPolicy = RFC5280Policy(fixedValidationTime: .now)
+        let timeAtInitPolicy = RFC5280Policy(fixedExpiryValidationTime: .now)
 
-        // Construct the policy correctly: set fixedValidationTime = nil; the current time will be obtained at the point
-        // of validation.
-        let timeAtValidationPolicy = RFC5280Policy(fixedValidationTime: nil)
+        // Construct the policy correctly: the current time will be obtained at the point of validation.
+        let timeAtValidationPolicy = RFC5280Policy()
 
         // Now wait for 2 seconds before validating. Certificate will have then expired.
         try await Task.sleep(for: .seconds(2))
@@ -458,10 +456,10 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
         )
 
-        // The incorrectly constructed policy, whose `fixedValidationTime` corresponds to the point of initialization,
+        // The incorrectly constructed policy, whose validation time corresponds to the point of initialization,
         // will determine the certificate to be valid.
         guard case .validCertificate = timeAtInitResult else {
-            XCTFail("fixedValidationTime < certificate expiration, but the certificate was determined to be invalid.")
+            XCTFail("validation time < certificate expiration, but the certificate was determined to be invalid.")
             return
         }
 
@@ -2130,11 +2128,10 @@ class RFC5280PolicyBase: XCTestCase {
         case nameConstraints
 
         @PolicyBuilder
-        func create(_ fixedValidationTime: Date? = nil) -> some VerifierPolicy {
+        func create(_ fixedValidationTime: Date) -> some VerifierPolicy {
             switch self {
             case .rfc5280:
-                RFC5280Policy(fixedValidationTime: fixedValidationTime)
-
+                RFC5280Policy(fixedExpiryValidationTime: fixedValidationTime)
             case .expiry:
                 ExpiryPolicy(fixedValidationTime: fixedValidationTime)
                 CatchAllPolicy()
@@ -2519,11 +2516,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         )
 
         // Construct the policy incorrectly: .now corresponds to the point of initialization.
-        let timeAtInitPolicy = RFC5280Policy(fixedValidationTime: .now)
+        let timeAtInitPolicy = RFC5280Policy(fixedExpiryValidationTime: .now)
 
-        // Construct the policy correctly: set fixedValidationTime = nil; the current time will be obtained at the point
-        // of validation.
-        let timeAtValidationPolicy = RFC5280Policy(fixedValidationTime: nil)
+        // Construct the policy correctly; the current time will be obtained at the point of validation.
+        let timeAtValidationPolicy = RFC5280Policy()
 
         // Now wait for 2 seconds before validating. Certificate will have then expired.
         try await Task.sleep(for: .seconds(2))
@@ -2545,10 +2541,10 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
         )
 
-        // The incorrectly constructed policy, whose `fixedValidationTime` corresponds to the point of initialization,
+        // The incorrectly constructed policy, whose validation time corresponds to the point of initialization,
         // will determine the certificate to be valid.
         guard case .validCertificate = timeAtInitResult else {
-            XCTFail("fixedValidationTime < certificate expiration, but the certificate was determined to be invalid.")
+            XCTFail("validation time < certificate expiration, but the certificate was determined to be invalid.")
             return
         }
 
