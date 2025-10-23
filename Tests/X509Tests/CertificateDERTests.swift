@@ -855,7 +855,9 @@ final class CertificatePrivateKeyDEREncodedTests: XCTestCase {
 
     func testED25519() throws {
         let key = Curve25519.Signing.PrivateKey()
-        let derBytes = key.derRepresentation
+        // swift-crpto offers a similar API but returning Data; use ours as it has wider platform
+        // avaialble requirements.
+        let derBytes = key.derRepresentation as [UInt8]
         let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
 
         XCTAssertEqual(parsedKey.backing, .ed25519(key))
