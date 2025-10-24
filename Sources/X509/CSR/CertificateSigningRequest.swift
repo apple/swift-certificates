@@ -165,7 +165,7 @@ public struct CertificateSigningRequest {
     public init(
         version: Version,
         subject: DistinguishedName,
-        privateKey: some Certificate.PrivateKeyProtocol,
+        privateKey: some CustomPrivateKey,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) throws {
@@ -201,7 +201,7 @@ public struct CertificateSigningRequest {
     public init(
         version: Version,
         subject: DistinguishedName,
-        privateKey: some Certificate.AsyncPrivateKeyProtocol,
+        privateKey: some AsyncCustomPrivateKey,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws {
