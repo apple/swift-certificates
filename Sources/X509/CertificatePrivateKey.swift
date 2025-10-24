@@ -119,6 +119,27 @@ extension Certificate {
             #endif
             case .ed25519(let ed25519):
                 return try ed25519.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
+            case .custom(let custom):
+                return try custom.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+            }
+        }
+
+        /// Use the private key to sign the provided bytes asynchronously with a given signature algorithm.
+        ///
+        /// - Parameters:
+        ///   - bytes: The data to create the signature for.
+        ///   - signatureAlgorithm: The signature algorithm to use.
+        /// - Returns: The signature.
+        @inlinable
+        public func signAsynchronously<Bytes: DataProtocol>(
+            bytes: Bytes,
+            signatureAlgorithm: SignatureAlgorithm
+        ) async throws -> Signature {
+            switch self.backing {
+            case .custom(let custom):
+                return try await custom.signAsynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+            default:
+                return try self.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
             }
         }
 
@@ -143,6 +164,8 @@ extension Certificate {
             #endif
             case .ed25519(let ed25519):
                 return PublicKey(ed25519.publicKey)
+            case .custom(let custom):
+                return custom.publicKey
             }
         }
 
@@ -177,6 +200,8 @@ extension Certificate {
             #endif
             case .ed25519:
                 return .ed25519
+            case .custom(let custom):
+                return custom.defaultSignatureAlgorithm
             }
         }
     }
@@ -208,6 +233,11 @@ extension Certificate.PrivateKey: CustomStringConvertible {
         #endif
         case .ed25519:
             return "Ed25519.PrivateKey"
+        case .custom(let custom):
+            if let custom = custom as? CustomStringConvertible {
+                return custom.description
+            }
+            return "CustomPrivateKey"
         }
     }
 }
@@ -225,6 +255,7 @@ extension Certificate.PrivateKey {
         case secKey(SecKeyWrapper)
         #endif
         case ed25519(Crypto.Curve25519.Signing.PrivateKey)
+        case custom(any CustomPrivateKey)
 
         @inlinable
         static func == (lhs: BackingPrivateKey, rhs: BackingPrivateKey) -> Bool {
@@ -245,6 +276,8 @@ extension Certificate.PrivateKey {
             #endif
             case (.ed25519(let l), .ed25519(let r)):
                 return l.rawRepresentation == r.rawRepresentation
+            case (.custom(let l), .custom(let r)):
+                return l.publicKey == r.publicKey
             default:
                 return false
             }
@@ -277,6 +310,8 @@ extension Certificate.PrivateKey {
             case .ed25519(let digest):
                 hasher.combine(6)
                 hasher.combine(digest.rawRepresentation)
+            case .custom(let key):
+                hasher.combine(key)
             }
         }
     }
@@ -350,6 +385,13 @@ extension Certificate.PrivateKey {
         case .secKey(let key): return try key.pemDocument()
         #endif
         case .ed25519(let key): return key.pemRepresentation
+        case .custom(let key):
+            guard let key = key as? PEMSerializable else {
+                throw CertificateError.unsupportedPrivateKey(
+                    reason: "custom private key can not be serialised as PEM"
+                )
+            }
+            return try key.serializeAsPEM()
         }
     }
 }

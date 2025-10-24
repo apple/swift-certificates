@@ -16,6 +16,7 @@
 import FoundationEssentials
 #else
 import Foundation
+import SwiftASN1
 #endif
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -24,6 +25,8 @@ public protocol CustomPrivateKey: Sendable, Hashable {
     /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
     /// this private key.
     var publicKey: Certificate.PublicKey { get }
+
+    var defaultSignatureAlgorithm: Certificate.SignatureAlgorithm { get }
 
     /// Use the private key to sign the provided bytes with a given signature algorithm.
     ///
