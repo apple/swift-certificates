@@ -245,7 +245,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerPrivateKey: some PrivateKeyProtocol
+        issuerPrivateKey: some CustomPrivateKey
     ) throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
@@ -302,7 +302,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerPrivateKey: some AsyncPrivateKeyProtocol
+        issuerPrivateKey: some AsyncCustomPrivateKey
     ) async throws {
         self.tbsCertificate = TBSCertificate(
             version: version,

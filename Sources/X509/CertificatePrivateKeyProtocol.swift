@@ -19,51 +19,43 @@ import Foundation
 #endif
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension Certificate {
+public protocol CustomPrivateKey: Sendable, Hashable {
 
-    public protocol PrivateKeyProtocol: Sendable, Hashable {
+    /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
+    /// this private key.
+    var publicKey: Certificate.PublicKey { get }
 
-        /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
-        /// this private key.
-        var publicKey: PublicKey { get }
-
-        /// Use the private key to sign the provided bytes with a given signature algorithm.
-        ///
-        /// - Parameters:
-        ///   - bytes: The data to create the signature for.
-        ///   - signatureAlgorithm: The signature algorithm to use.
-        /// - Returns: The signature.
-        @inlinable
-        func sign(
-            bytes: some DataProtocol,
-            signatureAlgorithm: SignatureAlgorithm
-        ) throws -> Signature
-
-    }
+    /// Use the private key to sign the provided bytes with a given signature algorithm.
+    ///
+    /// - Parameters:
+    ///   - bytes: The data to create the signature for.
+    ///   - signatureAlgorithm: The signature algorithm to use.
+    /// - Returns: The signature.
+    @inlinable
+    func sign(
+        bytes: some DataProtocol,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) throws -> Certificate.Signature
 
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension Certificate {
+public protocol AsyncCustomPrivateKey: Sendable, Hashable {
 
-    public protocol AsyncPrivateKeyProtocol: Sendable, Hashable {
+    /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
+    /// this private key.
+    var publicKey: Certificate.PublicKey { get }
 
-        /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
-        /// this private key.
-        var publicKey: PublicKey { get }
-
-        /// Use the private key to sign the provided bytes with a given signature algorithm.
-        ///
-        /// - Parameters:
-        ///   - bytes: The data to create the signature for.
-        ///   - signatureAlgorithm: The signature algorithm to use.
-        /// - Returns: The signature.
-        @inlinable
-        func sign(
-            bytes: some DataProtocol,
-            signatureAlgorithm: SignatureAlgorithm
-        ) async throws -> Signature
-
-    }
+    /// Use the private key to sign the provided bytes with a given signature algorithm.
+    ///
+    /// - Parameters:
+    ///   - bytes: The data to create the signature for.
+    ///   - signatureAlgorithm: The signature algorithm to use.
+    /// - Returns: The signature.
+    @inlinable
+    func sign(
+        bytes: some DataProtocol,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) async throws -> Certificate.Signature
 
 }
