@@ -385,13 +385,7 @@ extension Certificate.PrivateKey {
         case .secKey(let key): return try key.pemDocument()
         #endif
         case .ed25519(let key): return key.pemRepresentation
-        case .custom(let key):
-            guard let key = key as? PEMSerializable else {
-                throw CertificateError.unsupportedPrivateKey(
-                    reason: "custom private key can not be serialised as PEM"
-                )
-            }
-            return try key.serializeAsPEM()
+        case .custom(let key): return try key.serializeAsPEM()
         }
     }
 }

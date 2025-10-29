@@ -20,7 +20,7 @@ import SwiftASN1
 #endif
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public protocol CustomPrivateKey: Sendable, Hashable {
+public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
 
     /// Obtain the ``Certificate/PublicKey-swift.struct`` corresponding to
     /// this private key.
