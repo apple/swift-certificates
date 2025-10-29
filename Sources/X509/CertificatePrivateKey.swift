@@ -120,7 +120,7 @@ extension Certificate {
             case .ed25519(let ed25519):
                 return try ed25519.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .custom(let custom):
-                return try custom.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+                return try custom.signSynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
             }
         }
 
