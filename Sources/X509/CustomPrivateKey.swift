@@ -35,7 +35,7 @@ public protocol CustomPrivateKey: Sendable, Hashable {
     ///   - signatureAlgorithm: The signature algorithm to use.
     /// - Returns: The signature.
     @inlinable
-    func sign(
+    func signSynchronously(
         bytes: some DataProtocol,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) throws -> Certificate.Signature
@@ -61,7 +61,7 @@ extension CustomPrivateKey {
         bytes: some DataProtocol,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws -> Certificate.Signature {
-        try sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+        try signSynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
 }
