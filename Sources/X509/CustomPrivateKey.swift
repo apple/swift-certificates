@@ -61,7 +61,7 @@ extension CustomPrivateKey {
         bytes: some DataProtocol,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws -> Certificate.Signature {
-        try signSynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+        try self.signSynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
 }
