@@ -245,7 +245,7 @@ public struct Certificate {
         subject: DistinguishedName,
         signatureAlgorithm: SignatureAlgorithm,
         extensions: Extensions,
-        issuerPrivateKey: PrivateKey
+        issuerAsyncPrivateKey: PrivateKey
     ) async throws {
         self.tbsCertificate = TBSCertificate(
             version: version,
@@ -263,7 +263,7 @@ public struct Certificate {
         self.signatureAlgorithm = signatureAlgorithm
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
-        self.signature = try await issuerPrivateKey.signAsynchronously(
+        self.signature = try await issuerAsyncPrivateKey.signAsynchronously(
             bytes: tbsCertificateBytes,
             signatureAlgorithm: signatureAlgorithm
         )
