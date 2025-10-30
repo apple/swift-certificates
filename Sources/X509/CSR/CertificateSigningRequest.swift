@@ -165,20 +165,20 @@ public struct CertificateSigningRequest {
     public init(
         version: Version,
         subject: DistinguishedName,
-        privateKey: Certificate.PrivateKey,
+        asyncPrivateKey: Certificate.PrivateKey,
         attributes: Attributes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws {
         self.info = CertificationRequestInfo(
             version: version,
             subject: subject,
-            publicKey: privateKey.publicKey,
+            publicKey: asyncPrivateKey.publicKey,
             attributes: attributes
         )
         self.signatureAlgorithm = signatureAlgorithm
 
         let infoBytes = try DER.Serializer.serialized(element: self.info)
-        self.signature = try await privateKey.signAsynchronously(
+        self.signature = try await asyncPrivateKey.signAsynchronously(
             bytes: infoBytes,
             signatureAlgorithm: signatureAlgorithm
         )
