@@ -158,7 +158,7 @@ public struct CertificateSigningRequest {
     /// - Parameters:
     ///   - version: The CSR version.
     ///   - subject: The ``DistinguishedName`` of the subject of this CSR
-    ///   - privateKey: The private key associated with this CSR.
+    ///   - asyncPrivateKey: The private key associated with this CSR.
     ///   - attributes: The attributes associated with this CSR
     ///   - signatureAlgorithm: The signature algorithm to use for the signature on this CSR.
     @inlinable
