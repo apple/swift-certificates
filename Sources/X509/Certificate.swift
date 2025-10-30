@@ -218,10 +218,10 @@ public struct Certificate {
     ///
     /// This API can be used to construct a ``Certificate`` directly, without an intermediary
     /// Certificate Signing Request. The ``signature-swift.property`` for this certificate will be produced
-    /// automatically, using `issuerPrivateKey`.
+    /// automatically, using `issuerAsyncPrivateKey`.
     ///
     /// This API can be used to construct a self-signed key by passing the private key for `publicKey` as the
-    /// `issuerPrivateKey` argument.
+    /// `issuerAsyncPrivateKey` argument.
     ///
     /// - Parameters:
     ///   - version: The X.509 specification version for this certificate.
@@ -233,7 +233,7 @@ public struct Certificate {
     ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
     ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
     ///   - extensions: The extensions on this certificate.
-    ///   - issuerPrivateKey: The private key to use to sign this certificate.
+    ///   - issuerAsyncPrivateKey: The private key to use to sign this certificate.
     @inlinable
     public init(
         version: Version,
