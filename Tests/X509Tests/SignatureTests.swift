@@ -941,4 +941,135 @@ final class SignatureTests: XCTestCase {
             0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
         ])
     }
+
+    func testSignatureAlgorithmTranslatesToCorrectRFC8446Value() throws {
+        // RFC8446 defines the following values for the Signature Schemes ("SignatureAlgorithm" prior to TLS 1.3).
+        // Swift Certificates only supports a handful of them.
+        //
+        // enum {
+        //     /* RSASSA-PKCS1-v1_5 algorithms */
+        //     rsa_pkcs1_sha256(0x0401),
+        //     rsa_pkcs1_sha384(0x0501),
+        //     rsa_pkcs1_sha512(0x0601),
+        //
+        //     /* ECDSA algorithms */
+        //     ecdsa_secp256r1_sha256(0x0403),
+        //     ecdsa_secp384r1_sha384(0x0503),
+        //     ecdsa_secp521r1_sha512(0x0603),
+        //
+        //     /* RSASSA-PSS algorithms with public key OID rsaEncryption */
+        //     rsa_pss_rsae_sha256(0x0804),
+        //     rsa_pss_rsae_sha384(0x0805),
+        //     rsa_pss_rsae_sha512(0x0806),
+        //
+        //     /* EdDSA algorithms */
+        //     ed25519(0x0807),
+        //     ed448(0x0808),
+        //
+        //     /* RSASSA-PSS algorithms with public key OID RSASSA-PSS */
+        //     rsa_pss_pss_sha256(0x0809),
+        //     rsa_pss_pss_sha384(0x080a),
+        //     rsa_pss_pss_sha512(0x080b),
+        //
+        //     /* Legacy algorithms */
+        //     rsa_pkcs1_sha1(0x0201),
+        //     ecdsa_sha1(0x0203),
+        //
+        //     /* Reserved Code Points */
+        //     private_use(0xFE00..0xFFFF),
+        //     (0xFFFF)
+        // } SignatureScheme;
+
+        // RSASSA-PKCS1-v1_5 algorithms
+        XCTAssertEqual(0x0401, try! Certificate.SignatureAlgorithm.sha256WithRSAEncryption.rfc8446SignatureSchemeValue)
+        XCTAssertEqual(0x0501, try! Certificate.SignatureAlgorithm.sha384WithRSAEncryption.rfc8446SignatureSchemeValue)
+        XCTAssertEqual(0x0601, try! Certificate.SignatureAlgorithm.sha512WithRSAEncryption.rfc8446SignatureSchemeValue)
+
+        // RSASSA-PSS algorithms with public key OID rsaEncryption
+        // Currently not supported
+
+        // ECDSA algorithms
+        XCTAssertEqual(0x0403, try! Certificate.SignatureAlgorithm.ecdsaWithSHA256.rfc8446SignatureSchemeValue)
+        XCTAssertEqual(0x0503, try! Certificate.SignatureAlgorithm.ecdsaWithSHA384.rfc8446SignatureSchemeValue)
+        XCTAssertEqual(0x0603, try! Certificate.SignatureAlgorithm.ecdsaWithSHA512.rfc8446SignatureSchemeValue)
+
+        // EdDSA algorithms
+        XCTAssertEqual(0x0807, try! Certificate.SignatureAlgorithm.ed25519.rfc8446SignatureSchemeValue)
+        // ed448 is currenlty not supported
+
+        // RSASSA-PSS algorithms with public key OID RSASSA-PSS
+        // Currently not supported
+
+        // Legacy algorithms
+        XCTAssertEqual(0x0201, try! Certificate.SignatureAlgorithm.sha1WithRSAEncryption.rfc8446SignatureSchemeValue)
+        // ecdsa_sha1 is currenlty not supported
+    }
+
+    func supportedSignatureAlgorithmsMatch(
+        ofKey key: Certificate.PrivateKey,
+        match expected: Set<Certificate.SignatureAlgorithm>,
+        withLegacyAlgorithms expectedLegacy: Set<Certificate.SignatureAlgorithm>
+    ) {
+        // Check non-legacy set
+        let supportedAlgorithms = Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false))
+        XCTAssertEqual(supportedAlgorithms, expected)
+
+        // Check legacy set
+        let supportedAlgorithmsWithLegacy = Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true))
+        XCTAssertEqual(supportedAlgorithmsWithLegacy, expectedLegacy)
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmRSA() throws {
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits2048).wrapped,
+            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
+            withLegacyAlgorithms: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]
+        )
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits3072).wrapped,
+            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
+            withLegacyAlgorithms: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]
+        )
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits4096).wrapped,
+            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
+            withLegacyAlgorithms: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmECDSA() throws {
+        supportedSignatureAlgorithmsMatch(
+            ofKey: P256.Signing.PrivateKey().wrapped,
+            match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
+            withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
+        )
+        supportedSignatureAlgorithmsMatch(
+            ofKey: P384.Signing.PrivateKey().wrapped,
+            match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
+            withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
+        )
+        supportedSignatureAlgorithmsMatch(
+            ofKey: P521.Signing.PrivateKey().wrapped,
+            match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
+            withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmEdDSA() throws {
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(pemEncoded: Curve25519.Signing.PrivateKey().pemRepresentation.pemString),
+            match: [.ed25519],
+            withLegacyAlgorithms: [.ed25519]
+        )
+    }
+
+#if canImport(Darwin)
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecureEncalve() throws {
+        supportedSignatureAlgorithmsMatch(
+            ofKey: Certificate.PrivateKey(try SecureEnclave.P256.Signing.PrivateKey()),
+            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
+            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        )
+    }
+#endif
 }

@@ -152,3 +152,32 @@ extension AlgorithmIdentifier {
         }
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension Certificate.SignatureAlgorithm {
+    /// Map a signature algorithm to the signature scheme value defined in RFC 8446 for TLS 1.3.
+    public var rfc8446SignatureSchemeValue: UInt16 {
+        get throws {
+            switch self {
+            case .ecdsaWithSHA256:
+                return 0x0403
+            case .ecdsaWithSHA384:
+                return 0x0503
+            case .ecdsaWithSHA512:
+                return 0x0603
+            case .sha1WithRSAEncryption:
+                return 0x0201
+            case .sha256WithRSAEncryption:
+                return 0x0401
+            case .sha384WithRSAEncryption:
+                return 0x0501
+            case .sha512WithRSAEncryption:
+                return 0x0601
+            case .ed25519:
+                return 0x0807
+            default:
+                throw CertificateError.unsupportedSignatureAlgorithm(reason: "SignatureAlgorithm(\(self)) has an unsupprted value")
+            }
+        }
+    }
+}
