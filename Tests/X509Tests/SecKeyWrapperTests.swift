@@ -19,12 +19,6 @@ import XCTest
 #endif
 
 #if canImport(Darwin)
-
-enum SecKeyType {
-    case rsa
-    case ecdsa
-}
-
 final class SecKeyWrapperTests: XCTestCase {
     struct CandidateKey {
         let key: SecKey
@@ -33,49 +27,41 @@ final class SecKeyWrapperTests: XCTestCase {
         let sep: Bool
     }
 
-    func generateCandidateKeys(_ keyTypes: [SecKeyType]) throws -> [CandidateKey] {
+    func generateCandidateKeys() throws -> [CandidateKey] {
         do {
             var keys: [CandidateKey] = []
 
-            if keyTypes.contains(.rsa) {
-                // RSA
-                keys.append(
-                    CandidateKey(
-                        key: try SignatureTests.generateSecKey(
-                            keyType: kSecAttrKeyTypeRSA,
-                            keySize: 2048,
-                            useSEP: false
-                        ),
-                        type: "RSA",
-                        keySize: 2048,
-                        sep: false
-                    )
+            // RSA
+            keys.append(
+                CandidateKey(
+                    key: try SignatureTests.generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false),
+                    type: "RSA",
+                    keySize: 2048,
+                    sep: false
                 )
-            }
+            )
 
-            if keyTypes.contains(.ecdsa) {
-                // eliptic curves
-                var keyTypes = [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC]
-                #if os(macOS)
-                keyTypes.append(kSecAttrKeyTypeECDSA)
-                #endif
+            // eliptic curves
+            var keyTypes = [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC]
+            #if os(macOS)
+            keyTypes.append(kSecAttrKeyTypeECDSA)
+            #endif
 
-                for keyType in keyTypes {
-                    for keySize in [256, 384] {
-                        for useSEP in [true, false] {
-                            keys.append(
-                                CandidateKey(
-                                    key: try SignatureTests.generateSecKey(
-                                        keyType: keyType,
-                                        keySize: keySize,
-                                        useSEP: useSEP
-                                    ),
-                                    type: "EC-\(keyType)",
+            for keyType in keyTypes {
+                for keySize in [256, 384] {
+                    for useSEP in [true, false] {
+                        keys.append(
+                            CandidateKey(
+                                key: try SignatureTests.generateSecKey(
+                                    keyType: keyType,
                                     keySize: keySize,
-                                    sep: useSEP
-                                )
+                                    useSEP: useSEP
+                                ),
+                                type: "EC-\(keyType)",
+                                keySize: keySize,
+                                sep: useSEP
                             )
-                        }
+                        )
                     }
                 }
             }
@@ -92,7 +78,7 @@ final class SecKeyWrapperTests: XCTestCase {
 
     @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
     func testPEMExport() async throws {
-        for candidate in try generateCandidateKeys([.rsa, .ecdsa]) {
+        for candidate in try generateCandidateKeys() {
             try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
                 let secKeyWrapper = try Certificate.PrivateKey.SecKeyWrapper(key: candidate.key)
 
@@ -102,42 +88,6 @@ final class SecKeyWrapperTests: XCTestCase {
                 } else {
                     XCTAssertThrowsError(try secKeyWrapper.pemDocument())
                 }
-            }
-        }
-    }
-
-    @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)
-    func testSupportedSignatureAlgorithms() async throws {
-        // RSA
-        for candidate in try generateCandidateKeys([.rsa]) {
-            try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
-                let key = try Certificate.PrivateKey(candidate.key)
-                XCTAssertEqual(
-                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false)),
-                    Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption])
-                )
-                XCTAssertEqual(
-                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true)),
-                    Set([
-                        .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption,
-                        .sha1WithRSAEncryption,
-                    ])
-                )
-            }
-        }
-
-        // EC
-        for candidate in try generateCandidateKeys([.ecdsa]) {
-            try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
-                let key = try Certificate.PrivateKey(candidate.key)
-                XCTAssertEqual(
-                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false)),
-                    Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
-                )
-                XCTAssertEqual(
-                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true)),
-                    Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
-                )
             }
         }
     }

@@ -1071,8 +1071,79 @@ final class SignatureTests: XCTestCase {
 
     #if canImport(Darwin)
     func testMapPrivateKeyToSupportedSignatureAlgorithmSecureEncalve() throws {
+        guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
+            throw XCTSkip("No SEP")
+        }
         supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(try SecureEnclave.P256.Signing.PrivateKey()),
+            ofKey: Certificate.PrivateKey(secureEnclaveP256),
+            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
+            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyRSA() async throws {
+        guard let secKeyRSA = Self.secKeyRSA else {
+            throw XCTSkip("Key Error")
+        }
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(secKeyRSA),
+            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
+            withLegacyAlgorithms: [
+                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyEC256() async throws {
+        guard let secKeyEC256 = Self.secKeyEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(secKeyEC256),
+            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
+            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyEC2384() async throws {
+        guard let secKeyEC384 = Self.secKeyEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(secKeyEC384),
+            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
+            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyEC521() async throws {
+        guard let secKeyEC521 = Self.secKeyEC521 else {
+            throw XCTSkip("Key Error")
+        }
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(secKeyEC521),
+            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
+            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmsecKeyEnclaveEC256() async throws {
+        guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(secKeyEnclaveEC256),
+            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
+            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmsecKeyEnclaveEC384() async throws {
+        guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        supportedSignatureAlgorithmsMatch(
+            ofKey: try Certificate.PrivateKey(secKeyEnclaveEC384),
             match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
             withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
         )
