@@ -381,7 +381,8 @@ extension Certificate.PrivateKey {
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate.PrivateKey {
-    /// Return a list of all supported signature types for this private key.
+    /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
+    /// preference or security of the contained algorithms.
     @inlinable
     func supportedSignatureAlgorithms(includeLegacyAlgorithms: Bool = false) -> [Certificate.SignatureAlgorithm] {
         switch backing {
