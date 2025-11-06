@@ -176,7 +176,9 @@ extension Certificate.SignatureAlgorithm {
             case .ed25519:
                 return 0x0807
             default:
-                throw CertificateError.unsupportedSignatureAlgorithm(reason: "SignatureAlgorithm(\(self)) has an unsupprted value")
+                throw CertificateError.unsupportedSignatureAlgorithm(
+                    reason: "SignatureAlgorithm(\(self)) has an unsupprted value"
+                )
             }
         }
     }

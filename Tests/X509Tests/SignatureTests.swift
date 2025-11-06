@@ -1023,17 +1023,23 @@ final class SignatureTests: XCTestCase {
         supportedSignatureAlgorithmsMatch(
             ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits2048).wrapped,
             match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]
+            withLegacyAlgorithms: [
+                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
         )
         supportedSignatureAlgorithmsMatch(
             ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits3072).wrapped,
             match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]
+            withLegacyAlgorithms: [
+                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
         )
         supportedSignatureAlgorithmsMatch(
             ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits4096).wrapped,
             match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]
+            withLegacyAlgorithms: [
+                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
         )
     }
 
@@ -1063,7 +1069,7 @@ final class SignatureTests: XCTestCase {
         )
     }
 
-#if canImport(Darwin)
+    #if canImport(Darwin)
     func testMapPrivateKeyToSupportedSignatureAlgorithmSecureEncalve() throws {
         supportedSignatureAlgorithmsMatch(
             ofKey: Certificate.PrivateKey(try SecureEnclave.P256.Signing.PrivateKey()),
@@ -1071,5 +1077,5 @@ final class SignatureTests: XCTestCase {
             withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
         )
     }
-#endif
+    #endif
 }

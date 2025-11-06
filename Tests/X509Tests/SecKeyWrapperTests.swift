@@ -41,7 +41,11 @@ final class SecKeyWrapperTests: XCTestCase {
                 // RSA
                 keys.append(
                     CandidateKey(
-                        key: try SignatureTests.generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false),
+                        key: try SignatureTests.generateSecKey(
+                            keyType: kSecAttrKeyTypeRSA,
+                            keySize: 2048,
+                            useSEP: false
+                        ),
                         type: "RSA",
                         keySize: 2048,
                         sep: false
@@ -108,8 +112,17 @@ final class SecKeyWrapperTests: XCTestCase {
         for candidate in try generateCandidateKeys([.rsa]) {
             try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
                 let key = try Certificate.PrivateKey(candidate.key)
-                XCTAssertEqual(Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false)), Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption]))
-                XCTAssertEqual(Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true)), Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption]))
+                XCTAssertEqual(
+                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false)),
+                    Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption])
+                )
+                XCTAssertEqual(
+                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true)),
+                    Set([
+                        .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption,
+                        .sha1WithRSAEncryption,
+                    ])
+                )
             }
         }
 
@@ -117,8 +130,14 @@ final class SecKeyWrapperTests: XCTestCase {
         for candidate in try generateCandidateKeys([.ecdsa]) {
             try await XCTContext.runActivity(named: "Testing \(candidate.type) key (size: \(candidate.keySize))") { _ in
                 let key = try Certificate.PrivateKey(candidate.key)
-                XCTAssertEqual(Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false)), Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]))
-                XCTAssertEqual(Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true)), Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]))
+                XCTAssertEqual(
+                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false)),
+                    Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+                )
+                XCTAssertEqual(
+                    Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true)),
+                    Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+                )
             }
         }
     }

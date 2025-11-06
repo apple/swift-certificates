@@ -389,26 +389,29 @@ extension Certificate.PrivateKey {
         case .p256, .p384, .p521:
             return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
         case .rsa:
-            if includeLegacyAlgorithms {
-                return [.sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption]
-            } else {
+            guard includeLegacyAlgorithms else {
                 return [.sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption]
             }
-#if canImport(Darwin)
+            return [
+                .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
+        #if canImport(Darwin)
         case .secureEnclaveP256:
             return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
         case .secKey(let key):
             switch key.type {
             case .RSA:
-                if includeLegacyAlgorithms {
-                    return [.sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption]
-                } else {
+                guard includeLegacyAlgorithms else {
                     return [.sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption]
                 }
+                return [
+                    .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption,
+                    .sha1WithRSAEncryption,
+                ]
             case .ECDSA:
                 return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
             }
-#endif
+        #endif
         case .ed25519:
             return [.ed25519]
         }
