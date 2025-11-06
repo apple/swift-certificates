@@ -1021,21 +1021,7 @@ final class SignatureTests: XCTestCase {
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmRSA() throws {
         supportedSignatureAlgorithmsMatch(
-            ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits2048).wrapped,
-            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [
-                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
-            ]
-        )
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits3072).wrapped,
-            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [
-                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
-            ]
-        )
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try! _RSA.Signing.PrivateKey(keySize: .bits4096).wrapped,
+            ofKey: Certificate.PrivateKey(Self.rsaKey),
             match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
             withLegacyAlgorithms: [
                 .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
@@ -1045,17 +1031,17 @@ final class SignatureTests: XCTestCase {
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmECDSA() throws {
         supportedSignatureAlgorithmsMatch(
-            ofKey: P256.Signing.PrivateKey().wrapped,
+            ofKey: Certificate.PrivateKey(Self.p256Key),
             match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
             withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
         )
         supportedSignatureAlgorithmsMatch(
-            ofKey: P384.Signing.PrivateKey().wrapped,
+            ofKey: Certificate.PrivateKey(Self.p384Key),
             match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
             withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
         )
         supportedSignatureAlgorithmsMatch(
-            ofKey: P521.Signing.PrivateKey().wrapped,
+            ofKey: Certificate.PrivateKey(Self.p521Key),
             match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
             withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
         )
@@ -1063,7 +1049,7 @@ final class SignatureTests: XCTestCase {
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmEdDSA() throws {
         supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(pemEncoded: Curve25519.Signing.PrivateKey().pemRepresentation.pemString),
+            ofKey: Certificate.PrivateKey(Self.ed25519Key),
             match: [.ed25519],
             withLegacyAlgorithms: [.ed25519]
         )
