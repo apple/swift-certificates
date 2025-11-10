@@ -131,7 +131,7 @@ extension Certificate {
         ///   - signatureAlgorithm: The signature algorithm to use.
         /// - Returns: The signature.
         @inlinable
-        public func signAsynchronously<Bytes: DataProtocol>(
+        public func signAsynchronously<Bytes: DataProtocol & Sendable>(
             bytes: Bytes,
             signatureAlgorithm: SignatureAlgorithm
         ) async throws -> Signature {

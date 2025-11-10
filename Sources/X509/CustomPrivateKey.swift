@@ -48,7 +48,7 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
     /// - Returns: The signature.
     @inlinable
     func signAsynchronously(
-        bytes: some DataProtocol,
+        bytes: some DataProtocol & Sendable,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws -> Certificate.Signature
 
@@ -57,8 +57,8 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CustomPrivateKey {
 
-        bytes: some DataProtocol,
     public func signAsynchronously(
+        bytes: some DataProtocol & Sendable,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) async throws -> Certificate.Signature {
         try self.signSynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
