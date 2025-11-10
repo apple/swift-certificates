@@ -14,7 +14,7 @@
 
 import CryptoKit
 import SwiftASN1
-import X509
+@testable import X509
 import XCTest
 
 final class CustomPrivateKeyTests: XCTestCase {
@@ -25,6 +25,7 @@ final class CustomPrivateKeyTests: XCTestCase {
         XCTAssertEqual(privateKey.publicKey, keyBacking.publicKey)
         XCTAssertEqual(privateKey.description, "CustomPrivateKey")
         XCTAssertEqual(keyBacking.hashValue, privateKey.hashValue)
+        XCTAssertEqual(keyBacking.defaultSignatureAlgorithm, privateKey.defaultSignatureAlgorithm)
     }
 
     func testCustomPrivateKeySigning() async throws {
