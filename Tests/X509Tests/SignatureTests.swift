@@ -1026,28 +1026,28 @@ final class SignatureTests: XCTestCase {
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmRSA() throws {
         XCTAssertEqual(
-            Set(Certificate.PrivateKey(Self.rsaKey).supportedSignatureAlgorithms()),
+            Set(Certificate.PrivateKey(Self.rsaKey).supportedSignatureAlgorithms),
             Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption])
         )
     }
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmECDSA() throws {
         XCTAssertEqual(
-            Set(Certificate.PrivateKey(Self.p256Key).supportedSignatureAlgorithms()),
+            Set(Certificate.PrivateKey(Self.p256Key).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
         XCTAssertEqual(
-            Set(Certificate.PrivateKey(Self.p384Key).supportedSignatureAlgorithms()),
+            Set(Certificate.PrivateKey(Self.p384Key).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
         XCTAssertEqual(
-            Set(Certificate.PrivateKey(Self.p521Key).supportedSignatureAlgorithms()),
+            Set(Certificate.PrivateKey(Self.p521Key).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmEdDSA() throws {
-        XCTAssertEqual(Set(Certificate.PrivateKey(Self.ed25519Key).supportedSignatureAlgorithms()), Set([.ed25519]))
+        XCTAssertEqual(Set(Certificate.PrivateKey(Self.ed25519Key).supportedSignatureAlgorithms), Set([.ed25519]))
     }
 
     #if canImport(Darwin)
@@ -1056,7 +1056,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("No SEP")
         }
         XCTAssertEqual(
-            Set(Certificate.PrivateKey(secureEnclaveP256).supportedSignatureAlgorithms()),
+            Set(Certificate.PrivateKey(secureEnclaveP256).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
@@ -1066,7 +1066,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("Key Error")
         }
         XCTAssertEqual(
-            Set(try Certificate.PrivateKey(secKeyRSA).supportedSignatureAlgorithms()),
+            Set(try Certificate.PrivateKey(secKeyRSA).supportedSignatureAlgorithms),
             Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption])
         )
     }
@@ -1076,7 +1076,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("Key Error")
         }
         XCTAssertEqual(
-            Set(try Certificate.PrivateKey(secKeyEC256).supportedSignatureAlgorithms()),
+            Set(try Certificate.PrivateKey(secKeyEC256).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
@@ -1086,7 +1086,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("Key Error")
         }
         XCTAssertEqual(
-            Set(try Certificate.PrivateKey(secKeyEC384).supportedSignatureAlgorithms()),
+            Set(try Certificate.PrivateKey(secKeyEC384).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
@@ -1096,7 +1096,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("Key Error")
         }
         XCTAssertEqual(
-            Set(try Certificate.PrivateKey(secKeyEC521).supportedSignatureAlgorithms()),
+            Set(try Certificate.PrivateKey(secKeyEC521).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
@@ -1106,7 +1106,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("Key Error")
         }
         XCTAssertEqual(
-            Set(try Certificate.PrivateKey(secKeyEnclaveEC256).supportedSignatureAlgorithms()),
+            Set(try Certificate.PrivateKey(secKeyEnclaveEC256).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
@@ -1116,7 +1116,7 @@ final class SignatureTests: XCTestCase {
             throw XCTSkip("Key Error")
         }
         XCTAssertEqual(
-            Set(try Certificate.PrivateKey(secKeyEnclaveEC384).supportedSignatureAlgorithms()),
+            Set(try Certificate.PrivateKey(secKeyEnclaveEC384).supportedSignatureAlgorithms),
             Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
