@@ -384,15 +384,11 @@ extension Certificate.PrivateKey {
     /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
     /// preference or security of the contained algorithms.
     @inlinable
-    public func supportedSignatureAlgorithms(includeLegacyAlgorithms: Bool = false) -> [Certificate.SignatureAlgorithm]
-    {
+    public func supportedSignatureAlgorithms() -> [Certificate.SignatureAlgorithm] {
         switch backing {
         case .p256, .p384, .p521:
             return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
         case .rsa:
-            guard includeLegacyAlgorithms else {
-                return [.sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption]
-            }
             return [
                 .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption,
             ]
@@ -402,9 +398,6 @@ extension Certificate.PrivateKey {
         case .secKey(let key):
             switch key.type {
             case .RSA:
-                guard includeLegacyAlgorithms else {
-                    return [.sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption]
-                }
                 return [
                     .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption,
                     .sha1WithRSAEncryption,

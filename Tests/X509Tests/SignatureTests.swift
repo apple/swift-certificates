@@ -1024,54 +1024,30 @@ final class SignatureTests: XCTestCase {
 
     }
 
-    func supportedSignatureAlgorithmsMatch(
-        ofKey key: Certificate.PrivateKey,
-        match expected: Set<Certificate.SignatureAlgorithm>,
-        withLegacyAlgorithms expectedLegacy: Set<Certificate.SignatureAlgorithm>
-    ) {
-        // Check non-legacy set
-        let supportedAlgorithms = Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: false))
-        XCTAssertEqual(supportedAlgorithms, expected)
-
-        // Check legacy set
-        let supportedAlgorithmsWithLegacy = Set(key.supportedSignatureAlgorithms(includeLegacyAlgorithms: true))
-        XCTAssertEqual(supportedAlgorithmsWithLegacy, expectedLegacy)
-    }
-
     func testMapPrivateKeyToSupportedSignatureAlgorithmRSA() throws {
-        supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(Self.rsaKey),
-            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [
-                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
-            ]
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.rsaKey).supportedSignatureAlgorithms()),
+            Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption])
         )
     }
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmECDSA() throws {
-        supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(Self.p256Key),
-            match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
-            withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.p256Key).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
-        supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(Self.p384Key),
-            match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
-            withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.p384Key).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
-        supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(Self.p521Key),
-            match: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512],
-            withLegacyAlgorithms: [.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512]
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.p521Key).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
     func testMapPrivateKeyToSupportedSignatureAlgorithmEdDSA() throws {
-        supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(Self.ed25519Key),
-            match: [.ed25519],
-            withLegacyAlgorithms: [.ed25519]
-        )
+        XCTAssertEqual(Set(Certificate.PrivateKey(Self.ed25519Key).supportedSignatureAlgorithms()), Set([.ed25519]))
     }
 
     #if canImport(Darwin)
@@ -1079,10 +1055,9 @@ final class SignatureTests: XCTestCase {
         guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
             throw XCTSkip("No SEP")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: Certificate.PrivateKey(secureEnclaveP256),
-            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
-            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(secureEnclaveP256).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
@@ -1090,12 +1065,9 @@ final class SignatureTests: XCTestCase {
         guard let secKeyRSA = Self.secKeyRSA else {
             throw XCTSkip("Key Error")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(secKeyRSA),
-            match: [.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption],
-            withLegacyAlgorithms: [
-                .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption,
-            ]
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyRSA).supportedSignatureAlgorithms()),
+            Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption])
         )
     }
 
@@ -1103,10 +1075,9 @@ final class SignatureTests: XCTestCase {
         guard let secKeyEC256 = Self.secKeyEC256 else {
             throw XCTSkip("Key Error")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(secKeyEC256),
-            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
-            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEC256).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
@@ -1114,10 +1085,9 @@ final class SignatureTests: XCTestCase {
         guard let secKeyEC384 = Self.secKeyEC384 else {
             throw XCTSkip("Key Error")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(secKeyEC384),
-            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
-            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEC384).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
@@ -1125,10 +1095,9 @@ final class SignatureTests: XCTestCase {
         guard let secKeyEC521 = Self.secKeyEC521 else {
             throw XCTSkip("Key Error")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(secKeyEC521),
-            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
-            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEC521).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
@@ -1136,10 +1105,9 @@ final class SignatureTests: XCTestCase {
         guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
             throw XCTSkip("Key Error")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(secKeyEnclaveEC256),
-            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
-            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEnclaveEC256).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
 
@@ -1147,10 +1115,9 @@ final class SignatureTests: XCTestCase {
         guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
             throw XCTSkip("Key Error")
         }
-        supportedSignatureAlgorithmsMatch(
-            ofKey: try Certificate.PrivateKey(secKeyEnclaveEC384),
-            match: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256],
-            withLegacyAlgorithms: [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEnclaveEC384).supportedSignatureAlgorithms()),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
         )
     }
     #endif
