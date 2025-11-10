@@ -13,19 +13,22 @@
 //===----------------------------------------------------------------------===//
 
 import CryptoKit
+import Foundation
 import SwiftASN1
+import Testing
 @testable import X509
-import XCTest
 
-final class CustomPrivateKeyTests: XCTestCase {
+@Suite
+final class CustomPrivateKeyTests {
 
+    @Test("CustomPrivateKey Backing Properties")
     func testCustomPrivateKeyBackingProperties() {
         let keyBacking = TestAsyncKey()
         let privateKey = Certificate.PrivateKey(keyBacking)
-        XCTAssertEqual(privateKey.publicKey, keyBacking.publicKey)
-        XCTAssertEqual(privateKey.description, "CustomPrivateKey")
-        XCTAssertEqual(keyBacking.hashValue, privateKey.hashValue)
-        XCTAssertEqual(keyBacking.defaultSignatureAlgorithm, privateKey.defaultSignatureAlgorithm)
+        #expect(privateKey.publicKey == keyBacking.publicKey)
+        #expect(privateKey.description == "CustomPrivateKey")
+        #expect(keyBacking.hashValue == privateKey.hashValue)
+        #expect(keyBacking.defaultSignatureAlgorithm == privateKey.defaultSignatureAlgorithm)
     }
 
     func testCustomPrivateKeySigning() async throws {
@@ -35,24 +38,26 @@ final class CustomPrivateKeyTests: XCTestCase {
             bytes: Data(),
             signatureAlgorithm: .ecdsaWithSHA256
         )
-        XCTAssertThrowsError(
+        #expect(throws: TestAsyncKey.MyError.self) {
             try privateKey.sign(
                 bytes: Data(),
                 signatureAlgorithm: .ecdsaWithSHA256
             )
-        )
+        }
     }
 
     func testCustomPrivateKeyBackingEquality() {
         let keyBacking = TestAsyncKey()
         let leftKey = Certificate.PrivateKey(keyBacking)
         let rightKey = Certificate.PrivateKey(keyBacking)
-        XCTAssertEqual(leftKey, rightKey)
+        #expect(leftKey == rightKey)
     }
 
     func testCustomPrivateKeySerialization() {
         let privateKey = Certificate.PrivateKey(TestAsyncKey())
-        XCTAssertThrowsError(try privateKey.serializeAsPEM())
+        #expect(throws: TestAsyncKey.MyError.self) {
+            try privateKey.serializeAsPEM()
+        }
     }
 
 }
