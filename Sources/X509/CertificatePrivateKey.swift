@@ -91,6 +91,13 @@ extension Certificate {
         }
         #endif
 
+        /// Construct a private key wrapping a custom private key.
+        /// - Parameter custom: The custom private key to wrap.
+        @inlinable
+        public init(_ custom: some CustomPrivateKey) {
+            self.backing = .custom(custom)
+        }
+
         /// Use the private key to sign the provided bytes with a given signature algorithm.
         ///
         /// - Parameters:
