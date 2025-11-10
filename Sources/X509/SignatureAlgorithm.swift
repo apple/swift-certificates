@@ -183,3 +183,33 @@ extension Certificate.SignatureAlgorithm {
         }
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension Certificate.SignatureAlgorithm {
+    /// Initialize a signature algorithm from a raw value as defined in RFC8446.
+    ///
+    /// Returns: The signature algorithm matching the value for the algorithms supported by Swift Certificates and
+    ///     nil otherwise.
+    public init?(rfc8446SignatureSchemeValue value: UInt16) {
+        switch value {
+        case 0x0403:
+            self = .ecdsaWithSHA256
+        case 0x0503:
+            self = .ecdsaWithSHA384
+        case 0x0603:
+            self = .ecdsaWithSHA512
+        case 0x0201:
+            self = .sha1WithRSAEncryption
+        case 0x0401:
+            self = .sha256WithRSAEncryption
+        case 0x0501:
+            self = .sha384WithRSAEncryption
+        case 0x0601:
+            self = .sha512WithRSAEncryption
+        case 0x0807:
+            self = .ed25519
+        default:
+            return nil
+        }
+    }
+}
