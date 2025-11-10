@@ -384,7 +384,8 @@ extension Certificate.PrivateKey {
     /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
     /// preference or security of the contained algorithms.
     @inlinable
-    public func supportedSignatureAlgorithms(includeLegacyAlgorithms: Bool = false) -> [Certificate.SignatureAlgorithm] {
+    public func supportedSignatureAlgorithms(includeLegacyAlgorithms: Bool = false) -> [Certificate.SignatureAlgorithm]
+    {
         switch backing {
         case .p256, .p384, .p521:
             return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
