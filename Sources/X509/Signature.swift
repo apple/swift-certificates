@@ -199,6 +199,31 @@ extension P256.Signing.PublicKey {
             return false
         }
     }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+
+        // Parse the raw signature bytes as DER-encoded ECDSA signature
+        guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
+              let innerSignature = P256.Signing.ECDSASignature(ecdsaSignature) else {
+            return false
+        }
+
+        switch signatureAlgorithm {
+        case .ecdsaWithSHA256:
+            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes))
+        case .ecdsaWithSHA384:
+            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes))
+        case .ecdsaWithSHA512:
+            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes))
+        default:
+            return false
+        }
+    }
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -227,6 +252,30 @@ extension P384.Signing.PublicKey {
             return false
         }
     }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        // Parse the raw signature bytes as DER-encoded ECDSA signature
+        guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
+              let innerSignature = P384.Signing.ECDSASignature(ecdsaSignature) else {
+            return false
+        }
+
+        switch signatureAlgorithm {
+        case .ecdsaWithSHA256:
+            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes))
+        case .ecdsaWithSHA384:
+            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes))
+        case .ecdsaWithSHA512:
+            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes))
+        default:
+            return false
+        }
+    }
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -241,6 +290,30 @@ extension P521.Signing.PublicKey {
             let innerSignature = P521.Signing.ECDSASignature(rawInnerSignature)
         else {
             // Signature mismatch
+            return false
+        }
+
+        switch signatureAlgorithm {
+        case .ecdsaWithSHA256:
+            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes))
+        case .ecdsaWithSHA384:
+            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes))
+        case .ecdsaWithSHA512:
+            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes))
+        default:
+            return false
+        }
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        // Parse the raw signature bytes as DER-encoded ECDSA signature
+        guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
+              let innerSignature = P521.Signing.ECDSASignature(ecdsaSignature) else {
             return false
         }
 
@@ -285,6 +358,32 @@ extension _RSA.Signing.PublicKey {
             return false
         }
     }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        // RSA signatures are already in raw format
+        let rsaSignature = _RSA.Signing.RSASignature(rawRepresentation: signature)
+        
+        // For now we don't support RSA PSS, as it's not deployed in the WebPKI.
+        let padding = _RSA.Signing.Padding.insecurePKCS1v1_5
+
+        switch signatureAlgorithm {
+        case .sha1WithRSAEncryption:
+            return self.isValidSignature(rsaSignature, for: Insecure.SHA1.hash(data: bytes), padding: padding)
+        case .sha256WithRSAEncryption:
+            return self.isValidSignature(rsaSignature, for: SHA256.hash(data: bytes), padding: padding)
+        case .sha384WithRSAEncryption:
+            return self.isValidSignature(rsaSignature, for: SHA384.hash(data: bytes), padding: padding)
+        case .sha512WithRSAEncryption:
+            return self.isValidSignature(rsaSignature, for: SHA512.hash(data: bytes), padding: padding)
+        default:
+            return false
+        }
+    }
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -303,6 +402,21 @@ extension Curve25519.Signing.PublicKey {
         switch signatureAlgorithm {
         case .ed25519:
             return self.isValidSignature(rawInnerSignature, for: bytes)
+        default:
+            return false
+        }
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        switch signatureAlgorithm {
+        case .ed25519:
+            // Ed25519 signatures are already in raw format (64 bytes)
+            return self.isValidSignature(signature, for: bytes)
         default:
             return false
         }

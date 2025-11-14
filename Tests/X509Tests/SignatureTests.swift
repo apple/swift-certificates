@@ -31,6 +31,7 @@ final class SignatureTests: XCTestCase {
     static let p521Key = P521.Signing.PrivateKey()
     static let rsaKey = try! _RSA.Signing.PrivateKey(keySize: .bits2048)
     static let ed25519Key = Curve25519.Signing.PrivateKey()
+    static let dummyData: Data = "the quick brown fox jumps over the lazy dog".data(using: .utf8)!
     #if canImport(Darwin)
     static let secureEnclaveP256 = try? SecureEnclave.P256.Signing.PrivateKey()
     static let secKeyRSA = try? generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false)
@@ -941,4 +942,122 @@ final class SignatureTests: XCTestCase {
             0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
         ])
     }
+
+    func testSignatureValidationRSA() async throws {
+        let algo = Certificate.SignatureAlgorithm.sha384WithRSAEncryption
+        let key = Certificate.PrivateKey(Self.rsaKey)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        XCTAssert(pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo))
+    }
+
+    func testSignatureValidationECDSA() async throws {
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA384
+
+        func test(_ key: Certificate.PrivateKey) throws {
+            let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+            let pub = key.publicKey
+            let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+            XCTAssert(isValidSignature)
+        }
+
+        try test(Certificate.PrivateKey(Self.p256Key))
+        try test(Certificate.PrivateKey(Self.p384Key))
+        try test(Certificate.PrivateKey(Self.p521Key))
+    }
+
+    func testSignatureValidationEdDSA() async throws {
+        let algo = Certificate.SignatureAlgorithm.ed25519
+        let key = Certificate.PrivateKey(Self.ed25519Key)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    #if canImport(Darwin)
+    func testSignatureValidationSecureEncalve() throws {
+        guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
+            throw XCTSkip("No SEP")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = Certificate.PrivateKey(secureEnclaveP256)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyRSA() async throws {
+        guard let secKeyRSA = Self.secKeyRSA else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.sha384WithRSAEncryption
+        let key = try Certificate.PrivateKey(secKeyRSA)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEC256() async throws {
+        guard let secKeyEC256 = Self.secKeyEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = try Certificate.PrivateKey(secKeyEC256)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEC2384() async throws {
+        guard let secKeyEC384 = Self.secKeyEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA512
+        let key = try Certificate.PrivateKey(secKeyEC384)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEC521() async throws {
+        guard let secKeyEC521 = Self.secKeyEC521 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = try Certificate.PrivateKey(secKeyEC521)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEnclaveEC256() async throws {
+        guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = try Certificate.PrivateKey(secKeyEnclaveEC256)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEnclaveEC384() async throws {
+        guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA384
+        let key = try Certificate.PrivateKey(secKeyEnclaveEC384)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        XCTAssert(isValidSignature)
+    }
+    #endif
 }

@@ -156,6 +156,37 @@ extension Certificate.PublicKey {
             return ed25519.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
         }
     }
+
+    /// Confirms that `signature` is a valid signature for `bytes`, created by the
+    /// private key associated with this public key.
+    ///
+    /// This function accepts raw signature bytes (such as those from a TLS handshake)
+    /// and validates them directly against the data.
+    ///
+    /// - Parameters:
+    ///   - signature: The raw signature bytes to validate.
+    ///   - bytes: The data that was signed.
+    ///   - signatureAlgorithm: The algorithm used to create the signature.
+    /// - Returns: Whether the signature was produced by signing `bytes` with the private key corresponding to this public key.
+    @inlinable
+    public func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        switch self.backing {
+        case .p256(let p256):
+            return p256.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .p384(let p384):
+            return p384.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .p521(let p521):
+            return p521.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .rsa(let rsa):
+            return rsa.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .ed25519(let ed25519):
+            return ed25519.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        }
+    }
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
