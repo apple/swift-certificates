@@ -957,7 +957,11 @@ final class SignatureTests: XCTestCase {
         func test(_ key: Certificate.PrivateKey) throws {
             let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
             let pub = key.publicKey
-            let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+            let isValidSignature = pub.isValidSignature(
+                signature.rawRepresentation,
+                for: Self.dummyData,
+                signatureAlgorithm: algo
+            )
             XCTAssert(isValidSignature)
         }
 
@@ -971,7 +975,11 @@ final class SignatureTests: XCTestCase {
         let key = Certificate.PrivateKey(Self.ed25519Key)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -984,7 +992,11 @@ final class SignatureTests: XCTestCase {
         let key = Certificate.PrivateKey(secureEnclaveP256)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -996,7 +1008,11 @@ final class SignatureTests: XCTestCase {
         let key = try Certificate.PrivateKey(secKeyRSA)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -1008,7 +1024,11 @@ final class SignatureTests: XCTestCase {
         let key = try Certificate.PrivateKey(secKeyEC256)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -1020,7 +1040,11 @@ final class SignatureTests: XCTestCase {
         let key = try Certificate.PrivateKey(secKeyEC384)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -1032,7 +1056,11 @@ final class SignatureTests: XCTestCase {
         let key = try Certificate.PrivateKey(secKeyEC521)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -1044,7 +1072,11 @@ final class SignatureTests: XCTestCase {
         let key = try Certificate.PrivateKey(secKeyEnclaveEC256)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
 
@@ -1056,7 +1088,11 @@ final class SignatureTests: XCTestCase {
         let key = try Certificate.PrivateKey(secKeyEnclaveEC384)
         let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
         let pub = key.publicKey
-        let isValidSignature = pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo)
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
         XCTAssert(isValidSignature)
     }
     #endif
