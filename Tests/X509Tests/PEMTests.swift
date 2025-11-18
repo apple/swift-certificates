@@ -122,7 +122,8 @@ final class PEMTests: XCTestCase {
     func testRSAPrivateKey() throws {
         // generated with "openssl genpkey -algorithm rsa"
         let rsaKey = try String(
-            contentsOf: XCTUnwrap(Bundle.module.url(forResource: "PEMTestRSACertificate", withExtension: "pem"))
+            contentsOf: XCTUnwrap(Bundle.module.url(forResource: "PEMTestRSACertificate", withExtension: "pem")),
+            encoding: .ascii
         )
         let privateKey = try Certificate.PrivateKey(pemEncoded: rsaKey)
         guard case .rsa = privateKey.backing else {
