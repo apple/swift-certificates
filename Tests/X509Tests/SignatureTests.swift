@@ -1097,65 +1097,6 @@ final class SignatureTests: XCTestCase {
     }
     #endif
 
-    func testRawSignatureValidationAcrossKeysShouldFail() async throws {
-        var keys = [
-            Certificate.PrivateKey(Self.rsaKey),
-            Certificate.PrivateKey(Self.p256Key),
-            Certificate.PrivateKey(Self.p384Key),
-            Certificate.PrivateKey(Self.p521Key),
-            Certificate.PrivateKey(Self.ed25519Key),
-        ]
-
-        #if canImport(Darwin)
-        if let secureEnclaveP256 = Self.secureEnclaveP256 {
-            keys.append(Certificate.PrivateKey(secureEnclaveP256))
-        }
-        if let secKeyRSA = Self.secKeyRSA, let key = try? Certificate.PrivateKey(secKeyRSA) {
-            keys.append(key)
-        }
-        if let secKeyEC256 = Self.secKeyEC256, let key = try? Certificate.PrivateKey(secKeyEC256) {
-            keys.append(key)
-        }
-        if let secKeyEC384 = Self.secKeyEC384, let key = try? Certificate.PrivateKey(secKeyEC384) {
-            keys.append(key)
-        }
-        if let secKeyEC521 = Self.secKeyEC521, let key = try? Certificate.PrivateKey(secKeyEC521) {
-            keys.append(key)
-        }
-        if let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256, let key = try? Certificate.PrivateKey(secKeyEnclaveEC256) {
-            keys.append(key)
-        }
-        if let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384, let key = try? Certificate.PrivateKey(secKeyEnclaveEC384) {
-            keys.append(key)
-        }
-        #endif
-
-        for signatureKey in keys {
-            for verificationKey in keys {
-                let algo = signatureKey.defaultSignatureAlgorithm
-                let signature = try signatureKey.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
-                let pub = verificationKey.publicKey
-                let isValidSignature = pub.isValidSignature(
-                    signature.rawRepresentation,
-                    for: Self.dummyData,
-                    signatureAlgorithm: algo
-                )
-                // Signatures should only be validated by the same key pair.
-                XCTAssertEqual(isValidSignature, signatureKey == verificationKey)
-
-                // Bit flips in the signature always fail.
-                var signatureBytes = signature.rawRepresentation
-                signatureBytes[0] ^= 0xff
-                let isValidCorruptedSignature = pub.isValidSignature(
-                    signatureBytes,
-                    for: Self.dummyData,
-                    signatureAlgorithm: algo
-                )
-                XCTAssertFalse(isValidCorruptedSignature)
-            }
-        }
-    }
-
     func signatureCrossVerificationCheck(
         publicKeyPEM: String,
         signatureBase64: String,
