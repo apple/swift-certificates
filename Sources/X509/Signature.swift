@@ -188,7 +188,7 @@ extension P256.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -203,7 +203,7 @@ extension P256.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -240,7 +240,7 @@ extension P384.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -255,7 +255,7 @@ extension P384.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -292,7 +292,7 @@ extension P521.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -307,7 +307,7 @@ extension P521.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -353,7 +353,7 @@ extension _RSA.Signing.PublicKey {
     ) -> Bool {
         let rsaSignature = _RSA.Signing.RSASignature(rawRepresentation: signature)
 
-        return isValidSignature(rsaSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(rsaSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
@@ -393,7 +393,7 @@ extension Curve25519.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(rawInnerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(rawInnerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
