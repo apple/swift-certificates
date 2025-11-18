@@ -188,13 +188,37 @@ extension P256.Signing.PublicKey {
             return false
         }
 
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
+            let innerSignature = P256.Signing.ECDSASignature(ecdsaSignature)
+        else {
+            return false
+        }
+
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<Bytes: DataProtocol>(
+        _ signature: P256.Signing.ECDSASignature,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
         switch signatureAlgorithm {
         case .ecdsaWithSHA256:
-            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA256.hash(data: bytes))
         case .ecdsaWithSHA384:
-            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA384.hash(data: bytes))
         case .ecdsaWithSHA512:
-            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA512.hash(data: bytes))
         default:
             return false
         }
@@ -216,13 +240,37 @@ extension P384.Signing.PublicKey {
             return false
         }
 
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
+            let innerSignature = P384.Signing.ECDSASignature(ecdsaSignature)
+        else {
+            return false
+        }
+
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<Bytes: DataProtocol>(
+        _ signature: P384.Signing.ECDSASignature,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
         switch signatureAlgorithm {
         case .ecdsaWithSHA256:
-            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA256.hash(data: bytes))
         case .ecdsaWithSHA384:
-            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA384.hash(data: bytes))
         case .ecdsaWithSHA512:
-            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA512.hash(data: bytes))
         default:
             return false
         }
@@ -244,13 +292,37 @@ extension P521.Signing.PublicKey {
             return false
         }
 
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
+            let innerSignature = P521.Signing.ECDSASignature(ecdsaSignature)
+        else {
+            return false
+        }
+
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<Bytes: DataProtocol>(
+        _ signature: P521.Signing.ECDSASignature,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
         switch signatureAlgorithm {
         case .ecdsaWithSHA256:
-            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA256.hash(data: bytes))
         case .ecdsaWithSHA384:
-            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA384.hash(data: bytes))
         case .ecdsaWithSHA512:
-            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes))
+            return self.isValidSignature(signature, for: SHA512.hash(data: bytes))
         default:
             return false
         }
@@ -269,18 +341,39 @@ extension _RSA.Signing.PublicKey {
             // Signature mismatch
             return false
         }
+
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
+        let rsaSignature = _RSA.Signing.RSASignature(rawRepresentation: signature)
+
+        return self.isValidSignature(rsaSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<Bytes: DataProtocol>(
+        _ signature: _RSA.Signing.RSASignature,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
         // For now we don't support RSA PSS, as it's not deployed in the WebPKI.
         let padding = _RSA.Signing.Padding.insecurePKCS1v1_5
 
         switch signatureAlgorithm {
         case .sha1WithRSAEncryption:
-            return self.isValidSignature(innerSignature, for: Insecure.SHA1.hash(data: bytes), padding: padding)
+            return self.isValidSignature(signature, for: Insecure.SHA1.hash(data: bytes), padding: padding)
         case .sha256WithRSAEncryption:
-            return self.isValidSignature(innerSignature, for: SHA256.hash(data: bytes), padding: padding)
+            return self.isValidSignature(signature, for: SHA256.hash(data: bytes), padding: padding)
         case .sha384WithRSAEncryption:
-            return self.isValidSignature(innerSignature, for: SHA384.hash(data: bytes), padding: padding)
+            return self.isValidSignature(signature, for: SHA384.hash(data: bytes), padding: padding)
         case .sha512WithRSAEncryption:
-            return self.isValidSignature(innerSignature, for: SHA512.hash(data: bytes), padding: padding)
+            return self.isValidSignature(signature, for: SHA512.hash(data: bytes), padding: padding)
         default:
             return false
         }
@@ -300,9 +393,18 @@ extension Curve25519.Signing.PublicKey {
             return false
         }
 
+        return self.isValidSignature(rawInnerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+    }
+
+    @inlinable
+    internal func isValidSignature<SignatureBytes: DataProtocol, Bytes: DataProtocol>(
+        _ signature: SignatureBytes,
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) -> Bool {
         switch signatureAlgorithm {
         case .ed25519:
-            return self.isValidSignature(rawInnerSignature, for: bytes)
+            return self.isValidSignature(signature, for: bytes)
         default:
             return false
         }

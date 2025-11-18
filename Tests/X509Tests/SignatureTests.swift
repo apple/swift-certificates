@@ -31,6 +31,7 @@ final class SignatureTests: XCTestCase {
     static let p521Key = P521.Signing.PrivateKey()
     static let rsaKey = try! _RSA.Signing.PrivateKey(keySize: .bits2048)
     static let ed25519Key = Curve25519.Signing.PrivateKey()
+    static let dummyData: Data = "the quick brown fox jumps over the lazy dog".data(using: .utf8)!
     #if canImport(Darwin)
     static let secureEnclaveP256 = try? SecureEnclave.P256.Signing.PrivateKey()
     static let secKeyRSA = try? generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false)
@@ -1121,4 +1122,326 @@ final class SignatureTests: XCTestCase {
         )
     }
     #endif
+
+    func testSignatureValidationRSA() async throws {
+        let algo = Certificate.SignatureAlgorithm.sha384WithRSAEncryption
+        let key = Certificate.PrivateKey(Self.rsaKey)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        XCTAssert(pub.isValidSignature(signature.rawRepresentation, for: Self.dummyData, signatureAlgorithm: algo))
+    }
+
+    func testSignatureValidationECDSA() async throws {
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA384
+
+        func test(_ key: Certificate.PrivateKey) throws {
+            let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+            let pub = key.publicKey
+            let isValidSignature = pub.isValidSignature(
+                signature.rawRepresentation,
+                for: Self.dummyData,
+                signatureAlgorithm: algo
+            )
+            XCTAssert(isValidSignature)
+        }
+
+        try test(Certificate.PrivateKey(Self.p256Key))
+        try test(Certificate.PrivateKey(Self.p384Key))
+        try test(Certificate.PrivateKey(Self.p521Key))
+    }
+
+    func testSignatureValidationEdDSA() async throws {
+        let algo = Certificate.SignatureAlgorithm.ed25519
+        let key = Certificate.PrivateKey(Self.ed25519Key)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    #if canImport(Darwin)
+    func testSignatureValidationSecureEncalve() throws {
+        guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
+            throw XCTSkip("No SEP")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = Certificate.PrivateKey(secureEnclaveP256)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyRSA() async throws {
+        guard let secKeyRSA = Self.secKeyRSA else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.sha384WithRSAEncryption
+        let key = try Certificate.PrivateKey(secKeyRSA)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEC256() async throws {
+        guard let secKeyEC256 = Self.secKeyEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = try Certificate.PrivateKey(secKeyEC256)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEC2384() async throws {
+        guard let secKeyEC384 = Self.secKeyEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA512
+        let key = try Certificate.PrivateKey(secKeyEC384)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEC521() async throws {
+        guard let secKeyEC521 = Self.secKeyEC521 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = try Certificate.PrivateKey(secKeyEC521)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEnclaveEC256() async throws {
+        guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+        let key = try Certificate.PrivateKey(secKeyEnclaveEC256)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+
+    func testSignatureValidationSecKeyEnclaveEC384() async throws {
+        guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        let algo = Certificate.SignatureAlgorithm.ecdsaWithSHA384
+        let key = try Certificate.PrivateKey(secKeyEnclaveEC384)
+        let signature = try key.sign(bytes: Self.dummyData, signatureAlgorithm: algo)
+        let pub = key.publicKey
+        let isValidSignature = pub.isValidSignature(
+            signature.rawRepresentation,
+            for: Self.dummyData,
+            signatureAlgorithm: algo
+        )
+        XCTAssert(isValidSignature)
+    }
+    #endif
+
+    func signatureCrossVerificationCheck(
+        publicKeyPEM: String,
+        signatureBase64: String,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) throws -> Bool {
+        let singatureData = try XCTUnwrap(Data(base64Encoded: signatureBase64))
+        let publicKey = try Certificate.PublicKey(pemEncoded: publicKeyPEM)
+        let isValidSignature = publicKey.isValidSignature(
+            singatureData,
+            for: Self.dummyData,
+            signatureAlgorithm: signatureAlgorithm
+        )
+        return isValidSignature
+    }
+
+    /// The key and signature were created with openssl for cross verification.
+    ///
+    /// ```bash
+    /// openssl ecparam -genkey -name prime256v1 -noout -out private_key.pem
+    /// openssl ec -in private_key.pem -pubout -out public_key.pem
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha256 -sign private_key.pem -out signature.bin
+    /// cat signature.bin | base64 > signature.b64
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha256 -verify public_key.pem -signature signature.bin
+    /// ```
+    func testVerifyExternalSignatureP256() throws {
+        let publicKeyString = """
+            -----BEGIN PUBLIC KEY-----
+            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECE0sHvBI7sII2F/BU0MQZmYTopKC
+            kPvWhk6CZfJwUpWnwD/frW40nvA20YzQur/PWqUBh7q2Y9wiTiLuBcxO/g==
+            -----END PUBLIC KEY-----
+            """
+        let b64Signature =
+            "MEUCICk5wNvxRSoHGa8YmbCnpfpmmnsrjLIUBHRdQVGFwRgPAiEA+IvpJeu0ky5cLex4j6hcAhlPNu3V2cIIIMdgYa9pnko="
+        let signatureAlgorithm = Certificate.SignatureAlgorithm.ecdsaWithSHA256
+
+        XCTAssert(
+            try signatureCrossVerificationCheck(
+                publicKeyPEM: publicKeyString,
+                signatureBase64: b64Signature,
+                signatureAlgorithm: signatureAlgorithm
+            )
+        )
+    }
+
+    /// The key and signature were created with openssl for cross verification.
+    ///
+    /// ```bash
+    /// openssl ecparam -genkey -name secp384r1 -noout -out private_key.pem
+    /// openssl ec -in private_key.pem -pubout -out public_key.pem
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha384 -sign private_key.pem -out signature.bin
+    /// cat signature.bin | base64 > signature.b64
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha384 -verify public_key.pem -signature signature.bin
+    /// ```
+    func testVerifyExternalSignatureP384() throws {
+        let publicKeyString = """
+            -----BEGIN PUBLIC KEY-----
+            MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAENxXh5R2x/yemNlT3HdrTl5s18R1vc9Wb
+            07LajGD+Lpf71UOPHDOgvvvqXvSpjOmNlAjo1QZ9RYdTIBEdkld6i6G9eS/8HUYH
+            K0ShVbw8J9FoEqeEudPkDYnSsP4rGbi+
+            -----END PUBLIC KEY-----
+            """
+        let b64Signature =
+            "MGUCMBG76L2Jy/aS0AGDGOfMAXtYS0KJSXagd1HgcJjSMCDu39A45OAzrwuB79Q7WxHo7AIxALmi8wBQyD3tuKZXqyWX6WKMT5S5OP6GTR0yOskxxTgOtSAAJjfdPlwSHh/dX6SHlA=="
+        let signatureAlgorithm = Certificate.SignatureAlgorithm.ecdsaWithSHA384
+
+        XCTAssert(
+            try signatureCrossVerificationCheck(
+                publicKeyPEM: publicKeyString,
+                signatureBase64: b64Signature,
+                signatureAlgorithm: signatureAlgorithm
+            )
+        )
+    }
+
+    /// The key and signature were created with openssl for cross verification.
+    ///
+    /// ```bash
+    /// openssl ecparam -genkey -name secp521r1 -noout -out private_key.pem
+    /// openssl ec -in private_key.pem -pubout -out public_key.pem
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha512 -sign private_key.pem -out signature.bin
+    /// cat signature.bin | base64 > signature.b64
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha512 -verify public_key.pem -signature signature.bin
+    /// ```
+    func testVerifyExternalSignatureP521() throws {
+        let publicKeyString = """
+            -----BEGIN PUBLIC KEY-----
+            MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBs/PH1A47bzcgI5B9AO9WHSucivS6
+            DY8zAxCAxKgaiY2TZNx6+X5tfj3dULWmJihC2KhIIV8xwy4jMu+cnXE6KWQBgrQ5
+            LHJwzSmkmwHOUNfZFBZWcgciRS73A6ObamCODHpq0MX3EQQf+flTcgK9gPE/mG0Z
+            vFG9Vp8EOSoyGiMUYyg=
+            -----END PUBLIC KEY-----
+            """
+        let b64Signature =
+            "MIGIAkIA3UlG4owLd8os1NtGyssTph1dpRxYmfRXZ8XclKmaHXcVcqztZiFEs2aubmM4PbEBxMhs5B99Y6wEaV93wpF8+TACQgEikZjniBCSSwycVOKs63gLbz+cxHZesEsZ5YUoiotWL0qP1QHxZSkiMhdEjbi3iVV4cICMp79L8nl+Y45cCE5l2A=="
+        let signatureAlgorithm = Certificate.SignatureAlgorithm.ecdsaWithSHA512
+
+        XCTAssert(
+            try signatureCrossVerificationCheck(
+                publicKeyPEM: publicKeyString,
+                signatureBase64: b64Signature,
+                signatureAlgorithm: signatureAlgorithm
+            )
+        )
+    }
+
+    /// The key and signature were created with openssl for cross verification.
+    ///
+    /// ```bash
+    /// openssl genrsa -out private_key.pem 2048
+    /// openssl rsa -in private_key.pem -pubout -out public_key.pem
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha256 -sign private_key.pem -out signature.bin
+    /// base64 -i signature.bin -o signature.b64
+    /// echo -n "the quick brown fox jumps over the lazy dog" | openssl dgst -sha256 -verify public_key.pem -signature signature.bin
+    /// ```
+    func testVerifyExternalSignatureRSA() throws {
+        let publicKeyString = """
+            -----BEGIN PUBLIC KEY-----
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA69n2XSWqEfUXePz2LE/o
+            rJPn8WEWMUIbAXmVOkTkEtxu1hcPkFP+L8zpoXjcxXTieFPLPXNST2Y2DgOVW36R
+            bqcgK9L5UV/x1ZaHlT2aLjowSNapjMRMETWahiNLyoXjzj/bVefpreQx++BDx1BL
+            rYHd77OzjN5rOs16ASOxceinV34OddHMdNVZpA+nhL3vTjz+1wCplxhmF2x6wXty
+            jKv4UfUfxXSTzwgew0SmhjcBkpljkI+tUcS/XICIXCyrqGCzVupm/OnCET/2e6Kb
+            Q2OlSkJBsvXbaALZ+R5pBEz19OJ6gNXJKzQ1R+onkiER4vUE2KIV/nz8nClkiLEt
+            hwIDAQAB
+            -----END PUBLIC KEY-----
+            """
+        let b64Signature =
+            "Y8shChzT1weQ/aI9KtQaYAjQO3nB7TdJXBvCqtRjxF4hF3zM/RS5vd9HD5+pq9A2r4Zi9w8ehqOEJVMQ1iOoJ4kaJuKo6AXq4lGzeITiEF2P/BlFpBijawfuSlfGUxu8mtbj8bPOdCSH3QtRRSKl2xrmXz8pXyFBPnVdsVDL6nJ1qfv36eYPT4ZckyW4ob3LxB8DUWbC1yM2uoiv8qkGwI23xBae9G5Wk6rd6Op/jLxSB7OBbzReIE9OC9KKoqkwSM2f39L9tb/OCLBGt+EiDrj9dBeplbftqklHRtiz09+YMo62q0VuNDy/ZFidMouBI0m2RqqbZfguc7AJknj4ig=="
+        let signatureAlgorithm = Certificate.SignatureAlgorithm.sha256WithRSAEncryption
+
+        XCTAssert(
+            try signatureCrossVerificationCheck(
+                publicKeyPEM: publicKeyString,
+                signatureBase64: b64Signature,
+                signatureAlgorithm: signatureAlgorithm
+            )
+        )
+    }
+
+    /// The key and signature were created with openssl for cross verification. The openssl that comes with macOS has
+    /// some problems here, but the hombrew version does the job.
+    ///
+    /// ```bash
+    /// openssl_brew="/opt/homebrew/opt/openssl@3/bin/openssl"  # adjust path as needed
+    /// $openssl_brew genpkey -algorithm Ed25519 -out private_key_ed25519.pem
+    /// $openssl_brew pkey -in private_key_ed25519.pem -pubout -out public_key_ed25519.pem
+    /// echo -n "the quick brown fox jumps over the lazy dog" | $openssl_brew dgst -sign private_key_ed25519.pem -out signature_ed25519.bin
+    /// base64 -i signature_ed25519.bin -o signature_ed25519.b64
+    /// echo -n "the quick brown fox jumps over the lazy dog" | $openssl_brew dgst -verify public_key_ed25519.pem -signature signature_ed25519.bin
+    /// ```
+    func testVerifyExternalSignatureEd25519() throws {
+        let publicKeyString = """
+            -----BEGIN PUBLIC KEY-----
+            MCowBQYDK2VwAyEAigqjYOkQRGJZnXK5tlYGL64wqRImNW4xJ9ddCmCaNa8=
+            -----END PUBLIC KEY-----
+            """
+        let b64Signature = "kxEmGeHhUT+dG4Kpq/+ZCMpHzbIfXb/Oss+mvAGJMoieCu+4dhsQaO/fKNBNUQmBj2wu0ZyHpkXX8p2Eijd/Aw=="
+        let signatureAlgorithm = Certificate.SignatureAlgorithm.ed25519
+
+        XCTAssert(
+            try signatureCrossVerificationCheck(
+                publicKeyPEM: publicKeyString,
+                signatureBase64: b64Signature,
+                signatureAlgorithm: signatureAlgorithm
+            )
+        )
+    }
 }
