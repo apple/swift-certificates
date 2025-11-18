@@ -1004,7 +1004,7 @@ final class SignatureTests: XCTestCase {
             0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
         ])
     }
-  
+
     func testSignatureAlgorithmTranslatesToCorrectRFC8446Value() throws {
         for (value, algorithm) in SignatureTests.supportedRFC8446SignatureAlgorithms {
             XCTAssertEqual(value, try! algorithm.rfc8446SignatureSchemeValue)
