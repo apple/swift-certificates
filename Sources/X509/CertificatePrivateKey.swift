@@ -378,3 +378,36 @@ extension Certificate.PrivateKey {
         }
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension Certificate.PrivateKey {
+    /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
+    /// preference or security of the contained algorithms.
+    @inlinable
+    public var supportedSignatureAlgorithms: [Certificate.SignatureAlgorithm] {
+        switch backing {
+        case .p256, .p384, .p521:
+            return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        case .rsa:
+            return [
+                .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
+        #if canImport(Darwin)
+        case .secureEnclaveP256:
+            return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        case .secKey(let key):
+            switch key.type {
+            case .RSA:
+                return [
+                    .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption,
+                    .sha1WithRSAEncryption,
+                ]
+            case .ECDSA:
+                return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+            }
+        #endif
+        case .ed25519:
+            return [.ed25519]
+        }
+    }
+}
