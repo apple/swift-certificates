@@ -252,7 +252,6 @@ extension P384.Signing.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-
         // Parse the bytes as DER-encoded ECDSA signature
         guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
             let innerSignature = P384.Signing.ECDSASignature(ecdsaSignature)
@@ -306,7 +305,6 @@ extension P521.Signing.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-        // Parse the raw signature bytes as DER-encoded ECDSA signature
         guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
             let innerSignature = P521.Signing.ECDSASignature(ecdsaSignature)
         else {
@@ -357,7 +355,6 @@ extension _RSA.Signing.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-        // RSA signatures are already in raw format
         let rsaSignature = _RSA.Signing.RSASignature(rawRepresentation: signature)
 
         return isValidSignature(rsaSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
