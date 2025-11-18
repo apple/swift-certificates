@@ -197,8 +197,6 @@ extension P256.Signing.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-
-        // Parse the bytes as DER-encoded ECDSA signature.
         guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
             let innerSignature = P256.Signing.ECDSASignature(ecdsaSignature)
         else {
@@ -251,7 +249,6 @@ extension P384.Signing.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-        // Parse the bytes as DER-encoded ECDSA signature
         guard let ecdsaSignature = try? ECDSASignature(derEncoded: Array(signature)),
             let innerSignature = P384.Signing.ECDSASignature(ecdsaSignature)
         else {
