@@ -50,6 +50,68 @@ final class SignatureTests: XCTestCase {
     )
     #endif
 
+    // RFC8446 defines the following values for signature schemes for TLS 1.3 (signature algorithms before).
+    // Swift Certificates only supports a handful of them.
+    //
+    // enum {
+    //     /* RSASSA-PKCS1-v1_5 algorithms */
+    //     rsa_pkcs1_sha256(0x0401),
+    //     rsa_pkcs1_sha384(0x0501),
+    //     rsa_pkcs1_sha512(0x0601),
+    //
+    //     /* ECDSA algorithms */
+    //     ecdsa_secp256r1_sha256(0x0403),
+    //     ecdsa_secp384r1_sha384(0x0503),
+    //     ecdsa_secp521r1_sha512(0x0603),
+    //
+    //     /* RSASSA-PSS algorithms with public key OID rsaEncryption */
+    //     rsa_pss_rsae_sha256(0x0804),
+    //     rsa_pss_rsae_sha384(0x0805),
+    //     rsa_pss_rsae_sha512(0x0806),
+    //
+    //     /* EdDSA algorithms */
+    //     ed25519(0x0807),
+    //     ed448(0x0808),
+    //
+    //     /* RSASSA-PSS algorithms with public key OID RSASSA-PSS */
+    //     rsa_pss_pss_sha256(0x0809),
+    //     rsa_pss_pss_sha384(0x080a),
+    //     rsa_pss_pss_sha512(0x080b),
+    //
+    //     /* Legacy algorithms */
+    //     rsa_pkcs1_sha1(0x0201),
+    //     ecdsa_sha1(0x0203),
+    //
+    //     /* Reserved Code Points */
+    //     private_use(0xFE00..0xFFFF),
+    //     (0xFFFF)
+    // } SignatureScheme;
+    static let supportedRFC8446SignatureAlgorithms: [UInt16: Certificate.SignatureAlgorithm] = [
+        // RSASSA-PKCS1-v1_5 algorithms
+        0x0401: Certificate.SignatureAlgorithm.sha256WithRSAEncryption,
+        0x0501: Certificate.SignatureAlgorithm.sha384WithRSAEncryption,
+        0x0601: Certificate.SignatureAlgorithm.sha512WithRSAEncryption,
+
+        // RSASSA-PSS algorithms with public key OID rsaEncryption
+        // Currently not supported
+
+        // ECDSA algorithms
+        0x0403: Certificate.SignatureAlgorithm.ecdsaWithSHA256,
+        0x0503: Certificate.SignatureAlgorithm.ecdsaWithSHA384,
+        0x0603: Certificate.SignatureAlgorithm.ecdsaWithSHA512,
+
+        // EdDSA algorithms
+        0x0807: Certificate.SignatureAlgorithm.ed25519,
+        // ed448 is currenlty not supported
+
+        // RSASSA-PSS algorithms with public key OID RSASSA-PSS
+        // Currently not supported
+
+        // Legacy algorithms
+        0x0201: Certificate.SignatureAlgorithm.sha1WithRSAEncryption,
+        // ecdsa_sha1 is currenlty not supported
+    ]
+
     func testRSASignatureBytes() throws {
         let input = Array("Hello World".utf8)
         let privateKey = Certificate.PrivateKey(Self.rsaKey)
@@ -941,4 +1003,122 @@ final class SignatureTests: XCTestCase {
             0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
         ])
     }
+
+    func testSignatureAlgorithmTranslatesToCorrectRFC8446Value() throws {
+        for (value, algorithm) in SignatureTests.supportedRFC8446SignatureAlgorithms {
+            XCTAssertEqual(value, try! algorithm.rfc8446SignatureSchemeValue)
+        }
+    }
+
+    func testSignatureAlgorithmInitializedWithRFC8446Value() {
+        let supportedValues = Set(SignatureTests.supportedRFC8446SignatureAlgorithms.keys)
+        for value in 0...UInt16.max {
+            if supportedValues.contains(value) {
+                let algo = Certificate.SignatureAlgorithm(rfc8446SignatureSchemeValue: value)
+                XCTAssertNotNil(algo)
+                XCTAssertEqual(algo, SignatureTests.supportedRFC8446SignatureAlgorithms[value])
+            } else {
+                XCTAssertNil(Certificate.SignatureAlgorithm(rfc8446SignatureSchemeValue: value))
+            }
+        }
+
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmRSA() throws {
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.rsaKey).supportedSignatureAlgorithms),
+            Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmECDSA() throws {
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.p256Key).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.p384Key).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(Self.p521Key).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmEdDSA() throws {
+        XCTAssertEqual(Set(Certificate.PrivateKey(Self.ed25519Key).supportedSignatureAlgorithms), Set([.ed25519]))
+    }
+
+    #if canImport(Darwin)
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecureEncalve() throws {
+        guard let secureEnclaveP256 = Self.secureEnclaveP256 else {
+            throw XCTSkip("No SEP")
+        }
+        XCTAssertEqual(
+            Set(Certificate.PrivateKey(secureEnclaveP256).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyRSA() async throws {
+        guard let secKeyRSA = Self.secKeyRSA else {
+            throw XCTSkip("Key Error")
+        }
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyRSA).supportedSignatureAlgorithms),
+            Set([.sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption, .sha1WithRSAEncryption])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyEC256() async throws {
+        guard let secKeyEC256 = Self.secKeyEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEC256).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyEC2384() async throws {
+        guard let secKeyEC384 = Self.secKeyEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEC384).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmSecKeyEC521() async throws {
+        guard let secKeyEC521 = Self.secKeyEC521 else {
+            throw XCTSkip("Key Error")
+        }
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEC521).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmsecKeyEnclaveEC256() async throws {
+        guard let secKeyEnclaveEC256 = Self.secKeyEnclaveEC256 else {
+            throw XCTSkip("Key Error")
+        }
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEnclaveEC256).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+
+    func testMapPrivateKeyToSupportedSignatureAlgorithmsecKeyEnclaveEC384() async throws {
+        guard let secKeyEnclaveEC384 = Self.secKeyEnclaveEC384 else {
+            throw XCTSkip("Key Error")
+        }
+        XCTAssertEqual(
+            Set(try Certificate.PrivateKey(secKeyEnclaveEC384).supportedSignatureAlgorithms),
+            Set([.ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512])
+        )
+    }
+    #endif
 }
