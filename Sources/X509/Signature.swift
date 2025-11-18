@@ -181,7 +181,6 @@ extension P256.Signing.PublicKey {
         for bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm
     ) -> Bool {
-
         guard case .ecdsa(let rawInnerSignature) = signature.backing,
             let innerSignature = P256.Signing.ECDSASignature(rawInnerSignature)
         else {
@@ -408,7 +407,6 @@ extension Curve25519.Signing.PublicKey {
     ) -> Bool {
         switch signatureAlgorithm {
         case .ed25519:
-            // Ed25519 signatures are already in raw format (64 bytes)
             return self.isValidSignature(signature, for: bytes)
         default:
             return false
