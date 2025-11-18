@@ -342,7 +342,7 @@ extension _RSA.Signing.PublicKey {
             return false
         }
 
-        return isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        return self.isValidSignature(innerSignature, for: bytes, signatureAlgorithm: signatureAlgorithm)
     }
 
     @inlinable
