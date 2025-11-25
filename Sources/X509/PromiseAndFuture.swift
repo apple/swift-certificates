@@ -18,6 +18,26 @@ final class Promise<Value: Sendable, Failure: Error> {
     private enum State {
         case unfulfilled(observers: [CheckedContinuation<Result<Value, Failure>, Never>])
         case fulfilled(Result<Value, Failure>)
+
+        /// Returns the result, if available.
+        ///
+        /// - Parameter continuation: A continuation to store if no result is currently available.
+        ///   If a result is returned from this function then the continuation will not be stored.
+        /// - Returns: The result, if available.
+        mutating func result(
+            continuation: CheckedContinuation<Result<Value, Failure>, Never>?
+        ) -> Result<Value, Failure>? {
+            switch self {
+            case .fulfilled(let result):
+                return result
+            case .unfulfilled(var observers):
+                if let continuation = continuation {
+                    observers.append(continuation)
+                    self = .unfulfilled(observers: observers)
+                }
+                return nil
+            }
+        }
     }
 
     private let state = LockedValueBox(State.unfulfilled(observers: []))
@@ -26,36 +46,43 @@ final class Promise<Value: Sendable, Failure: Error> {
 
     fileprivate var result: Result<Value, Failure> {
         get async {
-            self.state.unsafe.lock()
+            let result = self.state.withLockedValue { state in
+                state.result(continuation: nil)
+            }
 
-            switch self.state.unsafe.withValueAssumingLockIsAcquired({ $0 }) {
-            case .fulfilled(let result):
-                defer { self.state.unsafe.unlock() }
+            if let result = result {
                 return result
-            case .unfulfilled(var observers):
-                return await withCheckedContinuation {
-                    (continuation: CheckedContinuation<Result<Value, Failure>, Never>) in
-                    observers.append(continuation)
-                    self.state.unsafe.withValueAssumingLockIsAcquired { value in
-                        value = .unfulfilled(observers: observers)
-                    }
-                    self.state.unsafe.unlock()
+            }
+
+            // Holding the lock here *should* be safe but because of a bug in the runtime
+            // it isn't, so drop the lock, create the continuation and then try again.
+            //
+            // See https://github.com/swiftlang/swift/issues/85668
+            return await withCheckedContinuation { continuation in
+                let result = self.state.withLockedValue { state in
+                    state.result(continuation: continuation)
+                }
+
+                if let result = result {
+                    continuation.resume(returning: result)
                 }
             }
         }
     }
 
     func fulfil(with result: Result<Value, Failure>) {
-        self.state.withLockedValue { state in
+        let observers = self.state.withLockedValue { state in
             switch state {
             case .fulfilled(let oldResult):
                 fatalError("tried to fulfil Promise that is already fulfilled to \(oldResult). New result: \(result)")
             case .unfulfilled(let observers):
-                for observer in observers {
-                    observer.resume(returning: result)
-                }
                 state = .fulfilled(result)
+                return observers
             }
+        }
+
+        for observer in observers {
+            observer.resume(returning: result)
         }
     }
 
