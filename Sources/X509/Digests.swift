@@ -19,16 +19,15 @@ import Foundation
 #endif
 @preconcurrency import Crypto
 
-@usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-enum Digest: Sendable {
+public enum Digest: Sendable {
     case insecureSHA1(Insecure.SHA1Digest)
     case sha256(SHA256Digest)
     case sha384(SHA384Digest)
     case sha512(SHA512Digest)
 
     @inlinable
-    static func computeDigest<Bytes: DataProtocol>(
+    public static func computeDigest<Bytes: DataProtocol>(
         for bytes: Bytes,
         using digestIdentifier: AlgorithmIdentifier
     ) throws -> Digest {
@@ -49,8 +48,7 @@ enum Digest: Sendable {
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Digest: Sequence {
-    @usableFromInline
-    func makeIterator() -> some IteratorProtocol<UInt8> {
+    public func makeIterator() -> some IteratorProtocol<UInt8> {
         switch self {
         case .insecureSHA1(let sha1):
             return sha1.makeIterator()
