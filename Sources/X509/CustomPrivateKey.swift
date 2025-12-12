@@ -38,7 +38,6 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
     ///   - bytes: The data to create the signature for.
     ///   - signatureAlgorithm: The signature algorithm to use.
     /// - Returns: The signature.
-    @inlinable
     func signSynchronously(
         bytes: some DataProtocol,
         signatureAlgorithm: Certificate.SignatureAlgorithm
@@ -50,7 +49,6 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
     ///   - bytes: The data to create the signature for.
     ///   - signatureAlgorithm: The signature algorithm to use.
     /// - Returns: The signature.
-    @inlinable
     func signAsynchronously(
         bytes: some DataProtocol & Sendable,
         signatureAlgorithm: Certificate.SignatureAlgorithm
