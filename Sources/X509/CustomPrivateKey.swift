@@ -45,6 +45,9 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
 
     /// Use the private key to sign the provided bytes asynchronously with a given signature algorithm.
     ///
+    /// The default implementation calls ``signSynchronously(bytes:signatureAlgorithm:)`` and returns the result.
+    /// Conforming types may override this method to provide a specialized asynchronous implementation.
+    ///
     /// - Parameters:
     ///   - bytes: The data to create the signature for.
     ///   - signatureAlgorithm: The signature algorithm to use.
