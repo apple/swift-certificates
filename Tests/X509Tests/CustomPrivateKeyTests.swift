@@ -32,6 +32,7 @@ final class CustomPrivateKeyTests {
         #expect(keyBacking.supportedSignatureAlgorithms == privateKey.supportedSignatureAlgorithms)
     }
 
+    @Test("CustomPrivateKey Signing")
     func testCustomPrivateKeySigning() async throws {
         let privateKey = Certificate.PrivateKey(TestAsyncKey())
 
@@ -47,6 +48,7 @@ final class CustomPrivateKeyTests {
         }
     }
 
+    @Test("CustomPrivateKey Equatable")
     func testCustomPrivateKeyBackingEquality() {
         let keyBacking = TestAsyncKey()
         let leftKey = Certificate.PrivateKey(keyBacking)
@@ -54,6 +56,7 @@ final class CustomPrivateKeyTests {
         #expect(leftKey == rightKey)
     }
 
+    @Test("CustomPrivateKey Serialization")
     func testCustomPrivateKeySerialization() {
         let privateKey = Certificate.PrivateKey(TestAsyncKey())
         #expect(throws: TestAsyncKey.MyError.self) {
