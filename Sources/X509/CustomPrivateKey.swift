@@ -59,6 +59,7 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CustomPrivateKey {
 
+    @inlinable
     public func signAsynchronously(
         bytes: some DataProtocol & Sendable,
         signatureAlgorithm: Certificate.SignatureAlgorithm
