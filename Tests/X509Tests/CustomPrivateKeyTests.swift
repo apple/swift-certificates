@@ -29,6 +29,7 @@ final class CustomPrivateKeyTests {
         #expect(privateKey.description == "CustomPrivateKey")
         #expect(keyBacking.hashValue == privateKey.hashValue)
         #expect(keyBacking.defaultSignatureAlgorithm == privateKey.defaultSignatureAlgorithm)
+        #expect(keyBacking.supportedSignatureAlgorithms == privateKey.supportedSignatureAlgorithms)
     }
 
     func testCustomPrivateKeySigning() async throws {
@@ -71,6 +72,8 @@ private struct TestAsyncKey: CustomPrivateKey {
     private let privateKey = Certificate.PrivateKey(P256.Signing.PrivateKey())
 
     let defaultSignatureAlgorithm: Certificate.SignatureAlgorithm = .sha256WithRSAEncryption
+
+    var supportedSignatureAlgorithms: [Certificate.SignatureAlgorithm] = [.sha256WithRSAEncryption]
 
     func signSynchronously(
         bytes: some DataProtocol,

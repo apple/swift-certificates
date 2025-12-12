@@ -28,6 +28,10 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
 
     var defaultSignatureAlgorithm: Certificate.SignatureAlgorithm { get }
 
+    /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
+    /// preference or security of the contained algorithms.
+    var supportedSignatureAlgorithms: [Certificate.SignatureAlgorithm] { get }
+
     /// Use the private key to sign the provided bytes with a given signature algorithm.
     ///
     /// - Parameters:

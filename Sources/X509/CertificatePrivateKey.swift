@@ -451,6 +451,8 @@ extension Certificate.PrivateKey {
         #endif
         case .ed25519:
             return [.ed25519]
+        case .custom(let customKey):
+            return customKey.supportedSignatureAlgorithms
         }
     }
 }
