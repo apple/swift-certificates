@@ -36,6 +36,7 @@ public enum CMS: Sendable {
             return try self.signWithSigningTime(
                 bytes,
                 signatureAlgorithm: signatureAlgorithm,
+                additionalIntermediateCertificates: additionalIntermediateCertificates,
                 certificate: certificate,
                 privateKey: privateKey,
                 signingTime: signingTime,
