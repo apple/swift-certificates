@@ -19,6 +19,7 @@ import Foundation
 #endif
 import SwiftASN1
 
+/// Implement ``CustomPrivateKey`` if you need custom signing logic.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
 
@@ -26,6 +27,7 @@ public protocol CustomPrivateKey: Sendable, Hashable, PEMSerializable {
     /// this private key.
     var publicKey: Certificate.PublicKey { get }
 
+    /// The default signature algorithm to use for signing.
     var defaultSignatureAlgorithm: Certificate.SignatureAlgorithm { get }
 
     /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
