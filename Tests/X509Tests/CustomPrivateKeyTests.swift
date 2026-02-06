@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import CryptoKit
+import Crypto
 import Foundation
 import SwiftASN1
 import Testing
