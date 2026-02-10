@@ -14,27 +14,23 @@
 
 import SwiftASN1
 
-@usableFromInline
-struct AlgorithmIdentifier: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
+public struct AlgorithmIdentifier: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
-    static var defaultIdentifier: ASN1Identifier {
+    public static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
-    @usableFromInline
-    var algorithm: ASN1ObjectIdentifier
+    public private(set) var algorithm: ASN1ObjectIdentifier
 
-    @usableFromInline
-    var parameters: ASN1Any?
+    public private(set) var parameters: ASN1Any?
 
-    @inlinable
-    init(algorithm: ASN1ObjectIdentifier, parameters: ASN1Any?) {
+    public init(algorithm: ASN1ObjectIdentifier, parameters: ASN1Any?) {
         self.algorithm = algorithm
         self.parameters = parameters
     }
 
     @inlinable
-    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+    public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         // The AlgorithmIdentifier block looks like this.
         //
         // AlgorithmIdentifier  ::=  SEQUENCE  {
@@ -51,12 +47,12 @@ struct AlgorithmIdentifier: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashab
     }
 
     @inlinable
-    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+    public init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try .init(derEncoded: rootNode, withIdentifier: identifier)
     }
 
     @inlinable
-    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+    public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.algorithm)
             if let parameters = self.parameters {
@@ -216,8 +212,7 @@ extension AlgorithmIdentifier {
 }
 
 extension AlgorithmIdentifier: CustomStringConvertible {
-    @usableFromInline
-    var description: String {
+    public var description: String {
         switch self {
         case .p256PublicKey:
             return "p256PublicKey"

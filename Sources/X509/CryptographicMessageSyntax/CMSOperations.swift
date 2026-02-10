@@ -79,6 +79,92 @@ public enum CMS: Sendable {
     }
 
     @inlinable
+    static func buildSignedAttributes<Bytes: DataProtocol>(
+        for bytes: Bytes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        signingTime: Date
+    ) throws -> [CMSAttribute] {
+        // 1. content-type attribute
+        let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
+        let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
+
+        // 2. message-digest attribute
+        let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+        let computedDigest = try Digest.computeDigest(for: bytes, using: digestAlgorithm)
+        let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
+        let messageDigestVal = try ASN1Any(erasing: messageDigest)
+        let messageDigestAttribute = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
+
+        // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
+        let utcTime = try UTCTime(signingTime.utcDate)
+        let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
+        let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
+        return [contentTypeAttribute, messageDigestAttribute, signingTimeAttribute]
+    }
+
+    @_spi(CMS)
+    @inlinable
+    public static func createSigningTimeASN1(signingTime: Date) throws -> Data {
+        let utcTime = try UTCTime(signingTime.utcDate)
+        let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
+        var coder = DER.Serializer()
+        try coder.serialize(signingTimeAttrVal)
+        return Data(coder.serializedBytes)
+    }
+
+    @_spi(CMS)
+    @inlinable
+    public static func getSignedAttributesBytes<Data: DataProtocol>(
+        digest: Data,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        signingTime: Date
+    ) throws -> [UInt8] {
+        let signedAttrs: [CMSAttribute] = try buildSignedAttributes(
+            for: digest,
+            signatureAlgorithm: signatureAlgorithm,
+            signingTime: signingTime
+        )
+        var coder = DER.Serializer()
+        try coder.serializeSetOf(signedAttrs)
+        return coder.serializedBytes
+    }
+
+    @_spi(CMS)
+    @inlinable
+    public static func signWithTrustedTimestamp<Data: DataProtocol>(
+        _ bytes: Data,
+        signatureBytes: ASN1OctetString,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalIntermediateCertificates: [Certificate] = [],
+        certificate: Certificate,
+        signingTime: Date,
+        detached: Bool = true,
+        trustedTimestampBytes: [UInt8]
+    ) throws -> [UInt8] {
+        let signedAttrs: [CMSAttribute] = try buildSignedAttributes(
+            for: bytes,
+            signatureAlgorithm: signatureAlgorithm,
+            signingTime: signingTime
+        )
+        // Adding trusted timestamp to unsignedAttrs
+        let tsrWrapped = try ASN1Any(derEncoded: trustedTimestampBytes)
+        let timestampAttr = CMSAttribute(attrType: .trustedTimestamp, attrValues: [tsrWrapped])
+        let unsignedAttrs: [CMSAttribute] = [timestampAttr]
+
+        // Generating CMS
+        let signedData = try self.generateSignedDataWithUnsignedAttrs(
+            signatureBytes: signatureBytes,
+            signatureAlgorithm: signatureAlgorithm,
+            additionalIntermediateCertificates: additionalIntermediateCertificates,
+            certificate: certificate,
+            signedAttrs: signedAttrs,
+            withContent: detached ? nil : bytes,
+            unsignedAttrs: unsignedAttrs
+        )
+        return try self.serializeSignedData(signedData)
+    }
+
+    @inlinable
     static func signWithSigningTime<Bytes: DataProtocol>(
         _ bytes: Bytes,
         signatureAlgorithm: Certificate.SignatureAlgorithm,
@@ -88,30 +174,11 @@ public enum CMS: Sendable {
         signingTime: Date,
         detached: Bool = true
     ) throws -> [UInt8] {
-        var signedAttrs: [CMSAttribute] = []
-        // As specified in RFC 5652 section 11 when including signedAttrs we need to include a minimum of:
-        // 1. content-type
-        // 2. message-digest
-
-        // add content-type signedAttr cms data
-        let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
-        let contentTypeAttribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
-        signedAttrs.append(contentTypeAttribute)
-
-        // add message-digest of provided content bytes
-        let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-        let computedDigest = try Digest.computeDigest(for: bytes, using: digestAlgorithm)
-        let messageDigest = ASN1OctetString(contentBytes: ArraySlice(computedDigest))
-        let messageDigestVal = try ASN1Any(erasing: messageDigest)
-        let messageDigestAttr = CMSAttribute(attrType: .messageDigest, attrValues: [messageDigestVal])
-        signedAttrs.append(messageDigestAttr)
-
-        // add signing time utc time in 'YYMMDDHHMMSSZ' format as specificed in `UTCTime`
-        let utcTime = try UTCTime(signingTime.utcDate)
-        let signingTimeAttrVal = try ASN1Any(erasing: utcTime)
-        let signingTimeAttribute = CMSAttribute(attrType: .signingTime, attrValues: [signingTimeAttrVal])
-        signedAttrs.append(signingTimeAttribute)
-
+        let signedAttrs: [CMSAttribute] = try buildSignedAttributes(
+            for: bytes,
+            signatureAlgorithm: signatureAlgorithm,
+            signingTime: signingTime
+        )
         // As specified in RFC 5652 section 5.4:
         // When the [signedAttrs] field is present, however, the result is the message digest of the complete DER encoding of the SignedAttrs value contained in the signedAttrs field.
         var coder = DER.Serializer()
@@ -173,6 +240,45 @@ public enum CMS: Sendable {
             signedAttrs: signedAttrs,
             withContent: nil as Data?
         )
+    }
+
+    @inlinable
+    static func generateSignedDataWithUnsignedAttrs<Bytes: DataProtocol>(
+        signatureBytes: ASN1OctetString,
+        signatureAlgorithm: Certificate.SignatureAlgorithm,
+        additionalIntermediateCertificates: [Certificate],
+        certificate: Certificate,
+        signedAttrs: [CMSAttribute]? = nil,
+        withContent content: Bytes? = nil,
+        unsignedAttrs: [CMSAttribute]? = nil
+    ) throws -> CMSContentInfo {
+        let digestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
+        var contentInfo = CMSEncapsulatedContentInfo(eContentType: .cmsData)
+        if let content {
+            contentInfo.eContent = ASN1OctetString(contentBytes: Array(content)[...])
+        }
+
+        let signerInfo = CMSSignerInfo(
+            signerIdentifier: .init(issuerAndSerialNumber: certificate),
+            digestAlgorithm: digestAlgorithm,
+            signedAttrs: signedAttrs,
+            signatureAlgorithm: AlgorithmIdentifier(signatureAlgorithm),
+            signature: signatureBytes,
+            unsignedAttrs: unsignedAttrs
+        )
+
+
+        var certificates = [certificate]
+        certificates.append(contentsOf: additionalIntermediateCertificates)
+
+        let signedData = CMSSignedData(
+            version: .v3,  // Signed Data should be v3
+            digestAlgorithms: [digestAlgorithm],
+            encapContentInfo: contentInfo,
+            certificates: certificates,
+            signerInfos: [signerInfo]
+        )
+        return try CMSContentInfo(signedData)
     }
 
     @inlinable
