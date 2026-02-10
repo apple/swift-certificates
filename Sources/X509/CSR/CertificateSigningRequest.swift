@@ -155,6 +155,45 @@ public struct CertificateSigningRequest {
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
     ///
+    /// - Parameters:
+    ///   - version: The CSR version.
+    ///   - subject: The ``DistinguishedName`` of the subject of this CSR
+    ///   - asyncPrivateKey: The private key associated with this CSR.
+    ///   - attributes: The attributes associated with this CSR
+    ///   - signatureAlgorithm: The signature algorithm to use for the signature on this CSR.
+    @inlinable
+    public init(
+        version: Version,
+        subject: DistinguishedName,
+        asyncPrivateKey: Certificate.PrivateKey,
+        attributes: Attributes,
+        signatureAlgorithm: Certificate.SignatureAlgorithm
+    ) async throws {
+        self.info = CertificationRequestInfo(
+            version: version,
+            subject: subject,
+            publicKey: asyncPrivateKey.publicKey,
+            attributes: attributes
+        )
+        self.signatureAlgorithm = signatureAlgorithm
+
+        let infoBytes = try DER.Serializer.serialized(element: self.info)
+        self.signature = try await asyncPrivateKey.signAsynchronously(
+            bytes: infoBytes,
+            signatureAlgorithm: signatureAlgorithm
+        )
+        self.infoBytes = infoBytes[...]
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(
+            element: AlgorithmIdentifier(self.signatureAlgorithm)
+        )[...]
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
+    }
+
+    /// Construct a CSR for a specific private key.
+    ///
+    /// This API can be used to construct a certificate signing request that can be passed to a certificate
+    /// authority. It will correctly generate a signature over the request.
+    ///
     /// A default signature algorithm to use for the signature of this CSR is automatically chosen based on
     /// the type of the private key.
     ///
