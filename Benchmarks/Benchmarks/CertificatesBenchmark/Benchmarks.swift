@@ -15,7 +15,7 @@
 import Benchmark
 import Foundation
 
-let benchmarks = {
+let benchmarks: @Sendable () -> Void = {
     Benchmark.defaultConfiguration = .init(
         metrics: [
             .mallocCountTotal
