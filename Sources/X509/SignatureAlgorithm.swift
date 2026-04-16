@@ -177,7 +177,7 @@ extension Certificate.SignatureAlgorithm {
                 return 0x0807
             default:
                 throw CertificateError.unsupportedSignatureAlgorithm(
-                    reason: "SignatureAlgorithm(\(self)) has an unsupprted value"
+                    reason: "SignatureAlgorithm(\(self)) has an unsupported value"
                 )
             }
         }
