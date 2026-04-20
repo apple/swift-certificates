@@ -21,10 +21,9 @@ import SwiftASN1
 ///   eContent [0] EXPLICIT OCTET STRING OPTIONAL }
 /// ContentType ::= OBJECT IDENTIFIER
 /// ```
-@usableFromInline
-struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
+public struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
-    static var defaultIdentifier: ASN1Identifier {
+    public static var defaultIdentifier: ASN1Identifier {
         .sequence
     }
 
@@ -35,13 +34,13 @@ struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable,
     var eContent: ASN1OctetString?
 
     @inlinable
-    init(eContentType: ASN1ObjectIdentifier, eContent: ASN1OctetString? = nil) {
+    public init(eContentType: ASN1ObjectIdentifier, eContent: ASN1OctetString? = nil) {
         self.eContentType = eContentType
         self.eContent = eContent
     }
 
     @inlinable
-    init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+    public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let eContentType = try ASN1ObjectIdentifier(derEncoded: &nodes)
             let eContent = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
@@ -53,7 +52,7 @@ struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable,
     }
 
     @inlinable
-    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+    public init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         self = try BER.sequence(rootNode, identifier: identifier) { nodes in
             let eContentType = try ASN1ObjectIdentifier(derEncoded: &nodes)
             let eContent = try BER.optionalExplicitlyTagged(&nodes, tagNumber: 0, tagClass: .contextSpecific) { node in
@@ -65,7 +64,7 @@ struct CMSEncapsulatedContentInfo: DERImplicitlyTaggable, BERImplicitlyTaggable,
     }
 
     @inlinable
-    func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+    public func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
         try coder.appendConstructedNode(
             identifier: identifier,
             { coder in
