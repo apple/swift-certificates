@@ -114,7 +114,7 @@ and the signature algorithm would be constrained to what that key is capable of.
 match the private key that the subject entity has attested to possessing.
 
 We can use the keys from `swift-crypto` for this operation. We'll select `P256.Signing.PrivateKey` as our private key, which
-we can wrap up in ``Certificate/PrivateKey/init(_:)-6xkmz`` to get `issuerPrivateKey`. We can then derive `publicKey` via
+we can wrap up in ``Certificate/PrivateKey/init(_:)-2we15`` to get `issuerPrivateKey`. We can then derive `publicKey` via
 ``Certificate/PrivateKey/publicKey``. Finally, we'll pick the only signature algorithm compatible with that key, which is
 ``Certificate/SignatureAlgorithm-swift.struct/ecdsaWithSHA256``.
 
