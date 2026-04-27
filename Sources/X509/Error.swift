@@ -79,8 +79,8 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
         )
     }
 
-    /// The private key algorithm used in a ``Certificate`` is not supported by this library.
-    /// - Parameter reason: A detailed reason explaining what private key algorithm was not supported.
+    /// The public key algorithm used in a ``Certificate`` is not supported by this library.
+    /// - Parameter reason: A detailed reason explaining what public key algorithm was not supported.
     /// - Parameter file: The file where the error occurs.
     /// - Parameter line: The line where the error occurs.
     /// - Returns: A ``CertificateError`` with ``code`` set to ``ErrorCode/unsupportedPublicKeyAlgorithm``.
@@ -163,7 +163,7 @@ public struct CertificateError: Error, Hashable, CustomStringConvertible {
         )
     }
 
-    /// A digest private key isn't supported
+    /// The private key isn't supported by this library.
     /// - Parameter reason: A detailed reason indicating the unsupported private key.
     /// - Parameter file: The file where the error occurs.
     /// - Parameter line: The line where the error occurs.

@@ -26,7 +26,7 @@ import _CertificateInternals
 /// contains one or more ``RelativeDistinguishedName/Attribute`` which are considered equivalent: that is, they
 /// are each a representation of the same piece of information.
 ///
-/// ``RelativeDistinguishedName``s are organised into a hierarchy in a ``DistinguishedName``, in order from least
+/// ``RelativeDistinguishedName``s are organized into a hierarchy in a ``DistinguishedName``, in order from least
 /// to most specific. In almost all current use-cases a ``RelativeDistinguishedName`` will contain only a single
 /// ``Attribute``.
 ///

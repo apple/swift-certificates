@@ -60,7 +60,7 @@ import SwiftASN1
 /// Both of these goals encourage this type to be immutable. A ``Certificate`` represents
 /// a specific assertion of identity. Its ``Certificate/signature-swift.property`` is signed
 /// across the rest of the data. Allowing users to change this data makes it easy to accidentally modify
-/// a ``Certificate`` in one part of your code and not realise that the signature has inevitably
+/// a ``Certificate`` in one part of your code and not realize that the signature has inevitably
 /// been invalidated.
 #if canImport(Security)
 ///
@@ -146,14 +146,14 @@ public struct Certificate {
     /// The bytes of the ``Signature``.
     ///
     /// These are preserved to ensure that we reserialize exactly what we deserialized, regardless
-    /// of any canonicalisation we might do.
+    /// of any canonicalization we might do.
     @usableFromInline
     internal let signatureBytes: ArraySlice<UInt8>
 
     /// The bytes of the ``signatureAlgorithm-swift.property``.
     ///
     /// These are preserved to ensure that we reserialize exactly what we deserialized, regardless of
-    /// any canonicalisation we might do.
+    /// any canonicalization we might do.
     @usableFromInline
     internal let signatureAlgorithmBytes: ArraySlice<UInt8>
 

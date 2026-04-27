@@ -27,7 +27,7 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     /// Wrap a ``CustomCertificateStore`` in a ``CertificateStore`` so the custom
-    /// implementation it can be used interchangeably. For details on why one
+    /// implementation can be used interchangeably. For details on why one
     /// may decide to implement a ``CustomCertificateStore``, please see the
     /// documentation on that protocol.
     @inlinable
@@ -66,7 +66,7 @@ public struct CertificateStore: Sendable, Hashable {
     public func appending(_ certificate: Certificate) -> Self {
         var copy = self
         copy.append(certificate)
-        return self
+        return copy
     }
 
     func resolve(diagnosticsCallback: ((VerificationDiagnostic) -> Void)?) async -> Resolved {

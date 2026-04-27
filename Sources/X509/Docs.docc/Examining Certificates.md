@@ -30,7 +30,7 @@ FGgfAiEA1PMpcTTeK8Hi17N0oaNNIWERLqDketPZG5E3OdEDw9E=
 ```
 
 This format is the DER representation of a certificate, base64-encoded, line wrapped at 64
-bytes, and bracketed by the `BEGIN X`/`END X` delimiter. As PEMs can easily be translated
+bytes, and bracketed by the `BEGIN X`/`END X` delimiters. As PEMs can easily be translated
 to DER bytes and vice-versa, the rest of this document will focus on the DER format.
 
 To parse a certificate from DER, we can construct it with a helper initializer from `SwiftASN1`:
@@ -65,14 +65,14 @@ distinguished name containing a ``CommonName`` ``RelativeDistinguishedName/Attri
 A string representation of a ``DistinguishedName`` can be obtained by using `String(describing:)`. This
 uses the common [RFC4514 format](https://www.rfc-editor.org/rfc/rfc4514) for textual ``DistinguishedName``s.
 
-Generally speaking the specific content of the names in these fields are unimportant to end users, though they do
+Generally speaking the specific content of the names in these fields is unimportant to end users, though they do
 play a vital role in validating certificates.
 
 ### Keys
 
 Certificates are bound to a specific private key, which can be used to authenticate that a specific entity is
 the one to whom the certificate was issued. This binding is achieved by embedding the public key corresponding
-to the underlying private key into the certificate object itself. This is modelled in the ``Certificate/publicKey-swift.property``
+to the underlying private key into the certificate object itself. This is modeled in the ``Certificate/publicKey-swift.property``
 field.
 
 In ``X509`` the ``Certificate/PublicKey-swift.struct`` type is opaque, but they can be compared for equality.
@@ -88,8 +88,8 @@ is a full-fidelity representation of all extensions found in the certificate. Th
 as ``Certificate/Extension`` objects, an opaque raw-bytes representation of the extension.
 
 Implementations are generally not required to understand all extensions in a certificate, as many are
-strictly informational. However, some extensions must be understood in order for the certificate to safely
-fulfil their function. As a result, users of a certificate should always search for extensions that have
+strictly informational. However, some extensions must be understood for the certificate to safely
+fulfill their function. As a result, users of a certificate should always search for extensions that have
 the ``Certificate/Extension/critical`` bit set to `true` and, if they do not understand those extensions,
 should refuse to trust the certificate.
 
@@ -114,7 +114,7 @@ for the ``SubjectAlternativeNames``, the typical code would be:
 ```swift
 let opaqueSanExtension = certificate.extensions.first(where: { $0.oid == .X509ExtensionID.subjectAlternativeName })
 if let opaqueSanExtension {
-    let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
+    let unwrappedSanExtension = try SubjectAlternativeNames(opaqueSanExtension)
 }
 ```
 
@@ -123,7 +123,7 @@ to search for a specific extension. The above code could be replaced by:
 
 ```swift
 if let opaqueSanExtension = certificate.extensions[oid: .X509ExtensionID.subjectAlternativeName] {
-    let unwrappedSanExtension = try SubjectAlternativeName(opaqueSanExtension)
+    let unwrappedSanExtension = try SubjectAlternativeNames(opaqueSanExtension)
 }
 ```
 
@@ -142,7 +142,7 @@ that can be used to get a specific typed extension:
 This lets us reduce the above code to a single line:
 
 ```swift
-let unwrappedSanExtension = try certificate.extensions.subjectAlternativeName
+let unwrappedSanExtension = try certificate.extensions.subjectAlternativeNames
 ```
 
 This shorthand is most useful when searching for a specific extension. When attempting to work with an entire certificate,

@@ -16,7 +16,7 @@
 /// certificate lookup, or if you need custom logic when matching the
 /// ``DistinguishedName`` of an Issuer with the Subject of the issuer
 /// certificate, then implement a custom certificate store used by the
-/// ```Verifier```.
+/// ``Verifier``.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public protocol CustomCertificateStore: Sendable, Hashable {
     /// Obtain a list of certificates which has a given subject. Note that this

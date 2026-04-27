@@ -27,7 +27,7 @@ extension CertificateSigningRequest {
     public struct Attribute {
         /// The identifier for this attribute type.
         ///
-        /// Common values are stored in `ASN1ObjectIdentifier.X509ExtensionID`.
+        /// Common values are stored in `ASN1ObjectIdentifier.CSRAttributes`.
         public var oid: ASN1ObjectIdentifier
 
         /// The encoded bytes of the values of this attribute.

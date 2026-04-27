@@ -433,7 +433,7 @@ public struct NameConstraints {
     /// The DNS name trees that are forbidden in certificates issued by this CA.
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
-    /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
+    /// constructed by adding zero or more labels to the left-hand side of the name satisfies the constraint.
     public internal(set) var excludedDNSDomains: DNSNames {
         get {
             DNSNames(subtrees: excludedSubtrees)
@@ -452,7 +452,7 @@ public struct NameConstraints {
     /// The IP ranges that are permitted in certificates issued by this CA.
     ///
     /// These restrictions are expressed as a subnet, represented in an ASN.1 octet string.
-    /// Due to the absence of a currency subnet and IP address type in Swift, these are preserved
+    /// Due to the absence of a standard subnet and IP address type in Swift, these are preserved
     /// as octet strings.
     ///
     /// As an example, the subnet 192.0.2.0/24 is encoded as the bytes `0xC0, 0x00, 0x02, 0x00, 0xFF, 0xFF, 0xFF, 0x00`.
@@ -477,7 +477,7 @@ public struct NameConstraints {
     /// The IP ranges that are forbidden in certificates issued by this CA.
     ///
     /// These restrictions are expressed as a subnet, represented in an ASN.1 octet string.
-    /// Due to the absence of a currency subnet and IP address type in Swift, these are preserved
+    /// Due to the absence of a standard subnet and IP address type in Swift, these are preserved
     /// as octet strings.
     ///
     /// As an example, the subnet 192.0.2.0/24 is encoded as the bytes `0xC0, 0x00, 0x02, 0x00, 0xFF, 0xFF, 0xFF, 0x00`.
@@ -519,7 +519,7 @@ public struct NameConstraints {
         }
     }
 
-    /// The email addresses that are permitted in certificates issued by this CA.
+    /// The email addresses that are excluded in certificates issued by this CA.
     ///
     /// This form may contain a specific mailbox (e.g. `user@example.com`), all
     /// addresses on a given host (e.g. `example.com`), or all mailboxes within a

@@ -65,14 +65,14 @@ but for our use-case it's sufficient to know that we don't need to set anything 
 all modern use-cases the common name is nothing more than an identifier, so we can set it to whatever we like.
 
 ```swift
-let subjectName = DistinguishedName {
+let subjectName = try DistinguishedName {
     CommonName("My awesome subject")
 }
 ```
 
 ### Issuer Name
 
-Just as the subject name identifies the entity to whom the subject is being issued, the issuer name identifies the entity that
+Just as the subject name identifies the entity to whom the certificate is being issued, the issuer name identifies the entity that
 issued the certificate. In particular, the issuer name should be exactly equivalent to the subject name in the issuing entity's
 certificate.
 
@@ -97,7 +97,7 @@ let extensions = try Certificate.Extensions {
         BasicConstraints.isCertificateAuthority(maxPathLength: nil)
     )
     Critical(
-        KeyUsage(digitalSignature: true, keyCertSign: true)
+        KeyUsage(keyCertSign: true)
     )
     SubjectAlternativeNames([.dnsName("localhost")])
 }
