@@ -14,9 +14,9 @@
 
 import SwiftASN1
 
-/// Provides a result-builder style DSL for constructing a ``VerifierPolicy``.
+/// A result-builder DSL for constructing a ``VerifierPolicy``.
 ///
-/// This DSL allows us to construct dynamic ``VerifierPolicy`` at runtime without using type erasure.
+/// This DSL allows constructing dynamic ``VerifierPolicy`` values at runtime without using type erasure.
 /// The resulting ``VerifierPolicy`` will use the listed policy in the order of declaration to check if a chain meets all policies.
 /// For Example, a simple ``Verifier`` with a simple policy can be constructed like this:
 /// ```swift

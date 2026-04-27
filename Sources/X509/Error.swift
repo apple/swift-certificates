@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// Represents an error that may be thrown from the ``Certificate`` module.
+/// An error thrown by the ``Certificate`` module.
 ///
 /// This object contains both an error ``code`` and a textual reason for the error,
 /// as well as source code context for the error. When attempting to process a specific

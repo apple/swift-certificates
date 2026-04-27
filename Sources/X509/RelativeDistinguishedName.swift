@@ -27,7 +27,7 @@ import _CertificateInternals
 /// are each a representation of the same piece of information.
 ///
 /// ``RelativeDistinguishedName``s are organized into a hierarchy in a ``DistinguishedName``, in order from least
-/// to most specific. In almost all current use-cases a ``RelativeDistinguishedName`` will contain only a single
+/// to most specific. In almost all current use cases a ``RelativeDistinguishedName`` will contain only a single
 /// ``Attribute``.
 ///
 /// Note that ``RelativeDistinguishedName`` does not have a stable ordering of its elements. Inserting an element

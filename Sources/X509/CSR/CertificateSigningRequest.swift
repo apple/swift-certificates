@@ -77,7 +77,7 @@ public struct CertificateSigningRequest {
     @usableFromInline
     let signatureBytes: ArraySlice<UInt8>
 
-    /// Construct a Certificate Signing Request from constituent parts.
+    /// Creates a certificate signing request from constituent parts.
     ///
     /// This API is generally not recommended for use, as it makes it very easy to construct a ``CertificateSigningRequest``
     /// whose ``signature`` is not valid. However, for testing and validation purposes it is useful to be
@@ -114,7 +114,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR for a specific private key.
+    /// Creates a CSR for a specific private key.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
@@ -150,7 +150,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR for a specific private key.
+    /// Creates a CSR for a specific private key.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.
@@ -189,7 +189,7 @@ public struct CertificateSigningRequest {
         self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
     }
 
-    /// Construct a CSR for a specific private key.
+    /// Creates a CSR for a specific private key.
     ///
     /// This API can be used to construct a certificate signing request that can be passed to a certificate
     /// authority. It will correctly generate a signature over the request.

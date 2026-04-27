@@ -16,7 +16,7 @@ import SwiftASN1
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A representation of a collection of X.509 extensions.
+    /// An ordered collection of X.509 certificate extensions.
     ///
     /// The majority of semantic information in an X.509 certificate is contained within its
     /// collection of extensions. These extensions can add additional constraints or capabilities

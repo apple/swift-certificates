@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// A validated certificate chain that traces the trust from a leaf to a root certificate. This type does not perform any validation
-/// itself. It is a container that gives information about the contained certificates. The safe method to acquire it goes through
-/// the certificate validation processes in a `Verifier`.
+/// A validated certificate chain from leaf to root. This type does not perform any validation
+/// itself. It gives information about the contained certificates. Acquire it through
+/// the certificate validation process in a ``Verifier``.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct ValidatedCertificateChain: Sendable, Collection, RandomAccessCollection, Hashable {
     @usableFromInline
@@ -34,8 +34,7 @@ public struct ValidatedCertificateChain: Sendable, Collection, RandomAccessColle
         self.validatedChain[index]
     }
 
-    /// Creates a `ValidatedCertificateChain` that represents a chain of trust. The chain should be ordered
-    /// from leaf to root and (with the exception of the root) each certificate should be issued by the owner of the subsequent
+    /// Creates a `ValidatedCertificateChain`. Order the chain from leaf to root; each certificate (except the root) should be issued by the owner of the subsequent
     /// certificate. Since the leaf and root certificate can be identical, a certificate chain must have at least one element.
     ///
     /// It is recommended to go through the verification process using `X509/Verifier/Verifier` with a

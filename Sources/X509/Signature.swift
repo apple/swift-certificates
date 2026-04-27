@@ -23,12 +23,12 @@ import Foundation
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// An abstract representation of the cryptographic signature on a certificate.
+    /// A cryptographic signature on a certificate.
     ///
     /// Certificates may have a wide range of signature types. This type provides a runtime
-    /// abstraction across these types. It ensures that we understand the algorithm used to
-    /// sign the certificate, and enables us to provide verification logic, without forcing
-    /// users to wrestle with the wide variety of runtime types that may represent a
+    /// abstraction across these types. It ensures that the algorithm used to
+    /// sign the certificate is understood, and enables verification logic, without forcing
+    /// you to wrestle with the wide variety of runtime types that may represent a
     /// signature.
     ///
     /// This type is almost entirely opaque. It can be validated by way of
@@ -45,6 +45,7 @@ extension Certificate {
             self.backing = backing
         }
 
+        /// Creates a signature from an algorithm identifier and raw signature bytes.
         @inlinable
         public init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1BitString) throws {
             switch signatureAlgorithm {

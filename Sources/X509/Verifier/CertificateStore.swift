@@ -14,7 +14,7 @@
 
 import _CertificateInternals
 
-/// A collection of ``Certificate`` objects for use in a verifier.
+/// A collection of certificates for use in verification.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct CertificateStore: Sendable, Hashable {
 

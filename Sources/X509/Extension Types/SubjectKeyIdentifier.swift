@@ -16,7 +16,7 @@ import SwiftASN1
 import Crypto
 import struct Foundation.Data
 
-/// Provides a means of identifying a certificate that contains a particular public key.
+/// Identifies a certificate by its public key.
 ///
 /// This extension contains a value derived from the public key of the certificate in which it appears.
 /// That value can be used to build the ``AuthorityKeyIdentifier/keyIdentifier`` field in

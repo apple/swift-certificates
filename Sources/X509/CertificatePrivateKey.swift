@@ -23,14 +23,14 @@ import _CryptoExtras
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A private key that can be used with a certificate.
+    /// A private key for use with a certificate.
     ///
-    /// This type provides an opaque wrapper around the various private key types
-    /// provided by `swift-crypto` and `Security`. Users are expected to construct this key from
+    /// This type is an opaque wrapper around the various private key types
+    /// provided by `swift-crypto` and `Security`. Construct this key from
     /// one of those types.
     ///
-    /// As private keys are never sent over the wire, this type does not offer
-    /// support for being unwrapped back into the underlying key types.
+    /// As private keys are never sent over the wire, this type does not support
+    /// unwrapping back into the underlying key types.
     public struct PrivateKey {
         @usableFromInline
         var backing: BackingPrivateKey

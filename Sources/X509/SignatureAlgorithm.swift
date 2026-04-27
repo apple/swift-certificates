@@ -14,13 +14,13 @@
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A representation of a kind of signature algorithm.
+    /// A signature algorithm identifier.
     ///
     /// X.509 certificates support a wide range of signature algorithms. This type
     /// identifies the algorithm, independently of the signature itself.
     ///
     /// This type represents an unbounded enumeration. There are potentially infinite
-    /// signature algorithms. Users are able to create representations of the signature
+    /// signature algorithms. You can create representations of the signature
     /// algorithms this library supports by using static fields on this type.
     public struct SignatureAlgorithm {
         @usableFromInline

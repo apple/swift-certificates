@@ -28,7 +28,7 @@ import Glibc
 import Musl
 #endif
 
-/// A ``VerifierPolicy`` that validates that the leaf certificate is authoritative
+/// A ``VerifierPolicy`` that checks whether the leaf certificate is authoritative
 /// for a given hostname or IP address.
 ///
 /// This policy is most commonly used to validate the leaf certificate presented by a server
@@ -48,7 +48,7 @@ public struct ServerIdentityPolicy: Sendable {
 
     /// Constructs a new ``ServerIdentityPolicy``.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - serverHostname: The hostname used to connect to the server.
     ///     - serverIP: The IP address of the server, if known.
     @inlinable
