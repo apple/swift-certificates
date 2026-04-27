@@ -63,7 +63,10 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     @inlinable
-    public func appending(_ certificate: Certificate) -> Self {
+    consuming func appending(_ certificate: Certificate) -> Self {
+        append(certificate)
+        return self
+    }
         var copy = self
         copy.append(certificate)
         return copy
