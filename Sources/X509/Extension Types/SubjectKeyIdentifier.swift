@@ -14,7 +14,11 @@
 
 import SwiftASN1
 import Crypto
+#if canImport(FoundationEssentials)
+import struct FoundationEssentials.Data
+#else
 import struct Foundation.Data
+#endif
 
 /// Identifies a certificate by its public key.
 ///
