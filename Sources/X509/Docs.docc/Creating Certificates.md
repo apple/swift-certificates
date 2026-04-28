@@ -113,7 +113,7 @@ and the signature algorithm would be constrained to what that key is capable of.
 match the private key that the subject entity has attested to possessing.
 
 You can use the keys from `swift-crypto` for this operation. Select `P256.Signing.PrivateKey` as the private key, which
-you can wrap in ``Certificate/PrivateKey/init(_:)-2we15`` to get `issuerPrivateKey`. Then derive `publicKey` via
+you can wrap in ``Certificate/PrivateKey/init(_:)-(P256.Signing.PrivateKey)`` to get `issuerPrivateKey`. Then derive `publicKey` via
 ``Certificate/PrivateKey/publicKey``. Finally, pick the only signature algorithm compatible with that key, which is
 ``Certificate/SignatureAlgorithm-swift.struct/ecdsaWithSHA256``.
 
@@ -183,5 +183,5 @@ let derEncodedPrivateKey = swiftCryptoKey.derRepresentation
 
 ### Convert between Certificate and SecCertificate
 
-Create an instance of ``Certificate`` from `Security/SecCertificate` (from the `Security` framework) with ``Certificate/init(_:)``.
-To create an instance of `Security/SecCertificate` from ``Certificate``, use ``Security/SecCertificate/makeWithCertificate(_:)``.
+Create an instance of ``Certificate`` from `SecCertificate` (from the `Security` framework) with `Certificate.init(_: SecCertificate)`.
+To create an instance of `SecCertificate` from ``Certificate``, use `SecCertificate.makeWithCertificate(_:)`.
