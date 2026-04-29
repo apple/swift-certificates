@@ -4,7 +4,7 @@ Decoding and introspecting certificates.
 
 A common use case is to receive an X.509 certificate from some source and
 inspect it to make decisions based on its content. X.509 certificates are complex
-objects with highly dynamic and nested content, so this article outlines
+objects with highly dynamic and nested content. This article outlines
 how to work with ``Certificate`` to get the most out of the content of an
 X.509 certificate.
 
