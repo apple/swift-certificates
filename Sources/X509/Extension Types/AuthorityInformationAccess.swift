@@ -14,7 +14,7 @@
 
 import SwiftASN1
 
-/// Provides details on how to access information about the certificate issuer.
+/// Describes how to access information about the certificate issuer.
 ///
 /// This extension behaves as a collection of ``AuthorityInformationAccess/AccessDescription`` objects.
 ///

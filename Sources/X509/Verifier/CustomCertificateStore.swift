@@ -12,23 +12,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// Implement the ``CustomCertificateStore`` if you want to perform dynamic
-/// certificate lookup, or if you need custom logic when matching the
-/// ``DistinguishedName`` of an Issuer with the Subject of the issuer
-/// certificate, then implement a custom certificate store used by the
-/// ```Verifier```.
+/// A protocol for certificate stores that perform dynamic lookup or custom matching logic.
+///
+/// Implement this protocol if you need to perform dynamic certificate lookup
+/// or custom logic when matching the ``DistinguishedName`` of an issuer with
+/// the subject of the issuer certificate.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public protocol CustomCertificateStore: Sendable, Hashable {
-    /// Obtain a list of certificates which has a given subject. Note that this
-    /// is an async method so that database lookups can be performed
-    /// asynchronously.
+    /// Returns the certificates that have the given subject, if any.
+    ///
+    /// This is an async method so that database lookups can be performed asynchronously.
     subscript(subject: DistinguishedName) -> [Certificate]? {
         get async
     }
 
-    /// Validate if a given certificate is known to exist in this certificate
-    /// store. Note that this is an async method so that the existence check
-    /// can be performed against a database.
+    /// Returns a Boolean value that indicates whether this store contains the given certificate.
+    ///
+    /// This is an async method so that the existence check can be performed against a database.
     func contains(_ certificate: Certificate) async -> Bool
 
     /// Add a certificate to this certificate store.

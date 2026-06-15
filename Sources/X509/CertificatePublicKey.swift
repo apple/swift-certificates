@@ -23,11 +23,11 @@ import Foundation
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A public key that can be used with a certificate.
+    /// A public key for use with a certificate.
     ///
-    /// This type provides an opaque wrapper around the various public key types
-    /// provided by `swift-crypto`. Users are expected to construct this key from
-    /// one of those types, or to decode it from the network.
+    /// This type is an opaque wrapper around the various public key types
+    /// provided by `swift-crypto`. Construct this key from
+    /// one of those types, or decode it from the network.
     public struct PublicKey {
         @usableFromInline
         var backing: BackingPublicKey
@@ -311,7 +311,7 @@ extension P256.Signing.PublicKey {
     ///
     /// Fails if the key is not a P256 key.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .p256(let inner) = key.backing else {
@@ -327,7 +327,7 @@ extension P384.Signing.PublicKey {
     ///
     /// Fails if the key is not a P384 key.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .p384(let inner) = key.backing else {
@@ -343,7 +343,7 @@ extension P521.Signing.PublicKey {
     ///
     /// Fails if the key is not a P521 key.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .p521(let inner) = key.backing else {
@@ -359,7 +359,7 @@ extension _RSA.Signing.PublicKey {
     ///
     /// Fails if the key is not an RSA key.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .rsa(let inner) = key.backing else {
@@ -375,7 +375,7 @@ extension Curve25519.Signing.PublicKey {
     ///
     /// Fails if the key is not a Curve25519 key.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .ed25519(let inner) = key.backing else {

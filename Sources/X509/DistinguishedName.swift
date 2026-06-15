@@ -20,7 +20,7 @@ import SwiftASN1
 /// distinguished names were the primary key, enabling the identification of a specific entity
 /// within the directory.
 ///
-/// These use-cases are largely obsolete, but distinguished names continue to be used to identify
+/// These use cases are largely obsolete, but distinguished names continue to be used to identify
 /// both the subject of and issuer of a given X.509 certificate. In this context, the distinguished
 /// name is a largely opaque identifier that just happens to have a human-readable string representation.
 ///

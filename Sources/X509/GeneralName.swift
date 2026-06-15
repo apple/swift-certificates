@@ -14,15 +14,25 @@
 
 import SwiftASN1
 
+/// A general-purpose name type used in X.509 certificate extensions.
 public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
+    /// A name in a form not directly supported by the other cases.
     case otherName(OtherName)
+    /// An RFC 822 email address, such as `user@example.com`.
     case rfc822Name(String)
+    /// A DNS domain name, such as `example.com`.
     case dnsName(String)
+    /// An X.400 address, preserved as a raw ASN.1 value.
     case x400Address(ASN1Any)
+    /// An X.500 directory name.
     case directoryName(DistinguishedName)
+    /// An EDI party name, preserved as a raw ASN.1 value.
     case ediPartyName(ASN1Any)
+    /// A URI, such as `https://example.com`.
     case uniformResourceIdentifier(String)
+    /// An IP address, encoded as an ASN.1 octet string.
     case ipAddress(ASN1OctetString)
+    /// A registered object identifier.
     case registeredID(ASN1ObjectIdentifier)
 
     @usableFromInline
@@ -153,14 +163,17 @@ extension GeneralName: CustomStringConvertible {
 //     partyName               [1]     DirectoryString }
 
 extension GeneralName {
+    /// A name identified by an OID and an arbitrary ASN.1 value.
     public struct OtherName: Hashable, Sendable, DERImplicitlyTaggable {
         @inlinable
         public static var defaultIdentifier: ASN1Identifier {
             .sequence
         }
 
+        /// The OID that identifies the name form.
         public var typeID: ASN1ObjectIdentifier
 
+        /// The name value, encoded as a raw ASN.1 element.
         public var value: ASN1Any?
 
         @inlinable

@@ -18,7 +18,7 @@ import Foundation
 #endif
 import SwiftASN1
 
-/// A ``VerifierPolicy`` that implements the core chain verifying policies from RFC 5280.
+/// A ``VerifierPolicy`` that implements the core chain verification policies from RFC 5280.
 ///
 /// Almost all verifiers should use this policy as the initial component of their policy set. The policy checks the
 /// following things:

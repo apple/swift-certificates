@@ -87,6 +87,8 @@ public struct DistinguishedNameBuilder: Sendable {
     }
 }
 
+/// A type that can be converted to a ``RelativeDistinguishedName``.
 public protocol RelativeDistinguishedNameConvertible {
+    /// Creates a ``RelativeDistinguishedName`` from this value.
     func makeRDN() throws -> RelativeDistinguishedName
 }

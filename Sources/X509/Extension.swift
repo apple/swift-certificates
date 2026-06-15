@@ -16,7 +16,7 @@ import SwiftASN1
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A general-purpose representation of a specific X.509 extension.
+    /// A type-erased representation of a specific X.509 extension.
     ///
     /// X.509 extensions are a general representation, with three properties: an identifier, a critical flag, and the encoded value.
     /// The specific data contained in the encoded value is determined by the value of the identifier stored in ``oid``.

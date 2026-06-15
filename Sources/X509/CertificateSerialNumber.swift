@@ -52,7 +52,7 @@ extension Certificate {
         ///
         /// In general this API should only be used for testing, as fixed width integers
         /// are not sufficiently large for use in certificates. Using this API for production
-        /// use-cases may expose users to hash collision attacks on generated certificates.
+        /// use cases may expose users to hash collision attacks on generated certificates.
         ///
         /// Prefer using ``Certificate/SerialNumber-swift.struct/init(integerLiteral:)``
         /// with a `StaticBigInt` which enables arbitrary-precision.

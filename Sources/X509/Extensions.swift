@@ -16,7 +16,7 @@ import SwiftASN1
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A representation of a collection of X.509 extensions.
+    /// An ordered collection of X.509 certificate extensions.
     ///
     /// The majority of semantic information in an X.509 certificate is contained within its
     /// collection of extensions. These extensions can add additional constraints or capabilities
@@ -197,10 +197,10 @@ extension Certificate.Extensions {
     }
 
     /// Updates the ``Certificate/Extension`` stored in the dictionary for the ``Certificate/Extension/oid`` of the `extension`,
-    /// or appends `extension` if an ``Certificate/Extension`` with same  ``Certificate/Extension/oid`` does not exist.
+    /// or appends `extension` if a ``Certificate/Extension`` with the same ``Certificate/Extension/oid`` does not exist.
     ///
     /// - Parameter extension: The ``Certificate/Extension`` to update or append.
-    /// - Returns: The old ``Certificate/Extension`` that was replaced or `nil` if no ``Certificate/Extension`` with same ``Certificate/Extension/oid`` was present
+    /// - Returns: The old ``Certificate/Extension`` that was replaced, or `nil` if no ``Certificate/Extension`` with the same ``Certificate/Extension/oid`` was present.
     @inlinable
     @discardableResult
     public mutating func update(_ extension: Certificate.Extension) -> Certificate.Extension? {
@@ -214,9 +214,9 @@ extension Certificate.Extensions {
     }
 
     /// Removes the ``Certificate/Extension`` with the given `oid`.
-    /// - Parameter oid: The  ``Certificate/Extension/oid`` of the``Certificate/Extension`` to remove.
+    /// - Parameter oid: The ``Certificate/Extension/oid`` of the ``Certificate/Extension`` to remove.
     /// - Returns: The ``Certificate/Extension`` that was removed,
-    ///     or `nil` if an ``Certificate/Extension`` was not present in with the given `oid`.
+    ///     or `nil` if a ``Certificate/Extension`` was not present with the given `oid`.
     @inlinable
     @discardableResult
     public mutating func remove(_ oid: ASN1ObjectIdentifier) -> Certificate.Extension? {

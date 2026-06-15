@@ -13,18 +13,33 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
+/// Validates an X.509 certificate chain against a set of root certificates and a ``VerifierPolicy``.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct Verifier<Policy: VerifierPolicy> {
+    /// The trusted root certificates used to anchor chain validation.
     public var rootCertificates: CertificateStore
 
+    /// The policy applied to candidate chains during validation.
     public var policy: Policy
 
+    /// Creates a verifier with the given root certificates and policy.
+    ///
+    /// - Parameters:
+    ///   - rootCertificates: The trusted root certificates.
+    ///   - policy: A ``PolicyBuilder`` closure that returns the verification policy.
     @inlinable
     public init(rootCertificates: CertificateStore, @PolicyBuilder policy: () throws -> Policy) rethrows {
         self.rootCertificates = rootCertificates
         self.policy = try policy()
     }
 
+    /// Validates a leaf certificate by building chains through intermediate certificates to the root store.
+    ///
+    /// - Parameters:
+    ///   - leaf: The leaf certificate to validate.
+    ///   - intermediates: A store of intermediate certificates that may form part of the chain.
+    ///   - diagnosticCallback: An optional closure invoked with diagnostic events during validation.
+    /// - Returns: A ``CertificateValidationResult`` indicating whether the certificate is valid.
     @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
     public mutating func validate(
         leaf: Certificate,
@@ -244,16 +259,22 @@ extension VerificationResult {
     }
 }
 
+/// The result of validating a certificate chain.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public enum CertificateValidationResult: Hashable, Sendable {
+    /// The certificate chain is valid and trusted.
     case validCertificate(ValidatedCertificateChain)
+    /// The certificate chain could not be validated, with the associated policy failures.
     case couldNotValidate([PolicyFailure])
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateValidationResult {
+    /// A candidate chain that failed to meet a verification policy.
     public struct PolicyFailure: Hashable, Sendable {
+        /// The candidate certificate chain that failed validation.
         public var chain: UnverifiedCertificateChain
+        /// The reason the policy rejected this chain.
         public var policyFailureReason: PolicyFailureReason
 
         @inlinable

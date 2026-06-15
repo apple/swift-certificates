@@ -15,7 +15,7 @@
 import SwiftASN1
 
 /// Indicates one or more purposes for which the certified public key
-/// may be used, in addition to or instead of the the purposes indicated
+/// may be used, in addition to or instead of the purposes indicated
 /// in the ``KeyUsage`` extension.
 public struct ExtendedKeyUsage {
     @usableFromInline
@@ -155,7 +155,7 @@ extension ExtendedKeyUsage {
     ///
     /// - Returns: A pair `(inserted, index)`, where `inserted` is a Boolean value
     ///    indicating whether the operation added a new element, and `index` is
-    ///    the index of `item` in the resulting set. If `inserted` is false, then
+    ///    the index of `usage` in the resulting set. If `inserted` is false, then
     ///    the returned `index` may be different from the index requested.
     @inlinable
     @discardableResult

@@ -32,7 +32,7 @@ public protocol OCSPRequester: Sendable {
     /// - Parameters:
     ///   - request: DER-encoded request bytes
     ///   - uri: uri of the OCSP responder
-    /// - Returns: DER-encoded response bytes if they request was successful or a terminal or non-terminal error.
+    /// - Returns: DER-encoded response bytes if the request was successful, or a terminal or non-terminal error.
     func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult
 }
 
@@ -164,7 +164,7 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
-/// Defines the behaviour of ``OCSPVerifierPolicy`` in the event of a failure.
+/// Defines the behavior of ``OCSPVerifierPolicy`` in the event of a failure.
 /// ``soft`` should be used most of the time and will only fail verification if a verified OCSP response reports a status of revoked.
 public struct OCSPFailureMode: Hashable, Sendable {
     /// ``soft`` failure mode will only fail verification if a verified and valid OCSP response reports a status of revoked.
