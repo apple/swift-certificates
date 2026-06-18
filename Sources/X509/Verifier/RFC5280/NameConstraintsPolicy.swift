@@ -144,6 +144,14 @@ struct NameConstraintsPolicy: VerifierPolicy, Sendable {
                 }
             case (.directoryName, _), (.dnsName, _), (.ipAddress, _), (.uniformResourceIdentifier, _):
                 // We support these, but the current name isn't of that type.
+                // If the name is a directoryName and the constraint is a non-DN type,
+                // treat it as an exclusion match (reject).
+                if case .directoryName = name {
+                    return .failsToMeetPolicy(
+                        reason:
+                            "RFC5280Policy: non-directoryName excluded subtree \(excludedSubtree) in critical nameConstraints"
+                    )
+                }
                 continue
             default:
                 // We don't support constraints on these!
@@ -201,8 +209,12 @@ struct NameConstraintsPolicy: VerifierPolicy, Sendable {
                     return .meetsPolicy
                 }
             case (.directoryName, _), (.dnsName, _), (.ipAddress, _), (.uniformResourceIdentifier, _):
-                // We support these, but the current name isn't of that type. This means we didn't evaluate
-                // this constraint.
+                // We support these, but the current name isn't of that type.
+                // If the name is a directoryName and the constraint is a non-DN type,
+                // treat it as a constraint that was evaluated but not matched.
+                if case .directoryName = name {
+                    evaluatedAtLeastOneConstraint = true
+                }
                 continue
             default:
                 // We don't support constraints on these!
