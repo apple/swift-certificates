@@ -353,4 +353,15 @@ extension Certificate.Extensions {
             try self[oid: .X509ExtensionID.subjectAlternativeName].map { try .init($0) }
         }
     }
+
+    /// Loads the ``CRLDistributionPoints``
+    /// extension, if it is present.
+    ///
+    /// Throws if it is not possible to decode the CDP extension.
+    @inlinable
+    public var crlDistributionPoints: CRLDistributionPoints? {
+        get throws {
+            try self[oid: .X509ExtensionID.crlDistributionPoints].map { try .init($0) }
+        }
+    }
 }

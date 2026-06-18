@@ -45,6 +45,10 @@ extension ASN1ObjectIdentifier {
         /// ``ExtendedKeyUsage``.
         public static let extendedKeyUsage: ASN1ObjectIdentifier = [2, 5, 29, 37]
 
+        /// Identifies the CRL distribution points extension, corresponding to
+        /// ``CRLDistributionPoints``.
+        public static let crlDistributionPoints: ASN1ObjectIdentifier = [2, 5, 29, 31]
+
         /// Identifies the authority information access extension, corresponding to
         /// ``AuthorityInformationAccess``.
         public static let authorityInformationAccess: ASN1ObjectIdentifier = [1, 3, 6, 1, 5, 5, 7, 1, 1]
