@@ -69,7 +69,7 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
     func nameconstraintsExcludedSubtrees(
         excludedSubtrees: [GeneralName],
         subjectAlternativeNames: [GeneralName],
-        match: Bool,
+        match: NameConstraintMatching,
         policyFactory: PolicyFactory
     ) async throws {
         let alternativeRoot = TestPKI.issueCA(
@@ -126,7 +126,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         )
 
         switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .couldNotValidate),
+            (.otherNameConstraints(match: false), .validCertificate):
             // Expected outcomes
             ()
         default:
@@ -144,7 +147,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         )
 
         switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .couldNotValidate),
+            (.otherNameConstraints(match: false), .validCertificate):
             // Expected outcomes
             ()
         default:
@@ -164,7 +170,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         )
 
         switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .couldNotValidate),
+            (.otherNameConstraints(match: false), .validCertificate):
             // Expected outcomes
             ()
         default:
@@ -193,7 +202,7 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
     func nameconstraintsPermittedSubtrees(
         permittedSubtrees: [GeneralName],
         subjectAlternativeNames: [GeneralName],
-        match: Bool,
+        match: NameConstraintMatching,
         policyFactory: PolicyFactory
     ) async throws {
         let alternativeRoot = TestPKI.issueCA(
@@ -250,7 +259,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         )
 
         switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .validCertificate),
+            (.otherNameConstraints(match: false), .couldNotValidate):
             // Expected outcomes
             ()
         default:
@@ -268,7 +280,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         )
 
         switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .validCertificate),
+            (.otherNameConstraints(match: false), .couldNotValidate):
             // Expected outcomes
             ()
         default:
@@ -286,7 +301,10 @@ class RFC5280PolicyBaseDeprecated: XCTestCase {
         )
 
         switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .validCertificate),
+            (.otherNameConstraints(match: false), .couldNotValidate):
             // Expected outcomes
             ()
         default:
@@ -1240,7 +1258,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -1252,7 +1270,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
@@ -1264,7 +1282,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -1276,20 +1294,21 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
-    func testDirectoryNameConstraintsExcludedSubtrees() async throws {
+    func testDirectoryNameConstraintsExcludedSubtreesAlwaysFails() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.directoryName(firstName)],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .rfc5280
                 )
             }
@@ -1297,13 +1316,14 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
-    func testDirectoryNameConstraintsExcludedSubtreesBasePolicy() async throws {
+    func testDirectoryNameConstraintsExcludedSubtreesBasePolicyAlwaysFails() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.directoryName(firstName)],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .nameConstraints
                 )
             }
@@ -1316,7 +1336,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -1328,7 +1348,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
@@ -1340,7 +1360,7 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -1352,16 +1372,18 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
-    func testDirectoryNameConstraintsPermittedSubtrees() async throws {
-        // Fun fact! These tests require additional permitted subtrees, because they _also_ have to match the subject names
-        // of the certificates. So let's add those too to omit them from the testing.
+    func testDirectoryNameConstraintsPermittedSubtreesAlwaysFails() async throws {
+        // Historically, these tests added permitted subtrees for the intermediate and leaf distinguished names so that
+        // those subjects wouldn't be rejected by the directoryName validator (alongside the name under test).
+        // directoryName name constraints are now always rejected outright, so the extra subtrees no longer affect the
+        // outcome. We just keep them here to preserve the original test setup.
         let leafName = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
@@ -1376,7 +1398,8 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
                         .directoryName(leafName),
                     ],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .rfc5280
                 )
             }
@@ -1384,9 +1407,11 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
     }
 
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
-    func testDirectoryNameConstraintsPermittedSubtreesBasePolicy() async throws {
-        // Fun fact! These tests require additional permitted subtrees, because they _also_ have to match the subject names
-        // of the certificates. So let's add those too to omit them from the testing.
+    func testDirectoryNameConstraintsPermittedSubtreesBasePolicyAlwaysFails() async throws {
+        // Historically, these tests added permitted subtrees for the intermediate and leaf distinguished names so that
+        // those subjects wouldn't be rejected by the directoryName validator (alongside the name under test).
+        // directoryName name constraints are now always rejected outright, so the extra subtrees no longer affect the
+        // outcome. We just keep them here to preserve the original test setup.
         let leafName = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
@@ -1401,7 +1426,8 @@ final class RFC5280PolicyTests1Deprecated: RFC5280PolicyBaseDeprecated {
                         .directoryName(leafName),
                     ],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .nameConstraints
                 )
             }
@@ -1775,7 +1801,7 @@ final class RFC5280PolicyURINameTests1Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .rfc5280
                 )
 
@@ -1783,7 +1809,7 @@ final class RFC5280PolicyURINameTests1Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -1797,7 +1823,7 @@ final class RFC5280PolicyURINameTests1Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -1816,7 +1842,7 @@ final class RFC5280PolicyURINameTests2Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .nameConstraints
                 )
 
@@ -1824,7 +1850,7 @@ final class RFC5280PolicyURINameTests2Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -1838,7 +1864,7 @@ final class RFC5280PolicyURINameTests2Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -1857,7 +1883,7 @@ final class RFC5280PolicyURINameTests3Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .rfc5280
                 )
 
@@ -1865,7 +1891,7 @@ final class RFC5280PolicyURINameTests3Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -1879,7 +1905,7 @@ final class RFC5280PolicyURINameTests3Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -1890,7 +1916,7 @@ final class RFC5280PolicyURINameTests3Deprecated: RFC5280PolicyBaseDeprecated {
 // All tests in the class are deprecated. A duplicated version of this class tests the new API.
 final class RFC5280PolicyURINameTests4Deprecated: RFC5280PolicyBaseDeprecated {
     @available(*, deprecated, message: "deprecated because it uses deprecated API")
-    func testURINameConstraintsPermittedSubtreesBasePolicy() async throws {
+    func testURINameConstraintsPermittedSubtreesBasePolicyAlwaysFails() async throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
@@ -1898,7 +1924,7 @@ final class RFC5280PolicyURINameTests4Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .nameConstraints
                 )
 
@@ -1906,7 +1932,7 @@ final class RFC5280PolicyURINameTests4Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -1920,7 +1946,7 @@ final class RFC5280PolicyURINameTests4Deprecated: RFC5280PolicyBaseDeprecated {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -2164,7 +2190,7 @@ class RFC5280PolicyBase: XCTestCase {
     func nameconstraintsExcludedSubtrees(
         excludedSubtrees: [GeneralName],
         subjectAlternativeNames: [GeneralName],
-        match: Bool,
+        match: NameConstraintMatching,
         policyFactory: PolicyFactory
     ) async throws {
         let alternativeRoot = TestPKI.issueCA(
@@ -2220,8 +2246,11 @@ class RFC5280PolicyBase: XCTestCase {
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
         )
 
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
         switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .couldNotValidate),
+            (.otherNameConstraints(match: false), .validCertificate):
             // Expected outcomes
             ()
         default:
@@ -2238,8 +2267,11 @@ class RFC5280PolicyBase: XCTestCase {
             intermediates: CertificateStore([alternativeIntermediate])
         )
 
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
         switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .couldNotValidate),
+            (.otherNameConstraints(match: false), .validCertificate):
             // Expected outcomes
             ()
         default:
@@ -2258,8 +2290,11 @@ class RFC5280PolicyBase: XCTestCase {
             intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason])
         )
 
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
         switch (match, result) {
-        case (true, .couldNotValidate), (false, .validCertificate):
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .couldNotValidate),
+            (.otherNameConstraints(match: false), .validCertificate):
             // Expected outcomes
             ()
         default:
@@ -2287,7 +2322,7 @@ class RFC5280PolicyBase: XCTestCase {
     func nameconstraintsPermittedSubtrees(
         permittedSubtrees: [GeneralName],
         subjectAlternativeNames: [GeneralName],
-        match: Bool,
+        match: NameConstraintMatching,
         policyFactory: PolicyFactory
     ) async throws {
         let alternativeRoot = TestPKI.issueCA(
@@ -2343,8 +2378,11 @@ class RFC5280PolicyBase: XCTestCase {
             intermediates: CertificateStore([TestPKI.unconstrainedIntermediate])
         )
 
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
         switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .validCertificate),
+            (.otherNameConstraints(match: false), .couldNotValidate):
             // Expected outcomes
             ()
         default:
@@ -2361,8 +2399,11 @@ class RFC5280PolicyBase: XCTestCase {
             intermediates: CertificateStore([alternativeIntermediate])
         )
 
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
         switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .validCertificate),
+            (.otherNameConstraints(match: false), .couldNotValidate):
             // Expected outcomes
             ()
         default:
@@ -2379,8 +2420,11 @@ class RFC5280PolicyBase: XCTestCase {
             intermediates: CertificateStore([intermediateWithAConstrainedNameForSomeReason])
         )
 
+        // directoryName name constraints are not supported, so any chain that involves them is rejected.
         switch (match, result) {
-        case (true, .validCertificate), (false, .couldNotValidate):
+        case (.directoryNameConstraints, .couldNotValidate),
+            (.otherNameConstraints(match: true), .validCertificate),
+            (.otherNameConstraints(match: false), .couldNotValidate):
             // Expected outcomes
             ()
         default:
@@ -3284,7 +3328,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -3295,7 +3339,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
@@ -3306,7 +3350,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -3317,32 +3361,34 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsExcludedSubtrees(
                 excludedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
     }
 
-    func testDirectoryNameConstraintsExcludedSubtrees() async throws {
+    func testDirectoryNameConstraintsExcludedSubtreesAlwaysFails() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.directoryName(firstName)],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .rfc5280
                 )
             }
         }
     }
 
-    func testDirectoryNameConstraintsExcludedSubtreesBasePolicy() async throws {
+    func testDirectoryNameConstraintsExcludedSubtreesBasePolicyAlwaysFails() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.directoryName(firstName)],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .nameConstraints
                 )
             }
@@ -3354,7 +3400,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -3365,7 +3411,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.dnsName(constraint)],
                 subjectAlternativeNames: [.dnsName(dnsName)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
@@ -3376,7 +3422,7 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .rfc5280
             )
         }
@@ -3387,15 +3433,17 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
             try await self.nameconstraintsPermittedSubtrees(
                 permittedSubtrees: [.ipAddress(constraint)],
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
-                match: match,
+                match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
             )
         }
     }
 
-    func testDirectoryNameConstraintsPermittedSubtrees() async throws {
-        // Fun fact! These tests require additional permitted subtrees, because they _also_ have to match the subject names
-        // of the certificates. So let's add those too to omit them from the testing.
+    func testDirectoryNameConstraintsPermittedSubtreesAlwaysFails() async throws {
+        // Historically, these tests added permitted subtrees for the intermediate and leaf distinguished names so that
+        // those subjects wouldn't be rejected by the directoryName validator (alongside the name under test).
+        // directoryName name constraints are now always rejected outright, so the extra subtrees no longer affect the
+        // outcome. We just keep them here to preserve the original test setup.
         let leafName = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
@@ -3410,16 +3458,19 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                         .directoryName(leafName),
                     ],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .rfc5280
                 )
             }
         }
     }
 
-    func testDirectoryNameConstraintsPermittedSubtreesBasePolicy() async throws {
-        // Fun fact! These tests require additional permitted subtrees, because they _also_ have to match the subject names
-        // of the certificates. So let's add those too to omit them from the testing.
+    func testDirectoryNameConstraintsPermittedSubtreesBasePolicyAlwaysFails() async throws {
+        // Historically, these tests added permitted subtrees for the intermediate and leaf distinguished names so that
+        // those subjects wouldn't be rejected by the directoryName validator (alongside the name under test).
+        // directoryName name constraints are now always rejected outright, so the extra subtrees no longer affect the
+        // outcome. We just keep them here to preserve the original test setup.
         let leafName = try! DistinguishedName {
             CountryName("US")
             OrganizationName("Apple")
@@ -3434,7 +3485,8 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                         .directoryName(leafName),
                     ],
                     subjectAlternativeNames: [.directoryName(secondName)],
-                    match: firstName == secondName,
+                    // directoryName name constraints are not supported. Therefore, we should expect a failure.
+                    match: .directoryNameConstraints,
                     policyFactory: .nameConstraints
                 )
             }
@@ -3790,7 +3842,7 @@ final class RFC5280PolicyURINameTests1: RFC5280PolicyBase {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .rfc5280
                 )
 
@@ -3798,7 +3850,7 @@ final class RFC5280PolicyURINameTests1: RFC5280PolicyBase {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -3812,7 +3864,7 @@ final class RFC5280PolicyURINameTests1: RFC5280PolicyBase {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -3828,7 +3880,7 @@ final class RFC5280PolicyURINameTests2: RFC5280PolicyBase {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .nameConstraints
                 )
 
@@ -3836,7 +3888,7 @@ final class RFC5280PolicyURINameTests2: RFC5280PolicyBase {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -3850,7 +3902,7 @@ final class RFC5280PolicyURINameTests2: RFC5280PolicyBase {
                 try await self.nameconstraintsExcludedSubtrees(
                     excludedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -3866,7 +3918,7 @@ final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .rfc5280
                 )
 
@@ -3874,7 +3926,7 @@ final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -3888,7 +3940,7 @@ final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .rfc5280
                 )
             }
@@ -3896,7 +3948,7 @@ final class RFC5280PolicyURINameTests3: RFC5280PolicyBase {
     }
 }
 final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
-    func testURINameConstraintsPermittedSubtreesBasePolicy() async throws {
+    func testURINameConstraintsPermittedSubtreesBasePolicyAlwaysFails() async throws {
         // This adapts the basic checks from the DNS name case, as they apply to the host part of the constraint. However,
         // to each case we add a little URI special sauce to confirm that they all still work (or don't!).
         for (dnsName, constraint, match) in DNSNamesTests.fixtures {
@@ -3904,7 +3956,7 @@ final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: match,
+                    match: .otherNameConstraints(match: match),
                     policyFactory: .nameConstraints
                 )
 
@@ -3912,7 +3964,7 @@ final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(uri)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(constraint)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
@@ -3926,10 +3978,27 @@ final class RFC5280PolicyURINameTests4: RFC5280PolicyBase {
                 try await self.nameconstraintsPermittedSubtrees(
                     permittedSubtrees: [.uniformResourceIdentifier(constraint)],
                     subjectAlternativeNames: [.uniformResourceIdentifier(uri)],
-                    match: false,
+                    match: .otherNameConstraints(match: false),
                     policyFactory: .nameConstraints
                 )
             }
         }
     }
+}
+
+/// The expected name constraints matching behaviour.
+///
+/// `directoryName` constraints get their own case because `NameConstraintsPolicy` (and `RFC5280Policy`) simply reject
+/// any chain whose constraints include a `directoryName` subtree.
+///
+/// Every other supported constraint type is evaluated by comparing the presented name to the constraint. This is
+/// represented by the `otherNameConstraints` case.
+enum NameConstraintMatching {
+    /// The test exercises a `directoryName` constraint. Since directoryName name constraints are not supported, chains
+    /// containing this constraint are always expected to fail validation.
+    case directoryNameConstraints
+
+    /// The test exercises a constraint type the policy supports. The associated value `match: Bool` should be set to
+    /// `true` if the presented name is expected to match the constraint.
+    case otherNameConstraints(match: Bool)
 }
