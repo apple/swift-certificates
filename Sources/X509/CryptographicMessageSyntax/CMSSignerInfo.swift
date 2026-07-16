@@ -137,7 +137,7 @@ struct CMSSignerInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Se
                 node in
                 return try DER.set(
                     of: CMSAttribute.self,
-                    identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
+                    identifier: .init(tagWithNumber: 1, tagClass: .contextSpecific),
                     rootNode: node
                 )
             }
@@ -192,7 +192,7 @@ struct CMSSignerInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Se
                 node in
                 return try BER.set(
                     of: CMSAttribute.self,
-                    identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
+                    identifier: .init(tagWithNumber: 1, tagClass: .contextSpecific),
                     rootNode: node
                 )
             }
