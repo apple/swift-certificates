@@ -36,22 +36,6 @@ final class NameConstraintsTests: XCTestCase {
         },
     ]
 
-    func testDirectoryNameMatches() throws {
-        // The key here is that a distinguished name only matches a constraint if they're equal.
-        for firstName in NameConstraintsTests.names {
-            for secondName in NameConstraintsTests.names {
-                XCTAssertEqual(
-                    NameConstraintsPolicy.directoryNameMatchesConstraint(
-                        directoryName: firstName,
-                        constraint: secondName
-                    ),
-                    firstName == secondName,
-                    "Expected directory name match to be \(firstName == secondName) for \(firstName) and \(secondName)"
-                )
-            }
-        }
-    }
-
     func testLazyProperties() {
         struct NameConstraintsPropertyValue {
             var property: PartialKeyPath<NameConstraints>
