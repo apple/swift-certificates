@@ -59,7 +59,7 @@ extension CMSSignature: DERImplicitlyTaggable, BERImplicitlyTaggable {
     @inlinable
     public init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         guard let base = try CMSContentInfo(derEncoded: rootNode, withIdentifier: identifier).signedData,
-            base.version == .v1 || base.version == .v4
+            [CMSVersion.v1, .v3, .v4].contains(base.version)
         else {
             throw CMS.Error.unexpectedCMSType
         }
@@ -70,7 +70,7 @@ extension CMSSignature: DERImplicitlyTaggable, BERImplicitlyTaggable {
     @inlinable
     public init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         guard let base = try CMSContentInfo(berEncoded: rootNode, withIdentifier: identifier).signedData,
-            base.version == .v1 || base.version == .v4
+            [CMSVersion.v1, .v3, .v4].contains(base.version)
         else {
             throw CMS.Error.unexpectedCMSType
         }
