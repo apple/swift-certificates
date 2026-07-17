@@ -133,7 +133,7 @@ extension AlgorithmIdentifier {
     }
 
     @inlinable
-    init(digestAlgorithmFor signatureAlgorithm: Certificate.SignatureAlgorithm) throws {
+    public init(digestAlgorithmFor signatureAlgorithm: Certificate.SignatureAlgorithm) throws {
         // Per RFC 5754 § 2, we must produce digest algorithm identifiers with
         // absent parameters, so we do.
         switch signatureAlgorithm {

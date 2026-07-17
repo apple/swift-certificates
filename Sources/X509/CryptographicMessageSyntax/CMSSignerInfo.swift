@@ -137,7 +137,7 @@ struct CMSSignerInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Se
                 node in
                 return try DER.set(
                     of: CMSAttribute.self,
-                    identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
+                    identifier: .init(tagWithNumber: 1, tagClass: .contextSpecific),
                     rootNode: node
                 )
             }
@@ -192,7 +192,7 @@ struct CMSSignerInfo: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Se
                 node in
                 return try BER.set(
                     of: CMSAttribute.self,
-                    identifier: .init(tagWithNumber: 0, tagClass: .contextSpecific),
+                    identifier: .init(tagWithNumber: 1, tagClass: .contextSpecific),
                     rootNode: node
                 )
             }
@@ -289,6 +289,9 @@ extension ASN1ObjectIdentifier {
 
     @usableFromInline
     static let signingTime: Self = [1, 2, 840, 113549, 1, 9, 5]
+
+    @usableFromInline
+    static let trustedTimestamp: Self = [1, 2, 840, 113549, 1, 9, 16, 2, 14]
 
     @usableFromInline
     static let contentType: Self = [1, 2, 840, 113549, 1, 9, 3]
