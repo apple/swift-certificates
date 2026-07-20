@@ -27,7 +27,7 @@ import SwiftASN1
 /// Note that these upper bounds are measured in _characters_, not bytes.
 ///
 @usableFromInline
-enum DirectoryString: DERParseable, DERSerializable, Hashable {
+enum DirectoryString: DERParseable, DERSerializable, Hashable, Sendable {
     case teletexString(ASN1TeletexString)
     case printableString(ASN1PrintableString)
     case universalString(ASN1UniversalString)

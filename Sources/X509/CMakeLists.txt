@@ -35,6 +35,7 @@ add_library(X509
   "CryptographicMessageSyntax/CMSSignerInfo.swift"
   "CryptographicMessageSyntax/CMSVersion.swift"
   "Curve25519+DER.swift"
+  "CustomPrivateKey.swift"
   "Digests.swift"
   "DistinguishedName.swift"
   "DistinguishedNameBuilder/CommonName.swift"
@@ -97,7 +98,6 @@ add_library(X509
   "Verifier/PolicyBuilder.swift"
   "Verifier/RFC5280/BasicConstraintsPolicy.swift"
   "Verifier/RFC5280/DNSNames.swift"
-  "Verifier/RFC5280/DirectoryNames.swift"
   "Verifier/RFC5280/ExpiryPolicy.swift"
   "Verifier/RFC5280/IPConstraints.swift"
   "Verifier/RFC5280/NameConstraintsPolicy.swift"
@@ -107,6 +107,7 @@ add_library(X509
   "Verifier/ServerIdentityPolicy.swift"
   "Verifier/TrustRootLoading.swift"
   "Verifier/UnverifiedChain.swift"
+  "Verifier/ValidatedCertificateChain.swift"
   "Verifier/VerificationDiagnostic.swift"
   "Verifier/Verifier.swift"
   "Verifier/VerifierPolicy.swift"
@@ -118,6 +119,7 @@ add_library(X509
   "X509BaseTypes/Time.swift"
   "X509BaseTypes/TimeCalculations.swift"
   "X509BaseTypes/Validity.swift"
+  "X509SendableMetatype.swift"
 )
 
 target_link_libraries(X509 PUBLIC

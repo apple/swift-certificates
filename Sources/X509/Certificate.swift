@@ -60,7 +60,7 @@ import SwiftASN1
 /// Both of these goals encourage this type to be immutable. A ``Certificate`` represents
 /// a specific assertion of identity. Its ``Certificate/signature-swift.property`` is signed
 /// across the rest of the data. Allowing users to change this data makes it easy to accidentally modify
-/// a ``Certificate`` in one part of your code and not realise that the signature has inevitably
+/// a ``Certificate`` in one part of your code and not realize that the signature has inevitably
 /// been invalidated.
 #if canImport(Security)
 ///
@@ -146,14 +146,14 @@ public struct Certificate {
     /// The bytes of the ``Signature``.
     ///
     /// These are preserved to ensure that we reserialize exactly what we deserialized, regardless
-    /// of any canonicalisation we might do.
+    /// of any canonicalization we might do.
     @usableFromInline
     internal let signatureBytes: ArraySlice<UInt8>
 
     /// The bytes of the ``signatureAlgorithm-swift.property``.
     ///
     /// These are preserved to ensure that we reserialize exactly what we deserialized, regardless of
-    /// any canonicalisation we might do.
+    /// any canonicalization we might do.
     @usableFromInline
     internal let signatureAlgorithmBytes: ArraySlice<UInt8>
 
@@ -207,6 +207,66 @@ public struct Certificate {
 
         let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
         self.signature = try issuerPrivateKey.sign(bytes: tbsCertificateBytes, signatureAlgorithm: signatureAlgorithm)
+        self.tbsCertificateBytes = tbsCertificateBytes
+        self.signatureAlgorithmBytes = try DER.Serializer.serialized(
+            element: AlgorithmIdentifier(self.signatureAlgorithm)
+        )[...]
+        self.signatureBytes = try DER.Serializer.serialized(element: ASN1BitString(self.signature))[...]
+    }
+
+    /// Construct a certificate from constituent parts, signed by an issuer key.
+    ///
+    /// This API can be used to construct a ``Certificate`` directly, without an intermediary
+    /// Certificate Signing Request. The ``signature-swift.property`` for this certificate will be produced
+    /// automatically, using `issuerAsyncPrivateKey`.
+    ///
+    /// This API can be used to construct a self-signed key by passing the private key for `publicKey` as the
+    /// `issuerAsyncPrivateKey` argument.
+    ///
+    /// - Parameters:
+    ///   - version: The X.509 specification version for this certificate.
+    ///   - serialNumber: The serial number of this certificate.
+    ///   - publicKey: The public key associated with this certificate.
+    ///   - notValidBefore: The date before which this certificate is not valid.
+    ///   - notValidAfter: The date after which this certificate is not valid.
+    ///   - issuer: The ``DistinguishedName`` of the issuer of this certificate.
+    ///   - subject: The ``DistinguishedName`` of the subject of this certificate.
+    ///   - signatureAlgorithm: The signature algorithm that will be used to produce `signature`. Must be compatible with the private key type.
+    ///   - extensions: The extensions on this certificate.
+    ///   - issuerAsyncPrivateKey: The private key to use to sign this certificate.
+    @inlinable
+    public init(
+        version: Version,
+        serialNumber: SerialNumber,
+        publicKey: PublicKey,
+        notValidBefore: Date,
+        notValidAfter: Date,
+        issuer: DistinguishedName,
+        subject: DistinguishedName,
+        signatureAlgorithm: SignatureAlgorithm,
+        extensions: Extensions,
+        issuerAsyncPrivateKey: PrivateKey
+    ) async throws {
+        self.tbsCertificate = TBSCertificate(
+            version: version,
+            serialNumber: serialNumber,
+            signature: signatureAlgorithm,
+            issuer: issuer,
+            validity: try Validity(
+                notBefore: .makeTime(from: notValidBefore),
+                notAfter: .makeTime(from: notValidAfter)
+            ),
+            subject: subject,
+            publicKey: publicKey,
+            extensions: extensions
+        )
+        self.signatureAlgorithm = signatureAlgorithm
+
+        let tbsCertificateBytes = try DER.Serializer.serialized(element: self.tbsCertificate)[...]
+        self.signature = try await issuerAsyncPrivateKey.signAsynchronously(
+            bytes: tbsCertificateBytes,
+            signatureAlgorithm: signatureAlgorithm
+        )
         self.tbsCertificateBytes = tbsCertificateBytes
         self.signatureAlgorithmBytes = try DER.Serializer.serialized(
             element: AlgorithmIdentifier(self.signatureAlgorithm)
@@ -281,7 +341,21 @@ public struct Certificate {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-extension Certificate: Hashable {}
+extension Certificate: Hashable {
+    @inlinable
+    public static func == (lhs: Certificate, rhs: Certificate) -> Bool {
+        return lhs.tbsCertificateBytes == rhs.tbsCertificateBytes
+            && lhs.signatureBytes == rhs.signatureBytes
+            && lhs.signatureAlgorithmBytes == rhs.signatureAlgorithmBytes
+    }
+
+    @inlinable
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.tbsCertificateBytes)
+        hasher.combine(self.signatureBytes)
+        hasher.combine(self.signatureAlgorithmBytes)
+    }
+}
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate: Sendable {}

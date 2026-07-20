@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022-2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2022-2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -32,7 +32,7 @@ public protocol OCSPRequester: Sendable {
     /// - Parameters:
     ///   - request: DER-encoded request bytes
     ///   - uri: uri of the OCSP responder
-    /// - Returns: DER-encoded response bytes if they request was successful or a terminal or non-terminal error.
+    /// - Returns: DER-encoded response bytes if the request was successful, or a terminal or non-terminal error.
     func query(request: [UInt8], uri: String) async -> OCSPRequesterQueryResult
 }
 
@@ -164,7 +164,7 @@ enum OCSPRequestHashAlgorithm {
     }
 }
 
-/// Defines the behaviour of ``OCSPVerifierPolicy`` in the event of a failure.
+/// Defines the behavior of ``OCSPVerifierPolicy`` in the event of a failure.
 /// ``soft`` should be used most of the time and will only fail verification if a verified OCSP response reports a status of revoked.
 public struct OCSPFailureMode: Hashable, Sendable {
     /// ``soft`` failure mode will only fail verification if a verified and valid OCSP response reports a status of revoked.
@@ -184,7 +184,7 @@ public struct OCSPFailureMode: Hashable, Sendable {
 }
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
+public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy, Sendable {
     public let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = []
 
     struct Storage: Sendable {
@@ -198,7 +198,7 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
         private var maxDuration: TimeInterval
 
         /// the time used to decide if the request is relatively recent
-        private var validationTime: Date
+        private var fixedValidationTime: Date?
 
         /// If true, a nonce is generated per OCSP request and attached to the request.
         /// If the response contains a nonce, it must match with the initially send nonce.
@@ -210,12 +210,12 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
             requester: Requester,
             requestHashAlgorithm: OCSPRequestHashAlgorithm,
             maxDuration: TimeInterval,
-            validationTime: Date
+            fixedValidationTime: Date? = nil
         ) {
             self.requester = requester
             self.requestHashAlgorithm = requestHashAlgorithm
             self.maxDuration = maxDuration
-            self.validationTime = validationTime
+            self.fixedValidationTime = fixedValidationTime
             self.failureMode = failureMode
         }
     }
@@ -231,14 +231,70 @@ public struct OCSPVerifierPolicy<Requester: OCSPRequester>: VerifierPolicy {
 
     private var storage: Storage
 
-    public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
+    private init(failureMode: OCSPFailureMode, requester: Requester, expiryValidationTime: Date?) {
         self.storage = .init(
             failureMode: failureMode,
             requester: requester,
             requestHashAlgorithm: .insecureSha1,
             maxDuration: 10,
-            validationTime: validationTime
+            fixedValidationTime: expiryValidationTime
         )
+    }
+
+    @available(
+        *,
+        deprecated,
+        message:
+            "Use init(failureMode:requester:) to validated expiry against the current time. Otherwise, to validate against a fixed time, import with @_spi(FixedExpiryValidationTime) and use init(failureMode:requester:fixedExpiryValidationTime:)."
+    )
+    public init(failureMode: OCSPFailureMode, requester: Requester, validationTime: Date) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: validationTime)
+    }
+
+    /// Creates an instance with an optional *fixed* validation time.
+    ///
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    /// - Parameter fixedValidationTime: The *fixed* time to compare against when determining if the request is recent. A fixed time is a *specific*
+    ///   time, either in the past or future, but **not** the current time. To compare against the current time *at the point of validation*, pass `nil` to
+    ///   `fixedValidationTime`.
+    ///
+    /// - Important: Pass `nil` to `fixedValidationTime` for the current time to be obtained at the time of validation and then used for the
+    ///   comparison; the validation method may be invoked long after initialization.
+    @available(
+        *,
+        deprecated,
+        message:
+            "Use init(failureMode:requester:) to validated expiry against the current time. Otherwise, to validate against a fixed time, import with @_spi(FixedExpiryValidationTime) and use init(failureMode:requester:fixedExpiryValidationTime:)."
+    )
+    public init(failureMode: OCSPFailureMode, requester: Requester, fixedValidationTime: Date? = nil) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedValidationTime)
+    }
+
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    ///
+    /// - Note: Certificate expiry is validated against the *current* time (evaluated at the point of validation)
+    public init(failureMode: OCSPFailureMode, requester: Requester) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: nil)
+    }
+
+    /// Creates an instance with a **fixed** time to validate certificate expiry against (a predetermined time *either*
+    /// in the past or future)
+    ///
+    /// - Parameter failureMode: The mode ``OCSPVerifierPolicy`` should use to determine failure.
+    /// - Parameter requester: A requester instance conforming to ``OCSPRequester``.
+    /// - Parameter fixedExpiryValidationTime: The *fixed* time to compare against when determining if the certificates
+    ///   in the chain have expired. A fixed time is a predetermined time, either in the past or future, but **not** the
+    ///   current time. To compare against the current time *at the point of validation*, use
+    ///   ``init(failureMode:requester:)``.
+    ///
+    /// - Warning: Only use this initializer if you want to validate the certificates against a *fixed* time. Most users
+    ///   should use ``init()``: the expiry of the certificates will be validated against the current time (evaluated at
+    ///   the point of validation) when using that initializer.
+    @_spi(FixedExpiryValidationTime)
+    public init(failureMode: OCSPFailureMode, requester: Requester, fixedExpiryValidationTime: Date) {
+        self.init(failureMode: failureMode, requester: requester, expiryValidationTime: fixedExpiryValidationTime)
     }
 
     // this method currently doesn't need to be mutating. However, we want to reserve the right to change our mind
@@ -424,7 +480,7 @@ extension OCSPVerifierPolicy.Storage {
             )
         }
 
-        switch basicResponse.responseData.verifyTime(validationTime: self.validationTime) {
+        switch basicResponse.responseData.verifyTime(fixedValidationTime: self.fixedValidationTime) {
         case .failsToMeetPolicy(reason: let reason):
             return self.softFailure(reason: reason)
         case .meetsPolicy:
@@ -447,7 +503,7 @@ extension OCSPVerifierPolicy.Storage {
             return self.softFailure(reason: .init("failed to decode nonce response \(error)"))
         }
 
-        switch response.verifyTime(validationTime: self.validationTime) {
+        switch response.verifyTime(fixedValidationTime: self.fixedValidationTime) {
         case .meetsPolicy:
             break
         case .failsToMeetPolicy(let reason):
@@ -501,11 +557,15 @@ extension OCSPVerifierPolicy.Storage {
             rootCertificates: CertificateStore([issuer])
         ) {
             OCSPResponderSigningPolicy(issuer: issuer)
-            RFC5280Policy(validationTime: validationTime)
+            if let fixedValidationTime = self.fixedValidationTime {
+                RFC5280Policy(fixedExpiryValidationTime: fixedValidationTime)
+            } else {
+                RFC5280Policy()
+            }
         }
 
         let validationResult = await verifier.validate(
-            leafCertificate: leafCertificate,
+            leaf: leafCertificate,
             intermediates: CertificateStore()
         )
 
@@ -580,10 +640,12 @@ extension OCSPResponseData {
     static let defaultTrustTimeLeeway: TimeInterval = 4500.0
 
     func verifyTime(
-        validationTime: Date,
+        fixedValidationTime: Date? = nil,
         trustTimeLeeway: TimeInterval = Self.defaultTrustTimeLeeway
     ) -> PolicyEvaluationResult {
         let producedAt = Date(self.producedAt)
+        // Obtain the current time if fixedValidationTime is nil.
+        let validationTime = fixedValidationTime ?? Date()
 
         guard producedAt <= validationTime.advanced(by: trustTimeLeeway) else {
             return .failsToMeetPolicy(
@@ -600,7 +662,7 @@ extension OCSPResponseData {
 extension OCSPSingleResponse {
 
     func verifyTime(
-        validationTime: Date,
+        fixedValidationTime: Date? = nil,
         trustTimeLeeway: TimeInterval = OCSPResponseData.defaultTrustTimeLeeway
     ) -> PolicyEvaluationResult {
         /// Clients MUST check for the existence of the nextUpdate field and MUST
@@ -614,6 +676,8 @@ extension OCSPSingleResponse {
 
         let thisUpdate = Date(self.thisUpdate)
         let nextUpdate = Date(nextUpdateGeneralizedTime)
+        // Obtain the current time if fixedValidationTime is nil.
+        let validationTime = fixedValidationTime ?? Date()
 
         guard thisUpdate <= validationTime.advanced(by: trustTimeLeeway) else {
             return .failsToMeetPolicy(

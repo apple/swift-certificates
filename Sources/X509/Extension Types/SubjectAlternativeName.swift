@@ -14,7 +14,7 @@
 
 import SwiftASN1
 
-/// Allows identities to be bound to the subject of a certificate.
+/// Binds identities to the subject of a certificate.
 ///
 /// The identities attested in this extension belong to the subject of the certificate.
 /// Users of the certificate may validate that these names correspond to a name they are

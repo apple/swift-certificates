@@ -30,7 +30,7 @@
 /// Users can extend this syntax for their own extensions by conforming their semantic type to ``RelativeDistinguishedNameConvertible``.
 /// This is the only requirement for adding new extensions to this builder syntax.
 @resultBuilder
-public struct DistinguishedNameBuilder {
+public struct DistinguishedNameBuilder: Sendable {
     @inlinable
     public static func buildExpression<Extension: RelativeDistinguishedNameConvertible>(
         _ expression: Extension
@@ -87,6 +87,8 @@ public struct DistinguishedNameBuilder {
     }
 }
 
+/// A type that can be converted to a ``RelativeDistinguishedName``.
 public protocol RelativeDistinguishedNameConvertible {
+    /// Creates a ``RelativeDistinguishedName`` from this value.
     func makeRDN() throws -> RelativeDistinguishedName
 }

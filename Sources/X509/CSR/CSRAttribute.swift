@@ -27,7 +27,7 @@ extension CertificateSigningRequest {
     public struct Attribute {
         /// The identifier for this attribute type.
         ///
-        /// Common values are stored in `ASN1ObjectIdentifier.X509ExtensionID`.
+        /// Common values are stored in `ASN1ObjectIdentifier.CSRAttributes`.
         public var oid: ASN1ObjectIdentifier
 
         /// The encoded bytes of the values of this attribute.
@@ -122,7 +122,7 @@ extension CertificateSigningRequest.Attribute: DERImplicitlyTaggable {
 
 extension ASN1ObjectIdentifier {
     /// Object Identifiers that identify attributes applied to CSRs.
-    public enum CSRAttributes {
+    public enum CSRAttributes: Sendable {
         /// A request to apply specific certificate extensions.
         public static let extensionRequest: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 9, 14]
     }

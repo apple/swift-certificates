@@ -28,40 +28,52 @@ final class SecKeyWrapperTests: XCTestCase {
     }
 
     func generateCandidateKeys() throws -> [CandidateKey] {
-        var keys: [CandidateKey] = []
+        do {
+            var keys: [CandidateKey] = []
 
-        // RSA
-        keys.append(
-            CandidateKey(
-                key: try SignatureTests.generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false),
-                type: "RSA",
-                keySize: 2048,
-                sep: false
+            // RSA
+            keys.append(
+                CandidateKey(
+                    key: try SignatureTests.generateSecKey(keyType: kSecAttrKeyTypeRSA, keySize: 2048, useSEP: false),
+                    type: "RSA",
+                    keySize: 2048,
+                    sep: false
+                )
             )
-        )
 
-        // eliptic curves
-        var keyTypes = [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC]
-        #if os(macOS)
-        keyTypes.append(kSecAttrKeyTypeECDSA)
-        #endif
+            // eliptic curves
+            var keyTypes = [kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyTypeEC]
+            #if os(macOS)
+            keyTypes.append(kSecAttrKeyTypeECDSA)
+            #endif
 
-        for keyType in keyTypes {
-            for keySize in [256, 384] {
-                for useSEP in [true, false] {
-                    keys.append(
-                        CandidateKey(
-                            key: try SignatureTests.generateSecKey(keyType: keyType, keySize: keySize, useSEP: useSEP),
-                            type: "EC-\(keyType)",
-                            keySize: keySize,
-                            sep: useSEP
+            for keyType in keyTypes {
+                for keySize in [256, 384] {
+                    for useSEP in [true, false] {
+                        keys.append(
+                            CandidateKey(
+                                key: try SignatureTests.generateSecKey(
+                                    keyType: keyType,
+                                    keySize: keySize,
+                                    useSEP: useSEP
+                                ),
+                                type: "EC-\(keyType)",
+                                keySize: keySize,
+                                sep: useSEP
+                            )
                         )
-                    )
+                    }
                 }
             }
-        }
 
-        return keys
+            return keys
+        } catch let err as NSError {
+            if err.domain == NSOSStatusErrorDomain && err.code == errSecInteractionNotAllowed {
+                // Suppress this error
+                throw XCTSkip("Unable to run this test without interactive prompting")
+            }
+            throw err
+        }
     }
 
     @available(macOS 11.0, iOS 14, tvOS 14, watchOS 7, macCatalyst 14, visionOS 1.0, *)

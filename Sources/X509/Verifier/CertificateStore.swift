@@ -14,7 +14,7 @@
 
 import _CertificateInternals
 
-/// A collection of ``Certificate`` objects for use in a verifier.
+/// A collection of certificates for use in verification.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct CertificateStore: Sendable, Hashable {
 
@@ -27,7 +27,7 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     /// Wrap a ``CustomCertificateStore`` in a ``CertificateStore`` so the custom
-    /// implementation it can be used interchangeably. For details on why one
+    /// implementation can be used interchangeably. For details on why one
     /// may decide to implement a ``CustomCertificateStore``, please see the
     /// documentation on that protocol.
     @inlinable
@@ -63,9 +63,8 @@ public struct CertificateStore: Sendable, Hashable {
     }
 
     @inlinable
-    public func appending(_ certificate: Certificate) -> Self {
-        var copy = self
-        copy.append(certificate)
+    public consuming func appending(_ certificate: Certificate) -> Self {
+        append(certificate)
         return self
     }
 
@@ -128,7 +127,7 @@ extension CertificateStore {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     @usableFromInline
-    enum Resolved {
+    enum Resolved: Sendable {
         case custom(AnyCustomCertificateStore)
         case concrete(ConcreteResolved)
     }
@@ -158,7 +157,7 @@ extension CertificateStore.Resolved {
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension CertificateStore {
     @usableFromInline
-    struct ConcreteResolved {
+    struct ConcreteResolved: Sendable {
 
         @usableFromInline
         var systemTrustRoots: [DistinguishedName: [Certificate]]

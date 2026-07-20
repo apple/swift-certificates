@@ -28,7 +28,7 @@ import Glibc
 import Musl
 #endif
 
-/// A ``VerifierPolicy`` that validates that the leaf certificate is authoritative
+/// A ``VerifierPolicy`` that checks whether the leaf certificate is authoritative
 /// for a given hostname or IP address.
 ///
 /// This policy is most commonly used to validate the leaf certificate presented by a server
@@ -38,7 +38,7 @@ import Musl
 /// RFC 6125 (https://tools.ietf.org/search/rfc6125), which loosely speaking
 /// defines the common algorithm used for validating that an X.509 certificate
 /// is valid for a given service
-public struct ServerIdentityPolicy {
+public struct ServerIdentityPolicy: Sendable {
     @usableFromInline
     var serverHostname: LazyServerHostname?
 
@@ -48,7 +48,7 @@ public struct ServerIdentityPolicy {
 
     /// Constructs a new ``ServerIdentityPolicy``.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - serverHostname: The hostname used to connect to the server.
     ///     - serverIP: The IP address of the server, if known.
     @inlinable
@@ -88,25 +88,25 @@ extension ServerIdentityPolicy: VerifierPolicy {
 
 extension ServerIdentityPolicy {
     @usableFromInline
-    enum IPAddress {
+    enum IPAddress: Sendable {
         case v4(in_addr)
         case v6(in6_addr)
     }
 
     @usableFromInline
-    enum LazyIPAddress {
+    enum LazyIPAddress: Sendable {
         case ipAddress(IPAddress)
         case string(String)
     }
 
     @usableFromInline
-    enum LazyServerHostname {
+    enum LazyServerHostname: Sendable {
         case string(String)
         case prepared(PreparedServerHostname)
     }
 
     @usableFromInline
-    struct PreparedServerHostname {
+    struct PreparedServerHostname: Sendable {
         var bytes: ArraySlice<UInt8>
         var firstPeriodIndex: ArraySlice<UInt8>.Index?
 

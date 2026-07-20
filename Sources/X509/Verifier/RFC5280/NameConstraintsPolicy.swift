@@ -21,7 +21,7 @@ import SwiftASN1
 /// A sub-policy of the ``RFC5280Policy`` that polices the nameConstraints extension.
 @usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-struct NameConstraintsPolicy: VerifierPolicy {
+struct NameConstraintsPolicy: VerifierPolicy, Sendable {
     @usableFromInline
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.nameConstraints
@@ -36,8 +36,11 @@ struct NameConstraintsPolicy: VerifierPolicy {
         //
         // Some notes:
         //
-        // - RFC 5280 says we MUST validate directoryName constraints, and SHOULD validate rfc822Name,
-        //       URI, dNSName, and iPAddress constraints.
+        // - RFC 5280 says we MUST validate directoryName constraints, and SHOULD validate rfc822Name, URI, dNSName, and
+        //   iPAddress constraints. However, proper directoryName constraint validation requires a complex comparison
+        //   algorithm. Most implementations skip that and just compare the distinguished names by exact equality. As
+        //   such, we deliberately do not validate directoryName constraints at all: if a certificate's nameConstraints
+        //   extension contains a directoryName subtree, we reject the chain.
         // - If there's a constraint we don't support and can't validate, we MUST reject the cert.
         //
         // Our algorithm is recursive: starting from the root and moving towards the leaf, for each CA
@@ -114,13 +117,10 @@ struct NameConstraintsPolicy: VerifierPolicy {
         // For excluded trees, if _any_ match then the name is forbidden.
         for excludedSubtree in excludedSubtrees {
             switch (excludedSubtree, name) {
-            case (.directoryName(let constraint), .directoryName(let presentedName)):
-                if directoryNameMatchesConstraint(directoryName: presentedName, constraint: constraint) {
-                    return .failsToMeetPolicy(
-                        reason:
-                            "RFC5280Policy: directoryName \(presentedName) is excluded by \(excludedSubtree) in name constraints"
-                    )
-                }
+            case (.directoryName, .directoryName):
+                // We immediately reject the chain if there is a directoryName name constraint involved: correct
+                // validation requires the full RFC 5280 comparison algorithm which we currently do not implement.
+                return .failsToMeetPolicy(reason: "RFC5280Policy: directoryName name constraints are not supported.")
             case (.dnsName(let constraint), .dnsName(let presentedName)):
                 if dnsNameMatchesConstraint(dnsName: presentedName.utf8, constraint: constraint.utf8) {
                     return .failsToMeetPolicy(
@@ -171,14 +171,10 @@ struct NameConstraintsPolicy: VerifierPolicy {
 
         for permittedSubtree in permittedSubtrees {
             switch (permittedSubtree, name) {
-            case (.directoryName(let constraint), .directoryName(let presentedName)):
-                evaluatedAtLeastOneConstraint = true
-
-                if directoryNameMatchesConstraint(directoryName: presentedName, constraint: constraint) {
-                    // This is a match, we're good.
-                    return .meetsPolicy
-                }
-
+            case (.directoryName, .directoryName):
+                // We immediately reject the chain if there is a directoryName name constraint involved: correct
+                // validation requires the full RFC 5280 comparison algorithm which we currently do not implement.
+                return .failsToMeetPolicy(reason: "RFC5280Policy: directoryName name constraints are not supported.")
             case (.dnsName(let constraint), .dnsName(let presentedName)):
                 evaluatedAtLeastOneConstraint = true
 
@@ -237,7 +233,7 @@ extension Certificate {
     }
 
     @usableFromInline
-    struct NameSequence: Sequence {
+    struct NameSequence: Sequence, Sendable {
         @usableFromInline
         var subject: DistinguishedName
 
@@ -256,7 +252,7 @@ extension Certificate {
         }
 
         @usableFromInline
-        struct Iterator: IteratorProtocol {
+        struct Iterator: IteratorProtocol, Sendable {
             @usableFromInline
             var subject: DistinguishedName?
 

@@ -21,7 +21,7 @@ import SwiftASN1
 /// ```swift
 /// let verifier = Verifier(rootCertificates: CertificateStore()) {
 ///     AnyPolicy {
-///         RFC5280Policy(validationTime: Date())
+///         RFC5280Policy()
 ///     }
 /// }
 /// ```
@@ -55,6 +55,9 @@ public struct AnyPolicy: VerifierPolicy {
         await policy.chainMeetsPolicyRequirements(chain: chain)
     }
 }
+
+@available(*, unavailable)
+extension AnyPolicy: Sendable {}
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 struct LegacyPolicySet: VerifierPolicy {

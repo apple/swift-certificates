@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2023 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -408,7 +408,7 @@ final class PolicyBuilderTests: XCTestCase {
         // tested at compile time
         let _: Verifier<AnyPolicy> = Verifier(rootCertificates: CertificateStore()) {
             AnyPolicy {
-                RFC5280Policy(validationTime: Date())
+                RFC5280Policy()
             }
         }
     }

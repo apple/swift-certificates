@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.1
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftCertificates open source project
@@ -22,15 +22,15 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../"),
-        .package(url: "https://github.com/ordo-one/package-benchmark.git", from: "1.11.1"),
-        .package(url: "https://github.com/apple/swift-crypto.git", "2.5.0"..<"4.0.0"),
+        .package(url: "https://github.com/ordo-one/benchmark.git", from: "1.11.1"),
+        .package(url: "https://github.com/apple/swift-crypto.git", "3.12.3"..<"5.0.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", from: "1.0.0"),
     ],
     targets: [
         .executableTarget(
             name: "CertificatesBenchmark",
             dependencies: [
-                .product(name: "Benchmark", package: "package-benchmark"),
+                .product(name: "Benchmark", package: "benchmark"),
                 .product(name: "X509", package: "swift-certificates"),
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "Crypto", package: "swift-crypto"),
@@ -40,7 +40,7 @@ let package = Package(
                 .copy("ca-certificates/")
             ],
             plugins: [
-                .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
+                .plugin(name: "BenchmarkPlugin", package: "benchmark")
             ]
         )
     ]

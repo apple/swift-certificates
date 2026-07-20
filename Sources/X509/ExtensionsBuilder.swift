@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// Provides a result-builder style DSL for constructing ``Certificate/Extensions-swift.struct`` values.
+/// A result-builder DSL for constructing ``Certificate/Extensions-swift.struct`` values.
 ///
-/// This DSL allows us to construct extensions straightforwardly, using their high-level representation instead of
+/// This DSL allows constructing extensions straightforwardly, using their high-level representation instead of
 /// the erased representation provided by ``Certificate/Extension``. For example, a simple set of
 /// extensions can be produced like this:
 ///
@@ -40,7 +40,7 @@
 /// Users are also able to mark specific extensions as critical by using the ``Critical`` helper type.
 @resultBuilder
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public struct ExtensionsBuilder {
+public struct ExtensionsBuilder: Sendable {
     @inlinable
     public static func buildExpression<Extension: CertificateExtensionConvertible>(
         _ expression: Extension
@@ -114,9 +114,9 @@ public struct ExtensionsBuilder {
     }
 }
 
-/// Conforming types are capable of being erased into ``Certificate/Extension`` values.
+/// A type that converts to a ``Certificate/Extension`` value.
 ///
-/// Note that for most extension types, the returned ``Certificate/Extension`` should have its
+/// For most extension types, the returned ``Certificate/Extension`` should have its
 /// ``Certificate/Extension/critical`` value set to `false`. This allows the ``Critical`` helper
 /// type to fulfill its function as expected.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
@@ -147,3 +147,6 @@ public struct Critical<BaseExtension: CertificateExtensionConvertible>: Certific
         return ext
     }
 }
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension Critical: Sendable where BaseExtension: Sendable {}

@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.1
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftCertificates open source project
@@ -74,21 +74,31 @@ let package = Package(
 // we're building in the Swift.org CI system alongside other projects in the Swift toolchain and
 // we can depend on local versions of our dependencies instead of fetching them remotely.
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
+
+    // If the `SWIFT_CERTIFICATES_ALLOW_SWIFT_CRYPTO_BETA` environment variable is set
+    // swift-certificates will accept swift-crypto beta releases as a dependency.
+    //
+    // Note: A beta release can only be used if other packages in the dependency tree
+    // that have a direct dependency on swift-crypto accept beta releases as well.
+    if ProcessInfo.processInfo.environment["SWIFT_CERTIFICATES_ALLOW_SWIFT_CRYPTO_BETA"] == nil {
+        package.dependencies += [
+            .package(url: "https://github.com/apple/swift-crypto.git", "3.12.3"..<"5.0.0")
+        ]
+    } else {
+        print("Accepting beta versions of swift-crypto!")
+        package.dependencies += [
+            .package(url: "https://github.com/apple/swift-crypto.git", "3.12.3"..<"5.0.0-beta.max")
+        ]
+    }
+
     package.dependencies += [
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.12.3"),
-        .package(url: "https://github.com/apple/swift-asn1.git", from: "1.1.0"),
+        .package(url: "https://github.com/apple/swift-asn1.git", from: "1.1.0")
     ]
 } else {
     package.dependencies += [
         .package(path: "../swift-crypto"),
         .package(path: "../swift-asn1"),
     ]
-}
-
-for target in package.targets {
-    var settings = target.swiftSettings ?? []
-    settings.append(.enableExperimentalFeature("StrictConcurrency=complete"))
-    target.swiftSettings = settings
 }
 
 // ---    STANDARD CROSS-REPO SETTINGS DO NOT EDIT   --- //

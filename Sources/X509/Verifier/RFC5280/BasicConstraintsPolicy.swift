@@ -21,7 +21,7 @@ import SwiftASN1
 /// A sub-policy of the ``RFC5280Policy`` that polices the basicConstraints extension.
 @usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-struct BasicConstraintsPolicy: VerifierPolicy {
+struct BasicConstraintsPolicy: VerifierPolicy, Sendable {
     @usableFromInline
     let verifyingCriticalExtensions: [ASN1ObjectIdentifier] = [
         .X509ExtensionID.basicConstraints

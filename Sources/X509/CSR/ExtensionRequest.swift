@@ -25,7 +25,7 @@ public struct ExtensionRequest: Hashable, Sendable {
 
     /// Construct an ``ExtensionRequest`` from a given set of extensions.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - extensions: The extensions to attach to this ``ExtensionRequest``.
     @inlinable
     public init(extensions: Certificate.Extensions) {
@@ -34,7 +34,7 @@ public struct ExtensionRequest: Hashable, Sendable {
 
     /// Unwrap a ``CertificateSigningRequest/Attribute`` that contains an ``ExtensionRequest``.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - attribute: The attribute to unwrap
     /// - throws: If the attribute is ill-formed, or does not contain an ``ExtensionRequest``.
     @inlinable
@@ -60,7 +60,7 @@ public struct ExtensionRequest: Hashable, Sendable {
 extension CertificateSigningRequest.Attribute {
     /// Wrap an ``ExtensionRequest`` into a ``CertificateSigningRequest/Attribute``.
     ///
-    /// - parameters:
+    /// - Parameters:
     ///     - extensionRequest: The ``ExtensionRequest`` to wrap.
     @inlinable
     public init(_ extensionRequest: ExtensionRequest) throws {

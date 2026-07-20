@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftCertificates open source project
 //
-// Copyright (c) 2022 Apple Inc. and the SwiftCertificates project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftCertificates project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -19,7 +19,7 @@ import Foundation
 #endif
 import XCTest
 import SwiftASN1
-@testable import X509
+@testable @_spi(FixedExpiryValidationTime) import X509
 import Crypto
 import _CryptoExtras
 
@@ -490,6 +490,72 @@ final class CertificateDERTests: XCTestCase {
         XCTAssertNoThrow(try Certificate(derEncoded: cert))
     }
 
+    @available(*, deprecated, message: "new test added below")
+    func testUsingWeirdHashFunctionsDeprecated() async throws {
+        let now = Date()
+        let issuerKey = P384.Signing.PrivateKey()
+        let issuerName = try DistinguishedName {
+            CommonName("Issuer")
+        }
+        let issuer = try Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(issuerKey.publicKey),
+            notValidBefore: now,
+            notValidAfter: now + 100,
+            issuer: issuerName,
+            subject: issuerName,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            extensions: try Certificate.Extensions {
+                Critical(
+                    BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+                )
+            },
+            issuerPrivateKey: .init(issuerKey)
+        )
+
+        let leafKey = P384.Signing.PrivateKey()
+        let leafName = try DistinguishedName {
+            CommonName("Leaf")
+        }
+        let leaf = try Certificate(
+            version: .v3,
+            serialNumber: .init(),
+            publicKey: .init(leafKey.publicKey),
+            notValidBefore: now,
+            notValidAfter: now + 50,
+            issuer: issuerName,
+            subject: leafName,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            extensions: try Certificate.Extensions {
+                Critical(
+                    BasicConstraints.notCertificateAuthority
+                )
+            },
+            issuerPrivateKey: .init(issuerKey)
+        )
+
+        // We should be able to serialize and deserialize this, and have it remain equal.
+        var serializer = DER.Serializer()
+        try serializer.serialize(leaf)
+        let parsed = try Certificate(derEncoded: serializer.serializedBytes)
+        XCTAssertEqual(parsed, leaf)
+
+        // And we should be able to validate it.
+        let roots = CertificateStore([issuer])
+        var verifier = Verifier(rootCertificates: roots) {
+            RFC5280Policy(fixedExpiryValidationTime: now + 1)
+        }
+        let result = await verifier.validate(leafCertificate: parsed, intermediates: CertificateStore())
+
+        guard case .validCertificate(let chain) = result else {
+            XCTFail("Failed to validate cert")
+            return
+        }
+
+        XCTAssertEqual(Array(chain), [parsed, issuer])
+    }
+
     func testUsingWeirdHashFunctions() async throws {
         let now = Date()
         let issuerKey = P384.Signing.PrivateKey()
@@ -543,16 +609,16 @@ final class CertificateDERTests: XCTestCase {
         // And we should be able to validate it.
         let roots = CertificateStore([issuer])
         var verifier = Verifier(rootCertificates: roots) {
-            RFC5280Policy(validationTime: now + 1)
+            RFC5280Policy(fixedExpiryValidationTime: now + 1)
         }
-        let result = await verifier.validate(leafCertificate: parsed, intermediates: CertificateStore())
+        let result = await verifier.validate(leaf: parsed, intermediates: CertificateStore())
 
         guard case .validCertificate(let chain) = result else {
             XCTFail("Failed to validate cert")
             return
         }
 
-        XCTAssertEqual(chain, [parsed, issuer])
+        XCTAssertEqual(Array(chain), [parsed, issuer])
     }
 
     func testParsingBigNameConstraints() throws {
@@ -789,7 +855,9 @@ final class CertificatePrivateKeyDEREncodedTests: XCTestCase {
 
     func testED25519() throws {
         let key = Curve25519.Signing.PrivateKey()
-        let derBytes = key.derRepresentation
+        // swift-crpto offers a similar API but returning Data; use ours as it has wider platform
+        // avaialble requirements.
+        let derBytes = key.derRepresentation as [UInt8]
         let parsedKey = try Certificate.PrivateKey(derBytes: derBytes)
 
         XCTAssertEqual(parsedKey.backing, .ed25519(key))

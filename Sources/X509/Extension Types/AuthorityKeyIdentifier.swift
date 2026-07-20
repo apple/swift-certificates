@@ -133,7 +133,7 @@ extension AuthorityKeyIdentifier: CertificateExtensionConvertible {
 
 // MARK: ASN1 helpers
 @usableFromInline
-struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable {
+struct AuthorityKeyIdentifierValue: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

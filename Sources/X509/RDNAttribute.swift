@@ -317,7 +317,7 @@ extension RelativeDistinguishedName.Attribute {
 
 extension ASN1ObjectIdentifier {
     /// Common object identifiers used within ``RelativeDistinguishedName/Attribute``s.
-    public enum RDNAttributeType {
+    public enum RDNAttributeType: Sendable {
         /// The 'countryName' attribute type contains a two-letter
         /// ISO 3166 country code.
         public static let countryName: ASN1ObjectIdentifier = [2, 5, 4, 6]
@@ -348,11 +348,11 @@ extension ASN1ObjectIdentifier {
         /// avenue, and the house number).
         public static let streetAddress: ASN1ObjectIdentifier = [2, 5, 4, 9]
 
-        /// The `domainComponent` attribute type contains parts (labels) of a DNS domain name
+        /// The `domainComponent` attribute type contains parts (labels) of a DNS domain name.
         public static let domainComponent: ASN1ObjectIdentifier = [0, 9, 2342, 19_200_300, 100, 1, 25]
 
-        /// The `emailAddress` attribute type contains email address defined in PCKS#9 (RFC2985).
-        /// Be aware that, modern best practices (e.g., RFC 5280) discourage embedding email addresses in the `Subject DN` instead it should be in  `Subject Alternative Name (SAN)
+        /// The `emailAddress` attribute type contains an email address defined in PKCS#9 (RFC 2985).
+        /// Modern best practices (e.g., RFC 5280) discourage embedding email addresses in the `Subject DN`; use the `Subject Alternative Name` (SAN) instead.
         public static let emailAddress: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 9, 1]
     }
 }

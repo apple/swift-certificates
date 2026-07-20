@@ -23,14 +23,14 @@ import _CryptoExtras
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Certificate {
-    /// A private key that can be used with a certificate.
+    /// A private key for use with a certificate.
     ///
-    /// This type provides an opaque wrapper around the various private key types
-    /// provided by `swift-crypto` and `Security`. Users are expected to construct this key from
+    /// This type is an opaque wrapper around the various private key types
+    /// provided by `swift-crypto` and `Security`. Construct this key from
     /// one of those types.
     ///
-    /// As private keys are never sent over the wire, this type does not offer
-    /// support for being unwrapped back into the underlying key types.
+    /// As private keys are never sent over the wire, this type does not support
+    /// unwrapping back into the underlying key types.
     public struct PrivateKey {
         @usableFromInline
         var backing: BackingPrivateKey
@@ -91,8 +91,21 @@ extension Certificate {
         }
         #endif
 
+        /// Construct a private key wrapping a custom private key.
+        /// - Parameter custom: The custom private key to wrap.
         @inlinable
-        internal func sign<Bytes: DataProtocol>(
+        public init(_ custom: some CustomPrivateKey) {
+            self.backing = .custom(custom)
+        }
+
+        /// Use the private key to sign the provided bytes with a given signature algorithm.
+        ///
+        /// - Parameters:
+        ///   - bytes: The data to create the signature for.
+        ///   - signatureAlgorithm: The signature algorithm to use.
+        /// - Returns: The signature.
+        @inlinable
+        public func sign<Bytes: DataProtocol>(
             bytes: Bytes,
             signatureAlgorithm: SignatureAlgorithm
         ) throws -> Signature {
@@ -113,6 +126,27 @@ extension Certificate {
             #endif
             case .ed25519(let ed25519):
                 return try ed25519.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
+            case .custom(let custom):
+                return try custom.signSynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+            }
+        }
+
+        /// Use the private key to sign the provided bytes asynchronously with a given signature algorithm.
+        ///
+        /// - Parameters:
+        ///   - bytes: The data to create the signature for.
+        ///   - signatureAlgorithm: The signature algorithm to use.
+        /// - Returns: The signature.
+        @inlinable
+        public func signAsynchronously<Bytes: DataProtocol & Sendable>(
+            bytes: Bytes,
+            signatureAlgorithm: SignatureAlgorithm
+        ) async throws -> Signature {
+            switch self.backing {
+            case .custom(let custom):
+                return try await custom.signAsynchronously(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
+            default:
+                return try self.sign(bytes: bytes, signatureAlgorithm: signatureAlgorithm)
             }
         }
 
@@ -137,6 +171,8 @@ extension Certificate {
             #endif
             case .ed25519(let ed25519):
                 return PublicKey(ed25519.publicKey)
+            case .custom(let custom):
+                return custom.publicKey
             }
         }
 
@@ -171,6 +207,8 @@ extension Certificate {
             #endif
             case .ed25519:
                 return .ed25519
+            case .custom(let custom):
+                return custom.defaultSignatureAlgorithm
             }
         }
     }
@@ -202,6 +240,11 @@ extension Certificate.PrivateKey: CustomStringConvertible {
         #endif
         case .ed25519:
             return "Ed25519.PrivateKey"
+        case .custom(let custom):
+            if let custom = custom as? CustomStringConvertible {
+                return custom.description
+            }
+            return "CustomPrivateKey"
         }
     }
 }
@@ -219,6 +262,7 @@ extension Certificate.PrivateKey {
         case secKey(SecKeyWrapper)
         #endif
         case ed25519(Crypto.Curve25519.Signing.PrivateKey)
+        case custom(any CustomPrivateKey)
 
         @inlinable
         static func == (lhs: BackingPrivateKey, rhs: BackingPrivateKey) -> Bool {
@@ -239,6 +283,8 @@ extension Certificate.PrivateKey {
             #endif
             case (.ed25519(let l), .ed25519(let r)):
                 return l.rawRepresentation == r.rawRepresentation
+            case (.custom(let l), .custom(let r)):
+                return l.publicKey == r.publicKey
             default:
                 return false
             }
@@ -271,6 +317,8 @@ extension Certificate.PrivateKey {
             case .ed25519(let digest):
                 hasher.combine(6)
                 hasher.combine(digest.rawRepresentation)
+            case .custom(let key):
+                hasher.combine(key)
             }
         }
     }
@@ -344,6 +392,7 @@ extension Certificate.PrivateKey {
         case .secKey(let key): return try key.pemDocument()
         #endif
         case .ed25519(let key): return key.pemRepresentation
+        case .custom(let key): return try key.serializeAsPEM()
         }
     }
 }
@@ -369,6 +418,41 @@ extension Certificate.PrivateKey {
             self = try .init(Curve25519.Signing.PrivateKey(pkcs8Key: pkcs8))
         default:
             throw CertificateError.unsupportedPrivateKey(reason: "unknown algorithm \(pkcs8.algorithm)")
+        }
+    }
+}
+
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension Certificate.PrivateKey {
+    /// Return a list of all supported signature types for this private key. The ordering is not a comment on the
+    /// preference or security of the contained algorithms.
+    @inlinable
+    public var supportedSignatureAlgorithms: [Certificate.SignatureAlgorithm] {
+        switch backing {
+        case .p256, .p384, .p521:
+            return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        case .rsa:
+            return [
+                .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption,
+            ]
+        #if canImport(Darwin)
+        case .secureEnclaveP256:
+            return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+        case .secKey(let key):
+            switch key.type {
+            case .RSA:
+                return [
+                    .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption,
+                    .sha1WithRSAEncryption,
+                ]
+            case .ECDSA:
+                return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
+            }
+        #endif
+        case .ed25519:
+            return [.ed25519]
+        case .custom(let customKey):
+            return customKey.supportedSignatureAlgorithms
         }
     }
 }

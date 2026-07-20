@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 import SwiftASN1
 
-/// A ``VerifierPolicy`` implements a series of checks on an ``UnverifiedCertificateChain`` in order to determine
+/// A ``VerifierPolicy`` implements a series of checks on an ``UnverifiedCertificateChain`` to determine
 /// whether that chain should be trusted.
 ///
 /// Certificate verification is split into two parts: chain building and policy enforcement. Chain building is general:
@@ -21,15 +21,16 @@ import SwiftASN1
 /// the form of ``UnverifiedCertificateChain``.
 ///
 /// Each of these candidate chains is then handed to a ``VerifierPolicy`` to be checked against the certificate policy.
-/// The reason for this is to allow different use-cases to share the same chain building code, but to enforce
+/// The reason for this is to allow different use cases to share the same chain building code, but to enforce
 /// different requirements on the chain.
 ///
 /// Some ``VerifierPolicy`` objects are used frequently and are very common, such as ``RFC5280Policy`` which implements
 /// the basic checks from that RFC. Other objects are less common, such as ``OCSPVerifierPolicy``, which performs live
 /// revocation checking. Users can also implement their own policies to enable swift-certificates to support other
-/// use-cases.
+/// use cases.
+@preconcurrency
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public protocol VerifierPolicy {
+public protocol VerifierPolicy: _X509SendableMetatype {
     /// The X.509 extension types that this policy understands and enforces.
     ///
     /// X.509 certificates can have extensions marked as `critical`. These extensions _must_ be understood and enforced by the
@@ -54,8 +55,11 @@ public protocol VerifierPolicy {
     mutating func chainMeetsPolicyRequirements(chain: UnverifiedCertificateChain) async -> PolicyEvaluationResult
 }
 
+/// The result of evaluating a ``VerifierPolicy`` against a candidate certificate chain.
 public enum PolicyEvaluationResult: Sendable {
+    /// The chain meets the policy requirements.
     case meetsPolicy
+    /// The chain fails to meet the policy requirements, with the associated reason.
     case failsToMeetPolicy(PolicyFailureReason)
 
     public static func failsToMeetPolicy(reason makeReason: @autoclosure @Sendable @escaping () -> String) -> Self {
@@ -67,6 +71,7 @@ public enum PolicyEvaluationResult: Sendable {
     }
 }
 
+/// A description of why a certificate chain failed to meet a verification policy.
 public struct PolicyFailureReason: Sendable {
     var storage: @Sendable () -> String
 

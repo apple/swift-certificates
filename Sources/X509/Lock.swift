@@ -44,7 +44,7 @@ typealias LockPrimitive = pthread_mutex_t
 #endif
 
 @usableFromInline
-enum LockOperations {}
+enum LockOperations: Sendable {}
 
 extension LockOperations {
     @inlinable

@@ -19,8 +19,9 @@ import Foundation
 import SwiftASN1
 import Crypto
 
+/// A namespace for Cryptographic Message Syntax (CMS) operations.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-public enum CMS {
+public enum CMS: Sendable {
     @_spi(CMS)
     @inlinable
     public static func sign<Bytes: DataProtocol>(
@@ -36,6 +37,7 @@ public enum CMS {
             return try self.signWithSigningTime(
                 bytes,
                 signatureAlgorithm: signatureAlgorithm,
+                additionalIntermediateCertificates: additionalIntermediateCertificates,
                 certificate: certificate,
                 privateKey: privateKey,
                 signingTime: signingTime,
@@ -425,7 +427,7 @@ public enum CMS {
 
         var verifier = try Verifier(rootCertificates: trustRoots, policy: policy)
         let result = await verifier.validate(
-            leafCertificate: signingCert,
+            leaf: signingCert,
             intermediates: untrustedIntermediates,
             diagnosticCallback: diagnosticCallback
         )
@@ -447,7 +449,7 @@ public enum CMS {
     @_spi(CMS)
     public typealias SignatureVerificationResult = Result<Valid, VerificationError>
 
-    public struct Valid: Hashable {
+    public struct Valid: Hashable, Sendable {
         public var signer: Certificate
 
         @inlinable
@@ -461,13 +463,26 @@ public enum CMS {
         case invalidCMSBlock(InvalidCMSBlock)
 
         public struct SignerValidationFailure: Hashable, Swift.Error {
-            public var validationFailures: [VerificationResult.PolicyFailure]
+            @available(*, deprecated, renamed: "policyFailures")
+            public var validationFailures: [VerificationResult.PolicyFailure] {
+                get { self.policyFailures.map { .init($0) } }
+                set { self.policyFailures = newValue.map { $0.upgrade() } }
+            }
+
+            public var policyFailures: [CertificateValidationResult.PolicyFailure]
 
             public var signer: Certificate
 
+            @available(*, deprecated, renamed: "init(failures:signer:)")
             @inlinable
             public init(validationFailures: [VerificationResult.PolicyFailure], signer: Certificate) {
-                self.validationFailures = validationFailures
+                self.policyFailures = validationFailures.map { $0.upgrade() }
+                self.signer = signer
+            }
+
+            @inlinable
+            public init(validationFailures: [CertificateValidationResult.PolicyFailure], signer: Certificate) {
+                self.policyFailures = validationFailures
                 self.signer = signer
             }
         }

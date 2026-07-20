@@ -14,7 +14,7 @@
 
 import SwiftASN1
 
-/// Constraints the namespace within which all subject names issued by a given CA must reside.
+/// Constrains the namespace within which all subject names issued by a given CA must reside.
 ///
 /// These constraints apply both to the ``Certificate/subject`` and also to any
 /// ``SubjectAlternativeNames`` that may be present. Restrictions are applied to
@@ -25,6 +25,7 @@ import SwiftASN1
 /// the same name is also matched in a permitted tree.
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 public struct NameConstraints {
+    /// A collection of DNS domain name constraints.
     public struct DNSNames: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         public typealias Element = String
 
@@ -61,7 +62,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -123,6 +124,7 @@ public struct NameConstraints {
         }
     }
 
+    /// A collection of IP address range constraints, encoded as ASN.1 octet strings.
     public struct IPRanges: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -157,7 +159,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -219,6 +221,7 @@ public struct NameConstraints {
         }
     }
 
+    /// A collection of email address constraints.
     public struct EmailAddresses: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -253,7 +256,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -315,6 +318,7 @@ public struct NameConstraints {
         }
     }
 
+    /// A collection of URI domain constraints.
     public struct URIDomains: Hashable, Sendable, Collection, ExpressibleByArrayLiteral, CustomStringConvertible {
         @inlinable
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -349,7 +353,7 @@ public struct NameConstraints {
             hasher.combine(contentsOf: self)
         }
 
-        public struct Index: Comparable {
+        public struct Index: Comparable, Sendable {
             @inlinable
             public static func < (lhs: Self, rhs: Self) -> Bool {
                 lhs.wrapped < rhs.wrapped
@@ -433,7 +437,7 @@ public struct NameConstraints {
     /// The DNS name trees that are forbidden in certificates issued by this CA.
     ///
     /// These restrictions are expressed in forms like `host.example.com`. Any DNS name that can be
-    /// constructed by adding zero or more labels to the left-hand side of the name satifies the constraint.
+    /// constructed by adding zero or more labels to the left-hand side of the name satisfies the constraint.
     public internal(set) var excludedDNSDomains: DNSNames {
         get {
             DNSNames(subtrees: excludedSubtrees)
@@ -452,7 +456,7 @@ public struct NameConstraints {
     /// The IP ranges that are permitted in certificates issued by this CA.
     ///
     /// These restrictions are expressed as a subnet, represented in an ASN.1 octet string.
-    /// Due to the absence of a currency subnet and IP address type in Swift, these are preserved
+    /// Due to the absence of a standard subnet and IP address type in Swift, these are preserved
     /// as octet strings.
     ///
     /// As an example, the subnet 192.0.2.0/24 is encoded as the bytes `0xC0, 0x00, 0x02, 0x00, 0xFF, 0xFF, 0xFF, 0x00`.
@@ -477,7 +481,7 @@ public struct NameConstraints {
     /// The IP ranges that are forbidden in certificates issued by this CA.
     ///
     /// These restrictions are expressed as a subnet, represented in an ASN.1 octet string.
-    /// Due to the absence of a currency subnet and IP address type in Swift, these are preserved
+    /// Due to the absence of a standard subnet and IP address type in Swift, these are preserved
     /// as octet strings.
     ///
     /// As an example, the subnet 192.0.2.0/24 is encoded as the bytes `0xC0, 0x00, 0x02, 0x00, 0xFF, 0xFF, 0xFF, 0x00`.
@@ -519,7 +523,7 @@ public struct NameConstraints {
         }
     }
 
-    /// The email addresses that are permitted in certificates issued by this CA.
+    /// The email addresses that are excluded in certificates issued by this CA.
     ///
     /// This form may contain a specific mailbox (e.g. `user@example.com`), all
     /// addresses on a given host (e.g. `example.com`), or all mailboxes within a
@@ -749,7 +753,7 @@ extension NameConstraints: CertificateExtensionConvertible {
 // MARK: ASN1 Helpers
 @usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-struct NameConstraintsValue: DERImplicitlyTaggable {
+struct NameConstraintsValue: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -837,7 +841,7 @@ struct NameConstraintsValue: DERImplicitlyTaggable {
 // [GeneralSubtree] will force a heap allocation. Instead, we inline the definition of GeneralSubtree into
 // GeneralSubtrees, to avoid the extra allocation.
 @usableFromInline
-struct GeneralSubtrees: DERImplicitlyTaggable {
+struct GeneralSubtrees: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence

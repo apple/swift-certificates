@@ -69,7 +69,7 @@ public struct VerificationDiagnostic: Sendable {
     }
 
     /// - Note: all ``LoadingTrustRootsFailed`` are considered equal,
-    /// best we can because the underlying storage type ``Error`` doesn't conform to Eqautable
+    /// best we can because the underlying storage type ``Error`` doesn't conform to Equatable
     struct LoadingTrustRootsFailed: Hashable, Sendable {
         var error: any Error
 

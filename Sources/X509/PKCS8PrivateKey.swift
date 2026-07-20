@@ -47,7 +47,7 @@ import SwiftASN1
 // We disregard the attributes because we don't support them anyway.
 //
 @usableFromInline
-struct PKCS8PrivateKey: DERImplicitlyTaggable {
+struct PKCS8PrivateKey: DERImplicitlyTaggable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         return .sequence
