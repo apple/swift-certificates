@@ -1039,6 +1039,26 @@ final class CMSTests: XCTestCase {
         XCTAssertValidSignature(isValidSignature)
     }
 
+    func testCanProvideIntermediatesDuringAttachedVerification() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        let signature = try CMS.sign(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf2Cert,
+            privateKey: Self.leaf2Key,
+            detached: false
+        )
+        let isValidSignature = await CMS.isValidAttachedSignature(
+            signatureBytes: signature,
+            additionalIntermediateCertificates: [Self.intermediateCert],
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {
+            Self.defaultPolicies
+        }
+        XCTAssertValidSignature(isValidSignature)
+    }
+
     func testCanProvideIntermediatesInSigningProcess() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
