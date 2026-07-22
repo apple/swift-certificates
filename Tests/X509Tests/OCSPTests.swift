@@ -123,6 +123,35 @@ final class OCSPTests: XCTestCase {
         try self.assertRoundTrips(certID)
     }
 
+    func testCertIDNormalizesHashAlgorithmParameters() throws {
+        // Parsing must normalize the absent-parameters spelling of each supported hash
+        // algorithm to the explicit-NULL-parameters spelling, and leave the latter unchanged.
+        let normalizations: [(AlgorithmIdentifier, AlgorithmIdentifier)] = [
+            (.sha1, .sha1UsingNil),
+            (.sha1UsingNil, .sha1UsingNil),
+            (.sha256, .sha256UsingNil),
+            (.sha256UsingNil, .sha256UsingNil),
+            (.sha384, .sha384UsingNil),
+            (.sha384UsingNil, .sha384UsingNil),
+            (.sha512, .sha512UsingNil),
+            (.sha512UsingNil, .sha512UsingNil),
+        ]
+
+        for (spelling, normalized) in normalizations {
+            let certID = OCSPCertID(
+                hashAlgorithm: spelling,
+                issuerNameHash: ASN1OctetString(contentBytes: [1, 2, 3, 4]),
+                issuerKeyHash: ASN1OctetString(contentBytes: [5, 6, 7, 8]),
+                serialNumber: .init(bytes: [9, 10, 11, 12])
+            )
+
+            var serializer = DER.Serializer()
+            try serializer.serialize(certID)
+            let parsed = try OCSPCertID(derEncoded: serializer.serializedBytes)
+            XCTAssertEqual(parsed.hashAlgorithm, normalized, "\(spelling) should normalize to \(normalized)")
+        }
+    }
+
     func testOCSPCertIDSerialization() throws {
         let certID = OCSPCertID(
             hashAlgorithm: .p256PublicKey,
