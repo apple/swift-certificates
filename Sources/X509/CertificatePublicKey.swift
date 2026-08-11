@@ -54,6 +54,10 @@ extension Certificate {
             case .ed25519:
                 let key = try Curve25519.Signing.PublicKey(rawRepresentation: spki.key.bytes)
                 self.backing = .ed25519(key)
+            case .mldsa65:
+                self.backing = .mldsa(try MLDSAPublicKeyBytes(spkiBytes: spki.key.bytes, variant: .mldsa65))
+            case .mldsa87:
+                self.backing = .mldsa(try MLDSAPublicKeyBytes(spkiBytes: spki.key.bytes, variant: .mldsa87))
             default:
                 throw CertificateError.unsupportedPublicKeyAlgorithm(reason: "\(spki.algorithmIdentifier)")
             }
@@ -154,6 +158,8 @@ extension Certificate.PublicKey {
             return rsa.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
         case .ed25519(let ed25519):
             return ed25519.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .mldsa(let mldsa):
+            return mldsa.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
         }
     }
 
@@ -185,6 +191,8 @@ extension Certificate.PublicKey {
             return rsa.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
         case .ed25519(let ed25519):
             return ed25519.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
+        case .mldsa(let mldsa):
+            return mldsa.isValidSignature(signature, for: bytes, signatureAlgorithm: signatureAlgorithm)
         }
     }
 }
@@ -209,6 +217,13 @@ extension Certificate.PublicKey: CustomStringConvertible {
             return "RSA\(publicKey.keySizeInBits).PublicKey"
         case .ed25519:
             return "Ed25519.PublicKey"
+        case .mldsa(let backing):
+            switch backing.variant {
+            case .mldsa65:
+                return "MLDSA65.PublicKey"
+            case .mldsa87:
+                return "MLDSA87.PublicKey"
+            }
         }
     }
 }
@@ -222,6 +237,7 @@ extension Certificate.PublicKey {
         case p521(Crypto.P521.Signing.PublicKey)
         case rsa(_CryptoExtras._RSA.Signing.PublicKey)
         case ed25519(Curve25519.Signing.PublicKey)
+        case mldsa(MLDSAPublicKeyBytes)
 
         @inlinable
         static func == (lhs: BackingPublicKey, rhs: BackingPublicKey) -> Bool {
@@ -236,6 +252,8 @@ extension Certificate.PublicKey {
                 return l.derRepresentation == r.derRepresentation
             case (.ed25519(let l), .ed25519(let r)):
                 return l.rawRepresentation == r.rawRepresentation
+            case (.mldsa(let l), .mldsa(let r)):
+                return l == r
             default:
                 return false
             }
@@ -259,6 +277,9 @@ extension Certificate.PublicKey {
             case .ed25519(let digest):
                 hasher.combine(4)
                 hasher.combine(digest.rawRepresentation)
+            case .mldsa(let backing):
+                hasher.combine(5)
+                hasher.combine(backing)
             }
         }
     }
@@ -287,6 +308,9 @@ extension SubjectPublicKeyInfo {
         case .ed25519(let ed25519):
             algorithmIdentifier = .ed25519
             key = .init(bytes: ArraySlice(ed25519.rawRepresentation))
+        case .mldsa(let mldsa):
+            algorithmIdentifier = (mldsa.variant == .mldsa65) ? .mldsa65 : .mldsa87
+            key = .init(bytes: ArraySlice(mldsa.bytes))
         }
 
         self.algorithmIdentifier = algorithmIdentifier
