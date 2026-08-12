@@ -101,7 +101,11 @@ extension MLDSAPublicKeyBytes {
         }
         guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
         else {
-            return false
+            // Every initializer of MLDSAPublicKeyBytes requires ML-DSA availability, so no
+            // value of this type can exist on a platform that fails this check. The guard is
+            // only here because this function must be callable from baseline-availability
+            // dispatch code while the swift-crypto calls below are macOS 26+ on Darwin.
+            fatalError("Unreachable: MLDSAPublicKeyBytes cannot be constructed without ML-DSA availability")
         }
         switch self.variant {
         case .mldsa65:
