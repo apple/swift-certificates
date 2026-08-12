@@ -20,9 +20,6 @@ import SwiftASN1
 final class MLDSATests: XCTestCase {
     // MARK: - No ML-DSA key material involved: parsing and re-serializing the ASN.1 identity layer
 
-    // A P-256 leaf signed by an ML-DSA-65 CA. Committed in wendylabs cloud-ws-c as a canary
-    // asserting swift-certificates could NOT parse it; generated with OpenSSL 3.6.3
-    // (`openssl genpkey -algorithm ML-DSA-65`). Interop evidence from a second implementation.
     func testParsesCertificateSignedByMLDSA65CA() throws {
         let cert = try fixtureCertificate(mldsaIssuedLeafDERBase64)
         XCTAssertEqual(cert.signatureAlgorithm, .mldsa65)
@@ -41,12 +38,7 @@ final class MLDSATests: XCTestCase {
     }
 
     // ML-DSA-44 exists in RFC 9881 (2.16.840.1.101.3.4.3.17) but not in swift-crypto,
-    // so we deliberately do not support it. The fixture is a self-signed ML-DSA-44 root, so
-    // its OWN subjectPublicKeyInfo (also id-ml-dsa-44) is decoded first, while parsing the
-    // TBSCertificate — before the outer signatureAlgorithm/signatureValue are ever reached.
-    // That decode order means this always surfaces as unsupportedPublicKeyAlgorithm, not
-    // unsupportedSignatureAlgorithm; verified empirically against Sources/X509/Certificate.swift
-    // and CertificatePublicKey.swift's `init(spki:)`.
+    // so we deliberately do not support it.
     func testMLDSA44IsRejected() throws {
         XCTAssertThrowsError(try fixtureCertificate(mldsa44RootDERBase64)) { error in
             XCTAssertEqual((error as? CertificateError)?.code, .unsupportedPublicKeyAlgorithm)
@@ -55,10 +47,8 @@ final class MLDSATests: XCTestCase {
 
     // MARK: - Requires macOS 26+ on Darwin: names MLDSA65/MLDSA87 and touches key material
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testParsesSelfSignedMLDSA65Root() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let cert = try fixtureCertificate(mldsa65RootDERBase64)
         XCTAssertEqual(cert.signatureAlgorithm, .mldsa65)
         // RFC 9881: raw FIPS 204 bytes in the BIT STRING — 1952 octets for ML-DSA-65.
@@ -68,20 +58,16 @@ final class MLDSATests: XCTestCase {
         XCTAssertNil(MLDSA87.PublicKey(cert.publicKey))
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testParsesSelfSignedMLDSA87Root() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let cert = try fixtureCertificate(mldsa87RootDERBase64)
         XCTAssertEqual(cert.signatureAlgorithm, .mldsa87)
         XCTAssertEqual(cert.publicKey.subjectPublicKeyInfoBytes.count, 2592)
         XCTAssertNotNil(MLDSA87.PublicKey(cert.publicKey))
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testMLDSARootRoundTripsToIdenticalDER() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         for fixture in [mldsa65RootDERBase64, mldsa87RootDERBase64] {
             let der = try XCTUnwrap(Data(base64Encoded: fixture))
             let cert = try Certificate(derEncoded: Array(der))
@@ -91,10 +77,8 @@ final class MLDSATests: XCTestCase {
         }
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testPublicKeyWrapUnwrapRoundTrip() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let cert = try fixtureCertificate(mldsa65RootDERBase64)
         let unwrapped = try XCTUnwrap(MLDSA65.PublicKey(cert.publicKey))
         XCTAssertEqual(Certificate.PublicKey(unwrapped), cert.publicKey)
@@ -102,10 +86,8 @@ final class MLDSATests: XCTestCase {
         XCTAssertEqual(pemRoundTripped, cert.publicKey)
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testVerifiesOpenSSLSelfSignature() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         // Known-answer interop test: signatures produced by OpenSSL 3.6.3, not by this library.
         for fixture in [mldsa65RootDERBase64, mldsa87RootDERBase64] {
             let root = try fixtureCertificate(fixture)
@@ -113,10 +95,8 @@ final class MLDSATests: XCTestCase {
         }
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testRejectsTamperedSignature() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let root = try fixtureCertificate(mldsa65RootDERBase64)
         var tamperedBytes = root.signature.rawRepresentation
         tamperedBytes[0] ^= 0x01
@@ -127,10 +107,8 @@ final class MLDSATests: XCTestCase {
         XCTAssertFalse(root.publicKey.isValidSignature(tampered, for: root))
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testRejectsMLDSASignatureWithPaddingBits() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         // RFC 9881 / FIPS 204 signatures are octet-aligned: a BIT STRING wrapping an
         // ML-DSA signature must never carry padding bits. Certificate.Signature's
         // initializer must reject one that does, rather than silently truncating it.
@@ -152,20 +130,16 @@ final class MLDSATests: XCTestCase {
         }
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testRejectsSignatureOverDifferentTBS() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let root = try fixtureCertificate(mldsa65RootDERBase64)
         let other = try fixtureCertificate(mldsa65LeafSignedByMLDSA65RootDERBase64)
         // The root's signature is not a signature over the leaf's TBSCertificate.
         XCTAssertFalse(root.publicKey.isValidSignature(root.signature, for: other))
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testRejectsWrongParameterSet() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let root65 = try fixtureCertificate(mldsa65RootDERBase64)
         let root87 = try fixtureCertificate(mldsa87RootDERBase64)
         // An ML-DSA-87 signature must not verify under an ML-DSA-65 key, and vice versa.
@@ -181,10 +155,8 @@ final class MLDSATests: XCTestCase {
         )
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testRejectsNonMLDSASignatureAgainstMLDSAKey() throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let root = try fixtureCertificate(mldsa65RootDERBase64)
         let ed25519Key = Curve25519.Signing.PrivateKey()
         let ed25519Signature = try Certificate.Signature(
@@ -196,10 +168,8 @@ final class MLDSATests: XCTestCase {
         XCTAssertFalse(root.publicKey.isValidSignature(ed25519Signature, for: root))
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testVerifiesP256LeafChainedToMLDSA65Root() async throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let root = try fixtureCertificate(mldsa65RootDERBase64)
         let leaf = try fixtureCertificate(p256LeafSignedByMLDSA65RootDERBase64)
         var verifier = Verifier(rootCertificates: CertificateStore([root])) { RFC5280Policy() }
@@ -211,10 +181,8 @@ final class MLDSATests: XCTestCase {
         XCTAssertEqual(Array(chain), [leaf, root])
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testVerifiesMLDSA65LeafChainedToMLDSA65Root() async throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         let root = try fixtureCertificate(mldsa65RootDERBase64)
         let leaf = try fixtureCertificate(mldsa65LeafSignedByMLDSA65RootDERBase64)
         var verifier = Verifier(rootCertificates: CertificateStore([root])) { RFC5280Policy() }
@@ -226,16 +194,10 @@ final class MLDSATests: XCTestCase {
         XCTAssertEqual(Array(chain), [leaf, root])
     }
 
+    @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testRejectsChainToWrongRoot() async throws {
-        guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *) else {
-            throw XCTSkip("ML-DSA requires macOS 26 / iOS 26 on Darwin")
-        }
         // An "evil twin" root: same subject DN as the real ML-DSA-65 root, but a different
-        // key. swift-certificates looks up candidate issuers by subject DN alone (AKI/SKI
-        // only affects sort *preference* among several candidates, not eligibility -- see
-        // Verifier.issuerPreference), so this twin is genuinely considered as an issuer for
-        // the leaf below, and is rejected only because the leaf's SIGNATURE does not verify
-        // under its key -- not because of a name/DN mismatch.
+        // key.
         let evilRoot = try fixtureCertificate(mldsa65EvilTwinRootDERBase64)
         let leaf = try fixtureCertificate(mldsa65LeafSignedByMLDSA65RootDERBase64)
         var verifier = Verifier(rootCertificates: CertificateStore([evilRoot])) { RFC5280Policy() }
@@ -256,11 +218,9 @@ private func fixtureCertificate(_ base64: String) throws -> Certificate {
     return try Certificate(derEncoded: Array(der))
 }
 
-// A P-256 leaf signed by an ML-DSA-65 CA. Reused verbatim (base64 content only) from
-// wendylabs cloud-ws-c's `RequestSignatureVerifierTests.swift`, where it is committed as an
-// interop canary asserting swift-certificates could NOT parse it. Generated there with
-// OpenSSL 3.6.3 (`openssl genpkey -algorithm ML-DSA-65` for the CA, then a P-256 CSR signed
-// by that CA). Interop evidence from a second implementation.
+// A P-256 leaf signed by an ML-DSA-65 CA. Generated with OpenSSL 3.6.3
+// (`openssl genpkey -algorithm ML-DSA-65` for the CA, then a P-256 CSR signed
+// by that CA).
 private let mldsaIssuedLeafDERBase64 = """
     MIIOLTCCASqgAwIBAgIUWmjsseMhy/elh8ZClHRbOMMmy6wwCwYJYIZIAWUDBAMSMCAxHjAcBgNVBAMMFVRl\
     c3QgTUwtRFNBIFRlbmFudCBDQTAeFw0yNjA4MTEwMDMyMDhaFw0yNzA4MTEwMDMyMDhaMB8xHTAbBgNVBAMM\
@@ -789,14 +749,7 @@ private let mldsa65LeafSignedByMLDSA65RootDERBase64 = """
     """
 
 // An "evil twin" of the ML-DSA-65 root above: same subject DN, a brand-new ML-DSA-65 key,
-// self-signed. swift-certificates indexes trust roots by subject DN only (see
-// CertificateStore.ConcreteBacking.additionalTrustRoots, keyed by Certificate.subject), so
-// this twin IS selected as a candidate issuer when chain-building looks for an issuer of
-// the real root's leaf -- it is rejected only because the leaf's SIGNATURE does not verify
-// under its (different) key, not because of a name/DN mismatch. Its SKI necessarily differs
-// from the real root's too (SKI is `hash` of its own public key), which only affects
-// Verifier.issuerPreference's *sort order* among candidates, not eligibility, so the
-// signature-verification path is still exercised. Generated with OpenSSL 3.6.3:
+// self-signed. Generated with OpenSSL 3.6.3:
 //   openssl req -x509 -new -newkey ML-DSA-65 -nodes -keyout evil-twin.key \
 //     -out evil-twin.pem -days 3650 -subj "/CN=swift-certificates ML-DSA-65 Test Root"
 //   openssl x509 -in evil-twin.pem -outform DER -out evil-twin.der

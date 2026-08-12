@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SwiftASN1
 @preconcurrency import Crypto
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -21,31 +20,37 @@ import Foundation
 #endif
 
 /// The ML-DSA parameter sets this library can name.
-///
-/// This type deliberately stores no key material and names no swift-crypto ML-DSA type,
-/// so it can be declared without an availability annotation: enum cases can't carry
-/// `@available`, so keeping this payload free of macOS-26-only types is what lets
-/// certificates *signed* with ML-DSA be parsed and re-serialized unconditionally.
 @usableFromInline
 enum MLDSAVariant: Hashable, Sendable {
     case mldsa65
     case mldsa87
 }
 
+extension AlgorithmIdentifier {
+    @usableFromInline
+    init(mldsaVariant: MLDSAVariant) {
+        switch mldsaVariant {
+        case .mldsa65:
+            self = .mldsa65
+        case .mldsa87:
+            self = .mldsa87
+        }
+    }
+}
+
 /// The raw bytes of an ML-DSA public key, plus its parameter set.
 ///
-/// Reconstructing a swift-crypto ML-DSA public key from its raw representation costs ~0.4%
-/// of a verification (measured in the design doc), so the key is stored as validated bytes
-/// and rebuilt on each use. The payload is plain data so the enum case that carries it can
-/// be declared without an availability annotation (macOS-26-only types can't appear in an
-/// unannotated enum payload); only the *initializers* need swift-crypto's ML-DSA API.
+/// This type cannot store swift-crypto's `MLDSA65.PublicKey` / `MLDSA87.PublicKey` while
+/// remaining available on all platforms, because swift-crypto's ML-DSA APIs have 26.0
+/// platform requirements. Only the key's bytes are stored; methods that need swift-crypto's
+/// ML-DSA APIs create an `MLDSA65.PublicKey` / `MLDSA87.PublicKey` from the raw bytes.
 @usableFromInline
 struct MLDSAPublicKeyBytes: Hashable, Sendable {
     @usableFromInline
     var variant: MLDSAVariant
 
     @usableFromInline
-    var bytes: Data
+    var rawRepresentation: Data
 
     /// Validates and stores SPKI subjectPublicKey bytes for the given parameter set.
     ///
@@ -62,9 +67,9 @@ struct MLDSAPublicKeyBytes: Hashable, Sendable {
         // Let swift-crypto validate the encoding; we store the validated raw bytes.
         switch variant {
         case .mldsa65:
-            self.bytes = try MLDSA65.PublicKey(rawRepresentation: spkiBytes).rawRepresentation
+            self.rawRepresentation = try MLDSA65.PublicKey(rawRepresentation: spkiBytes).rawRepresentation
         case .mldsa87:
-            self.bytes = try MLDSA87.PublicKey(rawRepresentation: spkiBytes).rawRepresentation
+            self.rawRepresentation = try MLDSA87.PublicKey(rawRepresentation: spkiBytes).rawRepresentation
         }
         self.variant = variant
     }
@@ -101,20 +106,17 @@ extension MLDSAPublicKeyBytes {
         }
         guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
         else {
-            // Every initializer of MLDSAPublicKeyBytes requires ML-DSA availability, so no
-            // value of this type can exist on a platform that fails this check. The guard is
-            // only here because this function must be callable from baseline-availability
-            // dispatch code while the swift-crypto calls below are macOS 26+ on Darwin.
+            // The initializer validates the platform requirement, so this `fatalError` is unreachable.
             fatalError("Unreachable: MLDSAPublicKeyBytes cannot be constructed without ML-DSA availability")
         }
         switch self.variant {
         case .mldsa65:
-            guard let key = try? MLDSA65.PublicKey(rawRepresentation: self.bytes) else {
+            guard let key = try? MLDSA65.PublicKey(rawRepresentation: self.rawRepresentation) else {
                 return false
             }
             return key.isValidSignature(signature, for: bytes)
         case .mldsa87:
-            guard let key = try? MLDSA87.PublicKey(rawRepresentation: self.bytes) else {
+            guard let key = try? MLDSA87.PublicKey(rawRepresentation: self.rawRepresentation) else {
                 return false
             }
             return key.isValidSignature(signature, for: bytes)
@@ -127,13 +129,13 @@ extension MLDSAPublicKeyBytes {
     @usableFromInline
     init(_ mldsa65: MLDSA65.PublicKey) {
         self.variant = .mldsa65
-        self.bytes = mldsa65.rawRepresentation
+        self.rawRepresentation = mldsa65.rawRepresentation
     }
 
     @usableFromInline
     init(_ mldsa87: MLDSA87.PublicKey) {
         self.variant = .mldsa87
-        self.bytes = mldsa87.rawRepresentation
+        self.rawRepresentation = mldsa87.rawRepresentation
     }
 }
 
@@ -164,7 +166,7 @@ extension MLDSA65.PublicKey {
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .mldsa(let backing) = key.backing, backing.variant == .mldsa65,
-            let key = try? MLDSA65.PublicKey(rawRepresentation: backing.bytes)
+            let key = try? MLDSA65.PublicKey(rawRepresentation: backing.rawRepresentation)
         else {
             return nil
         }
@@ -182,7 +184,7 @@ extension MLDSA87.PublicKey {
     ///     - key: The key to unwrap.
     public init?(_ key: Certificate.PublicKey) {
         guard case .mldsa(let backing) = key.backing, backing.variant == .mldsa87,
-            let key = try? MLDSA87.PublicKey(rawRepresentation: backing.bytes)
+            let key = try? MLDSA87.PublicKey(rawRepresentation: backing.rawRepresentation)
         else {
             return nil
         }

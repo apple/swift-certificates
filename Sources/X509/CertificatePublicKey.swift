@@ -309,8 +309,8 @@ extension SubjectPublicKeyInfo {
             algorithmIdentifier = .ed25519
             key = .init(bytes: ArraySlice(ed25519.rawRepresentation))
         case .mldsa(let mldsa):
-            algorithmIdentifier = (mldsa.variant == .mldsa65) ? .mldsa65 : .mldsa87
-            key = .init(bytes: ArraySlice(mldsa.bytes))
+            algorithmIdentifier = AlgorithmIdentifier(mldsaVariant: mldsa.variant)
+            key = .init(bytes: ArraySlice(mldsa.rawRepresentation))
         }
 
         self.algorithmIdentifier = algorithmIdentifier
