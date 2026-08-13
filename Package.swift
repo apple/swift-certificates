@@ -24,6 +24,12 @@ let package = Package(
             targets: ["X509"]
         )
     ],
+    traits: [
+        .trait(
+            name: "MLDSA",
+            description: "Enable ML-DSA (FIPS 204) certificate support. Requires swift-crypto 4.0.0 or later."
+        )
+    ],
     targets: [
         .target(
             name: "X509",
@@ -35,6 +41,9 @@ let package = Package(
             ],
             exclude: [
                 "CMakeLists.txt"
+            ],
+            swiftSettings: [
+                .define("SWIFT_CERTIFICATES_MLDSA", .when(traits: ["MLDSA"]))
             ]
         ),
         .testTarget(
@@ -53,6 +62,9 @@ let package = Package(
                 .copy("PEMTestRSACertificate.pem"),
                 .copy("CSR Vectors/"),
                 .copy("ca-certificates.crt"),
+            ],
+            swiftSettings: [
+                .define("SWIFT_CERTIFICATES_MLDSA", .when(traits: ["MLDSA"]))
             ]
         ),
         .target(
@@ -75,7 +87,7 @@ let package = Package(
 // we can depend on local versions of our dependencies instead of fetching them remotely.
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
     package.dependencies += [
-        .package(url: "https://github.com/apple/swift-crypto.git", "4.0.0"..<"6.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", "3.12.3"..<"6.0.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", from: "1.1.0"),
     ]
 } else {

@@ -54,10 +54,12 @@ struct MLDSAPublicKeyBytes: Hashable, Sendable {
 
     /// Validates and stores SPKI subjectPublicKey bytes for the given parameter set.
     ///
-    /// Throws ``CertificateError/unsupportedPublicKeyAlgorithm(reason:)`` at runtime on
-    /// Darwin platforms older than macOS 26 (where CryptoKit has no ML-DSA).
+    /// Throws ``CertificateError/unsupportedPublicKeyAlgorithm(reason:file:line:)`` when the
+    /// library was built without the `MLDSA` package trait, or at runtime on Darwin platforms
+    /// older than macOS 26 (where CryptoKit has no ML-DSA).
     @usableFromInline
     init(spkiBytes: ArraySlice<UInt8>, variant: MLDSAVariant) throws {
+        #if SWIFT_CERTIFICATES_MLDSA
         guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
         else {
             throw CertificateError.unsupportedPublicKeyAlgorithm(
@@ -72,6 +74,12 @@ struct MLDSAPublicKeyBytes: Hashable, Sendable {
             self.rawRepresentation = try MLDSA87.PublicKey(rawRepresentation: spkiBytes).rawRepresentation
         }
         self.variant = variant
+        #else
+        throw CertificateError.unsupportedPublicKeyAlgorithm(
+            reason:
+                "ML-DSA support requires the 'MLDSA' package trait on swift-certificates and swift-crypto 4.0.0 or later"
+        )
+        #endif
     }
 }
 
@@ -104,6 +112,7 @@ extension MLDSAPublicKeyBytes {
         default:
             return false
         }
+        #if SWIFT_CERTIFICATES_MLDSA
         guard #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
         else {
             // The initializer validates the platform requirement, so this `fatalError` is unreachable.
@@ -121,9 +130,14 @@ extension MLDSAPublicKeyBytes {
             }
             return key.isValidSignature(signature, for: bytes)
         }
+        #else
+        // The initializer requires the MLDSA package trait, so this `fatalError` is unreachable.
+        fatalError("Unreachable: MLDSAPublicKeyBytes cannot be constructed without the MLDSA package trait")
+        #endif
     }
 }
 
+#if SWIFT_CERTIFICATES_MLDSA
 @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
 extension MLDSAPublicKeyBytes {
     @usableFromInline
@@ -191,3 +205,4 @@ extension MLDSA87.PublicKey {
         self = key
     }
 }
+#endif

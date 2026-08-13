@@ -45,7 +45,18 @@ final class MLDSATests: XCTestCase {
         }
     }
 
-    // MARK: - Requires macOS 26+ on Darwin: names MLDSA65/MLDSA87 and touches key material
+    #if !SWIFT_CERTIFICATES_MLDSA
+    // Without the MLDSA trait, a certificate whose OWN key is ML-DSA must fail loudly at
+    // decode time (unsupportedPublicKeyAlgorithm), not decode and then quietly fail to verify.
+    func testMLDSAPublicKeyFailsLoudlyWithoutTrait() throws {
+        XCTAssertThrowsError(try fixtureCertificate(mldsa65RootDERBase64)) { error in
+            XCTAssertEqual((error as? CertificateError)?.code, .unsupportedPublicKeyAlgorithm)
+        }
+    }
+    #endif
+
+    #if SWIFT_CERTIFICATES_MLDSA
+    // MARK: - Requires the MLDSA trait, and macOS 26+ on Darwin
 
     @available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, macCatalyst 26.0, visionOS 26.0, *)
     func testParsesSelfSignedMLDSA65Root() throws {
@@ -211,6 +222,7 @@ final class MLDSATests: XCTestCase {
         // the same algorithm and the same tbsCertificate bytes are checked.
         XCTAssertFalse(evilRoot.publicKey.isValidSignature(leaf.signature, for: leaf))
     }
+    #endif
 }
 
 private func fixtureCertificate(_ base64: String) throws -> Certificate {
