@@ -1389,6 +1389,27 @@ final class CMSTests: XCTestCase {
         XCTAssertEqual(usingNewConstructor.validationFailures, [policyFailureDeprecated2])
         XCTAssertNotEqual(usingNewConstructor.validationFailures, [policyFailureDeprecated1])
     }
+
+    func testCMSContentInfoHandlesBERWithConstructedData() throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateInvalidSignedTestDataWithSignedAttrs(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        // CMS.sign only generates an issuerAndSerialNumber signerIdentifier, so hack up the attributes with an SKI
+        // (only needed for parsing, this won't actually verify)
+        var signedData = try XCTUnwrap(cmsData.signedData)
+        let subjectKeyIdentifier = try XCTUnwrap(Self.leaf1Cert.extensions.subjectKeyIdentifier)
+        signedData.version = .v4
+        signedData.signerInfos[0].version = .v3
+        signedData.signerInfos[0].signerIdentifier = .subjectKeyIdentifier(subjectKeyIdentifier)
+        cmsData = try CMSContentInfo(signedData)
+
+        XCTAssertNoThrow(try CMSSignature(berEncoded: ArraySlice(cmsData.encodedBytes)))
+    }
 }
 
 extension DERSerializable {
