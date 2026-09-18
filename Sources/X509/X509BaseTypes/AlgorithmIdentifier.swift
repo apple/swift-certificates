@@ -294,4 +294,36 @@ extension AlgorithmIdentifier {
         algorithm: .AlgorithmIdentifier.idEcPublicKey,
         parameters: try! .init(erasing: ASN1ObjectIdentifier.NamedCurves.secp521r1)
     )
+
+    var hasNullOrAbsentParameters: Bool {
+        // Absent
+        guard let parameters = self.parameters else {
+            return true
+        }
+
+        // Maybe null
+        do {
+            let _ = try ASN1Null(asn1Any: parameters)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Checks if an algorithm identifier is equal to another with absent and null parameters being equivalent.
+    @usableFromInline
+    func isEqualWithNullAndAbsentParametersMatching(to: AlgorithmIdentifier) -> Bool {
+        // Algorithm must be identical.
+        guard self.algorithm == to.algorithm else {
+            return false
+        }
+
+        // If both have null or absent parameters, they match.
+        if self.hasNullOrAbsentParameters && to.hasNullOrAbsentParameters {
+            return true
+        }
+
+        // Otherwise, parameters need to be identical.
+        return self.parameters == to.parameters
+    }
 }
