@@ -67,6 +67,81 @@ extension Certificate {
                 throw CertificateError.unsupportedSignatureAlgorithm(reason: "\(signatureAlgorithm)")
             }
         }
+
+        /// Creates an ECDSA signature from the raw `r ‖ s` representation.
+        ///
+        /// Hardware and remote signers — TPMs, PKCS#11 tokens, KMS backends — usually return an
+        /// ECDSA signature as the concatenation of its two components, each padded to the byte
+        /// width of the curve order, rather than as the DER `SEQUENCE` that
+        /// ``init(signatureAlgorithm:signatureBytes:)`` expects. This initializer accepts that
+        /// representation directly.
+        ///
+        /// - Parameters:
+        ///   - signatureAlgorithm: The ECDSA signature algorithm that produced this signature.
+        ///   - rawECDSASignatureBytes: `r` and `s` concatenated, each padded to the byte width of
+        ///       the curve order: 64 bytes for P-256, 96 for P-384, 132 for P-521.
+        @inlinable
+        public init(
+            signatureAlgorithm: SignatureAlgorithm,
+            rawECDSASignatureBytes: some DataProtocol
+        ) throws {
+            guard signatureAlgorithm.isECDSA else {
+                throw CertificateError.unsupportedSignatureAlgorithm(
+                    reason: "\(signatureAlgorithm) is not an ECDSA signature algorithm"
+                )
+            }
+
+            // Only the widths of the supported curves are accepted. Beyond catching truncation,
+            // this rejects a DER-encoded signature passed here by mistake: those are usually 70 to 72
+            // bytes for P-256 and would otherwise be split in half into a meaningless r and s.
+            let count = rawECDSASignatureBytes.count
+            guard count == 64 || count == 96 || count == 132 else {
+                throw CertificateError.invalidSignatureForCertificate(
+                    reason: "raw ECDSA signatures must be 64, 96 or 132 bytes, got \(count)"
+                )
+            }
+
+            self.backing = .ecdsa(ECDSASignature(rawSignatureBytes: Data(rawECDSASignatureBytes)))
+        }
+
+        /// Creates an ECDSA signature from its `r` and `s` components.
+        ///
+        /// Some signers hand back the two components separately, each as a big-endian integer
+        /// that may be shorter than the curve order because leading zero bytes were dropped.
+        /// This initializer accepts that form directly, where
+        /// ``init(signatureAlgorithm:rawECDSASignatureBytes:)`` requires both components padded to
+        /// the full width of the curve.
+        ///
+        /// - Parameters:
+        ///   - signatureAlgorithm: The ECDSA signature algorithm that produced this signature.
+        ///   - r: The `r` component, as an unsigned big-endian integer of at most 66 bytes.
+        ///   - s: The `s` component, as an unsigned big-endian integer of at most 66 bytes.
+        @inlinable
+        public init(
+            signatureAlgorithm: SignatureAlgorithm,
+            r: some DataProtocol,
+            s: some DataProtocol
+        ) throws {
+            guard signatureAlgorithm.isECDSA else {
+                throw CertificateError.unsupportedSignatureAlgorithm(
+                    reason: "\(signatureAlgorithm) is not an ECDSA signature algorithm"
+                )
+            }
+
+            // Leading zeros carry no value, so drop them as DER would. What is left must be a
+            // non-zero integer that fits the largest supported curve, P-521.
+            let r = ArraySlice(normalisingToASN1IntegerForm: Array(r))
+            let s = ArraySlice(normalisingToASN1IntegerForm: Array(s))
+            for (name, component) in [("r", r), ("s", s)] {
+                guard !component.isEmpty, component.count <= 66 else {
+                    throw CertificateError.invalidSignatureForCertificate(
+                        reason: "ECDSA \(name) must be a non-zero integer of at most 66 bytes"
+                    )
+                }
+            }
+
+            self.backing = .ecdsa(ECDSASignature(r: r, s: s))
+        }
     }
 }
 
