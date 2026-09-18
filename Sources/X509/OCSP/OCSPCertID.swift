@@ -65,7 +65,7 @@ struct OCSPCertID: DERImplicitlyTaggable, Hashable {
                     return .sha256UsingNil
                 case .sha384, .sha384UsingNil:
                     return .sha384UsingNil
-                case .sha512, .sha1UsingNil:
+                case .sha512, .sha512UsingNil:
                     return .sha512UsingNil
                 default:
                     return hashAlgorithm
