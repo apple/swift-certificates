@@ -100,6 +100,16 @@ final class IPAddressNameTests: XCTestCase {
         (.v6("fe80::8d:f7d:79c5:5719"), ASN1OctetString(contentBytes: .init(repeating: 0xff, count: 33)), false),
     ]
 
+    static let allZeroMaskFixtures: [(ASN1OctetString, ASN1OctetString)] = [
+        (.v4("17.250.78.1"), .v4(subnet: "0.0.0.0", mask: "0.0.0.0")),
+        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "::", mask: "::")),
+    ]
+
+    func testAllZeroMaskIsValidCIDRMask() {
+        XCTAssertTrue([UInt8](repeating: 0, count: 4)[...].isValidCIDRMask)
+        XCTAssertTrue([UInt8](repeating: 0, count: 16)[...].isValidCIDRMask)
+    }
+
     func testConstraints() throws {
         // (presented name, constraint, match)
         for (presentedName, constraint, match) in IPAddressNameTests.fixtures {
