@@ -45,8 +45,8 @@ final class IPAddressNameTests: XCTestCase {
         (.v4("17.250.78.1"), .v4(subnet: "17.250.78.1", mask: "255.255.62.0"), false),
         (.v4("17.250.78.1"), .v4(subnet: "17.250.78.1", mask: "255.239.255.255"), false),
 
-        // All zero mask matches nothing
-        (.v4("17.250.78.1"), .v4(subnet: "0.0.0.0", mask: "0.0.0.0"), false),
+        // The all-zero mask is the /0 prefix and covers the whole address space.
+        (.v4("17.250.78.1"), .v4(subnet: "0.0.0.0", mask: "0.0.0.0"), true),
 
         // v4 address with v6 mask and vice-versa
         (.v4("17.250.78.1"), .v6(subnet: "8000::", mask: "8000::"), false),
@@ -88,8 +88,8 @@ final class IPAddressNameTests: XCTestCase {
             .v6(subnet: "fe81::8d:f7d:79c5:5719", mask: "ffff:ffff:feff:ffff:ffff:ffff:ffff:ffff"), false
         ),
 
-        // All zero mask matches nothing
-        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "::", mask: "::"), false),
+        // The all-zero mask is the /0 prefix and covers the whole address space.
+        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "::", mask: "::"), true),
 
         // Require exactly double the bytes for the subnet.
         (.v4("17.250.78.1"), ASN1OctetString(contentBytes: .init(repeating: 0xff, count: 1)), false),
@@ -99,6 +99,16 @@ final class IPAddressNameTests: XCTestCase {
         (.v6("fe80::8d:f7d:79c5:5719"), ASN1OctetString(contentBytes: .init(repeating: 0xff, count: 31)), false),
         (.v6("fe80::8d:f7d:79c5:5719"), ASN1OctetString(contentBytes: .init(repeating: 0xff, count: 33)), false),
     ]
+
+    static let allZeroMaskFixtures: [(ASN1OctetString, ASN1OctetString)] = [
+        (.v4("17.250.78.1"), .v4(subnet: "0.0.0.0", mask: "0.0.0.0")),
+        (.v6("fe80::8d:f7d:79c5:5719"), .v6(subnet: "::", mask: "::")),
+    ]
+
+    func testAllZeroMaskIsValidCIDRMask() {
+        XCTAssertTrue([UInt8](repeating: 0, count: 4)[...].isValidCIDRMask)
+        XCTAssertTrue([UInt8](repeating: 0, count: 16)[...].isValidCIDRMask)
+    }
 
     func testConstraints() throws {
         // (presented name, constraint, match)
