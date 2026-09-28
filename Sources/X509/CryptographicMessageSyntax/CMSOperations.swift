@@ -359,7 +359,8 @@ public enum CMS: Sendable {
                 signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: sigAlgID)
             } else {
                 let expectedDigestAlgorithm = try AlgorithmIdentifier(digestAlgorithmFor: signatureAlgorithm)
-                guard expectedDigestAlgorithm == signer.digestAlgorithm else {
+                guard expectedDigestAlgorithm.isEqualWithNullAndAbsentParametersMatching(to: signer.digestAlgorithm)
+                else {
                     return .failure(.init(invalidCMSBlockReason: "Digest and signature algorithm mismatch"))
                 }
             }
