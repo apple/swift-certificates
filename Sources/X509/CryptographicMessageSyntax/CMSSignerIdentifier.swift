@@ -51,6 +51,27 @@ enum CMSSignerIdentifier: DERParseable, BERParseable, DERSerializable, BERSerial
     }
 
     @inlinable
+    init(berEncoded node: ASN1Node) throws {
+        switch node.identifier {
+        case CMSIssuerAndSerialNumber.defaultIdentifier:
+            self = try .issuerAndSerialNumber(.init(berEncoded: node))
+
+        case Self.skiIdentifier:
+            self = try .subjectKeyIdentifier(
+                .init(
+                    keyIdentifier: ASN1OctetString(
+                        berEncoded: node,
+                        withIdentifier: Self.skiIdentifier
+                    ).bytes
+                )
+            )
+
+        default:
+            throw ASN1Error.unexpectedFieldType(node.identifier)
+        }
+    }
+
+    @inlinable
     func serialize(into coder: inout DER.Serializer) throws {
         switch self {
         case .issuerAndSerialNumber(let issuerAndSerialNumber):

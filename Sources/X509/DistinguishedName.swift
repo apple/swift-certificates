@@ -203,6 +203,27 @@ extension DistinguishedName: DERParseable {
     }
 }
 
+extension DistinguishedName: BERParseable {
+    /// Creates a distinguished name from a BER-encoded ASN.1 `Name`.
+    ///
+    /// This initializer accepts BER so CMS structures emitted by implementations that
+    /// use BER inside issuer names can still be parsed.
+    @inlinable
+    public init(berEncoded rootNode: ASN1Node) throws {
+        self.rdns = try BER.sequence(of: RelativeDistinguishedName.self, identifier: .sequence, rootNode: rootNode)
+    }
+
+    @inlinable
+    static func berEncoded(_ sequenceNodeIterator: inout ASN1NodeCollection.Iterator) throws -> DistinguishedName {
+        // Keep BER sequence-iterator parsing explicit and untagged; DistinguishedName intentionally
+        // does not add BERImplicitlyTaggable conformance.
+        let dnFactory: (inout ASN1NodeCollection.Iterator) throws -> DistinguishedName =
+            DistinguishedName.init(berEncoded:)
+        return try dnFactory(&sequenceNodeIterator)
+    }
+}
+
+
 @available(*, deprecated, message: "Distinguished names may not be implicitly tagged")
 extension DistinguishedName: DERImplicitlyTaggable {
     @inlinable

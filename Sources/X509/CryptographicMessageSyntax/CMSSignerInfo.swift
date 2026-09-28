@@ -269,6 +269,19 @@ extension Array where Element == CMSAttribute {
     }
 
     @inlinable
+    var contentType: ASN1ObjectIdentifier? {
+        get throws {
+            if let attr = self[.contentType] {
+                guard attr.attrValues.count == 1 else {
+                    throw ASN1Error.invalidASN1Object(reason: "Content type attribute must have a single value")
+                }
+                return try ASN1ObjectIdentifier(asn1Any: attr.attrValues[0])
+            }
+            return nil
+        }
+    }
+
+    @inlinable
     var messageDigest: ArraySlice<UInt8>? {
         get throws {
             if let attr = self[.messageDigest] {
