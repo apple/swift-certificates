@@ -14,6 +14,8 @@
 
 import XCTest
 @_spi(Testing) @testable import X509
+import Crypto
+import _CryptoExtras
 #if canImport(Darwin)
 @preconcurrency import Security
 #endif
@@ -89,6 +91,46 @@ final class SecKeyWrapperTests: XCTestCase {
                     XCTAssertThrowsError(try secKeyWrapper.pemDocument())
                 }
             }
+        }
+    }
+
+    func testMakeWithPrivateKey() throws {
+        let keys: [(Certificate.PrivateKey, Certificate.SignatureAlgorithm)] = [
+            (Certificate.PrivateKey(P256.Signing.PrivateKey()), .ecdsaWithSHA256),
+            (Certificate.PrivateKey(P384.Signing.PrivateKey()), .ecdsaWithSHA384),
+            (Certificate.PrivateKey(P521.Signing.PrivateKey()), .ecdsaWithSHA512),
+            (Certificate.PrivateKey(try _RSA.Signing.PrivateKey(keySize: .bits2048)), .sha256WithRSAEncryption),
+        ]
+        let message = Array("hello, world".utf8)
+
+        for (privateKey, signatureAlgorithm) in keys {
+            let secKey = try SecKey.makeWithPrivateKey(privateKey)
+
+            // Wrapping the SecKey back up yields the same key, and signatures made through Security
+            // verify against the original public key.
+            let roundTripped = try Certificate.PrivateKey(secKey)
+            XCTAssertEqual(roundTripped.publicKey, privateKey.publicKey, "\(privateKey)")
+
+            let signature = try roundTripped.sign(bytes: message, signatureAlgorithm: signatureAlgorithm)
+            XCTAssertTrue(
+                privateKey.publicKey.isValidSignature(signature, for: message, signatureAlgorithm: signatureAlgorithm),
+                "\(privateKey)"
+            )
+        }
+    }
+
+    func testMakeWithPrivateKeyReturnsWrappedSecKey() throws {
+        for candidate in try generateCandidateKeys() {
+            let privateKey = try Certificate.PrivateKey(candidate.key)
+            XCTAssertTrue(try SecKey.makeWithPrivateKey(privateKey) === candidate.key)
+        }
+    }
+
+    func testMakeWithPrivateKeyRejectsUnrepresentableKeys() throws {
+        XCTAssertThrowsError(try SecKey.makeWithPrivateKey(Certificate.PrivateKey(Curve25519.Signing.PrivateKey())))
+        if SecureEnclave.isAvailable {
+            let secureEnclaveKey = try SecureEnclave.P256.Signing.PrivateKey()
+            XCTAssertThrowsError(try SecKey.makeWithPrivateKey(Certificate.PrivateKey(secureEnclaveKey)))
         }
     }
 }
