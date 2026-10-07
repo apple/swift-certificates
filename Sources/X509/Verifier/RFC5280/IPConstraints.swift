@@ -43,13 +43,11 @@ extension NameConstraintsPolicy {
 extension ArraySlice<UInt8> {
     @inlinable
     var isValidCIDRMask: Bool {
-        // Quick check: is the first byte zero? If it is, we can skip the rest: it matches nothing,
-        // either by way of being invalid or by being all zeros.
-        if self.first == 0 {
-            return false
-        }
-
-        // A valid CIDR mask is a sequence of leading 1s, followed by a sequence of 0s.
+        // A valid CIDR mask is a sequence of leading 1s, followed by a sequence of 0s. That
+        // includes the all-zeros mask, the /0 prefix, which covers the whole address space:
+        // the CA/Browser Forum Baseline Requirements express "must not issue for IP
+        // addresses" as excludedSubtrees of 0.0.0.0/0 and ::/0.
+        //
         // Look for the first index that isn't all 1s.
         guard let firstInterestingIndex = self.firstIndex(where: { $0 != 0xff }) else {
             // Huh, the mask is all 1s. Fine.

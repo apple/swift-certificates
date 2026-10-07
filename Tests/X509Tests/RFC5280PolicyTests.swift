@@ -3367,6 +3367,17 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
         }
     }
 
+    func testIPAddressNameConstraintsExcludedSubtreesAllZeroMask() async throws {
+        for (ipAddress, constraint) in IPAddressNameTests.allZeroMaskFixtures {
+            try await self.nameconstraintsExcludedSubtrees(
+                excludedSubtrees: [.ipAddress(constraint)],
+                subjectAlternativeNames: [.ipAddress(ipAddress)],
+                match: .otherNameConstraints(match: true),
+                policyFactory: .rfc5280
+            )
+        }
+    }
+
     func testDirectoryNameConstraintsExcludedSubtreesAlwaysFails() async throws {
         for firstName in NameConstraintsTests.names {
             for secondName in NameConstraintsTests.names {
@@ -3435,6 +3446,17 @@ final class RFC5280PolicyTests1: RFC5280PolicyBase {
                 subjectAlternativeNames: [.ipAddress(ipAddress)],
                 match: .otherNameConstraints(match: match),
                 policyFactory: .nameConstraints
+            )
+        }
+    }
+
+    func testIPAddressNameConstraintsPermittedSubtreesAllZeroMask() async throws {
+        for (ipAddress, constraint) in IPAddressNameTests.allZeroMaskFixtures {
+            try await self.nameconstraintsPermittedSubtrees(
+                permittedSubtrees: [.ipAddress(constraint)],
+                subjectAlternativeNames: [.ipAddress(ipAddress)],
+                match: .otherNameConstraints(match: true),
+                policyFactory: .rfc5280
             )
         }
     }
