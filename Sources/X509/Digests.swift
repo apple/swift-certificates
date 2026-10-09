@@ -19,28 +19,38 @@ import Foundation
 #endif
 @preconcurrency import Crypto
 
-@usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-enum Digest: Sendable {
-    case insecureSHA1(Insecure.SHA1Digest)
-    case sha256(SHA256Digest)
-    case sha384(SHA384Digest)
-    case sha512(SHA512Digest)
+public struct Digest: Sendable {
+    @usableFromInline
+    enum Backing: Sendable {
+        case insecureSHA1(Insecure.SHA1Digest)
+        case sha256(SHA256Digest)
+        case sha384(SHA384Digest)
+        case sha512(SHA512Digest)
+    }
+
+    @usableFromInline
+    var backing: Backing
 
     @inlinable
-    static func computeDigest<Bytes: DataProtocol>(
+    init(_ backing: Backing) {
+        self.backing = backing
+    }
+
+    @inlinable
+    public static func computeDigest<Bytes: DataProtocol>(
         for bytes: Bytes,
         using digestIdentifier: AlgorithmIdentifier
     ) throws -> Digest {
         switch digestIdentifier {
         case .sha1, .sha1UsingNil:
-            return .insecureSHA1(Insecure.SHA1.hash(data: bytes))
+            return Digest(.insecureSHA1(Insecure.SHA1.hash(data: bytes)))
         case .sha256, .sha256UsingNil:
-            return .sha256(SHA256.hash(data: bytes))
+            return Digest(.sha256(SHA256.hash(data: bytes)))
         case .sha384, .sha384UsingNil:
-            return .sha384(SHA384.hash(data: bytes))
+            return Digest(.sha384(SHA384.hash(data: bytes)))
         case .sha512, .sha512UsingNil:
-            return .sha512(SHA512.hash(data: bytes))
+            return Digest(.sha512(SHA512.hash(data: bytes)))
         default:
             throw CertificateError.unsupportedDigestAlgorithm(reason: "Unknown digest algorithm: \(digestIdentifier)")
         }
@@ -49,9 +59,8 @@ enum Digest: Sendable {
 
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
 extension Digest: Sequence {
-    @usableFromInline
-    func makeIterator() -> some IteratorProtocol<UInt8> {
-        switch self {
+    public func makeIterator() -> some IteratorProtocol<UInt8> {
+        switch self.backing {
         case .insecureSHA1(let sha1):
             return sha1.makeIterator()
         case .sha256(let sha256):
