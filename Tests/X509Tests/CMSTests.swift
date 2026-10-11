@@ -280,6 +280,44 @@ final class CMSTests: XCTestCase {
             "unexpected signerIdentifier for version should throw"
         )
     }
+    func testCMSSignerInfoWithSignedAndUnsignedAttrsRoundTrips() throws {
+        // unsignedAttrs is serialized as [1] IMPLICIT SET OF Attribute, exercising a tag that
+        // the signedAttrs ([0] IMPLICIT) round trips do not cover.
+        let contentTypeVal = try ASN1Any(erasing: ASN1ObjectIdentifier.cmsData)
+        let attribute = CMSAttribute(attrType: .contentType, attrValues: [contentTypeVal])
+
+        try assertRoundTrips(
+            CMSSignerInfo(
+                version: .v1,
+                signerIdentifier: .issuerAndSerialNumber(
+                    .init(
+                        issuer: .init {
+                            CountryName("US")
+                            OrganizationName("Apple Inc.")
+                            CommonName("Apple Public EV Server ECC CA 1 - G1")
+                        },
+                        serialNumber: .init(bytes: [20, 30, 40, 50])
+                    )
+                ),
+                digestAlgorithm: .sha256WithRSAEncryptionUsingNil,
+                signatureAlgorithm: .ecdsaWithSHA256,
+                signature: .init(contentBytes: [100, 110, 120, 130, 140]),
+                unsignedAttrs: [attribute]
+            )
+        )
+
+        try assertRoundTrips(
+            CMSSignerInfo(
+                version: .v3,
+                signerIdentifier: .subjectKeyIdentifier(.init(keyIdentifier: [10, 20, 30, 40])),
+                digestAlgorithm: .sha256WithRSAEncryptionUsingNil,
+                signedAttrs: [attribute],
+                signatureAlgorithm: .ecdsaWithSHA256,
+                signature: .init(contentBytes: [100, 110, 120, 130, 140]),
+                unsignedAttrs: [attribute]
+            )
+        )
+    }
     func testEncapsulatedContentInfo() throws {
         try assertRoundTrips(
             CMSEncapsulatedContentInfo(
