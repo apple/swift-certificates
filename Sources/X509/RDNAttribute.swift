@@ -168,6 +168,32 @@ extension RelativeDistinguishedName.Attribute.Value.Storage: DERParseable, DERSe
     }
 }
 
+extension RelativeDistinguishedName.Attribute.Value.Storage: BERParseable {
+    @inlinable
+    init(berEncoded node: SwiftASN1.ASN1Node) throws {
+        do {
+            switch node.identifier {
+            case ASN1UTF8String.defaultIdentifier:
+                self = .utf8(String(try ASN1UTF8String(berEncoded: node)))
+            case ASN1PrintableString.defaultIdentifier:
+                self = .printable(String(try ASN1PrintableString(berEncoded: node)))
+            case ASN1IA5String.defaultIdentifier:
+                self = .ia5(String(try ASN1IA5String(berEncoded: node)))
+            case ASN1TeletexString.defaultIdentifier:
+                self = .any(try ASN1Any(erasing: ASN1TeletexString(berEncoded: node)))
+            case ASN1UniversalString.defaultIdentifier:
+                self = .any(try ASN1Any(erasing: ASN1UniversalString(berEncoded: node)))
+            case ASN1BMPString.defaultIdentifier:
+                self = .any(try ASN1Any(erasing: ASN1BMPString(berEncoded: node)))
+            default:
+                self = .any(ASN1Any(berEncoded: node))
+            }
+        } catch {
+            self = .any(ASN1Any(berEncoded: node))
+        }
+    }
+}
+
 extension RelativeDistinguishedName.Attribute.Value: CustomStringConvertible {
     @inlinable
     public var description: String {
@@ -271,6 +297,20 @@ extension RelativeDistinguishedName.Attribute: DERImplicitlyTaggable {
         try coder.appendConstructedNode(identifier: identifier) { coder in
             try coder.serialize(self.type)
             try coder.serialize(self.value.storage)
+        }
+    }
+}
+
+extension RelativeDistinguishedName.Attribute: BERImplicitlyTaggable {
+    /// Creates an attribute from a BER-encoded ASN.1 `AttributeTypeAndValue`.
+    ///
+    /// This initializer accepts BER for CMS issuer-name parsing.
+    @inlinable
+    public init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try BER.sequence(rootNode, identifier: identifier) { nodes in
+            let type = try ASN1ObjectIdentifier(berEncoded: &nodes)
+            let value = try Value(storage: .init(berEncoded: &nodes))
+            return .init(type: type, value: value)
         }
     }
 }
