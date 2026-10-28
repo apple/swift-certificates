@@ -456,3 +456,66 @@ extension Certificate.PrivateKey {
         }
     }
 }
+
+#if canImport(Darwin)
+@available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
+extension SecKey {
+    /// Creates an instance of ``Security/SecKey`` from ``Certificate/PrivateKey``.
+    ///
+    /// To create an instance of ``Certificate/PrivateKey``, use ``Certificate/PrivateKey/init(_:)-(SecKey)`` instead.
+    ///
+    /// P256, P384, P521, and RSA software keys are imported into a new `SecKey`. A private key that was
+    /// constructed from a `SecKey` returns that same `SecKey`.
+    ///
+    /// Ed25519 keys, `SecureEnclave.P256.Signing.PrivateKey` keys, and ``CustomPrivateKey`` keys cannot be
+    /// represented as a `SecKey`, and cause this function to throw. To use a Secure Enclave key with
+    /// `Security`, create it as a `SecKey` and wrap it with ``Certificate/PrivateKey/init(_:)-(SecKey)``.
+    ///
+    /// - Parameter privateKey: The `Certificate.PrivateKey` instance used to initialize this new `SecKey` instance
+    /// - Returns: A new `SecKey` instance based on the provided `Certificate.PrivateKey` instance
+    public static func makeWithPrivateKey(_ privateKey: Certificate.PrivateKey) throws -> SecKey {
+        let keyType: CFString
+        let keyData: Data
+        switch privateKey.backing {
+        case .p256(let key):
+            keyType = kSecAttrKeyTypeECSECPrimeRandom
+            keyData = key.x963Representation
+        case .p384(let key):
+            keyType = kSecAttrKeyTypeECSECPrimeRandom
+            keyData = key.x963Representation
+        case .p521(let key):
+            keyType = kSecAttrKeyTypeECSECPrimeRandom
+            keyData = key.x963Representation
+        case .rsa(let key):
+            keyType = kSecAttrKeyTypeRSA
+            // PKCS #1 RSAPrivateKey, the format `SecKeyCreateWithData` expects for RSA.
+            keyData = key.derRepresentation
+        case .secKey(let wrapper):
+            return wrapper.privateKey
+        case .secureEnclaveP256:
+            // The key's data representation is an opaque Secure Enclave blob, and Security offers no
+            // public way to rebuild a `SecKey` around one.
+            throw CertificateError.unsupportedPrivateKey(
+                reason: "SecureEnclave.P256 private keys cannot be converted to SecKey"
+            )
+        case .ed25519:
+            throw CertificateError.unsupportedPrivateKey(reason: "SecKey does not support Ed25519 private keys")
+        case .custom:
+            throw CertificateError.unsupportedPrivateKey(reason: "custom private keys cannot be converted to SecKey")
+        }
+
+        let attributes: [CFString: Any] = [
+            kSecAttrKeyType: keyType,
+            kSecAttrKeyClass: kSecAttrKeyClassPrivate,
+        ]
+        var error: Unmanaged<CFError>?
+        guard let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error) else {
+            if let error = error?.takeRetainedValue() {
+                throw CertificateError.unsupportedPrivateKey(reason: "cannot create SecKey: \(error)")
+            }
+            throw CertificateError.unsupportedPrivateKey(reason: "SecKeyCreateWithData returned no key")
+        }
+        return secKey
+    }
+}
+#endif
