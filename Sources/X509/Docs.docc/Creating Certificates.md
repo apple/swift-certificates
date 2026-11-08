@@ -157,7 +157,7 @@ let extensions = try Certificate.Extensions {
         BasicConstraints.isCertificateAuthority(maxPathLength: nil)
     )
     Critical(
-        KeyUsage(keyCertSign: true)
+        KeyUsage(digitalSignature: true, keyCertSign: true)
     )
     SubjectAlternativeNames([.dnsName("localhost")])
 }
