@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if canImport(Darwin)
+#if canImport(Security)
 import SwiftASN1
 #if canImport(FoundationEssentials)
 import FoundationEssentials
