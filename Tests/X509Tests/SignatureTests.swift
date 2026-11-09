@@ -147,6 +147,153 @@ final class SignatureTests: XCTestCase {
         XCTAssertEqual(.init(expected.derRepresentation), signature.rawRepresentation)
     }
 
+    func testRawECDSASignatureBytesMatchDERRepresentation() throws {
+        let input = Array("Hello World".utf8)
+
+        for _ in 0..<32 {
+            // Fresh signatures each time: the interesting case is a component whose top bit is
+            // set, which needs a leading zero byte once re-encoded as an ASN.1 INTEGER.
+            let expected = try Self.p256Key.signature(for: SHA256.hash(data: input))
+            let signature = try Certificate.Signature(
+                signatureAlgorithm: .ecdsaWithSHA256,
+                rawECDSASignatureBytes: expected.rawRepresentation
+            )
+
+            XCTAssertEqual(.init(expected.derRepresentation), signature.rawRepresentation)
+            XCTAssertTrue(
+                Certificate.PublicKey(Self.p256Key.publicKey).isValidSignature(
+                    signature,
+                    for: input,
+                    signatureAlgorithm: .ecdsaWithSHA256
+                )
+            )
+        }
+    }
+
+    func testRawECDSASignatureBytesP521() throws {
+        // P521's order is 521 bits, so each component is padded to 66 bytes with the top 7 bits
+        // of the first byte always clear. Worth covering separately from the byte-aligned curves.
+        let input = Array("Hello World".utf8)
+        let expected = try Self.p521Key.signature(for: SHA512.hash(data: input))
+        let signature = try Certificate.Signature(
+            signatureAlgorithm: .ecdsaWithSHA512,
+            rawECDSASignatureBytes: expected.rawRepresentation
+        )
+
+        XCTAssertEqual(.init(expected.derRepresentation), signature.rawRepresentation)
+    }
+
+    func testRawECDSASignatureBytesRejectsNonECDSAAlgorithms() throws {
+        for algorithm: Certificate.SignatureAlgorithm in [.ed25519, .sha256WithRSAEncryption] {
+            XCTAssertThrowsError(
+                try Certificate.Signature(
+                    signatureAlgorithm: algorithm,
+                    rawECDSASignatureBytes: Array(repeating: UInt8(0xAA), count: 64)
+                )
+            ) { error in
+                XCTAssertEqual(
+                    (error as? CertificateError)?.code,
+                    .unsupportedSignatureAlgorithm
+                )
+            }
+        }
+    }
+
+    func testRawECDSASignatureBytesRejectsMalformedLengths() throws {
+        // 72 is the usual length of a DER-encoded P-256 signature, the likeliest wrong input.
+        for count in [0, 1, 2, 63, 72, 128] {
+            XCTAssertThrowsError(
+                try Certificate.Signature(
+                    signatureAlgorithm: .ecdsaWithSHA256,
+                    rawECDSASignatureBytes: Array(repeating: UInt8(0xAA), count: count)
+                )
+            ) { error in
+                XCTAssertEqual(
+                    (error as? CertificateError)?.code,
+                    .invalidSignatureForCertificate
+                )
+            }
+        }
+    }
+
+    func testRawECDSASignatureBytesRejectsDEREncodedSignatures() throws {
+        let input = Array("Hello World".utf8)
+
+        for _ in 0..<32 {
+            let der = try Self.p256Key.signature(for: SHA256.hash(data: input)).derRepresentation
+            XCTAssertThrowsError(
+                try Certificate.Signature(signatureAlgorithm: .ecdsaWithSHA256, rawECDSASignatureBytes: der)
+            )
+        }
+    }
+
+    func testECDSAComponentsWithLeadingZerosStripped() throws {
+        let input = Array("Hello World".utf8)
+        var sawShortComponent = false
+
+        // A component loses its first byte about one time in 256, so sign until that has
+        // happened a few times rather than relying on luck.
+        var attempts = 0
+        var shortCount = 0
+        while shortCount < 5 && attempts < 20_000 {
+            attempts += 1
+            let expected = try Self.p256Key.signature(
+                for: SHA256.hash(data: input + [UInt8(truncatingIfNeeded: attempts)])
+            )
+            let raw = expected.rawRepresentation
+            let r = Data(raw.prefix(32).drop(while: { $0 == 0 }))
+            let s = Data(raw.suffix(32).drop(while: { $0 == 0 }))
+            if r.count < 32 || s.count < 32 {
+                shortCount += 1
+                sawShortComponent = true
+            }
+
+            let signature = try Certificate.Signature(signatureAlgorithm: .ecdsaWithSHA256, r: r, s: s)
+            XCTAssertEqual(.init(expected.derRepresentation), signature.rawRepresentation)
+        }
+        XCTAssertTrue(sawShortComponent)
+    }
+
+    func testECDSAComponentsAgreeWithRawRepresentation() throws {
+        let expected = try Self.p384Key.signature(for: SHA384.hash(data: Array("Hello World".utf8)))
+        let raw = expected.rawRepresentation
+
+        let fromComponents = try Certificate.Signature(
+            signatureAlgorithm: .ecdsaWithSHA384,
+            r: raw.prefix(48),
+            s: raw.suffix(48)
+        )
+        let fromRaw = try Certificate.Signature(signatureAlgorithm: .ecdsaWithSHA384, rawECDSASignatureBytes: raw)
+        XCTAssertEqual(fromComponents, fromRaw)
+    }
+
+    func testECDSAComponentsRejectInvalidInput() throws {
+        let valid = Array(repeating: UInt8(0xAA), count: 32)
+        let invalid: [(String, [UInt8], [UInt8])] = [
+            ("empty r", [], valid),
+            ("empty s", valid, []),
+            ("zero r", [0, 0, 0], valid),
+            ("zero s", valid, [0]),
+            ("oversized r", Array(repeating: 0xAA, count: 67), valid),
+            ("oversized s", valid, Array(repeating: 0xAA, count: 67)),
+        ]
+
+        for (name, r, s) in invalid {
+            XCTAssertThrowsError(
+                try Certificate.Signature(signatureAlgorithm: .ecdsaWithSHA256, r: r, s: s),
+                name
+            ) { error in
+                XCTAssertEqual((error as? CertificateError)?.code, .invalidSignatureForCertificate, name)
+            }
+        }
+
+        XCTAssertThrowsError(
+            try Certificate.Signature(signatureAlgorithm: .sha256WithRSAEncryption, r: valid, s: valid)
+        ) { error in
+            XCTAssertEqual((error as? CertificateError)?.code, .unsupportedSignatureAlgorithm)
+        }
+    }
+
     func testP384Signature() throws {
         // This is the P384 signature over LetsEncrypt Intermediate E1.
         let signatureBytes: [UInt8] = [
