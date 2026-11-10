@@ -201,3 +201,14 @@ extension RelativeDistinguishedName: DERImplicitlyTaggable {
         }
     }
 }
+
+extension RelativeDistinguishedName: BERImplicitlyTaggable {
+    /// Creates a relative distinguished name from a BER-encoded ASN.1 set.
+    ///
+    /// This initializer accepts BER for CMS issuer-name parsing.
+    @inlinable
+    public init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self.init(try BER.set(of: Attribute.self, identifier: identifier, rootNode: rootNode))
+    }
+}
+

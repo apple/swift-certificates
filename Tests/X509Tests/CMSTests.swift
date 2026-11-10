@@ -145,13 +145,34 @@ final class CMSTests: XCTestCase {
         notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
         issuer: rsaCertName,
         subject: rsaCertName,
-        signatureAlgorithm: .sha1WithRSAEncryption,
+        signatureAlgorithm: .sha256WithRSAEncryption,
         extensions: try! Certificate.Extensions {
             Critical(
                 BasicConstraints.isCertificateAuthority(maxPathLength: nil)
             )
         },
         issuerPrivateKey: rsaCertKey
+    )
+
+    static let rsaCert2Key = try! Certificate.PrivateKey(_RSA.Signing.PrivateKey(keySize: .bits2048))
+    static let rsaCert2Name = try! DistinguishedName {
+        CommonName("CMS RSA 2")
+    }
+    static let rsaCert2 = try! Certificate(
+        version: .v3,
+        serialNumber: .init(),
+        publicKey: rsaCert2Key.publicKey,
+        notValidBefore: Date(),
+        notValidAfter: Date().advanced(by: 60 * 60 * 24 * 360),
+        issuer: rsaCert2Name,
+        subject: rsaCert2Name,
+        signatureAlgorithm: .sha256WithRSAEncryption,
+        extensions: try! Certificate.Extensions {
+            Critical(
+                BasicConstraints.isCertificateAuthority(maxPathLength: nil)
+            )
+        },
+        issuerPrivateKey: rsaCert2Key
     )
 
     static let ed25519CertKey = Certificate.PrivateKey(Curve25519.Signing.PrivateKey())
@@ -179,11 +200,17 @@ final class CMSTests: XCTestCase {
         RFC5280Policy()
     }
 
+
     private func assertRoundTrips<ASN1Object: DERParseable & DERSerializable & Equatable>(_ value: ASN1Object) throws {
         var serializer = DER.Serializer()
         try serializer.serialize(value)
         let parsed = try ASN1Object(derEncoded: serializer.serializedBytes)
         XCTAssertEqual(parsed, value)
+    }
+
+    private func envelopedData(from bytes: [UInt8]) throws -> CMSEnvelopedData {
+        let contentInfo = try CMSContentInfo(berEncoded: ArraySlice(bytes))
+        return try XCTUnwrap(try contentInfo.envelopedData)
     }
 
     func testIssuerAndSerialNumber() throws {
@@ -198,6 +225,152 @@ final class CMSTests: XCTestCase {
             )
         )
     }
+    func testCMSIssuerAndSerialNumberParsesBERIndefiniteLengthIssuerName() throws {
+        let bytes: [UInt8] = [
+            0x30, 0x13,
+            0x30, 0x80,
+            0x31, 0x0a,
+            0x30, 0x08,
+            0x06, 0x03, 0x55, 0x04, 0x03,
+            0x0c, 0x01, 0x41,
+            0x00, 0x00,
+            0x02, 0x01, 0x01,
+        ]
+        let parsed = try CMSIssuerAndSerialNumber(berEncoded: ArraySlice(bytes))
+        let expectedIssuer = try DistinguishedName {
+            CommonName("A")
+        }
+        XCTAssertEqual(parsed.issuer, expectedIssuer)
+        XCTAssertEqual(parsed.serialNumber, Certificate.SerialNumber(bytes: [0x01]))
+    }
+
+    func testCMSIssuerAndSerialNumberNormalizesConstructedBERBMPStringIssuerName() throws {
+        let bytes: [UInt8] = [
+            0x30, 0x80,
+            0x30, 0x80,
+            0x31, 0x0f,
+            0x30, 0x0d,
+            0x06, 0x03, 0x55, 0x04, 0x03,
+            0x3e, 0x80,
+            0x04, 0x02, 0x00, 0x41,
+            0x00, 0x00,
+            0x00, 0x00,
+            0x02, 0x01, 0x01,
+            0x00, 0x00,
+        ]
+        let parsed = try CMSIssuerAndSerialNumber(berEncoded: ArraySlice(bytes))
+        let bmpBytes: [UInt8] = [0x00, 0x41]
+        let expectedIssuer = DistinguishedName([
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(
+                    type: .RDNAttributeType.commonName,
+                    value: try ASN1Any(erasing: ASN1BMPString(contentBytes: bmpBytes[...]))
+                )
+            ])
+        ])
+
+        XCTAssertEqual(parsed.issuer, expectedIssuer)
+        XCTAssertEqual(parsed.serialNumber, Certificate.SerialNumber(bytes: [0x01]))
+    }
+
+    func testSignerIdentifierBERParsingNormalizesConstructedBMPStringIssuer() throws {
+        // BER bytes for an issuerAndSerialNumber SignerIdentifier whose issuer
+        // DistinguishedName contains a constructed (indefinite-length) BMPString.
+        // Without explicit BER CHOICE dispatch on CMSSignerIdentifier, the default
+        // DER-fallback path stores the raw BER bytes via ASN1Any without normalizing
+        // the DirectoryString, causing a DistinguishedName equality mismatch.
+        let bytes: [UInt8] = [
+            0x30, 0x80,       // IssuerAndSerialNumber SEQUENCE (indefinite)
+            0x30, 0x80,       // DistinguishedName SEQUENCE (indefinite)
+            0x31, 0x0f,       // RDN SET, length 15
+            0x30, 0x0d,       // ATV SEQUENCE, length 13
+            0x06, 0x03, 0x55, 0x04, 0x03,  // OID 2.5.4.3 (commonName)
+            0x3e, 0x80,       // BMPString, constructed, indefinite
+            0x04, 0x02, 0x00, 0x41,  // OCTET STRING segment: BMP "A"
+            0x00, 0x00,       // EOC (BMPString)
+            0x00, 0x00,       // EOC (DistinguishedName)
+            0x02, 0x01, 0x01, // INTEGER 1 (serialNumber)
+            0x00, 0x00,       // EOC (IssuerAndSerialNumber)
+        ]
+        let parsed = try CMSSignerIdentifier(berEncoded: ArraySlice(bytes))
+
+        let bmpBytes: [UInt8] = [0x00, 0x41]
+        let expectedIssuer = DistinguishedName([
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(
+                    type: .RDNAttributeType.commonName,
+                    value: try ASN1Any(erasing: ASN1BMPString(contentBytes: bmpBytes[...]))
+                )
+            ])
+        ])
+
+        let expected = CMSSignerIdentifier.issuerAndSerialNumber(
+            .init(issuer: expectedIssuer, serialNumber: .init(bytes: [0x01]))
+        )
+
+        XCTAssertEqual(parsed, expected)
+    }
+
+    func testCMSSignerInfoBERParsingNormalizesConstructedDirectoryStringIssuer() throws {
+        // A minimal CMSSignerInfo (v1, no signed/unsigned attrs) whose
+        // signerIdentifier contains a BER-constructed BMPString in the issuer DN.
+        // Exercises the full CMSSignerInfo(berEncoded:) → CMSSignerIdentifier(berEncoded:)
+        // → CMSIssuerAndSerialNumber(berEncoded:) chain after BER CHOICE dispatch exists.
+        let bytes: [UInt8] = [
+            // SignerInfo SEQUENCE, length 64 (0x40)
+            0x30, 0x40,
+            // version: INTEGER 1 (v1 matches issuerAndSerialNumber)
+            0x02, 0x01, 0x01,
+            // IssuerAndSerialNumber SEQUENCE, length 24 (0x18)
+            0x30, 0x18,
+            //   DistinguishedName SEQUENCE (indefinite)
+            0x30, 0x80,
+            //     RDN SET, length 15 (0x0f)
+            0x31, 0x0f,
+            //       ATV SEQUENCE, length 13 (0x0d)
+            0x30, 0x0d,
+            //         OID 2.5.4.3 (commonName)
+            0x06, 0x03, 0x55, 0x04, 0x03,
+            //         BMPString, constructed, indefinite
+            0x3e, 0x80,
+            //           OCTET STRING segment: BMP "A"
+            0x04, 0x02, 0x00, 0x41,
+            //           EOC (BMPString)
+            0x00, 0x00,
+            //     EOC (DistinguishedName)
+            0x00, 0x00,
+            //   serialNumber: INTEGER 1
+            0x02, 0x01, 0x01,
+            // digestAlgorithm: sha256WithRSAEncryption (nil params)
+            0x30, 0x0b, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b,
+            // signatureAlgorithm: ecdsaWithSHA256
+            0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x02,
+            // signature: 8-byte placeholder
+            0x04, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ]
+
+        let parsed = try CMSSignerInfo(berEncoded: ArraySlice(bytes))
+
+        guard case .issuerAndSerialNumber(let ias) = parsed.signerIdentifier else {
+            XCTFail("Expected issuerAndSerialNumber signerIdentifier")
+            return
+        }
+
+        let bmpBytes: [UInt8] = [0x00, 0x41]
+        let expectedIssuer = DistinguishedName([
+            RelativeDistinguishedName([
+                RelativeDistinguishedName.Attribute(
+                    type: .RDNAttributeType.commonName,
+                    value: try ASN1Any(erasing: ASN1BMPString(contentBytes: bmpBytes[...]))
+                )
+            ])
+        ])
+
+        XCTAssertEqual(parsed.version, .v1)
+        XCTAssertEqual(ias.issuer, expectedIssuer)
+        XCTAssertEqual(ias.serialNumber, Certificate.SerialNumber(bytes: [0x01]))
+    }
+
     func testSignerIdentifier() throws {
         try assertRoundTrips(
             CMSSignerIdentifier.issuerAndSerialNumber(
@@ -403,6 +576,370 @@ final class CMSTests: XCTestCase {
             )
         )
     }
+
+    func testCMSEncryptedContentInfo() throws {
+        let encryptedContentInfo = try CMSEncryptedContentInfo(
+            contentType: .cmsData,
+            contentEncryptionAlgorithm: .cmsAES256CBC(
+                iv: ASN1OctetString(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+            ),
+            encryptedContent: ASN1OctetString(contentBytes: [1, 2, 3])
+        )
+
+        try assertRoundTrips(encryptedContentInfo)
+        XCTAssertTrue(try encryptedContentInfo.encodedBytes.containsSubsequence([0x80, 0x03, 0x01, 0x02, 0x03]))
+    }
+
+    func testCMSEncryptedDataAndContentInfo() throws {
+        let encryptedData = try CMSEncryptedData(
+            version: .v0,
+            encryptedContentInfo: CMSEncryptedContentInfo(
+                contentType: .cmsData,
+                contentEncryptionAlgorithm: .cmsAES256CBC(
+                    iv: ASN1OctetString(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+                ),
+                encryptedContent: ASN1OctetString(contentBytes: [1, 2, 3])
+            ),
+            unprotectedAttrs: nil
+        )
+
+        try assertRoundTrips(encryptedData)
+
+        let contentInfo = try CMSContentInfo(encryptedData)
+        try assertRoundTrips(contentInfo)
+        XCTAssertNotNil(try contentInfo.encryptedData)
+    }
+
+    func testCMSRecipientIdentifiers() throws {
+        let issuerAndSerialNumber = CMSIssuerAndSerialNumber(
+            issuer: Self.rsaCert.issuer,
+            serialNumber: Self.rsaCert.serialNumber
+        )
+        try assertRoundTrips(CMSRecipientIdentifier.issuerAndSerialNumber(issuerAndSerialNumber))
+
+        let subjectKeyIdentifier = CMSRecipientIdentifier.subjectKeyIdentifier(
+            SubjectKeyIdentifier(keyIdentifier: [10, 20, 30, 40])
+        )
+        try assertRoundTrips(subjectKeyIdentifier)
+        XCTAssertEqual(try subjectKeyIdentifier.encodedBytes, [0x80, 0x04, 10, 20, 30, 40])
+
+        let recipientKeyIdentifier = CMSKeyAgreeRecipientIdentifier.recipientKeyIdentifier(
+            CMSRecipientKeyIdentifier(subjectKeyIdentifier: SubjectKeyIdentifier(keyIdentifier: [9]))
+        )
+        try assertRoundTrips(recipientKeyIdentifier)
+        let recipientKeyIdentifierBytes = try recipientKeyIdentifier.encodedBytes
+        XCTAssertEqual(recipientKeyIdentifierBytes[0], 0xa0)
+        XCTAssertEqual(recipientKeyIdentifierBytes[2], 0x04)
+    }
+
+    func testCMSRecipientKeyIdentifierParsesBEROptionalFields() throws {
+        let bytes: [UInt8] = [
+            0x30, 0x80,  // RecipientKeyIdentifier SEQUENCE (indefinite)
+            0x04, 0x01, 0x09,  // subjectKeyIdentifier
+            0x38, 0x80,  // constructed GeneralizedTime (indefinite)
+            // SwiftASN1's BER GeneralizedTime parser flattens constructed content as octet strings.
+            0x04, 0x08, 0x32, 0x30, 0x32, 0x36, 0x30, 0x31, 0x30, 0x31,  // "20260101"
+            0x04, 0x07, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a,  // "000000Z"
+            0x00, 0x00,
+            0x30, 0x80,  // OtherKeyAttribute SEQUENCE (indefinite)
+            0x06, 0x02, 0x2a, 0x03,  // 1.2.3
+            0x00, 0x00,
+            0x00, 0x00,
+        ]
+        let parsed = try CMSRecipientKeyIdentifier(berEncoded: ArraySlice(bytes))
+        let expectedDate = try GeneralizedTime(
+            year: 2026,
+            month: 1,
+            day: 1,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            fractionalSeconds: 0
+        )
+        let expectedOtherOID: ASN1ObjectIdentifier = [1, 2, 3]
+
+        XCTAssertEqual(Array(parsed.subjectKeyIdentifier.keyIdentifier), [0x09])
+        XCTAssertEqual(parsed.date, expectedDate)
+        XCTAssertEqual(parsed.other?.keyAttributeIdentifier, expectedOtherOID)
+        XCTAssertNil(parsed.other?.keyAttribute)
+    }
+
+    func testCMSKEKIdentifierParsesBEROptionalFields() throws {
+        let bytes: [UInt8] = [
+            0x30, 0x80,  // KEKIdentifier SEQUENCE (indefinite)
+            0x04, 0x03, 0x01, 0x02, 0x03,  // keyIdentifier
+            0x38, 0x80,  // constructed GeneralizedTime (indefinite)
+            // SwiftASN1's BER GeneralizedTime parser flattens constructed content as octet strings.
+            0x04, 0x08, 0x32, 0x30, 0x32, 0x36, 0x30, 0x31, 0x30, 0x31,  // "20260101"
+            0x04, 0x07, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a,  // "000000Z"
+            0x00, 0x00,
+            0x30, 0x80,  // OtherKeyAttribute SEQUENCE (indefinite)
+            0x06, 0x02, 0x2a, 0x03,  // 1.2.3
+            0x00, 0x00,
+            0x00, 0x00,
+        ]
+        let parsed = try CMSKEKIdentifier(berEncoded: ArraySlice(bytes))
+        let expectedDate = try GeneralizedTime(
+            year: 2026,
+            month: 1,
+            day: 1,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            fractionalSeconds: 0
+        )
+        let expectedOtherOID: ASN1ObjectIdentifier = [1, 2, 3]
+
+        XCTAssertEqual(Array(parsed.keyIdentifier.bytes), [0x01, 0x02, 0x03])
+        XCTAssertEqual(parsed.date, expectedDate)
+        XCTAssertEqual(parsed.other?.keyAttributeIdentifier, expectedOtherOID)
+        XCTAssertNil(parsed.other?.keyAttribute)
+    }
+
+    func testCMSRecipientInfoChoiceTags() throws {
+        let keyTransRecipientInfo = CMSRecipientInfo.keyTransRecipientInfo(
+            CMSKeyTransRecipientInfo(
+                recipientIdentifier: .init(issuerAndSerialNumber: Self.rsaCert),
+                keyEncryptionAlgorithm: .cmsRSAESOAEPWithSHA256,
+                encryptedKey: ASN1OctetString(contentBytes: [1, 2, 3])
+            )
+        )
+        try assertRoundTrips(keyTransRecipientInfo)
+        XCTAssertEqual(try keyTransRecipientInfo.encodedBytes.first, 0x30)
+
+        let keyAgreeRecipientInfo = CMSRecipientInfo.keyAgreeRecipientInfo(
+            CMSKeyAgreeRecipientInfo(
+                originator: .subjectKeyIdentifier(SubjectKeyIdentifier(keyIdentifier: [1])),
+                keyEncryptionAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+                recipientEncryptedKeys: [
+                    CMSRecipientEncryptedKey(
+                        recipientIdentifier: .recipientKeyIdentifier(
+                            CMSRecipientKeyIdentifier(
+                                subjectKeyIdentifier: SubjectKeyIdentifier(keyIdentifier: [9])
+                            )
+                        ),
+                        encryptedKey: ASN1OctetString(contentBytes: [8])
+                    )
+                ]
+            )
+        )
+        try assertRoundTrips(keyAgreeRecipientInfo)
+        let keyAgreeBytes = try keyAgreeRecipientInfo.encodedBytes
+        XCTAssertEqual(keyAgreeBytes[0], 0xa1)
+        XCTAssertEqual(keyAgreeBytes[2], 0x02)
+        XCTAssertTrue(keyAgreeBytes.containsSubsequence([0x30, 0x0a, 0x30, 0x08, 0xa0, 0x03, 0x04, 0x01, 0x09, 0x04, 0x01, 0x08]))
+        XCTAssertFalse(keyAgreeBytes.containsSubsequence([0x31, 0x0a, 0x30, 0x08]))
+
+        let kekRecipientInfo = CMSRecipientInfo.kekRecipientInfo(
+            CMSKEKRecipientInfo(
+                kekIdentifier: CMSKEKIdentifier(keyIdentifier: ASN1OctetString(contentBytes: [1, 2, 3])),
+                keyEncryptionAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+                encryptedKey: ASN1OctetString(contentBytes: [4, 5, 6])
+            )
+        )
+        try assertRoundTrips(kekRecipientInfo)
+        XCTAssertEqual(try kekRecipientInfo.encodedBytes.first, 0xa2)
+
+        let passwordRecipientInfo = CMSRecipientInfo.passwordRecipientInfo(
+            CMSPasswordRecipientInfo(
+                keyEncryptionAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+                encryptedKey: ASN1OctetString(contentBytes: [4, 5, 6])
+            )
+        )
+        try assertRoundTrips(passwordRecipientInfo)
+        XCTAssertEqual(try passwordRecipientInfo.encodedBytes.first, 0xa3)
+
+        let otherRecipientInfo = try CMSRecipientInfo.otherRecipientInfo(
+            CMSOtherRecipientInfo(type: [1, 2, 3], value: ASN1Any(erasing: ASN1Null()))
+        )
+        try assertRoundTrips(otherRecipientInfo)
+        XCTAssertEqual(try otherRecipientInfo.encodedBytes.first, 0xa4)
+    }
+
+    func testCMSPasswordRecipientInfoKeyDerivationAlgorithmIsOptionalAndTagged() throws {
+        let withoutKeyDerivationAlgorithm = CMSPasswordRecipientInfo(
+            keyEncryptionAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+            encryptedKey: ASN1OctetString(contentBytes: [4, 5, 6])
+        )
+        try assertRoundTrips(withoutKeyDerivationAlgorithm)
+        let reparsedWithoutKDF = try CMSPasswordRecipientInfo(
+            derEncoded: withoutKeyDerivationAlgorithm.encodedBytes
+        )
+        XCTAssertNil(reparsedWithoutKDF.keyDerivationAlgorithm)
+
+        let withKeyDerivationAlgorithm = CMSPasswordRecipientInfo(
+            keyDerivationAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+            keyEncryptionAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+            encryptedKey: ASN1OctetString(contentBytes: [4, 5, 6])
+        )
+        try assertRoundTrips(withKeyDerivationAlgorithm)
+        XCTAssertTrue(try withKeyDerivationAlgorithm.encodedBytes.containsSubsequence([0xa0, 0x04, 0x06, 0x02, 0x2a, 0x03]))
+    }
+
+    func testCMSEnvelopedDataAndContentInfo() throws {
+        let envelopedData = try CMSEnvelopedData(
+            version: .v0,
+            originatorInfo: nil,
+            recipientInfos: [
+                .keyTransRecipientInfo(
+                    CMSKeyTransRecipientInfo(
+                        recipientIdentifier: .init(issuerAndSerialNumber: Self.rsaCert),
+                        keyEncryptionAlgorithm: .cmsRSAESOAEPWithSHA256,
+                        encryptedKey: ASN1OctetString(contentBytes: [1, 2, 3])
+                    )
+                )
+            ],
+            encryptedContentInfo: CMSEncryptedContentInfo(
+                contentType: .cmsData,
+                contentEncryptionAlgorithm: .cmsAES256CBC(
+                    iv: ASN1OctetString(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+                ),
+                encryptedContent: ASN1OctetString(contentBytes: [1, 2, 3])
+            ),
+            unprotectedAttrs: nil
+        )
+
+        try assertRoundTrips(envelopedData)
+        XCTAssertEqual(envelopedData.expectedVersion, .v0)
+
+        let contentInfo = try CMSContentInfo(envelopedData)
+        try assertRoundTrips(contentInfo)
+        XCTAssertNotNil(try contentInfo.envelopedData)
+    }
+
+    func testEncryptDecryptSingleRecipientRSA() throws {
+        let plaintext = Array("swift-certificates cms".utf8)
+        let encrypted = try CMS.encrypt(plaintext, recipientCertificates: [Self.rsaCert])
+        let contentInfo = try CMSContentInfo(berEncoded: ArraySlice(encrypted))
+        let envelopedData = try XCTUnwrap(try contentInfo.envelopedData)
+        XCTAssertEqual(envelopedData.version, .v0)
+        XCTAssertEqual(envelopedData.recipientInfos.count, 1)
+        XCTAssertEqual(envelopedData.encryptedContentInfo.contentType, .cmsData)
+        XCTAssertEqual(envelopedData.encryptedContentInfo.contentEncryptionAlgorithm.algorithm, .AlgorithmIdentifier.aes256CBC)
+        let contentEncryptionParameters = try XCTUnwrap(envelopedData.encryptedContentInfo.contentEncryptionAlgorithm.parameters)
+        XCTAssertEqual(try ASN1OctetString(asn1Any: contentEncryptionParameters).bytes.count, 16)
+        guard case .keyTransRecipientInfo(let recipientInfo) = envelopedData.recipientInfos[0] else {
+            return XCTFail("Expected key transport recipient info")
+        }
+        XCTAssertEqual(recipientInfo.keyEncryptionAlgorithm.algorithm, .AlgorithmIdentifier.rsaESOAEP)
+        let keyEncryptionParameters = try XCTUnwrap(recipientInfo.keyEncryptionAlgorithm.parameters)
+        let rsaOAEPParams = try CMSRSAESOAEPParams(asn1Any: keyEncryptionParameters)
+        XCTAssertEqual(rsaOAEPParams.hashAlgorithm, .sha256)
+        XCTAssertEqual(rsaOAEPParams.maskGenAlgorithm, .cmsMGF1WithSHA256)
+
+        let decrypted = try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey)
+        XCTAssertEqual(decrypted, plaintext)
+    }
+
+    func testEncryptDecryptMultipleRecipientRSA() throws {
+        let plaintext = Array("multi recipient cms".utf8)
+        let encrypted = try CMS.encrypt(plaintext, recipientCertificates: [Self.rsaCert, Self.rsaCert2])
+
+        XCTAssertEqual(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey), plaintext)
+        XCTAssertEqual(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert2, privateKey: Self.rsaCert2Key), plaintext)
+    }
+
+    func testDecryptWrongPrivateKeyFails() throws {
+        let encrypted = try CMS.encrypt([1, 2, 3, 4], recipientCertificates: [Self.rsaCert])
+
+        XCTAssertThrowsError(
+            try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCert2Key)
+        )
+    }
+
+    func testDecryptMissingMatchingRecipientFails() throws {
+        let encrypted = try CMS.encrypt([1, 2, 3, 4], recipientCertificates: [Self.rsaCert])
+
+        XCTAssertThrowsError(
+            try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert2, privateKey: Self.rsaCert2Key)
+        )
+    }
+
+    func testEncryptRequiresRSACertificate() throws {
+        XCTAssertThrowsError(try CMS.encrypt([1, 2, 3, 4], recipientCertificates: [Self.ed25519Cert]))
+    }
+
+    func testDecryptVersionMismatchFails() throws {
+        let envelopedData = try CMSEnvelopedData(
+            version: .v3,
+            originatorInfo: nil,
+            recipientInfos: [
+                .keyAgreeRecipientInfo(
+                    CMSKeyAgreeRecipientInfo(
+                        originator: .subjectKeyIdentifier(SubjectKeyIdentifier(keyIdentifier: [1])),
+                        keyEncryptionAlgorithm: AlgorithmIdentifier(algorithm: [1, 2, 3], parameters: nil),
+                        recipientEncryptedKeys: [
+                            CMSRecipientEncryptedKey(
+                                recipientIdentifier: .recipientKeyIdentifier(
+                                    CMSRecipientKeyIdentifier(
+                                        subjectKeyIdentifier: SubjectKeyIdentifier(keyIdentifier: [9])
+                                    )
+                                ),
+                                encryptedKey: ASN1OctetString(contentBytes: [8])
+                            )
+                        ]
+                    )
+                )
+            ],
+            encryptedContentInfo: CMSEncryptedContentInfo(
+                contentType: .cmsData,
+                contentEncryptionAlgorithm: .cmsAES256CBC(
+                    iv: ASN1OctetString(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+                ),
+                encryptedContent: ASN1OctetString(contentBytes: [1, 2, 3])
+            ),
+            unprotectedAttrs: nil
+        )
+        let encrypted = try CMSContentInfo(envelopedData).encodedBytes
+
+        XCTAssertThrowsError(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey))
+    }
+
+    func testDecryptUnsupportedContentAlgorithmFails() throws {
+        var envelopedData = try self.envelopedData(from: CMS.encrypt([1, 2, 3, 4], recipientCertificates: [Self.rsaCert]))
+        envelopedData.encryptedContentInfo.contentEncryptionAlgorithm = .sha256
+        let encrypted = try CMSContentInfo(envelopedData).encodedBytes
+
+        XCTAssertThrowsError(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey))
+    }
+
+    func testDecryptUnsupportedKeyEncryptionAlgorithmFails() throws {
+        var envelopedData = try self.envelopedData(from: CMS.encrypt([1, 2, 3, 4], recipientCertificates: [Self.rsaCert]))
+        guard case .keyTransRecipientInfo(var recipientInfo) = envelopedData.recipientInfos[0] else {
+            return XCTFail("Expected key transport recipient info")
+        }
+        recipientInfo.keyEncryptionAlgorithm = .sha256
+        envelopedData.recipientInfos[0] = .keyTransRecipientInfo(recipientInfo)
+        let encrypted = try CMSContentInfo(envelopedData).encodedBytes
+
+        XCTAssertThrowsError(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey))
+    }
+
+    func testDecryptMalformedEnvelopedDataVersionFails() throws {
+        var envelopedData = try self.envelopedData(from: CMS.encrypt([1, 2, 3, 4], recipientCertificates: [Self.rsaCert]))
+        envelopedData.version = .v3
+        let encrypted = try CMSContentInfo(envelopedData).encodedBytes
+
+        XCTAssertThrowsError(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey))
+    }
+
+    func testDecryptWrongContentInfoTypeFails() throws {
+        let encryptedData = try CMSEncryptedData(
+            version: .v0,
+            encryptedContentInfo: CMSEncryptedContentInfo(
+                contentType: .cmsData,
+                contentEncryptionAlgorithm: .cmsAES256CBC(
+                    iv: ASN1OctetString(contentBytes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+                ),
+                encryptedContent: ASN1OctetString(contentBytes: [1, 2, 3])
+            ),
+            unprotectedAttrs: nil
+        )
+        let encrypted = try CMSContentInfo(encryptedData).encodedBytes
+
+        XCTAssertThrowsError(try CMS.decrypt(encrypted, recipientCertificate: Self.rsaCert, privateKey: Self.rsaCertKey))
+    }
+
 
     func testSimpleSigningVerifying() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -1398,6 +1935,26 @@ extension DERSerializable {
             try serializer.serialize(self)
             return serializer.serializedBytes
         }
+    }
+}
+
+extension Array where Element: Equatable {
+    fileprivate func containsSubsequence(_ subsequence: [Element]) -> Bool {
+        guard !subsequence.isEmpty, self.count >= subsequence.count else {
+            return subsequence.isEmpty
+        }
+
+        for index in self.indices where self[index] == subsequence[0] {
+            let endIndex = self.index(index, offsetBy: subsequence.count, limitedBy: self.endIndex)
+            guard let endIndex else {
+                continue
+            }
+            if Array(self[index..<endIndex]) == subsequence {
+                return true
+            }
+        }
+
+        return false
     }
 }
 
