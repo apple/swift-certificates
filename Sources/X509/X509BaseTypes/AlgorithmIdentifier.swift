@@ -213,6 +213,18 @@ extension AlgorithmIdentifier {
         algorithm: .AlgorithmIdentifier.ed25519,
         parameters: nil
     )
+
+    @usableFromInline
+    static let mldsa65 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.mldsa65,
+        parameters: nil
+    )
+
+    @usableFromInline
+    static let mldsa87 = AlgorithmIdentifier(
+        algorithm: .AlgorithmIdentifier.mldsa87,
+        parameters: nil
+    )
 }
 
 extension AlgorithmIdentifier: CustomStringConvertible {
@@ -249,6 +261,10 @@ extension AlgorithmIdentifier: CustomStringConvertible {
             return "sha512"
         case .ed25519:
             return "ed25519"
+        case .mldsa65:
+            return "mldsa65"
+        case .mldsa87:
+            return "mldsa87"
         default:
             return "AlgorithmIdentifier(\(self.algorithm) - \(String(reflecting: self.parameters)))"
         }
@@ -276,6 +292,10 @@ extension ASN1ObjectIdentifier.AlgorithmIdentifier {
     static let sha512: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 2, 3]
 
     static let ed25519: ASN1ObjectIdentifier = [1, 3, 101, 112]
+
+    static let mldsa65: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 3, 18]
+
+    static let mldsa87: ASN1ObjectIdentifier = [2, 16, 840, 1, 101, 3, 4, 3, 19]
 }
 
 extension AlgorithmIdentifier {
