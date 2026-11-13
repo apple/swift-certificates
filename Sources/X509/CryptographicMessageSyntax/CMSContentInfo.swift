@@ -111,7 +111,7 @@ extension CMSContentInfo {
             guard contentType == .cmsSignedData else {
                 return nil
             }
-            return try CMSSignedData(asn1Any: content)
+            return try CMSSignedData(berASN1Any: content)
         }
     }
 }
