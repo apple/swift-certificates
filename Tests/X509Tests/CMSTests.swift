@@ -977,6 +977,59 @@ final class CMSTests: XCTestCase {
         XCTAssertInvalidCMSBlock(isValidSignature)
     }
 
+    func testDigestAlgorithmAndSigningAlgorithmMatchWithNullAndAbsentParameters() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .sha1WithRSAEncryption,
+            certificate: Self.rsaCert,
+            privateKey: Self.rsaCertKey
+        )
+
+        // This test confirms that digest function matches with null and absent parameters.
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.digestAlgorithms = [.sha1UsingNil, .sha1]
+        signedData.signerInfos[0].digestAlgorithm = .sha1
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        // Notably, not XCTAssertInvalidCMSBlock.
+        XCTAssertUnableToValidateSigner(isValidSignature)
+    }
+
+    func testSHA2DigestAlgorithmAndSigningAlgorithmMatchWithParameters() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        var cmsData = try CMS.generateSignedTestData(
+            data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            privateKey: Self.leaf1Key
+        )
+
+        let algoIDWithParameters: AlgorithmIdentifier = .init(
+            algorithm: .AlgorithmIdentifier.sha256,
+            parameters: try ASN1Any(erasing: 3)
+        )
+
+        // This test confirms that digest function matches with SHA2 and differing parameters.
+        var signedData = try CMSSignedData(asn1Any: cmsData.content)
+        signedData.digestAlgorithms = [algoIDWithParameters, .sha256]
+        signedData.signerInfos[0].digestAlgorithm = .sha256
+        cmsData.content = try ASN1Any(erasing: signedData)
+
+        let isValidSignature = try await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cmsData.encodedBytes,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) {}
+        // Notably, not XCTAssertInvalidCMSBlock.
+        XCTAssertUnableToValidateSigner(isValidSignature)
+    }
+
     func testInvalidSignatureIsRejected() async throws {
         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         var cmsData = try CMS.generateSignedTestData(
