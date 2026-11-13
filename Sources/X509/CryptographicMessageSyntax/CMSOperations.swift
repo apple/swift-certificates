@@ -232,6 +232,7 @@ public enum CMS: Sendable {
             return try await isValidSignature(
                 dataBytes: attachedData.bytes,
                 signatureBytes: signatureBytes,
+                additionalIntermediateCertificates: additionalIntermediateCertificates,
                 trustRoots: trustRoots,
                 diagnosticCallback: diagnosticCallback,
                 microsoftCompatible: microsoftCompatible,
