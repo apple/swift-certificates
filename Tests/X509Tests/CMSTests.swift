@@ -280,6 +280,34 @@ final class CMSTests: XCTestCase {
             "unexpected signerIdentifier for version should throw"
         )
     }
+
+    func testCMSSignerInfoWithUnsignedAttrsRoundTrips() throws {
+        // A SignerInfo carrying unsignedAttrs (e.g. a trusted timestamp) must survive a
+        // serialize/parse round trip. This exercises the `[1] IMPLICIT` unsignedAttrs path.
+        let trustedTimestamp = CMSAttribute(
+            attrType: .trustedTimestamp,
+            attrValues: [try ASN1Any(erasing: ASN1OctetString(contentBytes: [0xDE, 0xAD, 0xBE, 0xEF]))]
+        )
+        try assertRoundTrips(
+            CMSSignerInfo(
+                version: .v1,
+                signerIdentifier: .issuerAndSerialNumber(
+                    .init(
+                        issuer: .init {
+                            CountryName("US")
+                            OrganizationName("Apple Inc.")
+                            CommonName("Apple Public EV Server ECC CA 1 - G1")
+                        },
+                        serialNumber: .init(bytes: [20, 30, 40, 50])
+                    )
+                ),
+                digestAlgorithm: .sha256WithRSAEncryptionUsingNil,
+                signatureAlgorithm: .ecdsaWithSHA256,
+                signature: .init(contentBytes: [100, 110, 120, 130, 140]),
+                unsignedAttrs: [trustedTimestamp]
+            )
+        )
+    }
     func testEncapsulatedContentInfo() throws {
         try assertRoundTrips(
             CMSEncapsulatedContentInfo(
@@ -460,6 +488,76 @@ final class CMSTests: XCTestCase {
                 .foundValidCertificateChain([Self.leaf1Cert, Self.rootCert]),
             ]
         )
+    }
+
+    func testGetSignedAttributesBytesContainsRequiredAttributes() throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signingTime = Date()
+
+        let signedAttributesBytes = try CMS.getSignedAttributesBytes(
+            digest: data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            signingTime: signingTime
+        )
+
+        // The bytes are the DER encoding of a SET OF the required signed attributes:
+        // content-type, message-digest and signing-time (RFC 5652 § 11).
+        let rootNode = try DER.parse(signedAttributesBytes)
+        let attributes = try DER.set(of: CMSAttribute.self, identifier: .set, rootNode: rootNode)
+        XCTAssertEqual(
+            Set(attributes.map(\.attrType)),
+            [.contentType, .messageDigest, .signingTime]
+        )
+    }
+
+    func testSignWithTrustedTimestamp() async throws {
+        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        let signingTime = Date()
+
+        // Externally produce the signature over the signed attributes, as a remote or
+        // HSM-backed signer would.
+        let signedAttributesBytes = try CMS.getSignedAttributesBytes(
+            digest: data,
+            signatureAlgorithm: .ecdsaWithSHA256,
+            signingTime: signingTime
+        )
+        let signature = try Self.leaf1Key.sign(
+            bytes: signedAttributesBytes[...],
+            signatureAlgorithm: .ecdsaWithSHA256
+        )
+
+        // The trusted-timestamp token is opaque to CMS; any valid DER is sufficient here.
+        var timestampSerializer = DER.Serializer()
+        try timestampSerializer.serialize(ASN1OctetString(contentBytes: [0xDE, 0xAD, 0xBE, 0xEF]))
+        let trustedTimestampBytes = timestampSerializer.serializedBytes
+
+        let cms = try CMS.signWithTrustedTimestamp(
+            data,
+            signatureBytes: ASN1OctetString(signature),
+            signatureAlgorithm: .ecdsaWithSHA256,
+            certificate: Self.leaf1Cert,
+            signingTime: signingTime,
+            trustedTimestampBytes: trustedTimestampBytes
+        )
+
+        // The produced CMS must carry the trusted timestamp as an unsigned attribute.
+        let contentInfo = try CMSContentInfo(derEncoded: cms)
+        let signedData = try CMSSignedData(asn1Any: contentInfo.content)
+        let signerInfo = try XCTUnwrap(signedData.signerInfos.first)
+        let unsignedAttrs = try XCTUnwrap(signerInfo.unsignedAttrs)
+        XCTAssertEqual(unsignedAttrs.map(\.attrType), [.trustedTimestamp])
+        XCTAssertEqual(
+            unsignedAttrs.first?.attrValues.first,
+            try ASN1Any(derEncoded: trustedTimestampBytes)
+        )
+
+        // And it must verify as a valid detached signature over the original data.
+        let isValidSignature = await CMS.isValidSignature(
+            dataBytes: data,
+            signatureBytes: cms,
+            trustRoots: CertificateStore([Self.rootCert])
+        ) { Self.defaultPolicies }
+        XCTAssertValidSignature(isValidSignature)
     }
 
     func testForbidsDetachedSignatureVerifyingAsAttached() async throws {
