@@ -75,7 +75,7 @@ extension Certificate {
             self.backing = .ed25519(ed25519)
         }
 
-        #if canImport(Darwin)
+        #if canImport(Security)
         /// Construct a private key wrapping a SecureEnclave.P256 private key.
         /// - Parameter secureEnclaveP256: The SecureEnclave.P256 private key to wrap.
         @inlinable
@@ -118,7 +118,7 @@ extension Certificate {
                 return try p521.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .rsa(let rsa):
                 return try rsa.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
-            #if canImport(Darwin)
+            #if canImport(Security)
             case .secureEnclaveP256(let secureEnclaveP256):
                 return try secureEnclaveP256.signature(for: bytes, signatureAlgorithm: signatureAlgorithm)
             case .secKey(let secKeyWrapper):
@@ -163,7 +163,7 @@ extension Certificate {
                 return PublicKey(p521.publicKey)
             case .rsa(let rsa):
                 return PublicKey(rsa.publicKey)
-            #if canImport(Darwin)
+            #if canImport(Security)
             case .secureEnclaveP256(let secureEnclaveP256):
                 return PublicKey(secureEnclaveP256.publicKey)
             case .secKey(let secKeyWrapper):
@@ -187,7 +187,7 @@ extension Certificate {
                 return .ecdsaWithSHA512
             case .rsa:
                 return .sha256WithRSAEncryption
-            #if canImport(Darwin)
+            #if canImport(Security)
             case .secureEnclaveP256:
                 return .ecdsaWithSHA256
             case .secKey(let key):
@@ -232,7 +232,7 @@ extension Certificate.PrivateKey: CustomStringConvertible {
             return "P521.PrivateKey"
         case .rsa(let publicKey):
             return "RSA\(publicKey.keySizeInBits).PrivateKey"
-        #if canImport(Darwin)
+        #if canImport(Security)
         case .secureEnclaveP256:
             return "SecureEnclave.P256.PrivateKey"
         case .secKey:
@@ -257,7 +257,7 @@ extension Certificate.PrivateKey {
         case p384(Crypto.P384.Signing.PrivateKey)
         case p521(Crypto.P521.Signing.PrivateKey)
         case rsa(_CryptoExtras._RSA.Signing.PrivateKey)
-        #if canImport(Darwin)
+        #if canImport(Security)
         case secureEnclaveP256(SecureEnclave.P256.Signing.PrivateKey)
         case secKey(SecKeyWrapper)
         #endif
@@ -275,7 +275,7 @@ extension Certificate.PrivateKey {
                 return l.rawRepresentation == r.rawRepresentation
             case (.rsa(let l), .rsa(let r)):
                 return l.derRepresentation == r.derRepresentation
-            #if canImport(Darwin)
+            #if canImport(Security)
             case (.secureEnclaveP256(let l), .secureEnclaveP256(let r)):
                 return l.dataRepresentation == r.dataRepresentation
             case (.secKey(let l), .secKey(let r)):
@@ -305,7 +305,7 @@ extension Certificate.PrivateKey {
             case .rsa(let digest):
                 hasher.combine(3)
                 hasher.combine(digest.derRepresentation)
-            #if canImport(Darwin)
+            #if canImport(Security)
             case .secureEnclaveP256(let digest):
                 hasher.combine(4)
                 hasher.combine(digest.dataRepresentation)
@@ -384,7 +384,7 @@ extension Certificate.PrivateKey {
         case .p384(let key): return try PEMDocument(pemString: key.pemRepresentation)
         case .p521(let key): return try PEMDocument(pemString: key.pemRepresentation)
         case .rsa(let key): return try PEMDocument(pemString: key.pemRepresentation)
-        #if canImport(Darwin)
+        #if canImport(Security)
         case .secureEnclaveP256:
             throw CertificateError.unsupportedPrivateKey(
                 reason: "secure enclave private keys can not be serialised as PEM"
@@ -435,7 +435,7 @@ extension Certificate.PrivateKey {
             return [
                 .sha512WithRSAEncryption, .sha384WithRSAEncryption, .sha256WithRSAEncryption, .sha1WithRSAEncryption,
             ]
-        #if canImport(Darwin)
+        #if canImport(Security)
         case .secureEnclaveP256:
             return [.ecdsaWithSHA512, .ecdsaWithSHA384, .ecdsaWithSHA256]
         case .secKey(let key):
