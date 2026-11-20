@@ -43,6 +43,7 @@ jobs:
     name: Check cmake lists
     uses: apple/swift-nio/.github/workflows/cmake_tests.yml@main
     with:
+      cmake_version: "3.29.6"
       update_cmake_lists_config: >-
         {
           "targets": [
