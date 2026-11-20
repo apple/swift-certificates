@@ -50,22 +50,31 @@ extension Certificate {
         public init(signatureAlgorithm: SignatureAlgorithm, signatureBytes: ASN1BitString) throws {
             switch signatureAlgorithm {
             case .ecdsaWithSHA256, .ecdsaWithSHA384, .ecdsaWithSHA512:
-                let signature = try ECDSASignature(derEncoded: signatureBytes.bytes)
+                let signature = try ECDSASignature(derEncoded: Self.octetAlignedBytes(signatureBytes))
                 self.backing = .ecdsa(signature)
             case .sha1WithRSAEncryption, .sha256WithRSAEncryption, .sha384WithRSAEncryption, .sha512WithRSAEncryption:
-                let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureBytes.bytes)
+                let signature = _RSA.Signing.RSASignature(rawRepresentation: try Self.octetAlignedBytes(signatureBytes))
                 self.backing = .rsa(signature)
             case .ed25519:
-                guard signatureBytes.paddingBits == 0 else {
-                    throw CertificateError.invalidSignatureForCertificate(
-                        reason: "No padding bits are allowed on Ed25519 signatures"
-                    )
-                }
-                let signature = Data(signatureBytes.bytes)
+                let signature = Data(try Self.octetAlignedBytes(signatureBytes))
                 self.backing = .ed25519(signature)
             default:
                 throw CertificateError.unsupportedSignatureAlgorithm(reason: "\(signatureAlgorithm)")
             }
+        }
+
+        /// Returns the bytes of a signature BIT STRING, rejecting it if it has any padding bits.
+        ///
+        /// All signature algorithms we support produce octet-aligned signatures, so padding bits are
+        /// never valid. Accepting them would allow multiple distinct encodings of the same signature.
+        @inlinable
+        static func octetAlignedBytes(_ signatureBytes: ASN1BitString) throws -> ArraySlice<UInt8> {
+            guard signatureBytes.paddingBits == 0 else {
+                throw CertificateError.invalidSignatureForCertificate(
+                    reason: "Signature BIT STRING must not contain padding bits, found \(signatureBytes.paddingBits)"
+                )
+            }
+            return signatureBytes.bytes
         }
     }
 }
