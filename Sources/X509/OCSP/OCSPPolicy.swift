@@ -542,7 +542,7 @@ extension OCSPVerifierPolicy.Storage {
         let signatureValidationResult = self.validateSignature(
             certificate: leafCertificate,
             tbsResponse: basicResponse.responseDataBytes,
-            signatureBytes: basicResponse.signature.bytes,
+            signatureBytes: basicResponse.signature,
             signatureAlgorithmIdentifier: basicResponse.signatureAlgorithm
         )
 
@@ -580,7 +580,7 @@ extension OCSPVerifierPolicy.Storage {
     private func validateSignature(
         certificate: Certificate,
         tbsResponse: ArraySlice<UInt8>,
-        signatureBytes: ArraySlice<UInt8>,
+        signatureBytes: ASN1BitString,
         signatureAlgorithmIdentifier: AlgorithmIdentifier
     ) -> PolicyEvaluationResult {
         let signatureAlgorithm = Certificate.SignatureAlgorithm(algorithmIdentifier: signatureAlgorithmIdentifier)
@@ -588,7 +588,7 @@ extension OCSPVerifierPolicy.Storage {
         do {
             signature = try Certificate.Signature(
                 signatureAlgorithm: signatureAlgorithm,
-                signatureBytes: .init(bytes: signatureBytes)
+                signatureBytes: signatureBytes
             )
         } catch {
             return .failsToMeetPolicy(reason: "could not create signature for OCSP response \(error)")

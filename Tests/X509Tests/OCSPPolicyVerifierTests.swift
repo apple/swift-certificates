@@ -596,6 +596,84 @@ final class OCSPVerifierPolicyTests: XCTestCase {
         )
     }
 
+    func testResponderSignatureWithPaddingBits() async {
+        // An ordinary, unpadded signature is accepted...
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .meetsPolicy,
+            chain: Self.chainWithSingleCertWithOCSP,
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
+                try Self.goodResponse(for: request, uri: uri, now: validationTime, padSignature: false)
+            }
+        )
+
+        // ...but an otherwise identical response, whose signature BIT STRING claims that the final bit is
+        // padding, is not.
+        await self.assertChain(
+            soft: .meetsPolicy,
+            hard: .failsToMeetPolicy,
+            chain: Self.chainWithSingleCertWithOCSP,
+            requester: TestRequester.noThrow { [validationTime] request, uri -> OCSPResponse in
+                try Self.goodResponse(for: request, uri: uri, now: validationTime, padSignature: true)
+            }
+        )
+    }
+
+    /// Builds a response asserting that the certificate in `request` is good, signed by the intermediate.
+    ///
+    /// If `padSignature` is true, the signature BIT STRING claims that the final bit of the signature is padding.
+    private static func goodResponse(
+        for request: OCSPRequest,
+        uri: String,
+        now: Date,
+        padSignature: Bool
+    ) throws -> OCSPResponse {
+        XCTAssertEqual(uri, Self.responderURI)
+        XCTAssertNil(request.signature)
+        let nonce = try XCTUnwrap(request.tbsRequest.requestExtensions?.ocspNonce)
+        XCTAssertEqual(request.tbsRequest.requestList.count, 1)
+        let singleRequest = try XCTUnwrap(request.tbsRequest.requestList.first)
+
+        let responseData = OCSPResponseData(
+            version: .v1,
+            responderID: .byName(Self.intermediate1Name),
+            producedAt: .init(now),
+            responses: [
+                OCSPSingleResponse(
+                    certID: singleRequest.certID,
+                    certStatus: .good,
+                    thisUpdate: .init(now - .days(1)),
+                    nextUpdate: .init(now + .days(1))
+                )
+            ],
+            responseExtensions: try .init {
+                nonce
+            }
+        )
+
+        let digest = SHA384.hash(data: try DER.Serializer.serialized(element: responseData))
+
+        // ECDSA signatures are randomised, so keep signing until the final byte has its lowest bit clear. Only then
+        // can the signature be encoded as a BIT STRING with a padding bit. We do this regardless of `padSignature`,
+        // so that both cases use the same kind of signature.
+        var signatureBytes: [UInt8]? = nil
+        for _ in 0..<64 {
+            let candidate = Array(try Self.intermediatePrivateKey.signature(for: digest).derRepresentation)
+            if let finalByte = candidate.last, finalByte & 0x01 == 0 {
+                signatureBytes = candidate
+                break
+            }
+        }
+
+        let response = try BasicOCSPResponse(
+            responseData: responseData,
+            signatureAlgorithm: .ecdsaWithSHA384,
+            signature: .init(bytes: try XCTUnwrap(signatureBytes)[...], paddingBits: padSignature ? 1 : 0),
+            certs: []
+        )
+        return .successful(response)
+    }
+
     func testResponseDoesNotIncludeResponseForRequestedCert() async {
         let now = self.validationTime
         await self.assertChain(
