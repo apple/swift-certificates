@@ -1444,4 +1444,209 @@ final class SignatureTests: XCTestCase {
             )
         )
     }
+
+    // MARK: Signature BIT STRING padding
+
+    /// Every supported signature algorithm, paired with a key that can produce it.
+    private static var allSupportedSigningCombinations: [(Certificate.PrivateKey, Certificate.SignatureAlgorithm)] {
+        [
+            (.init(Self.p256Key), .ecdsaWithSHA256),
+            (.init(Self.p384Key), .ecdsaWithSHA384),
+            (.init(Self.p521Key), .ecdsaWithSHA512),
+            (.init(Self.rsaKey), .sha1WithRSAEncryption),
+            (.init(Self.rsaKey), .sha256WithRSAEncryption),
+            (.init(Self.rsaKey), .sha384WithRSAEncryption),
+            (.init(Self.rsaKey), .sha512WithRSAEncryption),
+            (.init(Self.ed25519Key), .ed25519),
+        ]
+    }
+
+    /// Repeatedly calls `make` until it produces a value whose signature has a final byte with its lowest bit clear.
+    ///
+    /// Only such a signature can be re-encoded as a BIT STRING with a padding bit, as DER requires padding bits to be
+    /// zero. `make` is passed the attempt number so that it can vary its input: this ensures that deterministic
+    /// signature schemes (RSA PKCS#1 v1.5, Ed25519) also produce a fresh signature on each attempt. Each attempt has
+    /// roughly a 50% chance of success.
+    private static func withEvenFinalSignatureByte<T>(
+        _ make: (Int) throws -> T,
+        signature: (T) -> Certificate.Signature
+    ) rethrows -> T? {
+        for attempt in 0..<64 {
+            let value = try make(attempt)
+            if let finalByte = signature(value).rawRepresentation.last, finalByte & 0x01 == 0 {
+                return value
+            }
+        }
+        return nil
+    }
+
+    /// Returns `der` with the unused-bits octet of its trailing signature BIT STRING set to `paddingBits`.
+    ///
+    /// Certificates and CSRs both end with the signature BIT STRING, so its unused-bits octet sits immediately
+    /// before the final `signatureLength` bytes.
+    private static func settingSignaturePaddingBits(
+        _ paddingBits: UInt8,
+        in der: [UInt8],
+        signatureLength: Int,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> [UInt8] {
+        var der = der
+        let paddingOctetIndex = der.endIndex - signatureLength - 1
+        XCTAssertEqual(der[paddingOctetIndex], 0x00, "expected an unpadded signature", file: file, line: line)
+        der[paddingOctetIndex] = paddingBits
+        return der
+    }
+
+    func testSignatureRejectsPaddingBits() throws {
+        let input = Array("Hello World".utf8)
+
+        for (privateKey, signatureAlgorithm) in Self.allSupportedSigningCombinations {
+            var signatureBytes = try privateKey.sign(bytes: input, signatureAlgorithm: signatureAlgorithm)
+                .rawRepresentation
+            // Clear the low 7 bits of the final byte, so these bytes form a valid BIT STRING with any
+            // number of padding bits. This invalidates the signature, but parsing doesn't check that.
+            signatureBytes[signatureBytes.endIndex - 1] &= 0x80
+
+            XCTAssertNoThrow(
+                try Certificate.Signature(
+                    signatureAlgorithm: signatureAlgorithm,
+                    signatureBytes: ASN1BitString(bytes: signatureBytes[...], paddingBits: 0)
+                ),
+                "\(signatureAlgorithm) with no padding bits"
+            )
+
+            for paddingBits in 1..<8 {
+                XCTAssertThrowsError(
+                    try Certificate.Signature(
+                        signatureAlgorithm: signatureAlgorithm,
+                        signatureBytes: ASN1BitString(bytes: signatureBytes[...], paddingBits: paddingBits)
+                    ),
+                    "\(signatureAlgorithm) with \(paddingBits) padding bits"
+                ) { error in
+                    XCTAssertEqual(
+                        (error as? CertificateError)?.code,
+                        .invalidSignatureForCertificate,
+                        "wrong error \(error)"
+                    )
+                }
+            }
+        }
+    }
+
+    func testUnsupportedSignatureAlgorithmWithPaddingBitsIsReportedAsUnsupported() throws {
+        let unsupportedAlgorithm = Certificate.SignatureAlgorithm(
+            algorithmIdentifier: AlgorithmIdentifier(algorithm: [1, 2, 3, 4], parameters: nil)
+        )
+
+        XCTAssertThrowsError(
+            try Certificate.Signature(
+                signatureAlgorithm: unsupportedAlgorithm,
+                signatureBytes: ASN1BitString(bytes: [0x00], paddingBits: 1)
+            )
+        ) { error in
+            XCTAssertEqual(
+                (error as? CertificateError)?.code,
+                .unsupportedSignatureAlgorithm,
+                "wrong error \(error)"
+            )
+        }
+    }
+
+    func testCertificateWithPaddedSignatureIsRejected() throws {
+        let name = try DistinguishedName {
+            CommonName("Signature padding test")
+        }
+
+        for (privateKey, signatureAlgorithm) in Self.allSupportedSigningCombinations {
+            let certificate = try XCTUnwrap(
+                Self.withEvenFinalSignatureByte(
+                    { _ in
+                        // The serial number is random, so every attempt has a fresh signature.
+                        try Certificate(
+                            version: .v3,
+                            serialNumber: .init(),
+                            publicKey: privateKey.publicKey,
+                            notValidBefore: Self.now,
+                            notValidAfter: Self.oneYearFromNow,
+                            issuer: name,
+                            subject: name,
+                            signatureAlgorithm: signatureAlgorithm,
+                            extensions: Certificate.Extensions(),
+                            issuerPrivateKey: privateKey
+                        )
+                    },
+                    signature: \.signature
+                ),
+                "Unable to produce a suitable \(signatureAlgorithm) certificate"
+            )
+            let der = try DER.Serializer.serialized(element: certificate)
+
+            // The unmodified certificate parses and has a valid signature.
+            let parsed = try Certificate(derEncoded: der)
+            XCTAssertTrue(
+                privateKey.publicKey.isValidSignature(parsed.signature, for: parsed),
+                "\(signatureAlgorithm)"
+            )
+
+            // Marking the final (zero) bit of the signature as padding is still valid DER and leaves the signature
+            // bytes unchanged, but must be rejected.
+            let padded = Self.settingSignaturePaddingBits(
+                1,
+                in: der,
+                signatureLength: certificate.signature.rawRepresentation.count
+            )
+            XCTAssertThrowsError(try Certificate(derEncoded: padded), "\(signatureAlgorithm)") { error in
+                XCTAssertEqual(
+                    (error as? CertificateError)?.code,
+                    .invalidSignatureForCertificate,
+                    "wrong error \(error)"
+                )
+            }
+        }
+    }
+
+    func testCSRWithPaddedSignatureIsRejected() throws {
+        for (privateKey, signatureAlgorithm) in Self.allSupportedSigningCombinations {
+            let csr = try XCTUnwrap(
+                Self.withEvenFinalSignatureByte(
+                    { attempt in
+                        try CertificateSigningRequest(
+                            version: .v1,
+                            subject: DistinguishedName {
+                                CommonName("Signature padding test \(attempt)")
+                            },
+                            privateKey: privateKey,
+                            attributes: CertificateSigningRequest.Attributes(),
+                            signatureAlgorithm: signatureAlgorithm
+                        )
+                    },
+                    signature: \.signature
+                ),
+                "Unable to produce a suitable \(signatureAlgorithm) CSR"
+            )
+            let der = try DER.Serializer.serialized(element: csr)
+
+            // The unmodified CSR parses and has a valid signature.
+            let parsed = try CertificateSigningRequest(derEncoded: der)
+            XCTAssertTrue(
+                privateKey.publicKey.isValidSignature(parsed.signature, for: parsed),
+                "\(signatureAlgorithm)"
+            )
+
+            let padded = Self.settingSignaturePaddingBits(
+                1,
+                in: der,
+                signatureLength: csr.signature.rawRepresentation.count
+            )
+            XCTAssertThrowsError(try CertificateSigningRequest(derEncoded: padded), "\(signatureAlgorithm)") {
+                error in
+                XCTAssertEqual(
+                    (error as? CertificateError)?.code,
+                    .invalidSignatureForCertificate,
+                    "wrong error \(error)"
+                )
+            }
+        }
+    }
 }
