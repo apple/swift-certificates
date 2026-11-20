@@ -69,6 +69,32 @@ extension Certificate {
         /// This value represents an EdDSA signature using Curve25519.
         public static let ed25519 = Self(algorithmIdentifier: .ed25519)
 
+        /// This value represents an ML-DSA-65 signature (FIPS 204, RFC 9881).
+        ///
+        /// Verifying certificates and certificate chains signed with this algorithm is
+        /// supported when the package is built with the `MLDSA` trait (which requires
+        /// swift-crypto 4.0.0 or later); on Darwin platforms it additionally requires macOS 26,
+        /// iOS 26, watchOS 26, tvOS 26, macCatalyst 26, or visionOS 26 at runtime. Signing is not supported. This algorithm
+        /// has no RFC 8446 TLS 1.3 signature scheme value (ML-DSA is still draft-only in TLS),
+        /// so ``rfc8446SignatureSchemeValue`` throws
+        /// ``CertificateError/unsupportedSignatureAlgorithm(reason:file:line:)``; it also has no CMS
+        /// digest algorithm mapping, so CMS operations that need
+        /// `AlgorithmIdentifier(digestAlgorithmFor:)` throw the same error.
+        public static let mldsa65 = Self(algorithmIdentifier: .mldsa65)
+
+        /// This value represents an ML-DSA-87 signature (FIPS 204, RFC 9881).
+        ///
+        /// Verifying certificates and certificate chains signed with this algorithm is
+        /// supported when the package is built with the `MLDSA` trait (which requires
+        /// swift-crypto 4.0.0 or later); on Darwin platforms it additionally requires macOS 26,
+        /// iOS 26, watchOS 26, tvOS 26, macCatalyst 26, or visionOS 26 at runtime. Signing is not supported. This algorithm
+        /// has no RFC 8446 TLS 1.3 signature scheme value (ML-DSA is still draft-only in TLS),
+        /// so ``rfc8446SignatureSchemeValue`` throws
+        /// ``CertificateError/unsupportedSignatureAlgorithm(reason:file:line:)``; it also has no CMS
+        /// digest algorithm mapping, so CMS operations that need
+        /// `AlgorithmIdentifier(digestAlgorithmFor:)` throw the same error.
+        public static let mldsa87 = Self(algorithmIdentifier: .mldsa87)
+
         /// Whether this algorithm represents an ECDSA signature.
         @inlinable
         var isECDSA: Bool {
@@ -118,6 +144,10 @@ extension Certificate.SignatureAlgorithm: CustomStringConvertible {
             return "SignatureAlgorithm.sha512WithRSAEncryption"
         case .ed25519:
             return "SignatureAlgorithm.ed25519"
+        case .mldsa65:
+            return "SignatureAlgorithm.mldsa65"
+        case .mldsa87:
+            return "SignatureAlgorithm.mldsa87"
         default:
             return "SignatureAlgorithm(\(self._algorithmIdentifier))"
         }

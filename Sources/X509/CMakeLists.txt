@@ -64,6 +64,7 @@ add_library(X509
   "GeneralName.swift"
   "Lock.swift"
   "LockedValueBox.swift"
+  "MLDSA.swift"
   "OCSP/BasicOCSPResponse.swift"
   "OCSP/DirectoryString.swift"
   "OCSP/OCSPCertID.swift"

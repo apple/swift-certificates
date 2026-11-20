@@ -58,6 +58,14 @@ extension Certificate {
             case .ed25519:
                 let signature = Data(try Self.octetAlignedBytes(signatureBytes))
                 self.backing = .ed25519(signature)
+            case .mldsa65, .mldsa87:
+                guard signatureBytes.paddingBits == 0 else {
+                    throw CertificateError.invalidSignatureForCertificate(
+                        reason: "No padding bits are allowed on ML-DSA signatures"
+                    )
+                }
+                let variant: MLDSAVariant = (signatureAlgorithm == .mldsa65) ? .mldsa65 : .mldsa87
+                self.backing = .mldsa(variant, Data(signatureBytes.bytes))
             default:
                 throw CertificateError.unsupportedSignatureAlgorithm(reason: "\(signatureAlgorithm)")
             }
@@ -95,6 +103,10 @@ extension Certificate.Signature: CustomStringConvertible {
             return "RSA"
         case .ed25519:
             return "Ed25519"
+        case .mldsa(.mldsa65, _):
+            return "MLDSA65"
+        case .mldsa(.mldsa87, _):
+            return "MLDSA87"
         }
     }
 }
@@ -106,6 +118,7 @@ extension Certificate.Signature {
         case ecdsa(ECDSASignature)
         case rsa(_CryptoExtras._RSA.Signing.RSASignature)
         case ed25519(Data)
+        case mldsa(MLDSAVariant, Data)
 
         @inlinable
         static func == (lhs: BackingSignature, rhs: BackingSignature) -> Bool {
@@ -116,6 +129,8 @@ extension Certificate.Signature {
                 return l.rawRepresentation == r.rawRepresentation
             case (.ed25519(let l), .ed25519(let r)):
                 return l == r
+            case (.mldsa(let lv, let l), .mldsa(let rv, let r)):
+                return lv == rv && l == r
             default:
                 return false
             }
@@ -132,6 +147,10 @@ extension Certificate.Signature {
                 hasher.combine(digest.rawRepresentation)
             case .ed25519(let sig):
                 hasher.combine(2)
+                hasher.combine(sig)
+            case .mldsa(let variant, let sig):
+                hasher.combine(3)
+                hasher.combine(variant)
                 hasher.combine(sig)
             }
         }
@@ -152,6 +171,8 @@ extension Certificate.Signature {
             return .init(data)
         case let .rsa(signature):
             return .init(signature.rawRepresentation)
+        case .mldsa(_, let sig):
+            return .init(sig)
         }
     }
 }
@@ -176,6 +197,8 @@ extension ASN1OctetString {
         case .rsa(let sig):
             self = ASN1OctetString(contentBytes: ArraySlice(sig.rawRepresentation))
         case .ed25519(let sig):
+            self = ASN1OctetString(contentBytes: ArraySlice(sig))
+        case .mldsa(_, let sig):
             self = ASN1OctetString(contentBytes: ArraySlice(sig))
         }
     }
