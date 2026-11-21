@@ -24,7 +24,7 @@ import SwiftASN1
 /// definition of `CertificateSerialNumber` is taken from X.509 [X.509-97].
 @usableFromInline
 @available(macOS 10.15, iOS 13, watchOS 6, tvOS 13, macCatalyst 13, visionOS 1.0, *)
-struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
+struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, BERImplicitlyTaggable, Hashable, Sendable {
     @inlinable
     static var defaultIdentifier: ASN1Identifier {
         .sequence
@@ -47,6 +47,15 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
             let issuer = try DistinguishedName.derEncoded(&nodes)
             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
+            return .init(issuer: issuer, serialNumber: .init(bytes: serialNumber))
+        }
+    }
+
+    @inlinable
+    init(berEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try BER.sequence(rootNode, identifier: identifier) { nodes in
+            let issuer = try DistinguishedName.berEncoded(&nodes)
+            let serialNumber = try ArraySlice<UInt8>(berEncoded: &nodes)
             return .init(issuer: issuer, serialNumber: .init(bytes: serialNumber))
         }
     }

@@ -34,6 +34,16 @@ extension ASN1ObjectIdentifier {
     /// ```
     @usableFromInline
     static let cmsSignedData: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 7, 2]
+
+    /// Cryptographic Message Syntax (CMS) Authenticated Data.
+    ///
+    /// ASN.1 definition:
+    /// ```
+    /// id-ct-authData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    ///    us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) ct(1) 2 }
+    /// ```
+    @usableFromInline
+    static let cmsAuthenticatedData: ASN1ObjectIdentifier = [1, 2, 840, 113549, 1, 9, 16, 1, 2]
 }
 
 /// ``ContentInfo`` is defined in ASN.1 as:
@@ -111,7 +121,71 @@ extension CMSContentInfo {
             guard contentType == .cmsSignedData else {
                 return nil
             }
-            return try CMSSignedData(asn1Any: content)
+            return try CMSSignedData(berASN1Any: content)
+        }
+    }
+
+    @inlinable
+    init(_ envelopedData: CMSEnvelopedData) throws {
+        self.contentType = .cmsEnvelopedData
+        self.content = try ASN1Any(erasing: envelopedData)
+    }
+
+    @inlinable
+    var envelopedData: CMSEnvelopedData? {
+        get throws {
+            guard contentType == .cmsEnvelopedData else {
+                return nil
+            }
+            return try CMSEnvelopedData(berASN1Any: content)
+        }
+    }
+
+    @inlinable
+    init(_ encryptedData: CMSEncryptedData) throws {
+        self.contentType = .cmsEncryptedData
+        self.content = try ASN1Any(erasing: encryptedData)
+    }
+
+    @inlinable
+    var encryptedData: CMSEncryptedData? {
+        get throws {
+            guard contentType == .cmsEncryptedData else {
+                return nil
+            }
+            return try CMSEncryptedData(berASN1Any: content)
+        }
+    }
+
+    @inlinable
+    init(_ digestedData: CMSDigestedData) throws {
+        self.contentType = .cmsDigestedData
+        self.content = try ASN1Any(erasing: digestedData)
+    }
+
+    @inlinable
+    var digestedData: CMSDigestedData? {
+        get throws {
+            guard contentType == .cmsDigestedData else {
+                return nil
+            }
+            return try CMSDigestedData(berASN1Any: content)
+        }
+    }
+
+    @inlinable
+    init(_ authenticatedData: CMSAuthenticatedData) throws {
+        self.contentType = .cmsAuthenticatedData
+        self.content = try ASN1Any(erasing: authenticatedData)
+    }
+
+    @inlinable
+    var authenticatedData: CMSAuthenticatedData? {
+        get throws {
+            guard contentType == .cmsAuthenticatedData else {
+                return nil
+            }
+            return try CMSAuthenticatedData(berASN1Any: content)
         }
     }
 }
