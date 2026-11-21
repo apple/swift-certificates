@@ -371,7 +371,12 @@ extension ASN1BitString {
         } else {
             // We only need one byte here.
             let byte = UInt8(truncatingIfNeeded: ext.rawValue >> 8)
-            self = .init(bytes: [byte], paddingBits: byte.trailingZeroBitCount)
+            if byte == 0 {
+                // No bits are set: DER encodes this as an empty bitstring with no padding bits.
+                self = .init(bytes: [], paddingBits: 0)
+            } else {
+                self = .init(bytes: [byte], paddingBits: byte.trailingZeroBitCount)
+            }
         }
     }
 }
